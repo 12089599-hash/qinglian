@@ -142,7 +142,7 @@ h2 {
 
 .section-tabs {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(8, minmax(0, 1fr));
   gap: 8px;
   margin-top: 14px;
 }
@@ -242,7 +242,8 @@ small {
 .mission-list,
 .daily-list,
 .market-list,
-.upgrade-list {
+.upgrade-list,
+.system-list {
   display: grid;
   gap: 10px;
 }
@@ -263,6 +264,54 @@ small {
   gap: 4px;
   padding: 12px;
   text-align: left;
+}
+
+.system-split {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.system-split h3 {
+  margin: 0 0 10px;
+  color: var(--gold);
+  font-size: 0.9rem;
+}
+
+.system-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  min-height: 78px;
+  border: 1px solid rgba(245, 238, 220, 0.1);
+  border-radius: 8px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.system-row strong,
+.system-row span,
+.system-row small {
+  display: block;
+}
+
+.system-row span {
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
+.system-row small {
+  margin-top: 5px;
+  color: var(--gold);
+}
+
+.row-actions {
+  display: grid;
+  gap: 8px;
+  min-width: 72px;
 }
 
 .mini-button {
@@ -464,6 +513,19 @@ small {
     grid-template-columns: 1fr;
   }
 
+  .section-tabs {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    padding: 8px 0;
+    background: #0e1317;
+  }
+
+  .system-split {
+    grid-template-columns: 1fr;
+  }
+
   .log-panel {
     max-height: none;
   }
@@ -471,7 +533,26 @@ small {
 
 @media (max-width: 760px) {
   .section-tabs {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+    margin: 0;
+    padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--line);
+    background: rgba(14, 19, 23, 0.97);
+  }
+
+  .section-tabs button {
+    min-height: 46px;
+    padding: 0 8px;
+    font-size: 0.88rem;
+  }
+
+  body {
+    padding-bottom: 120px;
   }
 }
 
@@ -491,5 +572,13 @@ small {
 
   .panel {
     padding: 14px;
+  }
+
+  .system-row {
+    grid-template-columns: 1fr;
+  }
+
+  .row-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

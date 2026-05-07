@@ -27,6 +27,8 @@
         <button data-tab="goals" class="active">目标</button>
         <button data-tab="daily">日常</button>
         <button data-tab="market">坊市</button>
+        <button data-tab="alchemy">丹房</button>
+        <button data-tab="gear">装备</button>
         <button data-tab="cave">洞府</button>
         <button data-tab="missions">历练</button>
         <button data-tab="log">日志</button>
@@ -60,6 +62,14 @@
               <dd data-pills>0</dd>
             </div>
             <div>
+              <dt>清心丹</dt>
+              <dd data-clear-heart-pills>0</dd>
+            </div>
+            <div>
+              <dt>护脉丹</dt>
+              <dd data-meridian-pills>0</dd>
+            </div>
+            <div>
               <dt>妖核</dt>
               <dd data-beast-cores>0</dd>
             </div>
@@ -84,6 +94,10 @@
               <dd data-breakthrough-chance>75%</dd>
             </div>
             <div>
+              <dt>根基</dt>
+              <dd data-foundation>0 / 3</dd>
+            </div>
+            <div>
               <dt>当前行动</dt>
               <dd><span data-mission>闭关修炼</span> <small data-mission-time>待命</small></dd>
             </div>
@@ -95,6 +109,7 @@
           <div class="action-row">
             <button data-craft-pill>炼丹</button>
             <button data-consume-pill>服丹</button>
+            <button data-stabilize-foundation>稳固根基</button>
             <button data-reset class="ghost-button">重开</button>
           </div>
         </article>
@@ -122,11 +137,39 @@
           <div data-market-list class="market-list"></div>
         </article>
 
+        <article class="panel" data-panel="alchemy">
+          <header>
+            <h2>丹房</h2>
+          </header>
+          <div data-alchemy-list class="system-list"></div>
+        </article>
+
+        <article class="panel" data-panel="gear">
+          <header>
+            <h2>装备</h2>
+          </header>
+          <div class="system-split">
+            <section>
+              <h3>装备栏</h3>
+              <div data-gear-list class="system-list"></div>
+            </section>
+            <section>
+              <h3>阵法栏</h3>
+              <div data-formation-list class="system-list"></div>
+            </section>
+          </div>
+        </article>
+
         <article class="panel" data-panel="cave">
           <header>
             <h2>洞府</h2>
           </header>
           <div class="upgrade-list">
+            <button data-upgrade-building="alchemyFurnace">
+              <strong>炼丹炉 <span data-building-level="alchemyFurnace">0</span> 级</strong>
+              <span>缩短炼丹时间，解锁丹方</span>
+              <small data-building-cost="alchemyFurnace">升级需灵石</small>
+            </button>
             <button data-upgrade-building="meditationSeat">
               <strong>蒲团 <span data-building-level="meditationSeat">1</span> 级</strong>
               <span>提升吐纳速度</span>

@@ -7,24 +7,40 @@
 - 自动吐纳灵气和离线收益
 - 多阶段境界、突破成功率、心魔压力
 - 洞府升级：蒲团、灵田、剑阵
-- 炼丹、服丹、灵草和灵石经营
+- 丹方系统：聚气丹、清心丹、护脉丹
+- 炼丹炉升级：缩短炼丹时间并解锁丹方
 - 历练任务和多路线秘境战斗，产出妖核与法器
 - 历练任务可设置自动重复
 - 修仙目标可领取一次性奖励
-- 完成 3 个新手目标后解锁日常任务
+- 完成 3 个新手目标后解锁进度型日常任务
 - 坊市可购买材料、装备和阵法资源
 - 炼丹需要时间，服丹后获得限时吐纳加速
-- 功能面板使用标签页切换，减少首屏拥挤
+- 装备栏和阵法栏可升级，影响战力、吐纳和突破
+- 突破前可稳固根基，提高把握并缓冲心魔
+- 功能面板使用标签页切换，手机端使用底部导航
 
 ## 本地打开
 
 直接用浏览器打开 `index.html`。
 
+## 发布到 GitHub Pages
+
+1. 在 GitHub 新建一个公开仓库，例如 `qinglan-dongfu`。
+2. 如果用 GitHub 网页上传，覆盖根目录的 `index.html`、`styles.css`、`browserGame.js`、`README.md`。
+3. 进入仓库 `Settings` -> `Pages`。
+4. `Build and deployment` 选择 `Deploy from a branch`。
+5. `Branch` 选择 `main`，目录选择 `/root`，保存。
+6. 等待部署完成后，GitHub 会给出一个可分享的网址。
+
+## 发布到 Netlify 或 Vercel
+
+把整个文件夹拖到 Netlify，或导入到 Vercel。构建命令留空，发布目录选择项目根目录。
 
 ## 文件说明
 
 - `index.html`: 游戏入口页面
 - `styles.css`: 页面样式
+- `browserGame.js`: GitHub Pages 直接运行的游戏脚本
 - `src/browserGame.js`: 浏览器直接运行的游戏版本
 - `src/gameCore.mjs`: 可测试的核心规则
 - `tests/game.test.mjs`: 核心规则测试
