@@ -197,6 +197,11 @@ small {
   font-size: 0.78rem;
 }
 
+.goal-count {
+  color: var(--gold);
+  font-weight: 800;
+}
+
 .action-row {
   display: flex;
   flex-wrap: wrap;
@@ -260,6 +265,89 @@ small {
 .log-list time {
   color: var(--gold);
   font-variant-numeric: tabular-nums;
+}
+
+.goal-list {
+  display: grid;
+  gap: 10px;
+  padding: 0;
+  list-style: none;
+}
+
+.goal-list li {
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  gap: 10px;
+  align-items: start;
+  min-height: 58px;
+  border: 1px solid rgba(245, 238, 220, 0.1);
+  border-radius: 8px;
+  padding: 11px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.goal-list li > span {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  color: #15120a;
+  font-weight: 900;
+}
+
+.goal-list li.completed > span {
+  border-color: var(--gold);
+  background: var(--gold);
+}
+
+.goal-list strong,
+.goal-list small {
+  display: block;
+}
+
+.goal-list small {
+  margin-top: 4px;
+  color: var(--muted);
+  line-height: 1.35;
+}
+
+.offline-dialog {
+  width: min(430px, calc(100vw - 28px));
+  border: 1px solid rgba(232, 198, 106, 0.32);
+  border-radius: 8px;
+  padding: 0;
+  color: var(--paper);
+  background: #141a1f;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+}
+
+.offline-dialog::backdrop {
+  background: rgba(4, 8, 10, 0.62);
+}
+
+.offline-dialog form {
+  display: grid;
+  gap: 18px;
+  padding: 22px;
+}
+
+.offline-dialog h2 {
+  font-size: 1.6rem;
+}
+
+.offline-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.offline-summary div {
+  border: 1px solid rgba(245, 238, 220, 0.1);
+  border-radius: 8px;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.04);
 }
 
 @media (max-width: 1120px) {

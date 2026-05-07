@@ -82,6 +82,14 @@
           </div>
         </article>
 
+        <article class="panel goals-panel">
+          <header>
+            <h2>修仙目标</h2>
+            <span data-goal-count class="goal-count">0 / 4</span>
+          </header>
+          <ol data-goals class="goal-list"></ol>
+        </article>
+
         <article class="panel">
           <header>
             <h2>洞府</h2>
@@ -137,6 +145,17 @@
         </article>
       </section>
     </main>
+
+    <dialog data-offline-dialog class="offline-dialog">
+      <form method="dialog">
+        <header>
+          <p class="eyebrow">闭关结算</p>
+          <h2>离线修炼</h2>
+        </header>
+        <dl data-offline-summary class="offline-summary"></dl>
+        <button class="primary-button">收下</button>
+      </form>
+    </dialog>
 
     <script src="browserGame.js"></script>
   </body>

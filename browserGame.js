@@ -80,11 +80,16 @@
     progressText: document.querySelector('[data-progress-text]'),
     mission: document.querySelector('[data-mission]'),
     missionTime: document.querySelector('[data-mission-time]'),
+    goals: document.querySelector('[data-goals]'),
+    goalCount: document.querySelector('[data-goal-count]'),
+    offlineDialog: document.querySelector('[data-offline-dialog]'),
+    offlineSummary: document.querySelector('[data-offline-summary]'),
     log: document.querySelector('[data-log]'),
     canvas: document.querySelector('[data-world]'),
   };
 
   const ctx = refs.canvas.getContext('2d');
+  let pendingOfflineSummary = null;
   let state = loadState();
   let lastFrameAt = performance.now();
   let animationTime = 0;
@@ -131,6 +136,7 @@
   });
 
   render();
+  showOfflineSummary();
   requestAnimationFrame(loop);
   setInterval(saveState, 5000);
 
@@ -146,6 +152,8 @@
       heartDemon: 0,
       insight: 0,
       injuryUntil: 0,
+      craftedPills: 0,
+      completedMissions: {},
       buildings: {
         meditationSeat: 1,
         spiritField: 0,
@@ -166,6 +174,8 @@
     state.realmIndex = Math.min(realms.length - 1, Math.max(0, Math.floor(Number(state.realmIndex) || 0)));
     state.heartDemon = Math.max(0, Number(state.heartDemon) || 0);
     state.insight = Math.max(0, Number(state.insight) || 0);
+    state.craftedPills = Math.max(0, Number(state.craftedPills) || 0);
+    state.completedMissions = normalizeCompletedMissions(state.completedMissions);
     state.buildings = normalizeBuildings(state.buildings);
     state.log = Array.isArray(state.log) ? state.log.slice(0, 20) : [];
     state.activeMission = state.activeMission && missions[state.activeMission.id] ? state.activeMission : null;
@@ -254,6 +264,7 @@
     state.herbs -= 8;
     state.spiritStones -= 12;
     state.pills += 1;
+    state.craftedPills += 1;
     addLog(state, now, '丹炉火候正好，炼成一枚聚气丹。');
   }
 
@@ -307,6 +318,7 @@
       return;
     }
     applyResources(state, mission.reward);
+    state.completedMissions[mission.id] = (state.completedMissions[mission.id] || 0) + 1;
     addLog(state, now, `完成「${mission.name}」，收获${formatReward(mission.reward)}。`);
   }
 
@@ -341,6 +353,8 @@
     refs.log.innerHTML = state.log
       .map((entry) => `<li><time>${new Date(entry.time).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}</time>${entry.text}</li>`)
       .join('');
+
+    renderGoals();
 
     document.querySelectorAll('[data-start-mission]').forEach((button) => {
       button.disabled = Boolean(state.activeMission);
@@ -477,7 +491,7 @@
       const revived = reviveGameState(JSON.parse(saved), now);
       const offlineSeconds = Math.floor((now - revived.lastUpdatedAt) / 1000);
       if (offlineSeconds > 5) {
-        updateGame(revived, offlineSeconds, now);
+        pendingOfflineSummary = applyOfflineProgress(revived, offlineSeconds, now);
         revived.log.unshift({ time: now, text: `闭关离线 ${formatDuration(offlineSeconds)}，灵气仍在缓慢增长。` });
       }
       return revived;
@@ -488,6 +502,88 @@
 
   function getCurrentRealm(state) {
     return realms[state.realmIndex] || realms[0];
+  }
+
+  function getGoals(state) {
+    return [
+      {
+        id: 'realmThree',
+        title: '突破至炼气三层',
+        detail: '提高吐纳效率，开启更稳定的秘境收益',
+        completed: state.realmIndex >= 2,
+      },
+      {
+        id: 'spiritField',
+        title: '建成一阶灵田',
+        detail: '让洞府开始自动生长灵草',
+        completed: (state.buildings.spiritField || 0) >= 1,
+      },
+      {
+        id: 'mistyValley',
+        title: '完成一次雾隐秘境',
+        detail: '获得妖核或法器，准备强化剑阵',
+        completed: (state.completedMissions.mistyValley || 0) >= 1,
+      },
+      {
+        id: 'firstPill',
+        title: '炼成一枚聚气丹',
+        detail: '突破前用丹药快速补足灵气',
+        completed: (state.craftedPills || 0) >= 1,
+      },
+    ];
+  }
+
+  function renderGoals() {
+    const goals = getGoals(state);
+    const completed = goals.filter((goal) => goal.completed).length;
+    refs.goalCount.textContent = `${completed} / ${goals.length}`;
+    refs.goals.innerHTML = goals
+      .map((goal) => `
+        <li class="${goal.completed ? 'completed' : ''}">
+          <span>${goal.completed ? '✓' : ''}</span>
+          <div>
+            <strong>${goal.title}</strong>
+            <small>${goal.detail}</small>
+          </div>
+        </li>
+      `)
+      .join('');
+  }
+
+  function applyOfflineProgress(state, seconds, now = Date.now()) {
+    const before = snapshotResources(state);
+    updateGame(state, seconds, now);
+    const after = snapshotResources(state);
+    return {
+      seconds: Math.max(0, Math.min(seconds, 60 * 60 * 12)),
+      qi: round(after.qi - before.qi),
+      spiritStones: Math.max(0, round(after.spiritStones - before.spiritStones)),
+      herbs: Math.max(0, round(after.herbs - before.herbs)),
+      beastCores: Math.max(0, round(after.beastCores - before.beastCores)),
+      artifacts: Math.max(0, round(after.artifacts - before.artifacts)),
+    };
+  }
+
+  function showOfflineSummary() {
+    if (!pendingOfflineSummary || !refs.offlineDialog?.showModal) {
+      return;
+    }
+
+    const summary = pendingOfflineSummary;
+    const rows = [
+      ['离线时间', formatDuration(summary.seconds)],
+      ['灵气', `+${Math.floor(summary.qi)}`],
+      ['灵石', `+${Math.floor(summary.spiritStones)}`],
+      ['灵草', `+${Math.floor(summary.herbs)}`],
+      ['妖核', `+${Math.floor(summary.beastCores)}`],
+      ['法器', `+${Math.floor(summary.artifacts)}`],
+    ].filter((row, index) => index === 0 || row[1] !== '+0');
+
+    refs.offlineSummary.innerHTML = rows
+      .map(([label, value]) => `<div><dt>${label}</dt><dd>${value}</dd></div>`)
+      .join('');
+    refs.offlineDialog.showModal();
+    pendingOfflineSummary = null;
   }
 
   function calculateQiRate(state) {
@@ -523,6 +619,24 @@
       normalized[id] = Math.min(buildings[id].maxLevel, Math.max(0, Math.floor(Number.isFinite(level) ? level : normalized[id])));
     });
     return normalized;
+  }
+
+  function normalizeCompletedMissions(savedMissions) {
+    const normalized = {};
+    Object.keys(missions).forEach((id) => {
+      normalized[id] = Math.max(0, Number(savedMissions && savedMissions[id]) || 0);
+    });
+    return normalized;
+  }
+
+  function snapshotResources(state) {
+    return {
+      qi: state.qi || 0,
+      spiritStones: state.spiritStones || 0,
+      herbs: state.herbs || 0,
+      beastCores: state.beastCores || 0,
+      artifacts: state.artifacts || 0,
+    };
   }
 
   function canAfford(state, cost) {
