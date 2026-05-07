@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>青岚洞府</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="hero" aria-label="洞府场景">
+        <canvas data-world width="760" height="430"></canvas>
+        <div class="hero-panel">
+          <p class="eyebrow">挂机修仙</p>
+          <h1>青岚洞府</h1>
+          <div class="realm-line">
+            <span data-realm>炼气一层</span>
+            <span data-progress-text>正在吐纳灵气</span>
+          </div>
+          <div class="progress-track" aria-label="境界进度">
+            <div data-progress class="progress-fill"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="dashboard" aria-label="修行面板">
+        <article class="panel stats-panel">
+          <header>
+            <h2>修行</h2>
+            <button data-breakthrough class="primary-button">突破</button>
+          </header>
+          <dl class="stats-grid">
+            <div>
+              <dt>灵气</dt>
+              <dd data-qi>0 / 100</dd>
+            </div>
+            <div>
+              <dt>吐纳</dt>
+              <dd data-qi-rate>1.8 / 秒</dd>
+            </div>
+            <div>
+              <dt>灵石</dt>
+              <dd data-stones>0</dd>
+            </div>
+            <div>
+              <dt>灵草</dt>
+              <dd data-herbs>0</dd>
+            </div>
+            <div>
+              <dt>丹药</dt>
+              <dd data-pills>0</dd>
+            </div>
+            <div>
+              <dt>当前行动</dt>
+              <dd><span data-mission>闭关修炼</span> <small data-mission-time>待命</small></dd>
+            </div>
+          </dl>
+          <div class="action-row">
+            <button data-craft-pill>炼丹</button>
+            <button data-consume-pill>服丹</button>
+            <button data-reset class="ghost-button">重开</button>
+          </div>
+        </article>
+
+        <article class="panel">
+          <header>
+            <h2>历练</h2>
+          </header>
+          <div class="mission-list">
+            <button data-start-mission="herbGathering">
+              <strong>采集灵草</strong>
+              <span>30 秒，灵草与少量灵石</span>
+            </button>
+            <button data-start-mission="cavePatrol">
+              <strong>巡守洞府</strong>
+              <span>55 秒，灵石与灵气</span>
+            </button>
+            <button data-start-mission="marketTrade">
+              <strong>坊市交易</strong>
+              <span>90 秒，较多灵石</span>
+            </button>
+          </div>
+        </article>
+
+        <article class="panel log-panel">
+          <header>
+            <h2>修行日志</h2>
+          </header>
+          <ol data-log class="log-list"></ol>
+        </article>
+      </section>
+    </main>
+
+    <script src="src/browserGame.js"></script>
+  </body>
+</html>
