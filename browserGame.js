@@ -321,6 +321,117 @@
     },
   };
 
+  const mainlineChapters = [
+    {
+      id: 'qinglanStart',
+      title: '青岚初启',
+      subtitle: '立洞府、通吐纳、备丹药，完成最初的修行根基。',
+      reward: { spiritStones: 120, qiRateBonus: 0.03 },
+      objectives: [
+        {
+          id: 'realmThree',
+          title: '突破至炼气三层',
+          detail: '提高吐纳效率，开启更稳定的秘境收益',
+          completed: (state) => state.realmIndex >= 2,
+          reward: { spiritStones: 80, pills: 1 },
+        },
+        {
+          id: 'spiritField',
+          title: '建成一阶灵田',
+          detail: '让洞府开始自动生长灵草',
+          completed: (state) => (state.buildings.spiritField || 0) >= 1,
+          reward: { herbs: 10, spiritStones: 30 },
+        },
+        {
+          id: 'mistyValley',
+          title: '完成一次雾隐秘境',
+          detail: '获得妖核或法器，准备强化剑阵',
+          completed: (state) => (state.completedMissions.mistyValley || 0) >= 1,
+          reward: { beastCores: 1, spiritStones: 60 },
+        },
+        {
+          id: 'firstPill',
+          title: '炼成一枚聚气丹',
+          detail: '突破前用丹药快速补足灵气',
+          completed: (state) => (state.craftedPills || 0) >= 1,
+          reward: { qi: 120, spiritStones: 25 },
+        },
+      ],
+    },
+    {
+      id: 'foundationPath',
+      title: '筑基问道',
+      subtitle: '选择主修方向，强化第一套护身手段，开始挑战更深秘境。',
+      reward: { spiritStones: 200, powerBonus: 40 },
+      objectives: [
+        {
+          id: 'foundationRealm',
+          title: '踏入筑基初期',
+          detail: '境界达到筑基初期，开启灵阶养成上限',
+          completed: (state) => state.realmIndex >= 3,
+          reward: { spiritStones: 120, herbs: 18 },
+        },
+        {
+          id: 'firstPath',
+          title: '参悟一门功法',
+          detail: '剑修、丹修、阵修任一达到 1 级',
+          completed: (state) => Object.values(state.cultivationPaths || {}).some((level) => level >= 1),
+          reward: { spiritStones: 90, arrayFlags: 1 },
+        },
+        {
+          id: 'firstArmament',
+          title: '整备护身法器',
+          detail: '任意装备或阵法升至 1 级',
+          completed: (state) => [...Object.values(state.gear || {}), ...Object.values(state.formations || {})].some((level) => level >= 1),
+          reward: { beastCores: 1, artifacts: 1 },
+        },
+        {
+          id: 'swordTombTrial',
+          title: '踏入古剑冢',
+          detail: '完成一次古剑冢历练',
+          completed: (state) => (state.completedMissions.ancientSwordTomb || 0) >= 1,
+          reward: { spiritStones: 160, artifacts: 2 },
+        },
+      ],
+    },
+    {
+      id: 'goldenCoreTrial',
+      title: '金丹试炼',
+      subtitle: '淬炼法器、压制魔气裂隙，为更长线的金丹成长铺路。',
+      reward: { spiritStones: 320, qiRateBonus: 0.05, powerBonus: 60 },
+      objectives: [
+        {
+          id: 'goldenCoreRealm',
+          title: '凝成金丹',
+          detail: '境界达到金丹初成',
+          completed: (state) => state.realmIndex >= 5,
+          reward: { spiritStones: 220, meridianPill: 1 },
+        },
+        {
+          id: 'refinedGear',
+          title: '完成一次法器淬炼',
+          detail: '任意装备品质提升至下品或以上',
+          completed: (state) => Object.values(state.gearQuality || {}).some((quality) => quality >= 1),
+          reward: { artifacts: 2, spiritStones: 180 },
+        },
+        {
+          id: 'pathThree',
+          title: '主修小成',
+          detail: '任一功法达到 3 级',
+          completed: (state) => Object.values(state.cultivationPaths || {}).some((level) => level >= 3),
+          reward: { clearHeartPill: 1, spiritStones: 160 },
+        },
+        {
+          id: 'demonRiftTrial',
+          title: '镇压魔气裂隙',
+          detail: '完成两次魔气裂隙历练',
+          completed: (state) => (state.completedMissions.demonRift || 0) >= 2,
+          reward: { beastCores: 3, arrayFlags: 2 },
+        },
+      ],
+    },
+  ];
+
   const saveKey = 'idle-xianxia-save-v1';
   const refs = {
     realm: document.querySelector('[data-realm]'),
@@ -346,6 +457,8 @@
     pillBoost: document.querySelector('[data-pill-boost]'),
     goals: document.querySelector('[data-goals]'),
     goalCount: document.querySelector('[data-goal-count]'),
+    mainlineHeader: document.querySelector('[data-mainline-header]'),
+    mainlineChapters: document.querySelector('[data-mainline-chapters]'),
     alchemyList: document.querySelector('[data-alchemy-list]'),
     gearList: document.querySelector('[data-gear-list]'),
     formationList: document.querySelector('[data-formation-list]'),
@@ -498,11 +611,23 @@
   });
 
   refs.goals?.addEventListener('click', (event) => {
-    const button = event.target.closest('[data-claim-goal]');
+    const goalButton = event.target.closest('[data-claim-goal]');
+    if (goalButton) {
+      const result = claimGoalReward(state, goalButton.dataset.claimGoal);
+      if (result.ok) {
+        showToast('目标奖励', `获得${formatReward(result.reward)}。`);
+      }
+      saveState();
+      render(true);
+    }
+  });
+
+  refs.mainlineHeader?.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-claim-chapter]');
     if (!button) return;
-    const result = claimGoalReward(state, button.dataset.claimGoal);
+    const result = claimChapterReward(state, button.dataset.claimChapter);
     if (result.ok) {
-      showToast('目标奖励', `获得${formatReward(result.reward)}。`);
+      showToast('主线完成', `获得${formatReward(result.reward)}。`);
     }
     saveState();
     render(true);
@@ -575,6 +700,11 @@
       craftedPills: 0,
       completedMissions: {},
       claimedGoals: {},
+      claimedChapterRewards: {},
+      permanentBonuses: {
+        qiRate: 0,
+        power: 0,
+      },
       autoMissionId: null,
       dailyClaims: {},
       dailyProgress: {},
@@ -633,6 +763,8 @@
     state.craftedPills = Math.max(0, Number(state.craftedPills) || 0);
     state.completedMissions = normalizeCompletedMissions(state.completedMissions);
     state.claimedGoals = normalizeClaimedGoals(state.claimedGoals);
+    state.claimedChapterRewards = normalizeClaimedGoals(state.claimedChapterRewards);
+    state.permanentBonuses = normalizePermanentBonuses(state.permanentBonuses);
     state.autoMissionId = missions[state.autoMissionId] ? state.autoMissionId : null;
     state.arrayFlags = Math.max(0, Number(state.arrayFlags) || 0);
     state.dailyClaims = normalizeNestedClaims(state.dailyClaims);
@@ -1277,40 +1409,63 @@
   }
 
   function getGoals(state) {
-    return [
-      {
-        id: 'realmThree',
-        title: '突破至炼气三层',
-        detail: '提高吐纳效率，开启更稳定的秘境收益',
-        completed: state.realmIndex >= 2,
-        claimed: Boolean(state.claimedGoals.realmThree),
-        reward: { spiritStones: 80, pills: 1 },
-      },
-      {
-        id: 'spiritField',
-        title: '建成一阶灵田',
-        detail: '让洞府开始自动生长灵草',
-        completed: (state.buildings.spiritField || 0) >= 1,
-        claimed: Boolean(state.claimedGoals.spiritField),
-        reward: { herbs: 10, spiritStones: 30 },
-      },
-      {
-        id: 'mistyValley',
-        title: '完成一次雾隐秘境',
-        detail: '获得妖核或法器，准备强化剑阵',
-        completed: (state.completedMissions.mistyValley || 0) >= 1,
-        claimed: Boolean(state.claimedGoals.mistyValley),
-        reward: { beastCores: 1, spiritStones: 60 },
-      },
-      {
-        id: 'firstPill',
-        title: '炼成一枚聚气丹',
-        detail: '突破前用丹药快速补足灵气',
-        completed: (state.craftedPills || 0) >= 1,
-        claimed: Boolean(state.claimedGoals.firstPill),
-        reward: { qi: 120, spiritStones: 25 },
-      },
-    ];
+    return mainlineChapters[0].objectives.map((objective) => hydrateMainlineObjective(state, objective));
+  }
+
+  function getMainlineChapters(state) {
+    return mainlineChapters.map((chapter, index) => {
+      const locked = !isMainlineChapterUnlocked(state, index);
+      const objectives = chapter.objectives.map((objective) => hydrateMainlineObjective(state, objective));
+      const completedCount = objectives.filter((objective) => objective.completed).length;
+      const completed = completedCount === objectives.length;
+      const allObjectivesClaimed = objectives.every((objective) => objective.claimed);
+      const rewardClaimed = Boolean(state.claimedChapterRewards[chapter.id]);
+      return {
+        id: chapter.id,
+        title: chapter.title,
+        subtitle: chapter.subtitle,
+        reward: chapter.reward,
+        locked,
+        completed,
+        completedCount,
+        allObjectivesClaimed,
+        rewardClaimed,
+        objectives,
+      };
+    });
+  }
+
+  function hydrateMainlineObjective(state, objective) {
+    return {
+      id: objective.id,
+      title: objective.title,
+      detail: objective.detail,
+      completed: Boolean(objective.completed(state)),
+      claimed: Boolean(state.claimedGoals[objective.id]),
+      reward: objective.reward,
+    };
+  }
+
+  function isMainlineChapterUnlocked(state, index) {
+    if (index <= 0) {
+      return true;
+    }
+    return mainlineChapters.slice(0, index).every((chapter) => Boolean(state.claimedChapterRewards[chapter.id]));
+  }
+
+  function findMainlineObjective(state, objectiveId) {
+    for (const chapter of getMainlineChapters(state)) {
+      const objective = chapter.objectives.find((candidate) => candidate.id === objectiveId);
+      if (objective) {
+        return { chapter, objective };
+      }
+    }
+    return null;
+  }
+
+  function getActiveMainlineChapter(state) {
+    const chapters = getMainlineChapters(state);
+    return chapters.find((chapter) => !chapter.locked && !chapter.rewardClaimed) || chapters[chapters.length - 1];
   }
 
   function isDailyUnlocked(state) {
@@ -1646,34 +1801,75 @@
       return;
     }
 
-    const goals = getGoals(state);
-    const completed = goals.filter((goal) => goal.completed).length;
-    refs.goalCount.textContent = `${completed} / ${goals.length}`;
-    const signature = goals.map((goal) => `${goal.id}:${goal.completed}:${goal.claimed}`).join('|');
+    const chapters = getMainlineChapters(state);
+    const activeChapter = getActiveMainlineChapter(state);
+    refs.goalCount.textContent = `${activeChapter.completedCount} / ${activeChapter.objectives.length}`;
+    const signature = chapters
+      .map((chapter) => `${chapter.id}:${chapter.locked}:${chapter.completedCount}:${chapter.allObjectivesClaimed}:${chapter.rewardClaimed}:${chapter.objectives.map((goal) => `${goal.id}:${goal.completed}:${goal.claimed}`).join(',')}`)
+      .join('|');
     if (!force && renderCache.goals === signature) {
       return;
     }
 
-    refs.goals.innerHTML = goals
+    renderMainlineHeader(activeChapter);
+    renderMainlineTrack(chapters, activeChapter.id);
+    refs.goals.innerHTML = activeChapter.objectives
       .map((goal) => `
-        <li class="${goal.completed ? 'completed' : ''}">
-          <span>${goal.completed ? '✓' : ''}</span>
+        <li class="${goal.completed ? 'completed' : ''} ${goal.claimed ? 'claimed' : ''}">
+          <span>${goal.claimed ? '领' : goal.completed ? '✓' : ''}</span>
           <div>
             <strong>${goal.title}</strong>
-            <small>${goal.detail}</small>
+            <small>${goal.detail} · 奖励 ${formatReward(goal.reward)}</small>
           </div>
-          ${goal.completed ? `<button data-claim-goal="${goal.id}" ${goal.claimed ? 'disabled' : ''}>${goal.claimed ? '已领' : '领取'}</button>` : ''}
+          ${goal.completed ? `<button data-claim-goal="${goal.id}" ${goal.claimed ? 'disabled' : ''}>${goal.claimed ? '已领' : '领取'}</button>` : '<em>进行中</em>'}
         </li>
       `)
       .join('');
     renderCache.goals = signature;
   }
 
+  function renderMainlineHeader(chapter) {
+    if (!refs.mainlineHeader) {
+      return;
+    }
+    const readyForReward = chapter.completed && chapter.allObjectivesClaimed && !chapter.rewardClaimed;
+    refs.mainlineHeader.innerHTML = `
+      <div>
+        <span>当前篇章</span>
+        <strong>${chapter.title}</strong>
+        <small>${chapter.subtitle}</small>
+      </div>
+      <div class="chapter-reward">
+        <small>篇章奖励 ${formatReward(chapter.reward)}</small>
+        <button data-claim-chapter="${chapter.id}" ${readyForReward ? '' : 'disabled'}>${chapter.rewardClaimed ? '已完成' : readyForReward ? '领取篇章' : '待完成'}</button>
+      </div>
+    `;
+  }
+
+  function renderMainlineTrack(chapters, activeChapterId) {
+    if (!refs.mainlineChapters) {
+      return;
+    }
+    refs.mainlineChapters.innerHTML = chapters
+      .map((chapter, index) => `
+        <div class="${chapter.id === activeChapterId ? 'active' : ''} ${chapter.rewardClaimed ? 'done' : ''} ${chapter.locked ? 'locked' : ''}">
+          <span>${index + 1}</span>
+          <strong>${chapter.title}</strong>
+          <small>${chapter.locked ? '未解锁' : chapter.rewardClaimed ? '已完成' : `${chapter.completedCount}/${chapter.objectives.length}`}</small>
+        </div>
+      `)
+      .join('');
+  }
+
   function claimGoalReward(state, goalId, now = Date.now()) {
-    const goal = getGoals(state).find((candidate) => candidate.id === goalId);
-    if (!goal) {
+    const lookup = findMainlineObjective(state, goalId);
+    if (!lookup) {
       return { ok: false, reason: 'unknownGoal' };
     }
+    if (lookup.chapter.locked) {
+      return { ok: false, reason: 'locked' };
+    }
+    const goal = lookup.objective;
     if (!goal.completed) {
       return { ok: false, reason: 'notCompleted' };
     }
@@ -1685,6 +1881,30 @@
     state.claimedGoals[goalId] = true;
     addLog(state, now, `领取「${goal.title}」奖励：${formatReward(goal.reward)}。`);
     return { ok: true, reward: goal.reward };
+  }
+
+  function claimChapterReward(state, chapterId, now = Date.now()) {
+    const chapter = getMainlineChapters(state).find((candidate) => candidate.id === chapterId);
+    if (!chapter) {
+      return { ok: false, reason: 'unknownChapter' };
+    }
+    if (chapter.locked) {
+      return { ok: false, reason: 'locked' };
+    }
+    if (chapter.rewardClaimed) {
+      return { ok: false, reason: 'alreadyClaimed' };
+    }
+    if (!chapter.completed) {
+      return { ok: false, reason: 'notCompleted' };
+    }
+    if (!chapter.allObjectivesClaimed) {
+      return { ok: false, reason: 'objectivesUnclaimed' };
+    }
+
+    applyResources(state, chapter.reward);
+    state.claimedChapterRewards[chapter.id] = true;
+    addLog(state, now, `完成主线「${chapter.title}」，获得${formatReward(chapter.reward)}。`);
+    return { ok: true, reward: chapter.reward };
   }
 
   function toggleAutoMission(state, missionId, now = Date.now()) {
@@ -1738,9 +1958,10 @@
     const formationBonus = 1 + (state.formations.spiritGathering || 0) * formations.spiritGathering.qiBonusPerLevel;
     const affixBonus = 1 + getGearAffixBonus(state, 'qiBonus');
     const pathBonus = 1 + (state.cultivationPaths.formation || 0) * cultivationPaths.formation.qiBonusPerLevel;
+    const permanentBonus = 1 + (state.permanentBonuses.qiRate || 0);
     const pillBoost = state.pillBoostUntil && state.pillBoostUntil > now ? 1.4 : 1;
     const injuryPenalty = state.injuryUntil && state.injuryUntil > now ? 0.75 : 1;
-    return round(realm.qiRate * buildingBonus * formationBonus * affixBonus * pathBonus * pillBoost * injuryPenalty);
+    return round(realm.qiRate * buildingBonus * formationBonus * affixBonus * pathBonus * permanentBonus * pillBoost * injuryPenalty);
   }
 
   function calculateBreakthroughChance(state, now = Date.now()) {
@@ -1764,9 +1985,10 @@
     const gearQualityPower = Object.values(state.gearQuality || {}).reduce((total, qualityIndex) => total + (gearQualities[qualityIndex]?.powerBonus || 0), 0);
     const affixPower = getGearAffixBonus(state, 'powerBonus');
     const formationPower = (state.formations.swordArray || 0) * formations.swordArray.powerPerLevel;
+    const permanentPower = state.permanentBonuses.power || 0;
     const qiPower = Math.min(90, Math.floor((state.qi || 0) * 0.5));
     const demonPenalty = (state.heartDemon || 0) * 8;
-    return Math.max(10, Math.floor(realmPower + pathPower + swordPower + gearPower + gearQualityPower + affixPower + formationPower + qiPower - demonPenalty));
+    return Math.max(10, Math.floor(realmPower + pathPower + swordPower + gearPower + gearQualityPower + affixPower + formationPower + permanentPower + qiPower - demonPenalty));
   }
 
   function calculateBreakthroughCarryQi(state, realm = getCurrentRealm(state)) {
@@ -1797,6 +2019,13 @@
     }
 
     return Object.fromEntries(Object.entries(savedGoals).filter(([, claimed]) => Boolean(claimed)));
+  }
+
+  function normalizePermanentBonuses(bonuses) {
+    return {
+      qiRate: Math.max(0, Number(bonuses?.qiRate) || 0),
+      power: Math.max(0, Number(bonuses?.power) || 0),
+    };
   }
 
   function normalizeAlchemy(alchemy) {
@@ -1969,6 +2198,16 @@
 
   function applyResources(state, reward) {
     Object.entries(reward).forEach(([resource, amount]) => {
+      if (resource === 'qiRateBonus') {
+        state.permanentBonuses ||= { qiRate: 0, power: 0 };
+        state.permanentBonuses.qiRate = round((state.permanentBonuses.qiRate || 0) + amount);
+        return;
+      }
+      if (resource === 'powerBonus') {
+        state.permanentBonuses ||= { qiRate: 0, power: 0 };
+        state.permanentBonuses.power = round((state.permanentBonuses.power || 0) + amount);
+        return;
+      }
       if (resource === 'pills') {
         state.inventoryPills.gatherQiPill = Math.max(0, round((state.inventoryPills.gatherQiPill || 0) + amount));
         state.pills = state.inventoryPills.gatherQiPill;
@@ -2015,10 +2254,21 @@
   }
 
   function formatReward(reward) {
-    const names = { qi: '灵气', herbs: '灵草', spiritStones: '灵石', pills: '聚气丹', gatherQiPill: '聚气丹', clearHeartPill: '清心丹', meridianPill: '护脉丹', beastCores: '妖核', artifacts: '法器', arrayFlags: '阵旗', heartDemon: '心魔' };
     return Object.entries(reward)
-      .map(([key, amount]) => `${amount} ${names[key] || key}`)
+      .map(([key, amount]) => formatRewardEntry(key, amount))
       .join('、');
+  }
+
+  function formatRewardEntry(key, amount) {
+    if (key === 'qiRateBonus') {
+      return `吐纳永久 +${Math.round(amount * 100)}%`;
+    }
+    if (key === 'powerBonus') {
+      return `战力永久 +${amount}`;
+    }
+
+    const names = { qi: '灵气', herbs: '灵草', spiritStones: '灵石', pills: '聚气丹', gatherQiPill: '聚气丹', clearHeartPill: '清心丹', meridianPill: '护脉丹', beastCores: '妖核', artifacts: '法器', arrayFlags: '阵旗', heartDemon: '心魔' };
+    return `${amount} ${names[key] || key}`;
   }
 
   function formatDuration(seconds) {

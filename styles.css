@@ -397,16 +397,67 @@ small {
   list-style: none;
 }
 
+.chapter-banner {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  margin-bottom: 12px;
+  border: 1px solid rgba(232, 198, 106, 0.28);
+  border-radius: 8px;
+  padding: 14px;
+  background:
+    linear-gradient(135deg, rgba(125, 211, 183, 0.14), rgba(232, 198, 106, 0.11)),
+    rgba(255, 255, 255, 0.035);
+}
+
+.chapter-banner span,
+.chapter-banner small,
+.chapter-banner strong {
+  display: block;
+}
+
+.chapter-banner span {
+  color: var(--jade);
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.chapter-banner strong {
+  margin-top: 4px;
+  font-size: 1.24rem;
+}
+
+.chapter-banner small {
+  margin-top: 6px;
+  color: #c6d0c0;
+  line-height: 1.35;
+}
+
+.chapter-reward {
+  display: grid;
+  gap: 8px;
+  justify-items: end;
+  min-width: 170px;
+}
+
+.chapter-reward small {
+  color: var(--gold);
+  text-align: right;
+}
+
 .goal-list li {
   display: grid;
   grid-template-columns: 28px 1fr auto;
   gap: 10px;
   align-items: start;
   min-height: 58px;
-  border: 1px solid rgba(245, 238, 220, 0.1);
+  border: 1px solid rgba(245, 238, 220, 0.12);
   border-radius: 8px;
   padding: 11px;
-  background: rgba(255, 255, 255, 0.035);
+  background:
+    linear-gradient(90deg, rgba(245, 238, 220, 0.045), transparent 56%),
+    rgba(255, 255, 255, 0.035);
 }
 
 .goal-list li > span {
@@ -425,8 +476,20 @@ small {
   background: var(--gold);
 }
 
+.goal-list li.claimed {
+  border-color: rgba(125, 211, 183, 0.24);
+}
+
+.goal-list li.claimed > span {
+  border-color: rgba(125, 211, 183, 0.75);
+  color: #10231c;
+  background: var(--jade);
+  font-size: 0.74rem;
+}
+
 .goal-list strong,
-.goal-list small {
+.goal-list small,
+.goal-list em {
   display: block;
 }
 
@@ -436,10 +499,72 @@ small {
   color: var(--gold);
 }
 
+.goal-list em {
+  align-self: center;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-style: normal;
+  font-weight: 800;
+}
+
 .goal-list small {
   margin-top: 4px;
   color: var(--muted);
   line-height: 1.35;
+}
+
+.chapter-track {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.chapter-track div {
+  min-width: 0;
+  border: 1px solid rgba(245, 238, 220, 0.11);
+  border-radius: 8px;
+  padding: 10px;
+  background: rgba(0, 0, 0, 0.16);
+}
+
+.chapter-track div.active {
+  border-color: rgba(232, 198, 106, 0.66);
+}
+
+.chapter-track div.done {
+  border-color: rgba(125, 211, 183, 0.5);
+}
+
+.chapter-track div.locked {
+  opacity: 0.54;
+}
+
+.chapter-track span,
+.chapter-track strong,
+.chapter-track small {
+  display: block;
+}
+
+.chapter-track span {
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: #17130b;
+  background: var(--gold);
+  font-weight: 900;
+}
+
+.chapter-track strong {
+  margin-top: 8px;
+  font-size: 0.88rem;
+}
+
+.chapter-track small {
+  margin-top: 4px;
+  color: var(--muted);
 }
 
 .offline-dialog {
@@ -553,27 +678,51 @@ small {
 
 @media (max-width: 760px) {
   .section-tabs {
+    display: flex;
     position: fixed;
     top: auto;
     right: 0;
     bottom: 0;
     left: 0;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 6px;
+    overflow-x: auto;
     margin: 0;
     padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
     border-top: 1px solid var(--line);
     background: rgba(14, 19, 23, 0.97);
+    scrollbar-width: none;
+  }
+
+  .section-tabs::-webkit-scrollbar {
+    display: none;
   }
 
   .section-tabs button {
+    flex: 0 0 72px;
     min-height: 46px;
     padding: 0 8px;
     font-size: 0.88rem;
   }
 
   body {
-    padding-bottom: 120px;
+    padding-bottom: calc(76px + env(safe-area-inset-bottom));
+  }
+
+  .chapter-banner {
+    grid-template-columns: 1fr;
+  }
+
+  .chapter-reward {
+    justify-items: stretch;
+    min-width: 0;
+  }
+
+  .chapter-reward small {
+    text-align: left;
+  }
+
+  .chapter-track {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -597,6 +746,16 @@ small {
 
   .system-row {
     grid-template-columns: 1fr;
+  }
+
+  .goal-list li {
+    grid-template-columns: 28px 1fr;
+  }
+
+  .goal-list button,
+  .goal-list em {
+    grid-column: 2;
+    justify-self: start;
   }
 
   .row-actions {
