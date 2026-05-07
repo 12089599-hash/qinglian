@@ -84,6 +84,7 @@
     goalCount: document.querySelector('[data-goal-count]'),
     offlineDialog: document.querySelector('[data-offline-dialog]'),
     offlineSummary: document.querySelector('[data-offline-summary]'),
+    toastStack: document.querySelector('[data-toast-stack]'),
     log: document.querySelector('[data-log]'),
     canvas: document.querySelector('[data-world]'),
   };
@@ -235,8 +236,9 @@
       addLog(state, now, '突破时心魔骤起，灵气逆行，修为折损。');
       return;
     }
-    state.qi = 0;
+    const carriedQi = calculateBreakthroughCarryQi(state, realm);
     state.realmIndex += 1;
+    state.qi = Math.min(carriedQi, round(getCurrentRealm(state).requiredQi * 0.4));
     state.heartDemon = Math.max(0, state.heartDemon - 1);
     state.insight += 1;
     state.breakthroughCount += 1;
@@ -315,11 +317,13 @@
       applyResources(state, mission.failurePenalty);
       state.injuryUntil = now + 90 * 1000;
       addLog(state, now, `挑战「${mission.name}」失利，负伤退回洞府。`);
+      showToast('历练失利', `${mission.name} 战力不足，负伤并滋生心魔。`, 'warning');
       return;
     }
     applyResources(state, mission.reward);
     state.completedMissions[mission.id] = (state.completedMissions[mission.id] || 0) + 1;
     addLog(state, now, `完成「${mission.name}」，收获${formatReward(mission.reward)}。`);
+    showToast('历练完成', `${mission.name} 收获${formatReward(mission.reward)}。`);
   }
 
   function render() {
@@ -534,6 +538,10 @@
   }
 
   function renderGoals() {
+    if (!refs.goals || !refs.goalCount) {
+      return;
+    }
+
     const goals = getGoals(state);
     const completed = goals.filter((goal) => goal.completed).length;
     refs.goalCount.textContent = `${completed} / ${goals.length}`;
@@ -612,6 +620,11 @@
     return Math.max(10, Math.floor(realmPower + swordPower + artifactPower + qiPower - demonPenalty));
   }
 
+  function calculateBreakthroughCarryQi(state, realm = getCurrentRealm(state)) {
+    const overflowQi = Math.max(0, (state.qi || 0) - realm.requiredQi);
+    return round(overflowQi * 0.5);
+  }
+
   function normalizeBuildings(savedBuildings) {
     const normalized = { meditationSeat: 1, spiritField: 0, swordArray: 0 };
     Object.keys(buildings).forEach((id) => {
@@ -647,6 +660,23 @@
     Object.entries(reward).forEach(([resource, amount]) => {
       state[resource] = Math.max(0, round((state[resource] || 0) + amount));
     });
+  }
+
+  function showToast(title, message, tone = '') {
+    if (!refs.toastStack) {
+      return;
+    }
+
+    const toast = document.createElement('div');
+    toast.className = `toast ${tone}`.trim();
+    toast.innerHTML = `<strong>${title}</strong><span>${message}</span>`;
+    refs.toastStack.prepend(toast);
+
+    while (refs.toastStack.children.length > 3) {
+      refs.toastStack.lastElementChild.remove();
+    }
+
+    setTimeout(() => toast.remove(), 4200);
   }
 
   function addLog(state, time, text) {

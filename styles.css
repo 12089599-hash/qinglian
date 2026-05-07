@@ -350,6 +350,55 @@ small {
   background: rgba(255, 255, 255, 0.04);
 }
 
+.toast-stack {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 20;
+  display: grid;
+  gap: 10px;
+  width: min(340px, calc(100vw - 36px));
+  pointer-events: none;
+}
+
+.toast {
+  border: 1px solid rgba(232, 198, 106, 0.42);
+  border-radius: 8px;
+  padding: 12px 14px;
+  color: var(--paper);
+  background: rgba(20, 26, 31, 0.96);
+  box-shadow: 0 14px 42px rgba(0, 0, 0, 0.36);
+  animation: toast-in 180ms ease-out;
+}
+
+.toast strong,
+.toast span {
+  display: block;
+}
+
+.toast span {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.35;
+}
+
+.toast.warning {
+  border-color: rgba(238, 181, 164, 0.58);
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @media (max-width: 1120px) {
   .dashboard {
     grid-template-columns: repeat(2, minmax(0, 1fr));
