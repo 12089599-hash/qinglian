@@ -212,6 +212,33 @@
     },
   };
 
+  const cultivationPaths = {
+    sword: {
+      id: 'sword',
+      name: '剑修',
+      maxLevel: 12,
+      cost: (level) => ({ spiritStones: scaleCost(65, level), beastCores: scaleCost(1, level) }),
+      powerPerLevel: 28,
+      dangerReductionPerLevel: 4,
+    },
+    alchemy: {
+      id: 'alchemy',
+      name: '丹修',
+      maxLevel: 12,
+      cost: (level) => ({ spiritStones: scaleCost(55, level), herbs: scaleCost(8, level), gatherQiPill: Math.ceil(level / 3) }),
+      alchemySpeedPerLevel: 0.04,
+      pillQiBonusPerLevel: 0.04,
+    },
+    formation: {
+      id: 'formation',
+      name: '阵修',
+      maxLevel: 12,
+      cost: (level) => ({ spiritStones: scaleCost(60, level), arrayFlags: scaleCost(1, level) }),
+      qiBonusPerLevel: 0.05,
+      offlineBonusPerLevel: 0.03,
+    },
+  };
+
   const formations = {
     spiritGathering: {
       id: 'spiritGathering',
@@ -310,6 +337,7 @@
     heartDemon: document.querySelector('[data-heart-demon]'),
     power: document.querySelector('[data-power]'),
     breakthroughChance: document.querySelector('[data-breakthrough-chance]'),
+    dominantPath: document.querySelector('[data-dominant-path]'),
     upgradeLimit: document.querySelector('[data-upgrade-limit]'),
     progress: document.querySelector('[data-progress]'),
     progressText: document.querySelector('[data-progress-text]'),
@@ -321,6 +349,7 @@
     alchemyList: document.querySelector('[data-alchemy-list]'),
     gearList: document.querySelector('[data-gear-list]'),
     formationList: document.querySelector('[data-formation-list]'),
+    cultivationList: document.querySelector('[data-cultivation-list]'),
     foundation: document.querySelector('[data-foundation]'),
     dailyList: document.querySelector('[data-daily-list]'),
     dailyStatus: document.querySelector('[data-daily-status]'),
@@ -335,7 +364,7 @@
 
   const ctx = refs.canvas.getContext('2d');
   const renderCache = {};
-  const panelTabs = ['goals', 'daily', 'market', 'alchemy', 'gear', 'cave', 'missions', 'log'];
+  const panelTabs = ['goals', 'daily', 'market', 'alchemy', 'gear', 'cultivation', 'cave', 'missions', 'log'];
   let activeTab = localStorage.getItem('idle-xianxia-active-tab') || 'goals';
   if (!panelTabs.includes(activeTab)) {
     activeTab = 'goals';
@@ -413,6 +442,17 @@
     const button = event.target.closest('[data-upgrade-formation]');
     if (!button) return;
     upgradeFormation(state, button.dataset.upgradeFormation);
+    saveState();
+    render(true);
+  });
+
+  refs.cultivationList?.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-upgrade-path]');
+    if (!button) return;
+    const result = upgradeCultivationPath(state, button.dataset.upgradePath);
+    if (result.ok) {
+      showToast('功法精进', `${cultivationPaths[button.dataset.upgradePath].name}升至 ${result.level} 级。`);
+    }
     saveState();
     render(true);
   });
@@ -554,6 +594,11 @@
         amulet: null,
         robe: null,
       },
+      cultivationPaths: {
+        sword: 0,
+        alchemy: 0,
+        formation: 0,
+      },
       formations: {
         spiritGathering: 0,
         mountainGuard: 0,
@@ -596,6 +641,7 @@
     state.gear = normalizeLevels(state.gear, gear);
     state.gearQuality = normalizeGearQuality(state.gearQuality);
     state.gearAffixes = normalizeGearAffixes(state.gearAffixes);
+    state.cultivationPaths = normalizeLevels(state.cultivationPaths, cultivationPaths);
     state.formations = normalizeLevels(state.formations, formations);
     state.buildings = normalizeBuildings(state.buildings);
     state.pills = state.inventoryPills.gatherQiPill;
@@ -773,6 +819,30 @@
     return { ok: true, level: currentLevel + 1 };
   }
 
+  function upgradeCultivationPath(state, pathId, now = Date.now()) {
+    const path = cultivationPaths[pathId];
+    if (!path) {
+      return { ok: false, reason: 'unknownPath' };
+    }
+    const currentLevel = state.cultivationPaths[pathId] || 0;
+    if (currentLevel >= path.maxLevel) {
+      return { ok: false, reason: 'maxLevel' };
+    }
+    if (currentLevel + 1 > getRealmUpgradeLimit(state)) {
+      addLog(state, now, `${getUpgradeTier(currentLevel + 1).name}${path.name}需要更高境界。`);
+      return { ok: false, reason: 'realmLocked' };
+    }
+    const cost = path.cost(currentLevel + 1);
+    if (!canAfford(state, cost)) {
+      addLog(state, now, `提升${path.name}需要${formatReward(cost)}。`);
+      return { ok: false, reason: 'notEnoughResources' };
+    }
+    payResources(state, cost);
+    state.cultivationPaths[pathId] = currentLevel + 1;
+    addLog(state, now, `${path.name}功法升至 ${currentLevel + 1} 级。`);
+    return { ok: true, level: currentLevel + 1 };
+  }
+
   function refineGear(state, gearId, now = Date.now(), random = Math.random) {
     const item = gear[gearId];
     if (!item) {
@@ -856,7 +926,8 @@
     }
     state.inventoryPills[recipeId] -= 1;
     if (recipeId === 'gatherQiPill') {
-      state.qi = round(state.qi + 65 + state.realmIndex * 30);
+      const alchemyBonus = 1 + (state.cultivationPaths.alchemy || 0) * cultivationPaths.alchemy.pillQiBonusPerLevel;
+      state.qi = round(state.qi + (65 + state.realmIndex * 30) * alchemyBonus);
       state.pillBoostUntil = Math.max(state.pillBoostUntil || 0, now) + 120 * 1000;
       state.pills = state.inventoryPills.gatherQiPill;
       addLog(state, now, '服下一枚聚气丹，吐纳速度暂时提升。');
@@ -885,7 +956,7 @@
   }
 
   function getMissionDanger(state, mission) {
-    return Math.max(0, (mission.danger || 0) - (state.gear.robe || 0) * gear.robe.dangerReductionPerLevel - getGearAffixBonus(state, 'dangerReduction'));
+    return Math.max(0, (mission.danger || 0) - (state.gear.robe || 0) * gear.robe.dangerReductionPerLevel - getGearAffixBonus(state, 'dangerReduction') - (state.cultivationPaths.sword || 0) * cultivationPaths.sword.dangerReductionPerLevel);
   }
 
   function completeMissionIfReady(state, now) {
@@ -962,6 +1033,10 @@
     if (refs.foundation) {
       refs.foundation.textContent = `${state.foundationStability || 0} / 3`;
     }
+    if (refs.dominantPath) {
+      const path = getDominantPath(state);
+      refs.dominantPath.textContent = path.level > 0 ? `${path.name} ${path.level}` : path.name;
+    }
     if (refs.upgradeLimit) {
       const limit = getRealmUpgradeLimit(state);
       refs.upgradeLimit.textContent = `${getUpgradeTier(limit).name} ${limit}`;
@@ -981,6 +1056,7 @@
     renderAlchemy(forceLists);
     renderGear(forceLists);
     renderFormations(forceLists);
+    renderCultivation(forceLists);
     renderMissions(forceLists);
     renderTabs();
 
@@ -1189,6 +1265,15 @@
       affixId,
       affixName: affix?.name || '无词条',
     };
+  }
+
+  function getDominantPath(state) {
+    const entries = Object.entries(state.cultivationPaths || {});
+    const [pathId, level] = entries.reduce((best, current) => (current[1] > best[1] ? current : best), ['none', 0]);
+    if (!level || !cultivationPaths[pathId]) {
+      return { id: 'none', name: '未定', level: 0 };
+    }
+    return { id: pathId, name: cultivationPaths[pathId].name, level };
   }
 
   function getGoals(state) {
@@ -1441,6 +1526,39 @@
     renderCache.formations = signature;
   }
 
+  function renderCultivation(force = false) {
+    if (!refs.cultivationList) {
+      return;
+    }
+    const signature = `${getRealmUpgradeLimit(state)}|${Object.keys(cultivationPaths).map((id) => `${id}:${state.cultivationPaths[id] || 0}`).join('|')}`;
+    if (!force && renderCache.cultivation === signature) {
+      return;
+    }
+    refs.cultivationList.innerHTML = Object.values(cultivationPaths)
+      .map((path) => renderPathRow(path))
+      .join('');
+    renderCache.cultivation = signature;
+  }
+
+  function renderPathRow(path) {
+    const level = state.cultivationPaths[path.id] || 0;
+    const maxed = level >= path.maxLevel;
+    const nextLevel = level + 1;
+    const realmLocked = nextLevel > getRealmUpgradeLimit(state);
+    const tier = getUpgradeTier(Math.max(1, maxed ? level : nextLevel));
+    const cost = maxed || realmLocked ? null : path.cost(nextLevel);
+    return `
+      <div class="system-row">
+        <div>
+          <strong>${path.name} <small>${tier.name} ${level} / ${path.maxLevel}</small></strong>
+          <span>${getPathEffectText(path.id)}</span>
+          <small>${maxed ? '已达上限' : realmLocked ? `${getUpgradeTier(nextLevel).name}需更高境界` : `参悟需 ${formatReward(cost)}`}</small>
+        </div>
+        <button data-upgrade-path="${path.id}" ${maxed || realmLocked ? 'disabled' : ''}>参悟</button>
+      </div>
+    `;
+  }
+
   function renderUpgradeRow(item, level, actionAttribute) {
     const maxed = level >= item.maxLevel;
     const nextLevel = level + 1;
@@ -1505,6 +1623,15 @@
       swordArray: '提高秘境战力',
     };
     return effects[id] || '强化修行能力';
+  }
+
+  function getPathEffectText(id) {
+    const effects = {
+      sword: '提高战力，并降低秘境风险',
+      alchemy: '缩短炼丹时间，强化丹药收益',
+      formation: '提高吐纳速度，强化挂机成长',
+    };
+    return effects[id] || '长期修行方向';
   }
 
   function formatDailyProgress(task) {
@@ -1610,9 +1737,10 @@
     const buildingBonus = 1 + ((state.buildings.meditationSeat || 1) - 1) * buildings.meditationSeat.qiBonusPerLevel;
     const formationBonus = 1 + (state.formations.spiritGathering || 0) * formations.spiritGathering.qiBonusPerLevel;
     const affixBonus = 1 + getGearAffixBonus(state, 'qiBonus');
+    const pathBonus = 1 + (state.cultivationPaths.formation || 0) * cultivationPaths.formation.qiBonusPerLevel;
     const pillBoost = state.pillBoostUntil && state.pillBoostUntil > now ? 1.4 : 1;
     const injuryPenalty = state.injuryUntil && state.injuryUntil > now ? 0.75 : 1;
-    return round(realm.qiRate * buildingBonus * formationBonus * affixBonus * pillBoost * injuryPenalty);
+    return round(realm.qiRate * buildingBonus * formationBonus * affixBonus * pathBonus * pillBoost * injuryPenalty);
   }
 
   function calculateBreakthroughChance(state, now = Date.now()) {
@@ -1630,6 +1758,7 @@
 
   function calculatePower(state) {
     const realmPower = (state.realmIndex + 1) * 55;
+    const pathPower = (state.cultivationPaths.sword || 0) * cultivationPaths.sword.powerPerLevel;
     const swordPower = (state.buildings.swordArray || 0) * buildings.swordArray.powerPerLevel;
     const gearPower = (state.gear.weapon || 0) * gear.weapon.powerPerLevel;
     const gearQualityPower = Object.values(state.gearQuality || {}).reduce((total, qualityIndex) => total + (gearQualities[qualityIndex]?.powerBonus || 0), 0);
@@ -1637,7 +1766,7 @@
     const formationPower = (state.formations.swordArray || 0) * formations.swordArray.powerPerLevel;
     const qiPower = Math.min(90, Math.floor((state.qi || 0) * 0.5));
     const demonPenalty = (state.heartDemon || 0) * 8;
-    return Math.max(10, Math.floor(realmPower + swordPower + gearPower + gearQualityPower + affixPower + formationPower + qiPower - demonPenalty));
+    return Math.max(10, Math.floor(realmPower + pathPower + swordPower + gearPower + gearQualityPower + affixPower + formationPower + qiPower - demonPenalty));
   }
 
   function calculateBreakthroughCarryQi(state, realm = getCurrentRealm(state)) {
@@ -1757,7 +1886,8 @@
 
   function getAlchemyDuration(state, recipe) {
     const furnaceLevel = state.buildings.alchemyFurnace || 0;
-    const speedMultiplier = Math.max(0.5, 1 - furnaceLevel * buildings.alchemyFurnace.speedBonusPerLevel);
+    const pathLevel = state.cultivationPaths.alchemy || 0;
+    const speedMultiplier = Math.max(0.35, 1 - furnaceLevel * buildings.alchemyFurnace.speedBonusPerLevel - pathLevel * cultivationPaths.alchemy.alchemySpeedPerLevel);
     return Math.max(10, Math.round(recipe.duration * speedMultiplier));
   }
 
@@ -1788,7 +1918,7 @@
   }
 
   function canAfford(state, cost) {
-    return Object.entries(cost).every(([resource, amount]) => (state[resource] || 0) >= amount);
+    return Object.entries(cost).every(([resource, amount]) => getResourceAmount(state, resource) >= amount);
   }
 
   function getRefineCost(nextQuality) {
@@ -1811,8 +1941,28 @@
     return Object.values(state.gearAffixes || {}).reduce((total, affixId) => total + (gearAffixes[affixId]?.[key] || 0), 0);
   }
 
+  function getResourceAmount(state, resource) {
+    if (resource === 'pills') {
+      return state.inventoryPills.gatherQiPill || state.pills || 0;
+    }
+    if (pillRecipes[resource]) {
+      return state.inventoryPills[resource] || 0;
+    }
+    return state[resource] || 0;
+  }
+
   function payResources(state, cost) {
     Object.entries(cost).forEach(([resource, amount]) => {
+      if (resource === 'pills') {
+        state.inventoryPills.gatherQiPill = round((state.inventoryPills.gatherQiPill || 0) - amount);
+        state.pills = state.inventoryPills.gatherQiPill;
+        return;
+      }
+      if (pillRecipes[resource]) {
+        state.inventoryPills[resource] = round((state.inventoryPills[resource] || 0) - amount);
+        state.pills = state.inventoryPills.gatherQiPill;
+        return;
+      }
       state[resource] = round((state[resource] || 0) - amount);
     });
   }
