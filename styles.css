@@ -323,6 +323,10 @@ small {
   font-weight: 600;
 }
 
+.system-row.muted-row {
+  opacity: 0.72;
+}
+
 .system-row small {
   margin-top: 5px;
   color: var(--gold);

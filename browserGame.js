@@ -25,6 +25,7 @@
       unlockRealmIndex: 0,
       duration: 30,
       reward: { herbs: 5, spiritStones: 6 },
+      events: ['hiddenHerbPatch', 'spiritSpring'],
     },
     cavePatrol: {
       id: 'cavePatrol',
@@ -33,6 +34,7 @@
       unlockRealmIndex: 0,
       duration: 55,
       reward: { spiritStones: 18, qi: 35 },
+      events: ['spiritSpring', 'cloudRobeCache'],
     },
     marketTrade: {
       id: 'marketTrade',
@@ -41,6 +43,7 @@
       unlockRealmIndex: 0,
       duration: 90,
       reward: { spiritStones: 48 },
+      events: ['wanderingTrader', 'hiddenHerbPatch'],
     },
     mistyValley: {
       id: 'mistyValley',
@@ -53,6 +56,7 @@
       rareEvery: 4,
       rareReward: { meridianPill: 1 },
       failurePenalty: { qi: -45, heartDemon: 1 },
+      events: ['spiritSpring', 'cloudRobeCache'],
     },
     herbValley: {
       id: 'herbValley',
@@ -65,6 +69,7 @@
       rareEvery: 3,
       rareReward: { clearHeartPill: 1 },
       failurePenalty: { qi: -20 },
+      events: ['hiddenHerbPatch', 'xuanmuAmuletCache'],
     },
     ancientSwordTomb: {
       id: 'ancientSwordTomb',
@@ -77,6 +82,7 @@
       rareEvery: 3,
       rareReward: { beastCores: 2, arrayFlags: 1 },
       failurePenalty: { qi: -60, heartDemon: 1 },
+      events: ['swordRemnant', 'beastAmbush'],
     },
     demonRift: {
       id: 'demonRift',
@@ -89,6 +95,7 @@
       rareEvery: 4,
       rareReward: { meridianPill: 1, arrayFlags: 1 },
       failurePenalty: { qi: -90, heartDemon: 2 },
+      events: ['beastAmbush', 'cloudRobeCache'],
     },
     ancientRuins: {
       id: 'ancientRuins',
@@ -101,6 +108,85 @@
       rareEvery: 5,
       rareReward: { artifacts: 3, meridianPill: 1 },
       failurePenalty: { qi: -130, heartDemon: 2 },
+      events: ['ancientCache', 'swordRemnant', 'xuanmuAmuletCache'],
+    },
+  };
+
+  const missionEvents = {
+    hiddenHerbPatch: {
+      id: 'hiddenHerbPatch',
+      name: '隐蔽药圃',
+      detail: '在山隙中发现一片野生灵草。',
+      reward: { herbs: 3 },
+    },
+    spiritSpring: {
+      id: 'spiritSpring',
+      name: '灵泉暗涌',
+      detail: '灵泉涌动，顺势吐纳一轮。',
+      reward: { qi: 18 },
+    },
+    wanderingTrader: {
+      id: 'wanderingTrader',
+      name: '游商问价',
+      detail: '遇见路过散修，以低价换得一笔灵石。',
+      reward: { spiritStones: 18 },
+    },
+    beastAmbush: {
+      id: 'beastAmbush',
+      name: '妖兽伏击',
+      detail: '斩退伏击妖兽，剖得一枚妖核。',
+      reward: { beastCores: 1 },
+    },
+    swordRemnant: {
+      id: 'swordRemnant',
+      name: '残剑鸣匣',
+      detail: '剑匣自鸣，遗落青锋可入武器栏。',
+      reward: { artifacts: 1 },
+      equipment: 'qingfengSword',
+    },
+    cloudRobeCache: {
+      id: 'cloudRobeCache',
+      name: '云纹残匣',
+      detail: '旧匣中藏有一件轻灵法袍。',
+      reward: { spiritStones: 24 },
+      equipment: 'cloudthreadRobe',
+    },
+    xuanmuAmuletCache: {
+      id: 'xuanmuAmuletCache',
+      name: '玄木符匣',
+      detail: '符匣内温润生机，可护持突破。',
+      reward: { herbs: 5 },
+      equipment: 'xuanmuAmulet',
+    },
+    ancientCache: {
+      id: 'ancientCache',
+      name: '上古秘藏',
+      detail: '残阵中留有灵石和阵旗。',
+      reward: { spiritStones: 80, arrayFlags: 1 },
+    },
+  };
+
+  const lootEquipment = {
+    qingfengSword: {
+      id: 'qingfengSword',
+      name: '青锋剑',
+      slot: 'weapon',
+      quality: 1,
+      bonuses: { power: 36 },
+    },
+    cloudthreadRobe: {
+      id: 'cloudthreadRobe',
+      name: '云纹法袍',
+      slot: 'robe',
+      quality: 1,
+      bonuses: { dangerReduction: 16 },
+    },
+    xuanmuAmulet: {
+      id: 'xuanmuAmulet',
+      name: '玄木护符',
+      slot: 'amulet',
+      quality: 1,
+      bonuses: { breakthrough: 0.04, qiRate: 0.03 },
     },
   };
 
@@ -461,6 +547,7 @@
     mainlineChapters: document.querySelector('[data-mainline-chapters]'),
     alchemyList: document.querySelector('[data-alchemy-list]'),
     gearList: document.querySelector('[data-gear-list]'),
+    lootList: document.querySelector('[data-loot-list]'),
     formationList: document.querySelector('[data-formation-list]'),
     cultivationList: document.querySelector('[data-cultivation-list]'),
     foundation: document.querySelector('[data-foundation]'),
@@ -546,6 +633,17 @@
     const result = refineGear(state, refineButton.dataset.refineGear);
     if (result.ok) {
       showToast('淬炼成功', `${gear[refineButton.dataset.refineGear].name}提升为${gearQualities[result.quality].name}。`);
+    }
+    saveState();
+    render(true);
+  });
+
+  refs.lootList?.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-equip-loot]');
+    if (!button) return;
+    const result = equipLootEquipment(state, button.dataset.equipLoot);
+    if (result.ok) {
+      showToast('换上战利品', `${result.item.name}已生效。`);
     }
     saveState();
     render(true);
@@ -724,6 +822,13 @@
         amulet: null,
         robe: null,
       },
+      lootEquipment: [],
+      equippedLoot: {
+        weapon: null,
+        amulet: null,
+        robe: null,
+      },
+      lastMissionEvent: null,
       cultivationPaths: {
         sword: 0,
         alchemy: 0,
@@ -773,6 +878,9 @@
     state.gear = normalizeLevels(state.gear, gear);
     state.gearQuality = normalizeGearQuality(state.gearQuality);
     state.gearAffixes = normalizeGearAffixes(state.gearAffixes);
+    state.lootEquipment = normalizeLootEquipment(state.lootEquipment);
+    state.equippedLoot = normalizeEquippedLoot(state.equippedLoot, state.lootEquipment);
+    state.lastMissionEvent = normalizeMissionEvent(state.lastMissionEvent);
     state.cultivationPaths = normalizeLevels(state.cultivationPaths, cultivationPaths);
     state.formations = normalizeLevels(state.formations, formations);
     state.buildings = normalizeBuildings(state.buildings);
@@ -1088,7 +1196,7 @@
   }
 
   function getMissionDanger(state, mission) {
-    return Math.max(0, (mission.danger || 0) - (state.gear.robe || 0) * gear.robe.dangerReductionPerLevel - getGearAffixBonus(state, 'dangerReduction') - (state.cultivationPaths.sword || 0) * cultivationPaths.sword.dangerReductionPerLevel);
+    return Math.max(0, (mission.danger || 0) - (state.gear.robe || 0) * gear.robe.dangerReductionPerLevel - getGearAffixBonus(state, 'dangerReduction') - getEquippedLootBonus(state, 'dangerReduction') - (state.cultivationPaths.sword || 0) * cultivationPaths.sword.dangerReductionPerLevel);
   }
 
   function completeMissionIfReady(state, now) {
@@ -1112,6 +1220,11 @@
     }
     applyResources(state, mission.reward);
     state.completedMissions[mission.id] = (state.completedMissions[mission.id] || 0) + 1;
+    const event = resolveMissionEvent(mission, state.completedMissions[mission.id]);
+    if (event) {
+      const eventResult = applyMissionEvent(state, mission, event, now);
+      showToast('历练奇遇', `${event.name}${eventResult.item ? ` · 获得${eventResult.item.name}` : ''}`);
+    }
     if (mission.rareEvery && state.completedMissions[mission.id] % mission.rareEvery === 0) {
       applyResources(state, mission.rareReward);
       addLog(state, now, `深入「${mission.map || mission.name}」有所感悟，额外获得${formatReward(mission.rareReward)}。`);
@@ -1187,6 +1300,7 @@
     renderMarket(forceLists);
     renderAlchemy(forceLists);
     renderGear(forceLists);
+    renderLoot(forceLists);
     renderFormations(forceLists);
     renderCultivation(forceLists);
     renderMissions(forceLists);
@@ -1566,12 +1680,13 @@
     const running = Boolean(state.activeMission);
     const lockedText = status.unlocked ? '' : `${realms[status.unlockRealmIndex]?.name || '更高境界'}解锁`;
     const rareText = mission.rareReward ? `稀有 ${status.rareProgress} · ${formatReward(mission.rareReward)}` : '无稀有奖励';
+    const eventText = mission.events?.length ? `奇遇 ${mission.events.map((id) => missionEvents[id]?.name).filter(Boolean).join(' / ')}` : '无奇遇';
     return `
       <div class="mission-card ${status.unlocked ? '' : 'locked'}">
         <button data-start-mission="${mission.id}" ${running || !status.unlocked ? 'disabled' : ''}>
           <strong>${mission.name}</strong>
           <span>${status.unlocked ? `${formatDuration(mission.duration)} · 推荐战力 ${status.recommendedPower}` : lockedText}</span>
-          <small>产出 ${formatReward(mission.reward)} · ${rareText}</small>
+          <small>产出 ${formatReward(mission.reward)} · ${rareText} · ${eventText}</small>
         </button>
         <button data-auto-mission="${mission.id}" class="mini-button ${active ? 'active' : ''}" ${!status.unlocked ? 'disabled' : ''}>${active ? '自动中' : '自动'}</button>
       </div>
@@ -1665,6 +1780,37 @@
       .map((item) => renderGearRow(item))
       .join('');
     renderCache.gear = signature;
+  }
+
+  function renderLoot(force = false) {
+    if (!refs.lootList) {
+      return;
+    }
+    const signature = `${state.lootEquipment.map((item) => item.uid).join('|')}|${Object.entries(state.equippedLoot).map(([slot, uid]) => `${slot}:${uid || ''}`).join('|')}`;
+    if (!force && renderCache.loot === signature) {
+      return;
+    }
+    if (!state.lootEquipment.length) {
+      refs.lootList.innerHTML = '<div class="system-row muted-row"><div><strong>暂无战利品</strong><span>完成历练奇遇后，可能获得青锋剑、玄木护符、云纹法袍等装备。</span></div></div>';
+      renderCache.loot = signature;
+      return;
+    }
+    refs.lootList.innerHTML = state.lootEquipment
+      .map((item) => {
+        const equipped = state.equippedLoot[item.slot] === item.uid;
+        return `
+          <div class="system-row">
+            <div>
+              <strong>${item.name} <small>${getSlotName(item.slot)} · ${gearQualities[item.quality]?.name || '凡品'}</small></strong>
+              <span>${formatLootBonuses(item.bonuses)}</span>
+              <small>${equipped ? '当前已穿戴' : '可替换同栏位战利品'}</small>
+            </div>
+            <button data-equip-loot="${item.uid}" ${equipped ? 'disabled' : ''}>${equipped ? '已穿戴' : '穿戴'}</button>
+          </div>
+        `;
+      })
+      .join('');
+    renderCache.loot = signature;
   }
 
   function renderFormations(force = false) {
@@ -1778,6 +1924,30 @@
       swordArray: '提高秘境战力',
     };
     return effects[id] || '强化修行能力';
+  }
+
+  function getSlotName(slot) {
+    return { weapon: '武器', amulet: '护符', robe: '法袍' }[slot] || '装备';
+  }
+
+  function formatLootBonuses(bonuses) {
+    const names = {
+      power: '战力',
+      dangerReduction: '秘境风险',
+      breakthrough: '突破把握',
+      qiRate: '吐纳',
+    };
+    return Object.entries(bonuses)
+      .map(([key, value]) => {
+        if (key === 'dangerReduction') {
+          return `${names[key]} -${value}`;
+        }
+        if (key === 'breakthrough' || key === 'qiRate') {
+          return `${names[key]} +${Math.round(value * 100)}%`;
+        }
+        return `${names[key] || key} +${value}`;
+      })
+      .join(' · ');
   }
 
   function getPathEffectText(id) {
@@ -1959,9 +2129,10 @@
     const affixBonus = 1 + getGearAffixBonus(state, 'qiBonus');
     const pathBonus = 1 + (state.cultivationPaths.formation || 0) * cultivationPaths.formation.qiBonusPerLevel;
     const permanentBonus = 1 + (state.permanentBonuses.qiRate || 0);
+    const lootBonus = 1 + getEquippedLootBonus(state, 'qiRate');
     const pillBoost = state.pillBoostUntil && state.pillBoostUntil > now ? 1.4 : 1;
     const injuryPenalty = state.injuryUntil && state.injuryUntil > now ? 0.75 : 1;
-    return round(realm.qiRate * buildingBonus * formationBonus * affixBonus * pathBonus * permanentBonus * pillBoost * injuryPenalty);
+    return round(realm.qiRate * buildingBonus * formationBonus * affixBonus * pathBonus * permanentBonus * lootBonus * pillBoost * injuryPenalty);
   }
 
   function calculateBreakthroughChance(state, now = Date.now()) {
@@ -1970,11 +2141,12 @@
     const preparation = Math.min(0.2, overfill / realm.requiredQi / 2);
     const insightBonus = Math.min(0.15, state.insight * 0.03);
     const gearBonus = Math.min(0.12, (state.gear.amulet || 0) * gear.amulet.breakthroughPerLevel);
+    const lootBonus = Math.min(0.1, getEquippedLootBonus(state, 'breakthrough'));
     const formationBonus = Math.min(0.12, (state.formations.mountainGuard || 0) * formations.mountainGuard.stabilityPerLevel);
     const pillBonus = state.breakthroughBoostUntil && state.breakthroughBoostUntil > now ? 0.12 : 0;
     const foundationBonus = Math.min(0.15, (state.foundationStability || 0) * 0.05);
     const heartDemonPenalty = Math.min(0.35, state.heartDemon * 0.15);
-    return round(Math.max(0.25, Math.min(0.95, 0.75 + preparation + insightBonus + gearBonus + formationBonus + pillBonus + foundationBonus - heartDemonPenalty)));
+    return round(Math.max(0.25, Math.min(0.95, 0.75 + preparation + insightBonus + gearBonus + lootBonus + formationBonus + pillBonus + foundationBonus - heartDemonPenalty)));
   }
 
   function calculatePower(state) {
@@ -1986,9 +2158,10 @@
     const affixPower = getGearAffixBonus(state, 'powerBonus');
     const formationPower = (state.formations.swordArray || 0) * formations.swordArray.powerPerLevel;
     const permanentPower = state.permanentBonuses.power || 0;
+    const lootPower = getEquippedLootBonus(state, 'power');
     const qiPower = Math.min(90, Math.floor((state.qi || 0) * 0.5));
     const demonPenalty = (state.heartDemon || 0) * 8;
-    return Math.max(10, Math.floor(realmPower + pathPower + swordPower + gearPower + gearQualityPower + affixPower + formationPower + permanentPower + qiPower - demonPenalty));
+    return Math.max(10, Math.floor(realmPower + pathPower + swordPower + gearPower + gearQualityPower + affixPower + formationPower + permanentPower + lootPower + qiPower - demonPenalty));
   }
 
   function calculateBreakthroughCarryQi(state, realm = getCurrentRealm(state)) {
@@ -2025,6 +2198,46 @@
     return {
       qiRate: Math.max(0, Number(bonuses?.qiRate) || 0),
       power: Math.max(0, Number(bonuses?.power) || 0),
+    };
+  }
+
+  function normalizeLootEquipment(items) {
+    if (!Array.isArray(items)) {
+      return [];
+    }
+    return items
+      .map((item, index) => {
+        const template = lootEquipment[item?.templateId] || lootEquipment[item?.id];
+        if (!template) {
+          return null;
+        }
+        return createLootItem(template.id, item.uid || `${template.id}-${index + 1}`);
+      })
+      .filter(Boolean)
+      .slice(0, 40);
+  }
+
+  function normalizeEquippedLoot(equippedLoot, lootItems) {
+    const slots = { weapon: null, amulet: null, robe: null };
+    Object.keys(slots).forEach((slot) => {
+      const uid = equippedLoot?.[slot] || null;
+      const item = lootItems.find((candidate) => candidate.uid === uid && candidate.slot === slot);
+      slots[slot] = item ? item.uid : null;
+    });
+    return slots;
+  }
+
+  function normalizeMissionEvent(event) {
+    if (!event || !missionEvents[event.id]) {
+      return null;
+    }
+    return {
+      id: event.id,
+      name: missionEvents[event.id].name,
+      missionId: missions[event.missionId] ? event.missionId : null,
+      reward: event.reward && typeof event.reward === 'object' ? { ...event.reward } : {},
+      equipmentName: event.equipmentName || null,
+      time: Number(event.time) || Date.now(),
     };
   }
 
@@ -2170,6 +2383,74 @@
     return Object.values(state.gearAffixes || {}).reduce((total, affixId) => total + (gearAffixes[affixId]?.[key] || 0), 0);
   }
 
+  function getEquippedLootBonus(state, key) {
+    return Object.values(state.equippedLoot || {}).reduce((total, uid) => {
+      const item = state.lootEquipment?.find((candidate) => candidate.uid === uid);
+      return total + (item?.bonuses?.[key] || 0);
+    }, 0);
+  }
+
+  function resolveMissionEvent(mission, completedCount) {
+    const eventIds = mission.events || [];
+    if (!eventIds.length || completedCount <= 0) {
+      return null;
+    }
+    return missionEvents[eventIds[(completedCount - 1) % eventIds.length]] || null;
+  }
+
+  function applyMissionEvent(state, mission, event, now) {
+    applyResources(state, event.reward || {});
+    const item = event.equipment ? addLootEquipment(state, event.equipment) : null;
+    state.lastMissionEvent = {
+      id: event.id,
+      name: event.name,
+      missionId: mission.id,
+      reward: event.reward || {},
+      equipmentName: item?.name || null,
+      time: now,
+    };
+
+    const rewardText = formatReward(event.reward || {});
+    const equipmentText = item ? `，并获得${item.name}` : '';
+    addLog(state, now, `奇遇「${event.name}」：${event.detail}${rewardText ? ` 获得${rewardText}` : ''}${equipmentText}。`);
+    return { event, item };
+  }
+
+  function addLootEquipment(state, templateId) {
+    const template = lootEquipment[templateId];
+    if (!template) {
+      return null;
+    }
+    state.lootEquipment ||= [];
+    const uid = `${template.id}-${state.lootEquipment.length + 1}`;
+    const item = createLootItem(template.id, uid);
+    state.lootEquipment.unshift(item);
+    state.lootEquipment = state.lootEquipment.slice(0, 40);
+    return item;
+  }
+
+  function createLootItem(templateId, uid) {
+    const template = lootEquipment[templateId];
+    return {
+      uid,
+      templateId,
+      name: template.name,
+      slot: template.slot,
+      quality: template.quality,
+      bonuses: { ...template.bonuses },
+    };
+  }
+
+  function equipLootEquipment(state, uid, now = Date.now()) {
+    const item = state.lootEquipment?.find((candidate) => candidate.uid === uid);
+    if (!item) {
+      return { ok: false, reason: 'unknownLoot' };
+    }
+    state.equippedLoot[item.slot] = item.uid;
+    addLog(state, now, `换上${item.name}，${gear[item.slot]?.name || '装备'}气象一新。`);
+    return { ok: true, item };
+  }
+
   function getResourceAmount(state, resource) {
     if (resource === 'pills') {
       return state.inventoryPills.gatherQiPill || state.pills || 0;
@@ -2254,6 +2535,9 @@
   }
 
   function formatReward(reward) {
+    if (!reward || !Object.keys(reward).length) {
+      return '';
+    }
     return Object.entries(reward)
       .map(([key, amount]) => formatRewardEntry(key, amount))
       .join('、');
