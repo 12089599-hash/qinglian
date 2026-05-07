@@ -21,52 +21,86 @@
     herbGathering: {
       id: 'herbGathering',
       name: '采集灵草',
+      map: '青岚山',
+      unlockRealmIndex: 0,
       duration: 30,
       reward: { herbs: 5, spiritStones: 6 },
     },
     cavePatrol: {
       id: 'cavePatrol',
       name: '巡守洞府',
+      map: '青岚山',
+      unlockRealmIndex: 0,
       duration: 55,
       reward: { spiritStones: 18, qi: 35 },
     },
     marketTrade: {
       id: 'marketTrade',
       name: '坊市交易',
+      map: '青岚山',
+      unlockRealmIndex: 0,
       duration: 90,
       reward: { spiritStones: 48 },
     },
     mistyValley: {
       id: 'mistyValley',
       name: '雾隐秘境',
+      map: '雾隐秘境',
+      unlockRealmIndex: 2,
       duration: 120,
       danger: 115,
       reward: { spiritStones: 35, qi: 90, beastCores: 1, artifacts: 1 },
+      rareEvery: 4,
+      rareReward: { meridianPill: 1 },
       failurePenalty: { qi: -45, heartDemon: 1 },
     },
     herbValley: {
       id: 'herbValley',
       name: '灵草谷',
+      map: '灵草谷',
+      unlockRealmIndex: 1,
       duration: 70,
       danger: 80,
       reward: { herbs: 14, spiritStones: 14, qi: 45 },
+      rareEvery: 3,
+      rareReward: { clearHeartPill: 1 },
       failurePenalty: { qi: -20 },
     },
     ancientSwordTomb: {
       id: 'ancientSwordTomb',
       name: '古剑冢',
+      map: '古剑冢',
+      unlockRealmIndex: 3,
       duration: 140,
       danger: 145,
       reward: { artifacts: 2, spiritStones: 50, beastCores: 1 },
+      rareEvery: 3,
+      rareReward: { beastCores: 2, arrayFlags: 1 },
       failurePenalty: { qi: -60, heartDemon: 1 },
     },
     demonRift: {
       id: 'demonRift',
       name: '魔气裂隙',
+      map: '魔气裂隙',
+      unlockRealmIndex: 4,
       duration: 180,
       danger: 180,
       reward: { beastCores: 3, spiritStones: 90, qi: 120, heartDemon: 1 },
+      rareEvery: 4,
+      rareReward: { meridianPill: 1, arrayFlags: 1 },
       failurePenalty: { qi: -90, heartDemon: 2 },
+    },
+    ancientRuins: {
+      id: 'ancientRuins',
+      name: '上古遗迹',
+      map: '上古遗迹',
+      unlockRealmIndex: 5,
+      duration: 240,
+      danger: 260,
+      reward: { spiritStones: 150, beastCores: 4, arrayFlags: 2, qi: 180 },
+      rareEvery: 5,
+      rareReward: { artifacts: 3, meridianPill: 1 },
+      failurePenalty: { qi: -130, heartDemon: 2 },
     },
   };
 
@@ -262,6 +296,7 @@
     dailyList: document.querySelector('[data-daily-list]'),
     dailyStatus: document.querySelector('[data-daily-status]'),
     marketList: document.querySelector('[data-market-list]'),
+    missionList: document.querySelector('[data-mission-list]'),
     offlineDialog: document.querySelector('[data-offline-dialog]'),
     offlineSummary: document.querySelector('[data-offline-summary]'),
     toastStack: document.querySelector('[data-toast-stack]'),
@@ -357,6 +392,22 @@
       saveState();
       render();
     });
+  });
+
+  refs.missionList?.addEventListener('click', (event) => {
+    const startButton = event.target.closest('[data-start-mission]');
+    if (startButton) {
+      startMission(state, startButton.dataset.startMission);
+      saveState();
+      render(true);
+      return;
+    }
+    const autoButton = event.target.closest('[data-auto-mission]');
+    if (autoButton) {
+      toggleAutoMission(state, autoButton.dataset.autoMission);
+      saveState();
+      render(true);
+    }
   });
 
   document.querySelectorAll('[data-upgrade-building]').forEach((button) => {
@@ -577,6 +628,10 @@
       return;
     }
     const mission = missions[missionId];
+    if (!getMissionStatus(state, missionId).unlocked) {
+      addLog(state, now, `境界不足，暂不能进入「${mission.map || mission.name}」。`);
+      return;
+    }
     state.activeMission = {
       id: mission.id,
       startedAt: now,
@@ -748,6 +803,10 @@
     showToast('炼丹完成', `获得 1 枚${recipe.name}。`);
   }
 
+  function getMissionDanger(state, mission) {
+    return Math.max(0, (mission.danger || 0) - (state.gear.robe || 0) * gear.robe.dangerReductionPerLevel);
+  }
+
   function completeMissionIfReady(state, now) {
     const active = state.activeMission;
     if (!active || now < active.endsAt) {
@@ -758,7 +817,7 @@
     if (!mission) {
       return;
     }
-    const danger = Math.max(0, (mission.danger || 0) - (state.gear.robe || 0) * gear.robe.dangerReductionPerLevel);
+    const danger = getMissionDanger(state, mission);
     if (danger && calculatePower(state) < danger) {
       applyResources(state, mission.failurePenalty);
       state.injuryUntil = now + 90 * 1000;
@@ -769,6 +828,11 @@
     }
     applyResources(state, mission.reward);
     state.completedMissions[mission.id] = (state.completedMissions[mission.id] || 0) + 1;
+    if (mission.rareEvery && state.completedMissions[mission.id] % mission.rareEvery === 0) {
+      applyResources(state, mission.rareReward);
+      addLog(state, now, `深入「${mission.map || mission.name}」有所感悟，额外获得${formatReward(mission.rareReward)}。`);
+      showToast('稀有收获', `${mission.name} 额外获得${formatReward(mission.rareReward)}。`);
+    }
     addDailyProgress(state, 'missions', 1, now);
     addLog(state, now, `完成「${mission.name}」，收获${formatReward(mission.reward)}。`);
     showToast('历练完成', `${mission.name} 收获${formatReward(mission.reward)}。`);
@@ -836,6 +900,7 @@
     renderAlchemy(forceLists);
     renderGear(forceLists);
     renderFormations(forceLists);
+    renderMissions(forceLists);
     renderTabs();
 
     document.querySelectorAll('[data-start-mission]').forEach((button) => {
@@ -1011,6 +1076,28 @@
     return upgradeTiers.reduce((limit, tier) => (state.realmIndex >= tier.realmIndex ? tier.maxLevel : limit), upgradeTiers[0].maxLevel);
   }
 
+  function getMissionStatus(state, missionId) {
+    const mission = missions[missionId];
+    if (!mission) {
+      return { exists: false, unlocked: false };
+    }
+    const completed = state.completedMissions[missionId] || 0;
+    const rareEvery = mission.rareEvery || 0;
+    const rareStep = rareEvery && completed > 0 && completed % rareEvery === 0 ? rareEvery : completed % rareEvery;
+    return {
+      exists: true,
+      id: mission.id,
+      name: mission.name,
+      map: mission.map || '青岚山',
+      unlocked: state.realmIndex >= (mission.unlockRealmIndex || 0),
+      unlockRealmIndex: mission.unlockRealmIndex || 0,
+      recommendedPower: getMissionDanger(state, mission),
+      completed,
+      rareProgress: rareEvery ? `${rareStep} / ${rareEvery}` : '',
+      rareReward: mission.rareReward || null,
+    };
+  }
+
   function getGoals(state) {
     return [
       {
@@ -1111,6 +1198,51 @@
       `)
       .join('');
     renderCache.market = signature;
+  }
+
+  function renderMissions(force = false) {
+    if (!refs.missionList) {
+      return;
+    }
+    const signature = `${state.realmIndex}|${state.autoMissionId || ''}|${state.activeMission?.id || ''}|${Object.keys(missions).map((id) => `${id}:${state.completedMissions[id] || 0}`).join('|')}`;
+    if (!force && renderCache.missions === signature) {
+      return;
+    }
+    const groups = Object.values(missions).reduce((acc, mission) => {
+      const map = mission.map || '青岚山';
+      acc[map] ||= [];
+      acc[map].push(mission);
+      return acc;
+    }, {});
+    refs.missionList.innerHTML = Object.entries(groups)
+      .map(([map, routeList]) => `
+        <section class="map-group">
+          <h3>${map}</h3>
+          <div class="mission-list">
+            ${routeList.map((mission) => renderMissionCard(mission)).join('')}
+          </div>
+        </section>
+      `)
+      .join('');
+    renderCache.missions = signature;
+  }
+
+  function renderMissionCard(mission) {
+    const status = getMissionStatus(state, mission.id);
+    const active = state.autoMissionId === mission.id;
+    const running = Boolean(state.activeMission);
+    const lockedText = status.unlocked ? '' : `${realms[status.unlockRealmIndex]?.name || '更高境界'}解锁`;
+    const rareText = mission.rareReward ? `稀有 ${status.rareProgress} · ${formatReward(mission.rareReward)}` : '无稀有奖励';
+    return `
+      <div class="mission-card ${status.unlocked ? '' : 'locked'}">
+        <button data-start-mission="${mission.id}" ${running || !status.unlocked ? 'disabled' : ''}>
+          <strong>${mission.name}</strong>
+          <span>${status.unlocked ? `${formatDuration(mission.duration)} · 推荐战力 ${status.recommendedPower}` : lockedText}</span>
+          <small>产出 ${formatReward(mission.reward)} · ${rareText}</small>
+        </button>
+        <button data-auto-mission="${mission.id}" class="mini-button ${active ? 'active' : ''}" ${!status.unlocked ? 'disabled' : ''}>${active ? '自动中' : '自动'}</button>
+      </div>
+    `;
   }
 
   function claimDailyTask(state, taskId, dateKey = getDateKey(), now = Date.now()) {
@@ -1528,6 +1660,11 @@
     Object.entries(reward).forEach(([resource, amount]) => {
       if (resource === 'pills') {
         state.inventoryPills.gatherQiPill = Math.max(0, round((state.inventoryPills.gatherQiPill || 0) + amount));
+        state.pills = state.inventoryPills.gatherQiPill;
+        return;
+      }
+      if (pillRecipes[resource]) {
+        state.inventoryPills[resource] = Math.max(0, round((state.inventoryPills[resource] || 0) + amount));
         state.pills = state.inventoryPills.gatherQiPill;
         return;
       }

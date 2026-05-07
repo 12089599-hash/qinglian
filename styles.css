@@ -248,10 +248,30 @@ small {
   gap: 10px;
 }
 
+.mission-map-list {
+  display: grid;
+  gap: 16px;
+}
+
+.map-group {
+  display: grid;
+  gap: 10px;
+}
+
+.map-group h3 {
+  margin: 0;
+  color: var(--gold);
+  font-size: 0.92rem;
+}
+
 .mission-card {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 62px;
   gap: 8px;
+}
+
+.mission-card.locked {
+  opacity: 0.72;
 }
 
 .mission-card > button:first-child,
