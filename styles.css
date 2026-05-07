@@ -142,7 +142,7 @@ h2 {
 
 .section-tabs {
   display: grid;
-  grid-template-columns: repeat(9, minmax(0, 1fr));
+  grid-template-columns: repeat(10, minmax(0, 1fr));
   gap: 8px;
   margin-top: 14px;
 }
@@ -256,6 +256,97 @@ small {
 .map-group {
   display: grid;
   gap: 10px;
+  border: 1px solid rgba(245, 238, 220, 0.1);
+  border-radius: 8px;
+  padding: 12px;
+  background:
+    linear-gradient(135deg, rgba(125, 211, 183, 0.08), rgba(232, 198, 106, 0.05)),
+    rgba(255, 255, 255, 0.026);
+}
+
+.map-group.locked {
+  opacity: 0.62;
+}
+
+.map-heading {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.map-icon,
+.boss-mark {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border: 1px solid rgba(232, 198, 106, 0.46);
+  border-radius: 8px;
+  color: #17130b;
+  background: var(--gold);
+  font-weight: 900;
+}
+
+.map-heading small,
+.map-meta small {
+  color: var(--muted);
+  line-height: 1.35;
+}
+
+.map-heading > strong {
+  color: var(--jade);
+  font-size: 0.82rem;
+}
+
+.map-progress {
+  height: 7px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(245, 238, 220, 0.12);
+}
+
+.map-progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--jade), var(--gold));
+}
+
+.map-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+}
+
+.boss-card {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  border: 1px solid rgba(232, 198, 106, 0.22);
+  border-radius: 8px;
+  padding: 10px;
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.boss-card.ready {
+  border-color: rgba(232, 198, 106, 0.66);
+}
+
+.boss-card.defeated {
+  border-color: rgba(125, 211, 183, 0.5);
+}
+
+.boss-card strong,
+.boss-card span {
+  display: block;
+}
+
+.boss-card span {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 0.84rem;
 }
 
 .map-group h3 {
@@ -336,6 +427,36 @@ small {
   display: grid;
   gap: 8px;
   min-width: 72px;
+}
+
+.sect-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) auto;
+  gap: 10px;
+  align-items: stretch;
+}
+
+.sect-summary div {
+  border: 1px solid rgba(245, 238, 220, 0.1);
+  border-radius: 8px;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.sect-summary span,
+.sect-summary strong {
+  display: block;
+}
+
+.sect-summary span {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.sect-summary strong {
+  margin-top: 6px;
+  color: var(--gold);
+  font-size: 1.2rem;
 }
 
 .mini-button {
@@ -645,6 +766,34 @@ small {
   border-color: rgba(238, 181, 164, 0.58);
 }
 
+.battle-pulse .hero,
+.battle-victory .hero,
+.battle-danger .hero {
+  animation: battle-flash 650ms ease-out;
+}
+
+.battle-victory .hero {
+  border-color: rgba(125, 211, 183, 0.7);
+}
+
+.battle-danger .hero {
+  border-color: rgba(238, 181, 164, 0.7);
+}
+
+@keyframes battle-flash {
+  0% {
+    box-shadow: 0 0 0 rgba(232, 198, 106, 0);
+  }
+
+  36% {
+    box-shadow: 0 0 34px rgba(232, 198, 106, 0.34);
+  }
+
+  100% {
+    box-shadow: 0 0 0 rgba(232, 198, 106, 0);
+  }
+}
+
 @keyframes toast-in {
   from {
     opacity: 0;
@@ -728,6 +877,18 @@ small {
   .chapter-track {
     grid-template-columns: 1fr;
   }
+
+  .map-heading,
+  .boss-card,
+  .sect-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .map-icon,
+  .boss-mark {
+    width: 36px;
+    height: 36px;
+  }
 }
 
 @media (max-width: 560px) {
@@ -763,6 +924,6 @@ small {
   }
 
   .row-actions {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }

@@ -1,0 +1,2198 @@
+export const REALMS = [
+  { name: '炼气一层', requiredQi: 100, qiRate: 1.8, stoneRate: 0.12 },
+  { name: '炼气二层', requiredQi: 260, qiRate: 2.8, stoneRate: 0.18 },
+  { name: '炼气三层', requiredQi: 520, qiRate: 4.2, stoneRate: 0.26 },
+  { name: '筑基初期', requiredQi: 1100, qiRate: 6.4, stoneRate: 0.38 },
+  { name: '筑基中期', requiredQi: 2200, qiRate: 9.2, stoneRate: 0.54 },
+  { name: '金丹初成', requiredQi: 4800, qiRate: 14, stoneRate: 0.82 },
+  { name: '金丹圆满', requiredQi: 9200, qiRate: 22, stoneRate: 1.25 },
+  { name: '元婴初期', requiredQi: 18000, qiRate: 34, stoneRate: 1.85 },
+];
+
+export const UPGRADE_TIERS = [
+  { name: '凡阶', minLevel: 1, maxLevel: 3, realmIndex: 0 },
+  { name: '灵阶', minLevel: 4, maxLevel: 6, realmIndex: 3 },
+  { name: '玄阶', minLevel: 7, maxLevel: 9, realmIndex: 5 },
+  { name: '地阶', minLevel: 10, maxLevel: 12, realmIndex: 7 },
+];
+
+export const MISSIONS = {
+  herbGathering: {
+    id: 'herbGathering',
+    name: '采集灵草',
+    mapId: 'qinglanMountain',
+    map: '青岚山',
+    unlockRealmIndex: 0,
+    duration: 30,
+    reward: { herbs: 5, spiritStones: 6 },
+    events: ['hiddenHerbPatch', 'spiritSpring'],
+  },
+  cavePatrol: {
+    id: 'cavePatrol',
+    name: '巡守洞府',
+    mapId: 'qinglanMountain',
+    map: '青岚山',
+    unlockRealmIndex: 0,
+    duration: 55,
+    reward: { spiritStones: 18, qi: 35 },
+    events: ['spiritSpring', 'cloudRobeCache'],
+  },
+  marketTrade: {
+    id: 'marketTrade',
+    name: '坊市交易',
+    mapId: 'qinglanMountain',
+    map: '青岚山',
+    unlockRealmIndex: 0,
+    duration: 90,
+    reward: { spiritStones: 48 },
+    events: ['wanderingTrader', 'hiddenHerbPatch'],
+  },
+  mistyValley: {
+    id: 'mistyValley',
+    name: '雾隐秘境',
+    mapId: 'mistyValley',
+    map: '雾隐秘境',
+    unlockRealmIndex: 2,
+    duration: 120,
+    danger: 115,
+    reward: { spiritStones: 35, qi: 90, beastCores: 1, artifacts: 1 },
+    rareEvery: 4,
+    rareReward: { meridianPill: 1 },
+    failurePenalty: { qi: -45, heartDemon: 1 },
+    events: ['spiritSpring', 'cloudRobeCache'],
+  },
+  herbValley: {
+    id: 'herbValley',
+    name: '灵草谷',
+    mapId: 'herbValley',
+    map: '灵草谷',
+    unlockRealmIndex: 1,
+    duration: 70,
+    danger: 80,
+    reward: { herbs: 14, spiritStones: 14, qi: 45 },
+    rareEvery: 3,
+    rareReward: { clearHeartPill: 1 },
+    failurePenalty: { qi: -20 },
+    events: ['hiddenHerbPatch', 'xuanmuAmuletCache'],
+  },
+  ancientSwordTomb: {
+    id: 'ancientSwordTomb',
+    name: '古剑冢',
+    mapId: 'swordTomb',
+    map: '古剑冢',
+    unlockRealmIndex: 3,
+    duration: 140,
+    danger: 145,
+    reward: { artifacts: 2, spiritStones: 50, beastCores: 1 },
+    rareEvery: 3,
+    rareReward: { beastCores: 2, arrayFlags: 1 },
+    failurePenalty: { qi: -60, heartDemon: 1 },
+    events: ['swordRemnant', 'beastAmbush'],
+  },
+  demonRift: {
+    id: 'demonRift',
+    name: '魔气裂隙',
+    mapId: 'demonRift',
+    map: '魔气裂隙',
+    unlockRealmIndex: 4,
+    duration: 180,
+    danger: 180,
+    reward: { beastCores: 3, spiritStones: 90, qi: 120, heartDemon: 1 },
+    rareEvery: 4,
+    rareReward: { meridianPill: 1, arrayFlags: 1 },
+    failurePenalty: { qi: -90, heartDemon: 2 },
+    events: ['beastAmbush', 'cloudRobeCache'],
+  },
+  ancientRuins: {
+    id: 'ancientRuins',
+    name: '上古遗迹',
+    mapId: 'ancientRuins',
+    map: '上古遗迹',
+    unlockRealmIndex: 5,
+    duration: 240,
+    danger: 260,
+    reward: { spiritStones: 150, beastCores: 4, arrayFlags: 2, qi: 180 },
+    rareEvery: 5,
+    rareReward: { artifacts: 3, meridianPill: 1 },
+    failurePenalty: { qi: -130, heartDemon: 2 },
+    events: ['ancientCache', 'swordRemnant', 'xuanmuAmuletCache'],
+  },
+};
+
+export const MISSION_MAPS = {
+  qinglanMountain: {
+    id: 'qinglanMountain',
+    name: '青岚山',
+    icon: '山',
+    description: '洞府外山脉，适合打牢根基。',
+    unlockRealmIndex: 0,
+    explorationTarget: 5,
+    reputationPerMission: 6,
+    masteryBonus: { qiRate: 0.03 },
+    boss: {
+      name: '青岚山魈',
+      title: '山门首领',
+      power: 130,
+      reward: { spiritStones: 120, powerBonus: 24, forgingEssence: 2 },
+      reputation: 25,
+      failurePenalty: { qi: -35, heartDemon: 1 },
+    },
+  },
+  herbValley: {
+    id: 'herbValley',
+    name: '灵草谷',
+    icon: '草',
+    description: '灵草丰茂，丹修和宗门补给的根基。',
+    unlockRealmIndex: 1,
+    explorationTarget: 6,
+    reputationPerMission: 7,
+    masteryBonus: { qiRate: 0.02 },
+    boss: {
+      name: '百年药灵',
+      title: '谷中灵魄',
+      power: 190,
+      reward: { herbs: 36, qiRateBonus: 0.02, forgingEssence: 3 },
+      reputation: 30,
+      failurePenalty: { qi: -45 },
+    },
+  },
+  mistyValley: {
+    id: 'mistyValley',
+    name: '雾隐秘境',
+    icon: '雾',
+    description: '雾气遮蔽感知，产出早期妖核和法器。',
+    unlockRealmIndex: 2,
+    explorationTarget: 5,
+    reputationPerMission: 8,
+    masteryBonus: { dangerReduction: 6 },
+    boss: {
+      name: '雾隐妖',
+      title: '秘境守影',
+      power: 240,
+      reward: { beastCores: 3, artifacts: 1, powerBonus: 32, forgingEssence: 4 },
+      reputation: 35,
+      failurePenalty: { qi: -65, heartDemon: 1 },
+    },
+  },
+  swordTomb: {
+    id: 'swordTomb',
+    name: '古剑冢',
+    icon: '剑',
+    description: '残剑埋骨之地，适合剑修淬炼战力。',
+    unlockRealmIndex: 3,
+    explorationTarget: 6,
+    reputationPerMission: 9,
+    masteryBonus: { power: 14 },
+    boss: {
+      name: '无名剑魂',
+      title: '剑冢残念',
+      power: 330,
+      reward: { artifacts: 3, beastCores: 2, powerBonus: 48, forgingEssence: 5 },
+      reputation: 40,
+      failurePenalty: { qi: -90, heartDemon: 1 },
+    },
+  },
+  demonRift: {
+    id: 'demonRift',
+    name: '魔气裂隙',
+    icon: '魔',
+    description: '魔气翻涌，收益更高也更考验稳定。',
+    unlockRealmIndex: 4,
+    explorationTarget: 7,
+    reputationPerMission: 10,
+    masteryBonus: { power: 18, dangerReduction: 4 },
+    boss: {
+      name: '裂隙魔影',
+      title: '魔气化身',
+      power: 460,
+      reward: { beastCores: 5, arrayFlags: 2, powerBonus: 64, forgingEssence: 6 },
+      reputation: 45,
+      failurePenalty: { qi: -120, heartDemon: 2 },
+    },
+  },
+  ancientRuins: {
+    id: 'ancientRuins',
+    name: '上古遗迹',
+    icon: '遗',
+    description: '旧时代残阵，通向更长线的宗门经营。',
+    unlockRealmIndex: 5,
+    explorationTarget: 8,
+    reputationPerMission: 12,
+    masteryBonus: { qiRate: 0.015, power: 16 },
+    boss: {
+      name: '残阵守灵',
+      title: '遗迹阵枢',
+      power: 620,
+      reward: { spiritStones: 320, arrayFlags: 4, qiRateBonus: 0.03, forgingEssence: 8 },
+      reputation: 55,
+      failurePenalty: { qi: -160, heartDemon: 2 },
+    },
+  },
+};
+
+export const MAP_MASTERY_TIERS = [
+  { level: 0, name: '初探', reputation: 0 },
+  { level: 1, name: '熟路', reputation: 10 },
+  { level: 2, name: '知势', reputation: 35 },
+  { level: 3, name: '名扬', reputation: 75 },
+  { level: 4, name: '镇域', reputation: 140 },
+];
+
+export const SECT_COMMISSIONS = {
+  herbGarden: {
+    id: 'herbGarden',
+    name: '采药委托',
+    detail: '弟子巡山采药，稳定补充灵草。',
+    rates: { herbs: 0.05, reputation: 0.01 },
+  },
+  mine: {
+    id: 'mine',
+    name: '采矿委托',
+    detail: '弟子整理灵脉碎矿，缓慢产出灵石。',
+    rates: { spiritStones: 0.08, reputation: 0.008 },
+  },
+  patrol: {
+    id: 'patrol',
+    name: '护山委托',
+    detail: '弟子巡守山门，偶得妖核并提升宗门名望。',
+    rates: { beastCores: 0.01, reputation: 0.01 },
+  },
+};
+
+export const MISSION_EVENTS = {
+  hiddenHerbPatch: {
+    id: 'hiddenHerbPatch',
+    name: '隐蔽药圃',
+    detail: '在山隙中发现一片野生灵草。',
+    reward: { herbs: 3 },
+  },
+  spiritSpring: {
+    id: 'spiritSpring',
+    name: '灵泉暗涌',
+    detail: '灵泉涌动，顺势吐纳一轮。',
+    reward: { qi: 18 },
+  },
+  wanderingTrader: {
+    id: 'wanderingTrader',
+    name: '游商问价',
+    detail: '遇见路过散修，以低价换得一笔灵石。',
+    reward: { spiritStones: 18 },
+  },
+  beastAmbush: {
+    id: 'beastAmbush',
+    name: '妖兽伏击',
+    detail: '斩退伏击妖兽，剖得一枚妖核。',
+    reward: { beastCores: 1 },
+  },
+  swordRemnant: {
+    id: 'swordRemnant',
+    name: '残剑鸣匣',
+    detail: '剑匣自鸣，遗落青锋可入武器栏。',
+    reward: { artifacts: 1 },
+    equipment: 'qingfengSword',
+  },
+  cloudRobeCache: {
+    id: 'cloudRobeCache',
+    name: '云纹残匣',
+    detail: '旧匣中藏有一件轻灵法袍。',
+    reward: { spiritStones: 24 },
+    equipment: 'cloudthreadRobe',
+  },
+  xuanmuAmuletCache: {
+    id: 'xuanmuAmuletCache',
+    name: '玄木符匣',
+    detail: '符匣内温润生机，可护持突破。',
+    reward: { herbs: 5 },
+    equipment: 'xuanmuAmulet',
+  },
+  ancientCache: {
+    id: 'ancientCache',
+    name: '上古秘藏',
+    detail: '残阵中留有灵石和阵旗。',
+    reward: { spiritStones: 80, arrayFlags: 1 },
+  },
+};
+
+export const LOOT_EQUIPMENT = {
+  qingfengSword: {
+    id: 'qingfengSword',
+    name: '青锋剑',
+    slot: 'weapon',
+    quality: 1,
+    bonuses: { power: 36 },
+  },
+  cloudthreadRobe: {
+    id: 'cloudthreadRobe',
+    name: '云纹法袍',
+    slot: 'robe',
+    quality: 1,
+    bonuses: { dangerReduction: 16 },
+  },
+  xuanmuAmulet: {
+    id: 'xuanmuAmulet',
+    name: '玄木护符',
+    slot: 'amulet',
+    quality: 1,
+    bonuses: { breakthrough: 0.04, qiRate: 0.03 },
+  },
+};
+
+export const BUILDINGS = {
+  alchemyFurnace: {
+    id: 'alchemyFurnace',
+    name: '炼丹炉',
+    maxLevel: 12,
+    cost: (level) => ({ spiritStones: scaleCost(55, level), herbs: scaleCost(8, level) }),
+    speedBonusPerLevel: 0.2,
+  },
+  meditationSeat: {
+    id: 'meditationSeat',
+    name: '蒲团',
+    maxLevel: 12,
+    cost: (level) => ({ spiritStones: scaleCost(20, level), herbs: Math.max(0, scaleCost(4, level - 1)) }),
+    qiBonusPerLevel: 0.2,
+  },
+  spiritField: {
+    id: 'spiritField',
+    name: '灵田',
+    maxLevel: 12,
+    cost: (level) => ({ spiritStones: scaleCost(30, level) }),
+    herbRatePerLevel: 0.02,
+  },
+  swordArray: {
+    id: 'swordArray',
+    name: '剑阵',
+    maxLevel: 12,
+    cost: (level) => ({ spiritStones: scaleCost(45, level), beastCores: Math.max(0, scaleCost(1, level - 1)) }),
+    powerPerLevel: 28,
+  },
+};
+
+export const PILL_RECIPES = {
+  gatherQiPill: {
+    id: 'gatherQiPill',
+    name: '聚气丹',
+    duration: 45,
+    unlockLevel: 0,
+    cost: { herbs: 8, spiritStones: 12 },
+  },
+  clearHeartPill: {
+    id: 'clearHeartPill',
+    name: '清心丹',
+    duration: 45,
+    unlockLevel: 1,
+    cost: { herbs: 10, spiritStones: 18 },
+  },
+  meridianPill: {
+    id: 'meridianPill',
+    name: '护脉丹',
+    duration: 60,
+    unlockLevel: 2,
+    cost: { herbs: 14, spiritStones: 28, beastCores: 1 },
+  },
+};
+
+export const GEAR = {
+  weapon: {
+    id: 'weapon',
+    name: '武器',
+    maxLevel: 12,
+    cost: (level) => ({ spiritStones: scaleCost(80, level), beastCores: scaleCost(1, level) }),
+    powerPerLevel: 35,
+  },
+  amulet: {
+    id: 'amulet',
+    name: '护符',
+    maxLevel: 12,
+    cost: (level) => ({ spiritStones: scaleCost(70, level), beastCores: scaleCost(1, level) }),
+    breakthroughPerLevel: 0.03,
+  },
+  robe: {
+    id: 'robe',
+    name: '法袍',
+    maxLevel: 12,
+    cost: (level) => ({ spiritStones: scaleCost(60, level), beastCores: scaleCost(1, level) }),
+    dangerReductionPerLevel: 10,
+  },
+};
+
+export const GEAR_QUALITIES = [
+  { name: '凡品', powerBonus: 0, refineChance: 0.82 },
+  { name: '下品', powerBonus: 18, refineChance: 0.66 },
+  { name: '中品', powerBonus: 40, refineChance: 0.5 },
+  { name: '上品', powerBonus: 70, refineChance: 0.36 },
+  { name: '极品', powerBonus: 110, refineChance: 0 },
+];
+
+export const GEAR_AFFIXES = {
+  swordIntent: {
+    id: 'swordIntent',
+    name: '剑意',
+    slot: 'weapon',
+    powerBonus: 25,
+  },
+  spiritVein: {
+    id: 'spiritVein',
+    name: '灵脉',
+    slot: 'amulet',
+    qiBonus: 0.08,
+  },
+  cloudStep: {
+    id: 'cloudStep',
+    name: '云步',
+    slot: 'robe',
+    dangerReduction: 18,
+  },
+};
+
+export const CULTIVATION_PATHS = {
+  sword: {
+    id: 'sword',
+    name: '剑修',
+    maxLevel: 12,
+    cost: (level) => ({ spiritStones: scaleCost(65, level), beastCores: scaleCost(1, level) }),
+    powerPerLevel: 28,
+    dangerReductionPerLevel: 4,
+  },
+  alchemy: {
+    id: 'alchemy',
+    name: '丹修',
+    maxLevel: 12,
+    cost: (level) => ({ spiritStones: scaleCost(55, level), herbs: scaleCost(8, level), gatherQiPill: Math.ceil(level / 3) }),
+    alchemySpeedPerLevel: 0.04,
+    pillQiBonusPerLevel: 0.04,
+  },
+  formation: {
+    id: 'formation',
+    name: '阵修',
+    maxLevel: 12,
+    cost: (level) => ({ spiritStones: scaleCost(60, level), arrayFlags: scaleCost(1, level) }),
+    qiBonusPerLevel: 0.05,
+    offlineBonusPerLevel: 0.03,
+  },
+};
+
+export const FORMATIONS = {
+  spiritGathering: {
+    id: 'spiritGathering',
+    name: '聚灵阵',
+    maxLevel: 12,
+    cost: (level) => ({ spiritStones: scaleCost(70, level), arrayFlags: scaleCost(1, level) }),
+    qiBonusPerLevel: 0.1,
+  },
+  mountainGuard: {
+    id: 'mountainGuard',
+    name: '护山阵',
+    maxLevel: 12,
+    cost: (level) => ({ spiritStones: scaleCost(75, level), arrayFlags: scaleCost(1, level) }),
+    stabilityPerLevel: 0.03,
+  },
+  swordArray: {
+    id: 'swordArray',
+    name: '剑阵',
+    maxLevel: 12,
+    cost: (level) => ({ spiritStones: scaleCost(80, level), beastCores: scaleCost(1, level), arrayFlags: scaleCost(1, level) }),
+    powerPerLevel: 26,
+  },
+};
+
+export const DAILY_TASKS = {
+  dailyCultivation: {
+    id: 'dailyCultivation',
+    title: '今日吐纳',
+    detail: '累计修炼即可领取基础补给',
+    progressKey: 'cultivationSeconds',
+    target: 300,
+    reward: { spiritStones: 35, qi: 80 },
+  },
+  dailyMission: {
+    id: 'dailyMission',
+    title: '今日历练',
+    detail: '完成任意历练后领取额外材料',
+    progressKey: 'missions',
+    target: 3,
+    reward: { herbs: 8, spiritStones: 25 },
+  },
+  dailyMarket: {
+    id: 'dailyMarket',
+    title: '坊市问价',
+    detail: '每日补贴一笔交易本金',
+    progressKey: 'marketBuys',
+    target: 1,
+    reward: { spiritStones: 45 },
+  },
+};
+
+export const MARKET_ITEMS = {
+  herbBundle: {
+    id: 'herbBundle',
+    name: '灵草包',
+    type: '材料',
+    cost: { spiritStones: 40 },
+    reward: { herbs: 12 },
+  },
+  beastCoreShard: {
+    id: 'beastCoreShard',
+    name: '妖核碎片',
+    type: '材料',
+    cost: { spiritStones: 75 },
+    reward: { beastCores: 1 },
+  },
+  spiritSword: {
+    id: 'spiritSword',
+    name: '下品灵剑',
+    type: '装备',
+    cost: { spiritStones: 80 },
+    reward: { artifacts: 1 },
+  },
+  arrayManual: {
+    id: 'arrayManual',
+    name: '小周天阵旗',
+    type: '阵法',
+    cost: { spiritStones: 90, beastCores: 1 },
+    reward: { arrayFlags: 1 },
+  },
+};
+
+export const MAINLINE_CHAPTERS = [
+  {
+    id: 'qinglanStart',
+    title: '青岚初启',
+    subtitle: '立洞府、通吐纳、备丹药，完成最初的修行根基。',
+    reward: { spiritStones: 120, qiRateBonus: 0.03 },
+    objectives: [
+      {
+        id: 'realmThree',
+        title: '突破至炼气三层',
+        detail: '提高吐纳效率，开启更稳定的秘境收益',
+        completed: (state) => state.realmIndex >= 2,
+        reward: { spiritStones: 80, pills: 1 },
+      },
+      {
+        id: 'spiritField',
+        title: '建成一阶灵田',
+        detail: '让洞府开始自动生长灵草',
+        completed: (state) => (state.buildings?.spiritField ?? 0) >= 1,
+        reward: { herbs: 10, spiritStones: 30 },
+      },
+      {
+        id: 'mistyValley',
+        title: '完成一次雾隐秘境',
+        detail: '获得妖核或法器，准备强化剑阵',
+        completed: (state) => (state.completedMissions?.mistyValley ?? 0) >= 1,
+        reward: { beastCores: 1, spiritStones: 60 },
+      },
+      {
+        id: 'firstPill',
+        title: '炼成一枚聚气丹',
+        detail: '突破前用丹药快速补足灵气',
+        completed: (state) => (state.craftedPills ?? 0) >= 1,
+        reward: { qi: 120, spiritStones: 25 },
+      },
+    ],
+  },
+  {
+    id: 'foundationPath',
+    title: '筑基问道',
+    subtitle: '选择主修方向，强化第一套护身手段，开始挑战更深秘境。',
+    reward: { spiritStones: 200, powerBonus: 40 },
+    objectives: [
+      {
+        id: 'foundationRealm',
+        title: '踏入筑基初期',
+        detail: '境界达到筑基初期，开启灵阶养成上限',
+        completed: (state) => state.realmIndex >= 3,
+        reward: { spiritStones: 120, herbs: 18 },
+      },
+      {
+        id: 'firstPath',
+        title: '参悟一门功法',
+        detail: '剑修、丹修、阵修任一达到 1 级',
+        completed: (state) => Object.values(state.cultivationPaths ?? {}).some((level) => level >= 1),
+        reward: { spiritStones: 90, arrayFlags: 1 },
+      },
+      {
+        id: 'firstArmament',
+        title: '整备护身法器',
+        detail: '任意装备或阵法升至 1 级',
+        completed: (state) => [...Object.values(state.gear ?? {}), ...Object.values(state.formations ?? {})].some((level) => level >= 1),
+        reward: { beastCores: 1, artifacts: 1 },
+      },
+      {
+        id: 'swordTombTrial',
+        title: '踏入古剑冢',
+        detail: '完成一次古剑冢历练',
+        completed: (state) => (state.completedMissions?.ancientSwordTomb ?? 0) >= 1,
+        reward: { spiritStones: 160, artifacts: 2 },
+      },
+    ],
+  },
+  {
+    id: 'goldenCoreTrial',
+    title: '金丹试炼',
+    subtitle: '淬炼法器、压制魔气裂隙，为更长线的金丹成长铺路。',
+    reward: { spiritStones: 320, qiRateBonus: 0.05, powerBonus: 60 },
+    objectives: [
+      {
+        id: 'goldenCoreRealm',
+        title: '凝成金丹',
+        detail: '境界达到金丹初成',
+        completed: (state) => state.realmIndex >= 5,
+        reward: { spiritStones: 220, meridianPill: 1 },
+      },
+      {
+        id: 'refinedGear',
+        title: '完成一次法器淬炼',
+        detail: '任意装备品质提升至下品或以上',
+        completed: (state) => Object.values(state.gearQuality ?? {}).some((quality) => quality >= 1),
+        reward: { artifacts: 2, spiritStones: 180 },
+      },
+      {
+        id: 'pathThree',
+        title: '主修小成',
+        detail: '任一功法达到 3 级',
+        completed: (state) => Object.values(state.cultivationPaths ?? {}).some((level) => level >= 3),
+        reward: { clearHeartPill: 1, spiritStones: 160 },
+      },
+      {
+        id: 'demonRiftTrial',
+        title: '镇压魔气裂隙',
+        detail: '完成两次魔气裂隙历练',
+        completed: (state) => (state.completedMissions?.demonRift ?? 0) >= 2,
+        reward: { beastCores: 3, arrayFlags: 2 },
+      },
+    ],
+  },
+];
+
+export function createGameState(now = Date.now()) {
+  return {
+    qi: 0,
+    spiritStones: 0,
+    herbs: 0,
+    pills: 0,
+    beastCores: 0,
+    artifacts: 0,
+    arrayFlags: 0,
+    forgingEssence: 0,
+    realmIndex: 0,
+    heartDemon: 0,
+    insight: 0,
+    injuryUntil: 0,
+    pillBoostUntil: 0,
+    breakthroughBoostUntil: 0,
+    foundationStability: 0,
+    activeAlchemy: null,
+    inventoryPills: {
+      gatherQiPill: 0,
+      clearHeartPill: 0,
+      meridianPill: 0,
+    },
+    craftedPills: 0,
+    completedMissions: {},
+    mapReputation: {},
+    defeatedBosses: {},
+    claimedGoals: {},
+    claimedChapterRewards: {},
+    permanentBonuses: {
+      qiRate: 0,
+      power: 0,
+    },
+    autoMissionId: null,
+    dailyClaims: {},
+    dailyProgress: {},
+    marketPurchases: {},
+    gear: {
+      weapon: 0,
+      amulet: 0,
+      robe: 0,
+    },
+    gearQuality: {
+      weapon: 0,
+      amulet: 0,
+      robe: 0,
+    },
+    gearAffixes: {
+      weapon: null,
+      amulet: null,
+      robe: null,
+    },
+    lootEquipment: [],
+    equippedLoot: {
+      weapon: null,
+      amulet: null,
+      robe: null,
+    },
+    lastMissionEvent: null,
+    cultivationPaths: {
+      sword: 0,
+      alchemy: 0,
+      formation: 0,
+    },
+    formations: {
+      spiritGathering: 0,
+      mountainGuard: 0,
+      swordArray: 0,
+    },
+    sectDisciples: 0,
+    sectReputation: 0,
+    sectAssignments: {
+      herbGarden: 0,
+      mine: 0,
+      patrol: 0,
+    },
+    sectCarry: {
+      spiritStones: 0,
+      herbs: 0,
+      beastCores: 0,
+      reputation: 0,
+    },
+    buildings: {
+      alchemyFurnace: 0,
+      meditationSeat: 1,
+      spiritField: 0,
+      swordArray: 0,
+    },
+    activeMission: null,
+    totalCultivationSeconds: 0,
+    breakthroughCount: 0,
+    stoneCarry: 0,
+    herbCarry: 0,
+    lastUpdatedAt: now,
+    log: [
+      { time: now, text: '你在青岚山开辟洞府，开始吐纳灵气。' },
+    ],
+  };
+}
+
+export function reviveGameState(saved, now = Date.now()) {
+  const state = { ...createGameState(now), ...saved };
+  state.realmIndex = clampInteger(state.realmIndex, 0, REALMS.length - 1);
+  state.heartDemon = Math.max(0, Number(state.heartDemon) || 0);
+  state.insight = Math.max(0, Number(state.insight) || 0);
+  state.pillBoostUntil = Math.max(0, Number(state.pillBoostUntil) || 0);
+  state.breakthroughBoostUntil = Math.max(0, Number(state.breakthroughBoostUntil) || 0);
+  state.foundationStability = Math.max(0, Number(state.foundationStability) || 0);
+  state.activeAlchemy = normalizeAlchemy(state.activeAlchemy);
+  state.inventoryPills = normalizeInventoryPills(state.inventoryPills, state.pills);
+  state.buildings = normalizeBuildings(state.buildings);
+  state.gear = normalizeLevels(state.gear, GEAR);
+  state.gearQuality = normalizeGearQuality(state.gearQuality);
+  state.gearAffixes = normalizeGearAffixes(state.gearAffixes);
+  state.lootEquipment = normalizeLootEquipment(state.lootEquipment);
+  state.equippedLoot = normalizeEquippedLoot(state.equippedLoot, state.lootEquipment);
+  state.lastMissionEvent = normalizeMissionEvent(state.lastMissionEvent);
+  state.cultivationPaths = normalizeLevels(state.cultivationPaths, CULTIVATION_PATHS);
+  state.formations = normalizeLevels(state.formations, FORMATIONS);
+  state.completedMissions = normalizeCompletedMissions(state.completedMissions);
+  state.mapReputation = normalizeMapValues(state.mapReputation);
+  state.defeatedBosses = normalizeDefeatedBosses(state.defeatedBosses);
+  state.claimedGoals = normalizeClaimedGoals(state.claimedGoals);
+  state.claimedChapterRewards = normalizeClaimedGoals(state.claimedChapterRewards);
+  state.permanentBonuses = normalizePermanentBonuses(state.permanentBonuses);
+  state.autoMissionId = MISSIONS[state.autoMissionId] ? state.autoMissionId : null;
+  state.craftedPills = Math.max(0, Number(state.craftedPills) || 0);
+  state.arrayFlags = Math.max(0, Number(state.arrayFlags) || 0);
+  state.forgingEssence = Math.max(0, Number(state.forgingEssence) || 0);
+  state.sectDisciples = clampInteger(state.sectDisciples, 0, getSectCapacity(state));
+  state.sectReputation = Math.max(0, Number(state.sectReputation) || 0);
+  state.sectAssignments = normalizeSectAssignments(state.sectAssignments, state.sectDisciples);
+  state.sectCarry = normalizeSectCarry(state.sectCarry);
+  state.dailyClaims = normalizeNestedClaims(state.dailyClaims);
+  state.dailyProgress = normalizeDailyProgress(state.dailyProgress);
+  state.marketPurchases = normalizeNestedClaims(state.marketPurchases);
+  state.pills = state.inventoryPills.gatherQiPill;
+  state.log = Array.isArray(state.log) ? state.log.slice(0, 20) : [];
+  state.activeMission = normalizeMission(state.activeMission);
+  state.lastUpdatedAt = Number.isFinite(state.lastUpdatedAt) ? state.lastUpdatedAt : now;
+  return state;
+}
+
+export function getCurrentRealm(state) {
+  return REALMS[state.realmIndex] ?? REALMS[0];
+}
+
+export function getRealmProgress(state) {
+  const realm = getCurrentRealm(state);
+  return Math.max(0, Math.min(1, state.qi / realm.requiredQi));
+}
+
+export function getUpgradeTier(level) {
+  return UPGRADE_TIERS.find((tier) => level >= tier.minLevel && level <= tier.maxLevel) ?? UPGRADE_TIERS[UPGRADE_TIERS.length - 1];
+}
+
+export function getRealmUpgradeLimit(state) {
+  const realmIndex = state.realmIndex ?? 0;
+  return UPGRADE_TIERS.reduce((limit, tier) => (realmIndex >= tier.realmIndex ? tier.maxLevel : limit), UPGRADE_TIERS[0].maxLevel);
+}
+
+export function getMissionStatus(state, missionId) {
+  const mission = MISSIONS[missionId];
+  if (!mission) {
+    return { exists: false, unlocked: false };
+  }
+  const completed = state.completedMissions?.[missionId] ?? 0;
+  const rareEvery = mission.rareEvery ?? 0;
+  const rareStep = rareEvery && completed > 0 && completed % rareEvery === 0 ? rareEvery : completed % rareEvery;
+  return {
+    exists: true,
+    id: mission.id,
+    name: mission.name,
+    map: mission.map ?? '青岚山',
+    unlocked: (state.realmIndex ?? 0) >= (mission.unlockRealmIndex ?? 0),
+    unlockRealmIndex: mission.unlockRealmIndex ?? 0,
+    recommendedPower: getMissionDanger(state, mission),
+    completed,
+    rareProgress: rareEvery ? `${rareStep} / ${rareEvery}` : '',
+    rareReward: mission.rareReward ?? null,
+  };
+}
+
+export function getMapStatuses(state) {
+  return Object.values(MISSION_MAPS).map((map) => {
+    const routes = Object.values(MISSIONS).filter((mission) => getMissionMapId(mission) === map.id);
+    const completed = routes.reduce((total, mission) => total + (state.completedMissions?.[mission.id] ?? 0), 0);
+    const target = map.explorationTarget;
+    const unlocked = (state.realmIndex ?? 0) >= map.unlockRealmIndex;
+    const defeated = Boolean(state.defeatedBosses?.[map.id]);
+    const ready = unlocked && completed >= target && !defeated;
+    const mastery = getMapMastery(state, map.id);
+    return {
+      id: map.id,
+      name: map.name,
+      icon: map.icon,
+      description: map.description,
+      unlocked,
+      unlockRealmIndex: map.unlockRealmIndex,
+      routes: routes.map((mission) => mission.id),
+      exploration: {
+        completed,
+        target,
+        percent: target ? Math.min(1, completed / target) : 1,
+      },
+      reputation: state.mapReputation?.[map.id] ?? 0,
+      mastery,
+      boss: {
+        ...map.boss,
+        status: defeated ? 'defeated' : ready ? 'ready' : unlocked ? 'hidden' : 'locked',
+        defeated,
+      },
+    };
+  });
+}
+
+export function challengeMapBoss(state, mapId, now = Date.now()) {
+  const map = MISSION_MAPS[mapId];
+  if (!map) {
+    return { ok: false, reason: 'unknownMap' };
+  }
+  const status = getMapStatuses(state).find((candidate) => candidate.id === mapId);
+  if (!status.unlocked) {
+    addLog(state, now, `${map.name}尚未解锁，无法挑战${map.boss.name}。`);
+    return { ok: false, reason: 'realmLocked' };
+  }
+  if (status.boss.defeated) {
+    return { ok: false, reason: 'alreadyDefeated' };
+  }
+  if (status.exploration.completed < status.exploration.target) {
+    addLog(state, now, `${map.name}探索不足，尚未找到${map.boss.name}。`);
+    return { ok: false, reason: 'notReady' };
+  }
+  if (calculatePower(state) < map.boss.power) {
+    applyResources(state, map.boss.failurePenalty ?? {});
+    state.injuryUntil = now + 120 * 1000;
+    addLog(state, now, `挑战${map.boss.name}失利，需继续提升战力。`);
+    return { ok: false, reason: 'powerLow', requiredPower: map.boss.power };
+  }
+
+  applyResources(state, map.boss.reward);
+  addMapReputation(state, map.id, map.boss.reputation ?? 0);
+  state.defeatedBosses[map.id] = true;
+  addLog(state, now, `镇压${map.boss.name}，${map.name}声望大涨，获得${formatReward(map.boss.reward)}。`);
+  return { ok: true, reward: map.boss.reward, boss: map.boss };
+}
+
+export function calculateQiRate(state, now = Date.now()) {
+  const realm = getCurrentRealm(state);
+  const buildingBonus = 1 + ((state.buildings?.meditationSeat ?? 1) - 1) * BUILDINGS.meditationSeat.qiBonusPerLevel;
+  const formationBonus = 1 + (state.formations?.spiritGathering ?? 0) * FORMATIONS.spiritGathering.qiBonusPerLevel;
+  const affixBonus = 1 + getGearAffixBonus(state, 'qiBonus');
+  const pathBonus = 1 + (state.cultivationPaths?.formation ?? 0) * CULTIVATION_PATHS.formation.qiBonusPerLevel;
+  const permanentBonus = 1 + (state.permanentBonuses?.qiRate ?? 0);
+  const lootBonus = 1 + getEquippedLootBonus(state, 'qiRate');
+  const masteryBonus = 1 + getMapMasteryBonus(state, 'qiRate');
+  const pillBoost = state.pillBoostUntil && state.pillBoostUntil > now ? 1.4 : 1;
+  const injuryPenalty = state.injuryUntil && state.injuryUntil > now ? 0.75 : 1;
+  return round(realm.qiRate * buildingBonus * formationBonus * affixBonus * pathBonus * permanentBonus * lootBonus * masteryBonus * pillBoost * injuryPenalty);
+}
+
+export function calculateBreakthroughChance(state, now = Date.now()) {
+  const realm = getCurrentRealm(state);
+  const overfill = Math.max(0, state.qi - realm.requiredQi);
+  const preparation = Math.min(0.2, overfill / realm.requiredQi / 2);
+  const insightBonus = Math.min(0.15, (state.insight ?? 0) * 0.03);
+  const gearBonus = Math.min(0.12, (state.gear?.amulet ?? 0) * GEAR.amulet.breakthroughPerLevel);
+  const lootBonus = Math.min(0.1, getEquippedLootBonus(state, 'breakthrough'));
+  const formationBonus = Math.min(0.12, (state.formations?.mountainGuard ?? 0) * FORMATIONS.mountainGuard.stabilityPerLevel);
+  const pillBonus = state.breakthroughBoostUntil && state.breakthroughBoostUntil > now ? 0.12 : 0;
+  const foundationBonus = Math.min(0.15, (state.foundationStability ?? 0) * 0.05);
+  const heartDemonPenalty = Math.min(0.35, (state.heartDemon ?? 0) * 0.15);
+  return round(Math.max(0.25, Math.min(0.95, 0.75 + preparation + insightBonus + gearBonus + lootBonus + formationBonus + pillBonus + foundationBonus - heartDemonPenalty)));
+}
+
+export function calculatePower(state) {
+  const realmPower = (state.realmIndex + 1) * 55;
+  const pathPower = (state.cultivationPaths?.sword ?? 0) * CULTIVATION_PATHS.sword.powerPerLevel;
+  const swordPower = (state.buildings?.swordArray ?? 0) * BUILDINGS.swordArray.powerPerLevel;
+  const gearPower = (state.gear?.weapon ?? 0) * GEAR.weapon.powerPerLevel;
+  const gearQualityPower = Object.values(state.gearQuality ?? {}).reduce((total, qualityIndex) => total + (GEAR_QUALITIES[qualityIndex]?.powerBonus ?? 0), 0);
+  const affixPower = getGearAffixBonus(state, 'powerBonus');
+  const formationPower = (state.formations?.swordArray ?? 0) * FORMATIONS.swordArray.powerPerLevel;
+  const permanentPower = state.permanentBonuses?.power ?? 0;
+  const lootPower = getEquippedLootBonus(state, 'power');
+  const masteryPower = getMapMasteryBonus(state, 'power');
+  const sectPower = Math.floor((state.sectReputation ?? 0) / 20) * 4;
+  const qiPower = Math.min(90, Math.floor((state.qi ?? 0) * 0.5));
+  const demonPenalty = (state.heartDemon ?? 0) * 8;
+  return Math.max(10, Math.floor(realmPower + pathPower + swordPower + gearPower + gearQualityPower + affixPower + formationPower + permanentPower + lootPower + masteryPower + sectPower + qiPower - demonPenalty));
+}
+
+export function getGearQuality(state, gearId) {
+  const qualityIndex = state.gearQuality?.[gearId] ?? 0;
+  const affixId = state.gearAffixes?.[gearId] ?? null;
+  const affix = affixId ? GEAR_AFFIXES[affixId] : null;
+  return {
+    qualityIndex,
+    qualityName: GEAR_QUALITIES[qualityIndex]?.name ?? GEAR_QUALITIES[0].name,
+    affixId,
+    affixName: affix?.name ?? '无词条',
+  };
+}
+
+export function getEquippedLoot(state, slot) {
+  const uid = state.equippedLoot?.[slot] ?? null;
+  return state.lootEquipment?.find((item) => item.uid === uid) ?? null;
+}
+
+export function equipLootEquipment(state, uid, now = Date.now()) {
+  const item = state.lootEquipment?.find((candidate) => candidate.uid === uid);
+  if (!item) {
+    return { ok: false, reason: 'unknownLoot' };
+  }
+  state.equippedLoot[item.slot] = item.uid;
+  addLog(state, now, `换上${item.name}，${GEAR[item.slot]?.name ?? '装备'}气象一新。`);
+  return { ok: true, item };
+}
+
+export function disassembleLootEquipment(state, uid, now = Date.now()) {
+  const itemIndex = state.lootEquipment?.findIndex((candidate) => candidate.uid === uid) ?? -1;
+  if (itemIndex < 0) {
+    return { ok: false, reason: 'unknownLoot' };
+  }
+  const item = state.lootEquipment[itemIndex];
+  if (state.equippedLoot?.[item.slot] === item.uid) {
+    return { ok: false, reason: 'equipped' };
+  }
+
+  state.lootEquipment.splice(itemIndex, 1);
+  const reward = {
+    forgingEssence: 2 + (item.level ?? 0),
+    artifacts: 1,
+  };
+  applyResources(state, reward);
+  addLog(state, now, `分解${item.name}，获得${formatReward(reward)}。`);
+  return { ok: true, reward, item };
+}
+
+export function empowerLootEquipment(state, uid, now = Date.now()) {
+  const item = state.lootEquipment?.find((candidate) => candidate.uid === uid);
+  if (!item) {
+    return { ok: false, reason: 'unknownLoot' };
+  }
+  const level = item.level ?? 0;
+  const maxLevel = getLootMaxLevel(item);
+  if (level >= maxLevel) {
+    return { ok: false, reason: 'maxLevel' };
+  }
+  const cost = getLootEmpowerCost(level + 1);
+  if (!canAfford(state, cost)) {
+    addLog(state, now, `强化${item.name}需要${formatReward(cost)}。`);
+    return { ok: false, reason: 'notEnoughResources' };
+  }
+
+  payResources(state, cost);
+  item.level = level + 1;
+  item.bonuses = createLootBonuses(item.templateId, item.level);
+  addLog(state, now, `${item.name}强化至 ${item.level} 级。`);
+  return { ok: true, item, level: item.level };
+}
+
+export function getLootEmpowerCost(nextLevel) {
+  return {
+    spiritStones: scaleCost(90, nextLevel),
+    forgingEssence: nextLevel * 2,
+  };
+}
+
+export function getDominantPath(state) {
+  const entries = Object.entries(state.cultivationPaths ?? {});
+  const [pathId, level] = entries.reduce((best, current) => (current[1] > best[1] ? current : best), ['none', 0]);
+  if (!level || !CULTIVATION_PATHS[pathId]) {
+    return { id: 'none', name: '未定', level: 0 };
+  }
+  return { id: pathId, name: CULTIVATION_PATHS[pathId].name, level };
+}
+
+export function getMainlineChapters(state) {
+  return MAINLINE_CHAPTERS.map((chapter, index) => {
+    const locked = !isMainlineChapterUnlocked(state, index);
+    const objectives = chapter.objectives.map((objective) => hydrateMainlineObjective(state, objective));
+    const completedCount = objectives.filter((objective) => objective.completed).length;
+    const completed = completedCount === objectives.length;
+    const allObjectivesClaimed = objectives.every((objective) => objective.claimed);
+    const rewardClaimed = Boolean(state.claimedChapterRewards?.[chapter.id]);
+
+    return {
+      id: chapter.id,
+      title: chapter.title,
+      subtitle: chapter.subtitle,
+      reward: chapter.reward,
+      locked,
+      completed,
+      completedCount,
+      allObjectivesClaimed,
+      rewardClaimed,
+      objectives,
+    };
+  });
+}
+
+export function getGoals(state) {
+  return MAINLINE_CHAPTERS[0].objectives.map((objective) => hydrateMainlineObjective(state, objective));
+}
+
+export function isDailyUnlocked(state) {
+  return getGoals(state).filter((goal) => goal.completed).length >= 3;
+}
+
+export function getDailyTasks(state, dateKey = getDateKey()) {
+  const unlocked = isDailyUnlocked(state);
+  const claims = state.dailyClaims?.[dateKey] ?? {};
+  const progress = getDailyProgress(state, dateKey);
+  return Object.values(DAILY_TASKS).map((task) => ({
+    ...task,
+    unlocked,
+    progress: Math.min(task.target, Math.floor(progress[task.progressKey] ?? 0)),
+    completed: (progress[task.progressKey] ?? 0) >= task.target,
+    claimed: Boolean(claims[task.id]),
+  }));
+}
+
+export function claimDailyTask(state, taskId, dateKey = getDateKey(), now = Date.now()) {
+  const task = DAILY_TASKS[taskId];
+  if (!task) {
+    return { ok: false, reason: 'unknownTask' };
+  }
+  if (!isDailyUnlocked(state)) {
+    return { ok: false, reason: 'locked' };
+  }
+  const progress = getDailyProgress(state, dateKey);
+  if ((progress[task.progressKey] ?? 0) < task.target) {
+    return { ok: false, reason: 'notComplete' };
+  }
+
+  state.dailyClaims[dateKey] ??= {};
+  if (state.dailyClaims[dateKey][taskId]) {
+    return { ok: false, reason: 'alreadyClaimed' };
+  }
+
+  applyResources(state, task.reward);
+  state.dailyClaims[dateKey][taskId] = true;
+  addLog(state, now, `完成日常「${task.title}」，获得${formatReward(task.reward)}。`);
+  return { ok: true, reward: task.reward };
+}
+
+export function buyMarketItem(state, itemId, now = Date.now()) {
+  const item = MARKET_ITEMS[itemId];
+  if (!item) {
+    return { ok: false, reason: 'unknownItem' };
+  }
+  if (!canAfford(state, item.cost)) {
+    addLog(state, now, `购买${item.name}需要${formatReward(item.cost)}。`);
+    return { ok: false, reason: 'notEnoughResources' };
+  }
+
+  payResources(state, item.cost);
+  applyResources(state, item.reward);
+  addDailyProgress(state, 'marketBuys', 1, now);
+  const dateKey = getDateKey(now);
+  state.marketPurchases[dateKey] ??= {};
+  state.marketPurchases[dateKey][itemId] = (state.marketPurchases[dateKey][itemId] ?? 0) + 1;
+  addLog(state, now, `坊市购得${item.name}，获得${formatReward(item.reward)}。`);
+  return { ok: true, reward: item.reward };
+}
+
+export function getSectStatus(state) {
+  const unlocked = isSectUnlocked(state);
+  const disciples = state.sectDisciples ?? 0;
+  const capacity = getSectCapacity(state);
+  const assignments = normalizeSectAssignments(state.sectAssignments, disciples);
+  const assigned = Object.values(assignments).reduce((total, count) => total + count, 0);
+  return {
+    unlocked,
+    disciples,
+    capacity,
+    assigned,
+    idle: Math.max(0, disciples - assigned),
+    reputation: Math.floor(state.sectReputation ?? 0),
+    recruitCost: disciples >= capacity ? null : getRecruitCost(disciples + 1),
+    commissions: Object.values(SECT_COMMISSIONS).map((commission) => ({
+      ...commission,
+      assigned: assignments[commission.id] ?? 0,
+    })),
+  };
+}
+
+export function recruitDisciple(state, now = Date.now()) {
+  if (!isSectUnlocked(state)) {
+    return { ok: false, reason: 'locked' };
+  }
+  const capacity = getSectCapacity(state);
+  const current = state.sectDisciples ?? 0;
+  if (current >= capacity) {
+    return { ok: false, reason: 'full' };
+  }
+  const cost = getRecruitCost(current + 1);
+  if (!canAfford(state, cost)) {
+    addLog(state, now, `招募弟子需要${formatReward(cost)}。`);
+    return { ok: false, reason: 'notEnoughResources' };
+  }
+
+  payResources(state, cost);
+  state.sectDisciples = current + 1;
+  addLog(state, now, `一名外门弟子入门，宗门弟子增至 ${state.sectDisciples} 人。`);
+  return { ok: true, disciples: state.sectDisciples };
+}
+
+export function assignSectDisciple(state, commissionId, delta = 1, now = Date.now()) {
+  if (!isSectUnlocked(state)) {
+    return { ok: false, reason: 'locked' };
+  }
+  const commission = SECT_COMMISSIONS[commissionId];
+  if (!commission) {
+    return { ok: false, reason: 'unknownCommission' };
+  }
+  state.sectAssignments = normalizeSectAssignments(state.sectAssignments, state.sectDisciples ?? 0);
+  const current = state.sectAssignments[commissionId] ?? 0;
+  const assigned = Object.values(state.sectAssignments).reduce((total, count) => total + count, 0);
+  const safeDelta = Math.trunc(Number(delta) || 0);
+  if (safeDelta > 0 && assigned >= (state.sectDisciples ?? 0)) {
+    return { ok: false, reason: 'noIdleDisciple' };
+  }
+  if (safeDelta < 0 && current <= 0) {
+    return { ok: false, reason: 'noneAssigned' };
+  }
+  const next = Math.max(0, current + safeDelta);
+  state.sectAssignments[commissionId] = next;
+  addLog(state, now, `${commission.name}现有 ${next} 名弟子。`);
+  return { ok: true, assigned: next };
+}
+
+export function claimGoalReward(state, goalId, now = Date.now()) {
+  const lookup = findMainlineObjective(state, goalId);
+  if (!lookup) {
+    return { ok: false, reason: 'unknownGoal' };
+  }
+  if (lookup.chapter.locked) {
+    return { ok: false, reason: 'locked' };
+  }
+  const goal = lookup.objective;
+  if (!goal.completed) {
+    return { ok: false, reason: 'notCompleted' };
+  }
+  if (state.claimedGoals?.[goalId]) {
+    return { ok: false, reason: 'alreadyClaimed' };
+  }
+
+  applyResources(state, goal.reward);
+  state.claimedGoals[goalId] = true;
+  addLog(state, now, `领取「${goal.title}」奖励：${formatReward(goal.reward)}。`);
+  return { ok: true, reward: goal.reward };
+}
+
+export function claimChapterReward(state, chapterId, now = Date.now()) {
+  const chapter = getMainlineChapters(state).find((candidate) => candidate.id === chapterId);
+  if (!chapter) {
+    return { ok: false, reason: 'unknownChapter' };
+  }
+  if (chapter.locked) {
+    return { ok: false, reason: 'locked' };
+  }
+  if (chapter.rewardClaimed) {
+    return { ok: false, reason: 'alreadyClaimed' };
+  }
+  if (!chapter.completed) {
+    return { ok: false, reason: 'notCompleted' };
+  }
+  if (!chapter.allObjectivesClaimed) {
+    return { ok: false, reason: 'objectivesUnclaimed' };
+  }
+
+  applyResources(state, chapter.reward);
+  state.claimedChapterRewards[chapter.id] = true;
+  addLog(state, now, `完成主线「${chapter.title}」，获得${formatReward(chapter.reward)}。`);
+  return { ok: true, reward: chapter.reward };
+}
+
+export function toggleAutoMission(state, missionId, now = Date.now()) {
+  if (!MISSIONS[missionId]) {
+    return { ok: false, reason: 'unknownMission' };
+  }
+
+  state.autoMissionId = state.autoMissionId === missionId ? null : missionId;
+  addLog(state, now, state.autoMissionId ? `已设为自动历练：${MISSIONS[missionId].name}。` : '已停止自动历练。');
+  return { ok: true, active: state.autoMissionId };
+}
+
+export function applyOfflineProgress(state, seconds, now = Date.now()) {
+  const before = snapshotResources(state);
+  const previousLogCount = state.log.length;
+  updateGame(state, seconds, now);
+  const after = snapshotResources(state);
+
+  return {
+    seconds: Math.max(0, Math.min(seconds, 60 * 60 * 12)),
+    qi: round(after.qi - before.qi),
+    spiritStones: Math.max(0, round(after.spiritStones - before.spiritStones)),
+    herbs: Math.max(0, round(after.herbs - before.herbs)),
+    beastCores: Math.max(0, round(after.beastCores - before.beastCores)),
+    artifacts: Math.max(0, round(after.artifacts - before.artifacts)),
+    arrayFlags: Math.max(0, round(after.arrayFlags - before.arrayFlags)),
+    logEntries: state.log.slice(0, Math.max(0, state.log.length - previousLogCount)),
+  };
+}
+
+export function updateGame(state, deltaSeconds, now = Date.now()) {
+  const seconds = Math.max(0, Math.min(deltaSeconds, 60 * 60 * 12));
+
+  const realm = getCurrentRealm(state);
+  state.qi = round(state.qi + calculateQiRate(state, now) * seconds);
+  state.stoneCarry += realm.stoneRate * seconds;
+  state.herbCarry += (state.buildings?.spiritField ?? 0) * BUILDINGS.spiritField.herbRatePerLevel * seconds;
+
+  const stonesGained = Math.floor(state.stoneCarry);
+  if (stonesGained > 0) {
+    state.spiritStones += stonesGained;
+    state.stoneCarry = round(state.stoneCarry - stonesGained);
+  }
+
+  const herbsGained = Math.floor(state.herbCarry);
+  if (herbsGained > 0) {
+    state.herbs += herbsGained;
+    state.herbCarry = round(state.herbCarry - herbsGained);
+  }
+
+  state.totalCultivationSeconds += seconds;
+  addDailyProgress(state, 'cultivationSeconds', seconds, now);
+  completeAlchemyIfReady(state, now);
+  completeMissionIfReady(state, now);
+  updateSectCommissions(state, seconds);
+  state.lastUpdatedAt = now;
+  return state;
+}
+
+export function performBreakthrough(state, now = Date.now(), random = Math.random) {
+  const realm = getCurrentRealm(state);
+  if (state.realmIndex >= REALMS.length - 1) {
+    addLog(state, now, '此界修行已至尽头，静待新的机缘。');
+    return { ok: false, reason: 'maxRealm' };
+  }
+
+  if (state.qi < realm.requiredQi) {
+    addLog(state, now, '灵气尚未圆满，突破会伤及根基。');
+    return { ok: false, reason: 'notEnoughQi' };
+  }
+
+  const chance = calculateBreakthroughChance(state, now);
+  if (random() > chance) {
+    state.qi = round(state.qi * 0.5);
+    if ((state.foundationStability ?? 0) > 0) {
+      state.foundationStability = Math.max(0, state.foundationStability - 1);
+    } else {
+      state.heartDemon = (state.heartDemon ?? 0) + 1;
+    }
+    addLog(state, now, '突破时心魔骤起，灵气逆行，修为折损。');
+    return { ok: false, reason: 'failed', chance };
+  }
+
+  const carriedQi = calculateBreakthroughCarryQi(state, realm);
+  state.realmIndex += 1;
+  state.qi = Math.min(carriedQi, round(getCurrentRealm(state).requiredQi * 0.4));
+  state.heartDemon = Math.max(0, (state.heartDemon ?? 0) - 1);
+  state.insight = (state.insight ?? 0) + 1;
+  state.foundationStability = 0;
+  state.breakthroughBoostUntil = 0;
+  state.breakthroughCount += 1;
+  addLog(state, now, `灵气贯通周天，突破至${getCurrentRealm(state).name}。`);
+  return { ok: true, chance };
+}
+
+export function calculateBreakthroughCarryQi(state, realm = getCurrentRealm(state)) {
+  const overflowQi = Math.max(0, (state.qi ?? 0) - realm.requiredQi);
+  return round(overflowQi * 0.5);
+}
+
+export function startMission(state, missionId, now = Date.now()) {
+  if (state.activeMission) {
+    return { ok: false, reason: 'busy' };
+  }
+
+  const mission = MISSIONS[missionId];
+  if (!mission) {
+    return { ok: false, reason: 'unknownMission' };
+  }
+  if (!getMissionStatus(state, missionId).unlocked) {
+    addLog(state, now, `境界不足，暂不能进入「${mission.map ?? mission.name}」。`);
+    return { ok: false, reason: 'realmLocked' };
+  }
+
+  state.activeMission = {
+    id: mission.id,
+    startedAt: now,
+    endsAt: now + mission.duration * 1000,
+  };
+  addLog(state, now, `外出执行「${mission.name}」。`);
+  return { ok: true };
+}
+
+export function craftPill(state, recipeId = 'gatherQiPill', now = Date.now()) {
+  if (typeof recipeId === 'number') {
+    now = recipeId;
+    recipeId = 'gatherQiPill';
+  }
+  const recipe = PILL_RECIPES[recipeId];
+  if (!recipe) {
+    return { ok: false, reason: 'unknownRecipe' };
+  }
+  const furnaceLevel = state.buildings?.alchemyFurnace ?? 0;
+  if (furnaceLevel < recipe.unlockLevel) {
+    addLog(state, now, `${recipe.name}需要 ${recipe.unlockLevel} 级炼丹炉解锁。`);
+    return { ok: false, reason: 'locked' };
+  }
+  if (state.activeAlchemy) {
+    return { ok: false, reason: 'busy' };
+  }
+  if (!canAfford(state, recipe.cost)) {
+    addLog(state, now, `炼制${recipe.name}需要${formatReward(recipe.cost)}。`);
+    return { ok: false, reason: 'notEnoughResources' };
+  }
+
+  payResources(state, recipe.cost);
+  state.activeAlchemy = {
+    recipeId: recipe.id,
+    startedAt: now,
+    endsAt: now + getAlchemyDuration(state, recipe) * 1000,
+  };
+  addLog(state, now, `丹炉起火，开始炼制${recipe.name}。`);
+  return { ok: true };
+}
+
+export function upgradeBuilding(state, buildingId, now = Date.now()) {
+  const building = BUILDINGS[buildingId];
+  if (!building) {
+    return { ok: false, reason: 'unknownBuilding' };
+  }
+
+  const currentLevel = state.buildings?.[buildingId] ?? 0;
+  if (currentLevel >= building.maxLevel) {
+    addLog(state, now, `${building.name}已升至当前上限。`);
+    return { ok: false, reason: 'maxLevel' };
+  }
+
+  const nextLevel = currentLevel + 1;
+  if (nextLevel > getRealmUpgradeLimit(state)) {
+    addLog(state, now, `${getUpgradeTier(nextLevel).name}升级需要更高境界。`);
+    return { ok: false, reason: 'realmLocked' };
+  }
+  const cost = building.cost(nextLevel);
+  if (!canAfford(state, cost)) {
+    addLog(state, now, `升级${building.name}需要${formatReward(cost)}。`);
+    return { ok: false, reason: 'notEnoughResources' };
+  }
+
+  payResources(state, cost);
+  state.buildings[buildingId] = nextLevel;
+  addLog(state, now, `${building.name}升至 ${nextLevel} 级。`);
+  return { ok: true, level: nextLevel };
+}
+
+export function upgradeGear(state, gearId, now = Date.now()) {
+  const gear = GEAR[gearId];
+  if (!gear) {
+    return { ok: false, reason: 'unknownGear' };
+  }
+  const currentLevel = state.gear?.[gearId] ?? 0;
+  if (currentLevel >= gear.maxLevel) {
+    return { ok: false, reason: 'maxLevel' };
+  }
+  if (currentLevel + 1 > getRealmUpgradeLimit(state)) {
+    addLog(state, now, `${getUpgradeTier(currentLevel + 1).name}装备需要更高境界。`);
+    return { ok: false, reason: 'realmLocked' };
+  }
+  const cost = gear.cost(currentLevel + 1);
+  if (!canAfford(state, cost)) {
+    addLog(state, now, `升级${gear.name}需要${formatReward(cost)}。`);
+    return { ok: false, reason: 'notEnoughResources' };
+  }
+  payResources(state, cost);
+  state.gear[gearId] = currentLevel + 1;
+  addLog(state, now, `${gear.name}升至 ${currentLevel + 1} 级。`);
+  return { ok: true, level: currentLevel + 1 };
+}
+
+export function upgradeCultivationPath(state, pathId, now = Date.now()) {
+  const path = CULTIVATION_PATHS[pathId];
+  if (!path) {
+    return { ok: false, reason: 'unknownPath' };
+  }
+  const currentLevel = state.cultivationPaths?.[pathId] ?? 0;
+  if (currentLevel >= path.maxLevel) {
+    return { ok: false, reason: 'maxLevel' };
+  }
+  if (currentLevel + 1 > getRealmUpgradeLimit(state)) {
+    addLog(state, now, `${getUpgradeTier(currentLevel + 1).name}${path.name}需要更高境界。`);
+    return { ok: false, reason: 'realmLocked' };
+  }
+  const cost = path.cost(currentLevel + 1);
+  if (!canAfford(state, cost)) {
+    addLog(state, now, `提升${path.name}需要${formatReward(cost)}。`);
+    return { ok: false, reason: 'notEnoughResources' };
+  }
+  payResources(state, cost);
+  state.cultivationPaths[pathId] = currentLevel + 1;
+  addLog(state, now, `${path.name}功法升至 ${currentLevel + 1} 级。`);
+  return { ok: true, level: currentLevel + 1 };
+}
+
+export function upgradeFormation(state, formationId, now = Date.now()) {
+  const formation = FORMATIONS[formationId];
+  if (!formation) {
+    return { ok: false, reason: 'unknownFormation' };
+  }
+  const currentLevel = state.formations?.[formationId] ?? 0;
+  if (currentLevel >= formation.maxLevel) {
+    return { ok: false, reason: 'maxLevel' };
+  }
+  if (currentLevel + 1 > getRealmUpgradeLimit(state)) {
+    addLog(state, now, `${getUpgradeTier(currentLevel + 1).name}阵法需要更高境界。`);
+    return { ok: false, reason: 'realmLocked' };
+  }
+  const cost = formation.cost(currentLevel + 1);
+  if (!canAfford(state, cost)) {
+    addLog(state, now, `升级${formation.name}需要${formatReward(cost)}。`);
+    return { ok: false, reason: 'notEnoughResources' };
+  }
+  payResources(state, cost);
+  state.formations[formationId] = currentLevel + 1;
+  addLog(state, now, `${formation.name}升至 ${currentLevel + 1} 级。`);
+  return { ok: true, level: currentLevel + 1 };
+}
+
+export function refineGear(state, gearId, now = Date.now(), random = Math.random) {
+  const gear = GEAR[gearId];
+  if (!gear) {
+    return { ok: false, reason: 'unknownGear' };
+  }
+  if ((state.gear?.[gearId] ?? 0) <= 0) {
+    return { ok: false, reason: 'notEquipped' };
+  }
+  const currentQuality = state.gearQuality?.[gearId] ?? 0;
+  if (currentQuality >= GEAR_QUALITIES.length - 1) {
+    return { ok: false, reason: 'maxQuality' };
+  }
+  const cost = getRefineCost(currentQuality + 1);
+  if (!canAfford(state, cost)) {
+    addLog(state, now, `淬炼${gear.name}需要${formatReward(cost)}。`);
+    return { ok: false, reason: 'notEnoughResources' };
+  }
+  payResources(state, cost);
+  const chance = GEAR_QUALITIES[currentQuality].refineChance;
+  if (random() > chance) {
+    addLog(state, now, `淬炼${gear.name}火候不足，品质未提升。`);
+    return { ok: false, reason: 'failed', chance };
+  }
+  state.gearQuality[gearId] = currentQuality + 1;
+  state.gearAffixes[gearId] ||= getDefaultAffixForGear(gearId);
+  const quality = GEAR_QUALITIES[state.gearQuality[gearId]];
+  addLog(state, now, `${gear.name}淬炼至${quality.name}，获得词条「${GEAR_AFFIXES[state.gearAffixes[gearId]].name}」。`);
+  return { ok: true, quality: state.gearQuality[gearId], affix: state.gearAffixes[gearId] };
+}
+
+export function stabilizeFoundation(state, now = Date.now()) {
+  const cost = { spiritStones: 35, herbs: 8 };
+  if (!canAfford(state, cost)) {
+    addLog(state, now, `稳固根基需要${formatReward(cost)}。`);
+    return { ok: false, reason: 'notEnoughResources' };
+  }
+  payResources(state, cost);
+  state.foundationStability = Math.min(3, (state.foundationStability ?? 0) + 1);
+  state.heartDemon = Math.max(0, (state.heartDemon ?? 0) - 1);
+  addLog(state, now, '运转周天稳固根基，本次突破更有把握。');
+  return { ok: true, level: state.foundationStability };
+}
+
+export function consumePill(state, recipeId = 'gatherQiPill', now = Date.now()) {
+  if (typeof recipeId === 'number') {
+    now = recipeId;
+    recipeId = 'gatherQiPill';
+  }
+  const recipe = PILL_RECIPES[recipeId];
+  if (!recipe) {
+    return { ok: false, reason: 'unknownRecipe' };
+  }
+  if ((state.inventoryPills?.[recipeId] ?? 0) <= 0) {
+    addLog(state, now, '丹瓶已空。');
+    return { ok: false };
+  }
+
+  state.inventoryPills[recipeId] -= 1;
+  if (recipeId === 'gatherQiPill') {
+    const alchemyBonus = 1 + (state.cultivationPaths?.alchemy ?? 0) * CULTIVATION_PATHS.alchemy.pillQiBonusPerLevel;
+    state.qi = round(state.qi + (65 + state.realmIndex * 30) * alchemyBonus);
+    state.pillBoostUntil = Math.max(state.pillBoostUntil ?? 0, now) + 120 * 1000;
+    state.pills = state.inventoryPills.gatherQiPill;
+    addLog(state, now, '服下一枚聚气丹，吐纳速度暂时提升。');
+  } else if (recipeId === 'clearHeartPill') {
+    state.heartDemon = Math.max(0, (state.heartDemon ?? 0) - 1);
+    addLog(state, now, '服下一枚清心丹，心魔压力减轻。');
+  } else if (recipeId === 'meridianPill') {
+    state.breakthroughBoostUntil = Math.max(state.breakthroughBoostUntil ?? 0, now) + 180 * 1000;
+    addLog(state, now, '服下一枚护脉丹，突破把握暂时提高。');
+  }
+  return { ok: true };
+}
+
+export function formatDuration(seconds) {
+  const safeSeconds = Math.max(0, Math.floor(seconds));
+  const minutes = Math.floor(safeSeconds / 60);
+  const rest = safeSeconds % 60;
+  return `${minutes}:${String(rest).padStart(2, '0')}`;
+}
+
+function completeMissionIfReady(state, now) {
+  const active = state.activeMission;
+  if (!active || now < active.endsAt) {
+    return;
+  }
+
+  const mission = MISSIONS[active.id];
+  state.activeMission = null;
+  if (!mission) {
+    return;
+  }
+
+  const danger = getMissionDanger(state, mission);
+  if (danger && calculatePower(state) < danger) {
+    applyResources(state, mission.failurePenalty);
+    state.injuryUntil = now + 90 * 1000;
+    addLog(state, now, `挑战「${mission.name}」失利，负伤退回洞府。`);
+    restartAutoMission(state, mission.id, now);
+    return;
+  }
+
+  applyResources(state, mission.reward);
+  state.completedMissions[mission.id] = (state.completedMissions[mission.id] ?? 0) + 1;
+  const mapId = getMissionMapId(mission);
+  addMapReputation(state, mapId, MISSION_MAPS[mapId]?.reputationPerMission ?? 0);
+  const event = resolveMissionEvent(mission, state.completedMissions[mission.id]);
+  if (event) {
+    applyMissionEvent(state, mission, event, now);
+  }
+  if (mission.rareEvery && state.completedMissions[mission.id] % mission.rareEvery === 0) {
+    applyResources(state, mission.rareReward);
+    addLog(state, now, `深入「${mission.map ?? mission.name}」有所感悟，额外获得${formatReward(mission.rareReward)}。`);
+  }
+  addDailyProgress(state, 'missions', 1, now);
+  addLog(state, now, `完成「${mission.name}」，收获${formatReward(mission.reward)}。`);
+  restartAutoMission(state, mission.id, now);
+}
+
+function completeAlchemyIfReady(state, now) {
+  if (!state.activeAlchemy || now < state.activeAlchemy.endsAt) {
+    return;
+  }
+
+  const recipe = PILL_RECIPES[state.activeAlchemy.recipeId] ?? PILL_RECIPES.gatherQiPill;
+  state.activeAlchemy = null;
+  state.inventoryPills[recipe.id] = (state.inventoryPills[recipe.id] ?? 0) + 1;
+  state.pills = state.inventoryPills.gatherQiPill;
+  state.craftedPills = (state.craftedPills ?? 0) + 1;
+  addLog(state, now, `丹炉火候正好，炼成一枚${recipe.name}。`);
+}
+
+function getMissionDanger(state, mission) {
+  return Math.max(0, (mission.danger ?? 0) - (state.gear?.robe ?? 0) * GEAR.robe.dangerReductionPerLevel - getGearAffixBonus(state, 'dangerReduction') - getEquippedLootBonus(state, 'dangerReduction') - getMapMasteryBonus(state, 'dangerReduction') - (state.cultivationPaths?.sword ?? 0) * CULTIVATION_PATHS.sword.dangerReductionPerLevel);
+}
+
+function addLog(state, time, text) {
+  state.log.unshift({ time, text });
+  state.log = state.log.slice(0, 20);
+}
+
+function normalizeMission(mission) {
+  if (!mission || !MISSIONS[mission.id]) {
+    return null;
+  }
+  return {
+    id: mission.id,
+    startedAt: Number(mission.startedAt) || Date.now(),
+    endsAt: Number(mission.endsAt) || Date.now(),
+  };
+}
+
+function normalizeAlchemy(alchemy) {
+  if (!alchemy) {
+    return null;
+  }
+  return {
+    recipeId: PILL_RECIPES[alchemy.recipeId] ? alchemy.recipeId : 'gatherQiPill',
+    startedAt: Number(alchemy.startedAt) || Date.now(),
+    endsAt: Number(alchemy.endsAt) || Date.now(),
+  };
+}
+
+function normalizeBuildings(buildings) {
+  const normalized = createGameState().buildings;
+  Object.keys(BUILDINGS).forEach((id) => {
+    normalized[id] = clampInteger(buildings?.[id] ?? normalized[id] ?? 0, 0, BUILDINGS[id].maxLevel);
+  });
+  return normalized;
+}
+
+function normalizeLevels(savedLevels, definitions) {
+  const normalized = {};
+  Object.keys(definitions).forEach((id) => {
+    normalized[id] = clampInteger(savedLevels?.[id] ?? 0, 0, definitions[id].maxLevel);
+  });
+  return normalized;
+}
+
+function normalizeGearQuality(savedQuality) {
+  const normalized = {};
+  Object.keys(GEAR).forEach((id) => {
+    normalized[id] = clampInteger(savedQuality?.[id] ?? 0, 0, GEAR_QUALITIES.length - 1);
+  });
+  return normalized;
+}
+
+function normalizeGearAffixes(savedAffixes) {
+  const normalized = {};
+  Object.keys(GEAR).forEach((id) => {
+    const affixId = savedAffixes?.[id] ?? null;
+    normalized[id] = affixId && GEAR_AFFIXES[affixId]?.slot === id ? affixId : null;
+  });
+  return normalized;
+}
+
+function normalizeInventoryPills(inventoryPills, legacyPills = 0) {
+  const normalized = {};
+  Object.keys(PILL_RECIPES).forEach((id) => {
+    normalized[id] = Math.max(0, Math.floor(Number(inventoryPills?.[id]) || 0));
+  });
+  if (!inventoryPills && legacyPills > 0) {
+    normalized.gatherQiPill = Math.max(0, Math.floor(Number(legacyPills) || 0));
+  }
+  return normalized;
+}
+
+function normalizeCompletedMissions(completedMissions) {
+  if (!completedMissions || typeof completedMissions !== 'object') {
+    return {};
+  }
+
+  return Object.fromEntries(
+    Object.keys(MISSIONS).map((id) => [id, Math.max(0, Number(completedMissions[id]) || 0)]),
+  );
+}
+
+function normalizeMapValues(values) {
+  if (!values || typeof values !== 'object') {
+    return {};
+  }
+  return Object.fromEntries(
+    Object.keys(MISSION_MAPS).map((id) => [id, Math.max(0, Number(values[id]) || 0)]),
+  );
+}
+
+function normalizeDefeatedBosses(defeatedBosses) {
+  if (!defeatedBosses || typeof defeatedBosses !== 'object') {
+    return {};
+  }
+  return Object.fromEntries(
+    Object.entries(defeatedBosses).filter(([id, defeated]) => MISSION_MAPS[id] && Boolean(defeated)),
+  );
+}
+
+function normalizeClaimedGoals(claimedGoals) {
+  if (!claimedGoals || typeof claimedGoals !== 'object') {
+    return {};
+  }
+
+  return Object.fromEntries(
+    Object.entries(claimedGoals).filter(([, claimed]) => Boolean(claimed)),
+  );
+}
+
+function normalizeLootEquipment(items) {
+  if (!Array.isArray(items)) {
+    return [];
+  }
+  return items
+    .map((item, index) => {
+      const template = LOOT_EQUIPMENT[item?.templateId] ?? LOOT_EQUIPMENT[item?.id];
+      if (!template) {
+        return null;
+      }
+      return createLootItem(template.id, item.uid || `${template.id}-${index + 1}`, clampInteger(item.level ?? 0, 0, getLootMaxLevel(template)));
+    })
+    .filter(Boolean)
+    .slice(0, 40);
+}
+
+function normalizeSectAssignments(assignments, disciples = 0) {
+  const normalized = {};
+  let assigned = 0;
+  Object.keys(SECT_COMMISSIONS).forEach((id) => {
+    const count = Math.max(0, Math.floor(Number(assignments?.[id]) || 0));
+    const allowed = Math.max(0, Math.min(count, disciples - assigned));
+    normalized[id] = allowed;
+    assigned += allowed;
+  });
+  return normalized;
+}
+
+function normalizeSectCarry(carry) {
+  return {
+    spiritStones: Math.max(0, Number(carry?.spiritStones) || 0),
+    herbs: Math.max(0, Number(carry?.herbs) || 0),
+    beastCores: Math.max(0, Number(carry?.beastCores) || 0),
+    artifacts: Math.max(0, Number(carry?.artifacts) || 0),
+    reputation: Math.max(0, Number(carry?.reputation) || 0),
+  };
+}
+
+function normalizeEquippedLoot(equippedLoot, lootEquipment) {
+  const slots = { weapon: null, amulet: null, robe: null };
+  Object.keys(slots).forEach((slot) => {
+    const uid = equippedLoot?.[slot] ?? null;
+    const item = lootEquipment.find((candidate) => candidate.uid === uid && candidate.slot === slot);
+    slots[slot] = item ? item.uid : null;
+  });
+  return slots;
+}
+
+function normalizeMissionEvent(event) {
+  if (!event || !MISSION_EVENTS[event.id]) {
+    return null;
+  }
+  return {
+    id: event.id,
+    name: MISSION_EVENTS[event.id].name,
+    missionId: MISSIONS[event.missionId] ? event.missionId : null,
+    reward: event.reward && typeof event.reward === 'object' ? { ...event.reward } : {},
+    equipmentName: event.equipmentName ?? null,
+    time: Number(event.time) || Date.now(),
+  };
+}
+
+function normalizePermanentBonuses(bonuses) {
+  return {
+    qiRate: Math.max(0, Number(bonuses?.qiRate) || 0),
+    power: Math.max(0, Number(bonuses?.power) || 0),
+  };
+}
+
+function hydrateMainlineObjective(state, objective) {
+  return {
+    id: objective.id,
+    title: objective.title,
+    detail: objective.detail,
+    completed: Boolean(objective.completed(state)),
+    claimed: Boolean(state.claimedGoals?.[objective.id]),
+    reward: objective.reward,
+  };
+}
+
+function isMainlineChapterUnlocked(state, index) {
+  if (index <= 0) {
+    return true;
+  }
+  return MAINLINE_CHAPTERS.slice(0, index).every((chapter) => Boolean(state.claimedChapterRewards?.[chapter.id]));
+}
+
+function findMainlineObjective(state, objectiveId) {
+  for (const chapter of getMainlineChapters(state)) {
+    const objective = chapter.objectives.find((candidate) => candidate.id === objectiveId);
+    if (objective) {
+      return { chapter, objective };
+    }
+  }
+  return null;
+}
+
+function restartAutoMission(state, completedMissionId, now) {
+  const missionId = state.autoMissionId;
+  if (!missionId || missionId !== completedMissionId || !MISSIONS[missionId]) {
+    return;
+  }
+
+  const mission = MISSIONS[missionId];
+  state.activeMission = {
+    id: mission.id,
+    startedAt: now,
+    endsAt: now + mission.duration * 1000,
+  };
+  addLog(state, now, `自动继续「${mission.name}」。`);
+}
+
+function snapshotResources(state) {
+  return {
+    qi: state.qi ?? 0,
+    spiritStones: state.spiritStones ?? 0,
+    herbs: state.herbs ?? 0,
+    beastCores: state.beastCores ?? 0,
+    artifacts: state.artifacts ?? 0,
+    arrayFlags: state.arrayFlags ?? 0,
+  };
+}
+
+function normalizeNestedClaims(claims) {
+  if (!claims || typeof claims !== 'object') {
+    return {};
+  }
+  return Object.fromEntries(
+    Object.entries(claims)
+      .filter(([, value]) => value && typeof value === 'object')
+      .map(([key, value]) => [key, { ...value }]),
+  );
+}
+
+function normalizeDailyProgress(progress) {
+  if (!progress || typeof progress !== 'object') {
+    return {};
+  }
+  return Object.fromEntries(
+    Object.entries(progress)
+      .filter(([, value]) => value && typeof value === 'object')
+      .map(([dateKey, value]) => [dateKey, {
+        cultivationSeconds: Math.max(0, Number(value.cultivationSeconds) || 0),
+        missions: Math.max(0, Number(value.missions) || 0),
+        marketBuys: Math.max(0, Number(value.marketBuys) || 0),
+      }]),
+  );
+}
+
+function getDailyProgress(state, dateKey) {
+  state.dailyProgress[dateKey] ??= { cultivationSeconds: 0, missions: 0, marketBuys: 0 };
+  return state.dailyProgress[dateKey];
+}
+
+function addDailyProgress(state, key, amount, now = Date.now()) {
+  const progress = getDailyProgress(state, getDateKey(now));
+  progress[key] = (progress[key] ?? 0) + amount;
+}
+
+function getAlchemyDuration(state, recipe) {
+  const furnaceLevel = state.buildings?.alchemyFurnace ?? 0;
+  const pathLevel = state.cultivationPaths?.alchemy ?? 0;
+  const speedMultiplier = Math.max(0.35, 1 - furnaceLevel * BUILDINGS.alchemyFurnace.speedBonusPerLevel - pathLevel * CULTIVATION_PATHS.alchemy.alchemySpeedPerLevel);
+  return Math.max(10, Math.round(recipe.duration * speedMultiplier));
+}
+
+function canAfford(state, cost) {
+  return Object.entries(cost).every(([resource, amount]) => getResourceAmount(state, resource) >= amount);
+}
+
+function getRefineCost(nextQuality) {
+  return {
+    spiritStones: scaleCost(50, nextQuality),
+    artifacts: nextQuality,
+  };
+}
+
+function getDefaultAffixForGear(gearId) {
+  const defaults = {
+    weapon: 'swordIntent',
+    amulet: 'spiritVein',
+    robe: 'cloudStep',
+  };
+  return defaults[gearId] ?? null;
+}
+
+function getGearAffixBonus(state, key) {
+  return Object.values(state.gearAffixes ?? {}).reduce((total, affixId) => total + (GEAR_AFFIXES[affixId]?.[key] ?? 0), 0);
+}
+
+function getEquippedLootBonus(state, key) {
+  return Object.values(state.equippedLoot ?? {}).reduce((total, uid) => {
+    const item = state.lootEquipment?.find((candidate) => candidate.uid === uid);
+    return total + (item?.bonuses?.[key] ?? 0);
+  }, 0);
+}
+
+function getMissionMapId(mission) {
+  if (mission.mapId && MISSION_MAPS[mission.mapId]) {
+    return mission.mapId;
+  }
+  const found = Object.values(MISSION_MAPS).find((map) => map.name === mission.map);
+  return found?.id ?? 'qinglanMountain';
+}
+
+function addMapReputation(state, mapId, amount) {
+  if (!MISSION_MAPS[mapId] || amount <= 0) {
+    return;
+  }
+  state.mapReputation ??= {};
+  state.mapReputation[mapId] = round((state.mapReputation[mapId] ?? 0) + amount);
+}
+
+function getMapMastery(state, mapId) {
+  const reputation = state.mapReputation?.[mapId] ?? 0;
+  const tier = MAP_MASTERY_TIERS.reduce((best, current) => (reputation >= current.reputation ? current : best), MAP_MASTERY_TIERS[0]);
+  const next = MAP_MASTERY_TIERS.find((candidate) => candidate.level === tier.level + 1) ?? null;
+  return {
+    level: tier.level,
+    name: tier.name,
+    reputation,
+    nextReputation: next?.reputation ?? null,
+  };
+}
+
+function getMapMasteryBonus(state, key) {
+  return Object.values(MISSION_MAPS).reduce((total, map) => {
+    const level = getMapMastery(state, map.id).level;
+    return total + (map.masteryBonus?.[key] ?? 0) * level;
+  }, 0);
+}
+
+function isSectUnlocked(state) {
+  return (state.realmIndex ?? 0) >= 2 || Boolean(state.defeatedBosses?.qinglanMountain);
+}
+
+function getSectCapacity(state) {
+  if (!isSectUnlocked(state)) {
+    return 0;
+  }
+  const bossBonus = Object.values(state.defeatedBosses ?? {}).filter(Boolean).length;
+  return 3 + Math.floor((state.realmIndex ?? 0) / 2) + bossBonus;
+}
+
+function getRecruitCost(nextDisciple) {
+  return {
+    spiritStones: 60 + nextDisciple * 60,
+    herbs: 5 + nextDisciple * 5,
+  };
+}
+
+function updateSectCommissions(state, seconds) {
+  if (!isSectUnlocked(state) || seconds <= 0) {
+    return;
+  }
+  state.sectAssignments = normalizeSectAssignments(state.sectAssignments, state.sectDisciples ?? 0);
+  state.sectCarry = normalizeSectCarry(state.sectCarry);
+
+  Object.entries(state.sectAssignments).forEach(([commissionId, count]) => {
+    const commission = SECT_COMMISSIONS[commissionId];
+    if (!commission || count <= 0) {
+      return;
+    }
+    Object.entries(commission.rates).forEach(([resource, rate]) => {
+      const key = resource === 'reputation' ? 'reputation' : resource;
+      state.sectCarry[key] = (state.sectCarry[key] ?? 0) + rate * count * seconds;
+    });
+  });
+
+  ['spiritStones', 'herbs', 'beastCores', 'artifacts'].forEach((resource) => {
+    const gained = Math.floor(state.sectCarry[resource] ?? 0);
+    if (gained > 0) {
+      state[resource] = (state[resource] ?? 0) + gained;
+      state.sectCarry[resource] = round(state.sectCarry[resource] - gained);
+    }
+  });
+  const reputationGained = Math.floor(state.sectCarry.reputation ?? 0);
+  if (reputationGained > 0) {
+    state.sectReputation = (state.sectReputation ?? 0) + reputationGained;
+    state.sectCarry.reputation = round(state.sectCarry.reputation - reputationGained);
+  }
+}
+
+function resolveMissionEvent(mission, completedCount) {
+  const eventIds = mission.events ?? [];
+  if (!eventIds.length || completedCount <= 0) {
+    return null;
+  }
+  return MISSION_EVENTS[eventIds[(completedCount - 1) % eventIds.length]] ?? null;
+}
+
+function applyMissionEvent(state, mission, event, now) {
+  applyResources(state, event.reward ?? {});
+  const item = event.equipment ? addLootEquipment(state, event.equipment) : null;
+  state.lastMissionEvent = {
+    id: event.id,
+    name: event.name,
+    missionId: mission.id,
+    reward: event.reward ?? {},
+    equipmentName: item?.name ?? null,
+    time: now,
+  };
+
+  const rewardText = formatReward(event.reward ?? {});
+  const equipmentText = item ? `，并获得${item.name}` : '';
+  addLog(state, now, `奇遇「${event.name}」：${event.detail}${rewardText ? ` 获得${rewardText}` : ''}${equipmentText}。`);
+}
+
+function addLootEquipment(state, templateId) {
+  const template = LOOT_EQUIPMENT[templateId];
+  if (!template) {
+    return null;
+  }
+  state.lootEquipment ??= [];
+  const uid = `${template.id}-${state.lootEquipment.length + 1}`;
+  const item = createLootItem(template.id, uid);
+  state.lootEquipment.unshift(item);
+  state.lootEquipment = state.lootEquipment.slice(0, 40);
+  return item;
+}
+
+function createLootItem(templateId, uid, level = 0) {
+  const template = LOOT_EQUIPMENT[templateId];
+  const safeLevel = clampInteger(level, 0, getLootMaxLevel(template));
+  return {
+    uid,
+    templateId,
+    name: template.name,
+    slot: template.slot,
+    quality: template.quality,
+    level: safeLevel,
+    bonuses: createLootBonuses(templateId, safeLevel),
+  };
+}
+
+function createLootBonuses(templateId, level = 0) {
+  const template = LOOT_EQUIPMENT[templateId];
+  const multiplier = 1 + level * 0.22;
+  return Object.fromEntries(
+    Object.entries(template.bonuses).map(([key, value]) => [key, key === 'breakthrough' || key === 'qiRate' ? round(value + level * 0.01) : Math.round(value * multiplier)]),
+  );
+}
+
+function getLootMaxLevel(itemOrTemplate) {
+  return Math.max(3, 3 + (itemOrTemplate?.quality ?? 0));
+}
+
+function getResourceAmount(state, resource) {
+  if (resource === 'pills') {
+    return state.inventoryPills?.gatherQiPill ?? state.pills ?? 0;
+  }
+  if (PILL_RECIPES[resource]) {
+    return state.inventoryPills?.[resource] ?? 0;
+  }
+  return state[resource] ?? 0;
+}
+
+function payResources(state, cost) {
+  Object.entries(cost).forEach(([resource, amount]) => {
+    if (resource === 'pills') {
+      state.inventoryPills.gatherQiPill = round((state.inventoryPills.gatherQiPill ?? 0) - amount);
+      state.pills = state.inventoryPills.gatherQiPill;
+      return;
+    }
+    if (PILL_RECIPES[resource]) {
+      state.inventoryPills[resource] = round((state.inventoryPills[resource] ?? 0) - amount);
+      state.pills = state.inventoryPills.gatherQiPill;
+      return;
+    }
+    state[resource] = round((state[resource] ?? 0) - amount);
+  });
+}
+
+function applyResources(state, reward) {
+  Object.entries(reward).forEach(([resource, amount]) => {
+    if (resource === 'qiRateBonus') {
+      state.permanentBonuses ??= { qiRate: 0, power: 0 };
+      state.permanentBonuses.qiRate = round((state.permanentBonuses.qiRate ?? 0) + amount);
+      return;
+    }
+    if (resource === 'powerBonus') {
+      state.permanentBonuses ??= { qiRate: 0, power: 0 };
+      state.permanentBonuses.power = round((state.permanentBonuses.power ?? 0) + amount);
+      return;
+    }
+    if (resource === 'pills') {
+      state.inventoryPills.gatherQiPill = Math.max(0, round((state.inventoryPills.gatherQiPill ?? 0) + amount));
+      state.pills = state.inventoryPills.gatherQiPill;
+      return;
+    }
+    if (PILL_RECIPES[resource]) {
+      state.inventoryPills[resource] = Math.max(0, round((state.inventoryPills[resource] ?? 0) + amount));
+      state.pills = state.inventoryPills.gatherQiPill;
+      return;
+    }
+    state[resource] = Math.max(0, round((state[resource] ?? 0) + amount));
+  });
+}
+
+function formatReward(reward) {
+  if (!reward || !Object.keys(reward).length) {
+    return '';
+  }
+  return Object.entries(reward)
+    .map(([key, amount]) => formatRewardEntry(key, amount))
+    .join('、');
+}
+
+function formatRewardEntry(key, amount) {
+  if (key === 'qiRateBonus') {
+    return `吐纳永久 +${Math.round(amount * 100)}%`;
+  }
+  if (key === 'powerBonus') {
+    return `战力永久 +${amount}`;
+  }
+
+  const names = {
+    qi: '灵气',
+    herbs: '灵草',
+    spiritStones: '灵石',
+    pills: '丹药',
+    gatherQiPill: '聚气丹',
+    clearHeartPill: '清心丹',
+    meridianPill: '护脉丹',
+    beastCores: '妖核',
+    artifacts: '法器',
+    arrayFlags: '阵旗',
+    forgingEssence: '炼器精魄',
+    heartDemon: '心魔',
+  };
+  return `${amount} ${names[key] ?? key}`;
+}
+
+function clampInteger(value, min, max) {
+  const integer = Number.isFinite(value) ? Math.floor(value) : min;
+  return Math.min(max, Math.max(min, integer));
+}
+
+function scaleCost(base, level) {
+  if (level <= 0) {
+    return 0;
+  }
+  const tierMultiplier = 1 + Math.floor((level - 1) / 3) * 1.5;
+  return Math.ceil(base * level * tierMultiplier);
+}
+
+function round(value) {
+  return Math.round(value * 100) / 100;
+}
+
+function getDateKey(now = Date.now()) {
+  return new Date(now).toISOString().slice(0, 10);
+}

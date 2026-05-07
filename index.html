@@ -30,6 +30,7 @@
         <button data-tab="alchemy">丹房</button>
         <button data-tab="gear">装备</button>
         <button data-tab="cultivation">功法</button>
+        <button data-tab="sect">宗门</button>
         <button data-tab="cave">洞府</button>
         <button data-tab="missions">历练</button>
         <button data-tab="log">日志</button>
@@ -81,6 +82,10 @@
             <div>
               <dt>阵旗</dt>
               <dd data-array-flags>0</dd>
+            </div>
+            <div>
+              <dt>精魄</dt>
+              <dd data-forging-essence>0</dd>
             </div>
             <div>
               <dt>心魔</dt>
@@ -180,6 +185,14 @@
             <h2>功法</h2>
           </header>
           <div data-cultivation-list class="system-list"></div>
+        </article>
+
+        <article class="panel" data-panel="sect">
+          <header>
+            <h2>宗门</h2>
+            <span data-sect-status class="goal-count">炼气三层后解锁</span>
+          </header>
+          <div data-sect-list class="system-list"></div>
         </article>
 
         <article class="panel" data-panel="cave">
