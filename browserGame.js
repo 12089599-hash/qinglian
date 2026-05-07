@@ -183,6 +183,35 @@
     },
   };
 
+  const gearQualities = [
+    { name: '凡品', powerBonus: 0, refineChance: 0.82 },
+    { name: '下品', powerBonus: 18, refineChance: 0.66 },
+    { name: '中品', powerBonus: 40, refineChance: 0.5 },
+    { name: '上品', powerBonus: 70, refineChance: 0.36 },
+    { name: '极品', powerBonus: 110, refineChance: 0 },
+  ];
+
+  const gearAffixes = {
+    swordIntent: {
+      id: 'swordIntent',
+      name: '剑意',
+      slot: 'weapon',
+      powerBonus: 25,
+    },
+    spiritVein: {
+      id: 'spiritVein',
+      name: '灵脉',
+      slot: 'amulet',
+      qiBonus: 0.08,
+    },
+    cloudStep: {
+      id: 'cloudStep',
+      name: '云步',
+      slot: 'robe',
+      dangerReduction: 18,
+    },
+  };
+
   const formations = {
     spiritGathering: {
       id: 'spiritGathering',
@@ -363,9 +392,19 @@
   });
 
   refs.gearList?.addEventListener('click', (event) => {
-    const button = event.target.closest('[data-upgrade-gear]');
-    if (!button) return;
-    upgradeGear(state, button.dataset.upgradeGear);
+    const upgradeButton = event.target.closest('[data-upgrade-gear]');
+    if (upgradeButton) {
+      upgradeGear(state, upgradeButton.dataset.upgradeGear);
+      saveState();
+      render(true);
+      return;
+    }
+    const refineButton = event.target.closest('[data-refine-gear]');
+    if (!refineButton) return;
+    const result = refineGear(state, refineButton.dataset.refineGear);
+    if (result.ok) {
+      showToast('淬炼成功', `${gear[refineButton.dataset.refineGear].name}提升为${gearQualities[result.quality].name}。`);
+    }
     saveState();
     render(true);
   });
@@ -505,6 +544,16 @@
         amulet: 0,
         robe: 0,
       },
+      gearQuality: {
+        weapon: 0,
+        amulet: 0,
+        robe: 0,
+      },
+      gearAffixes: {
+        weapon: null,
+        amulet: null,
+        robe: null,
+      },
       formations: {
         spiritGathering: 0,
         mountainGuard: 0,
@@ -545,6 +594,8 @@
     state.dailyProgress = normalizeDailyProgress(state.dailyProgress);
     state.marketPurchases = normalizeNestedClaims(state.marketPurchases);
     state.gear = normalizeLevels(state.gear, gear);
+    state.gearQuality = normalizeGearQuality(state.gearQuality);
+    state.gearAffixes = normalizeGearAffixes(state.gearAffixes);
     state.formations = normalizeLevels(state.formations, formations);
     state.buildings = normalizeBuildings(state.buildings);
     state.pills = state.inventoryPills.gatherQiPill;
@@ -722,6 +773,36 @@
     return { ok: true, level: currentLevel + 1 };
   }
 
+  function refineGear(state, gearId, now = Date.now(), random = Math.random) {
+    const item = gear[gearId];
+    if (!item) {
+      return { ok: false, reason: 'unknownGear' };
+    }
+    if ((state.gear[gearId] || 0) <= 0) {
+      return { ok: false, reason: 'notEquipped' };
+    }
+    const currentQuality = state.gearQuality[gearId] || 0;
+    if (currentQuality >= gearQualities.length - 1) {
+      addLog(state, now, `${item.name}已是极品。`);
+      return { ok: false, reason: 'maxQuality' };
+    }
+    const cost = getRefineCost(currentQuality + 1);
+    if (!canAfford(state, cost)) {
+      addLog(state, now, `淬炼${item.name}需要${formatReward(cost)}。`);
+      return { ok: false, reason: 'notEnoughResources' };
+    }
+    payResources(state, cost);
+    const chance = gearQualities[currentQuality].refineChance;
+    if (random() > chance) {
+      addLog(state, now, `淬炼${item.name}火候不足，品质未提升。`);
+      return { ok: false, reason: 'failed', chance };
+    }
+    state.gearQuality[gearId] = currentQuality + 1;
+    state.gearAffixes[gearId] ||= getDefaultAffixForGear(gearId);
+    addLog(state, now, `${item.name}淬炼至${gearQualities[state.gearQuality[gearId]].name}，获得词条「${gearAffixes[state.gearAffixes[gearId]].name}」。`);
+    return { ok: true, quality: state.gearQuality[gearId], affix: state.gearAffixes[gearId] };
+  }
+
   function upgradeFormation(state, formationId, now = Date.now()) {
     const formation = formations[formationId];
     if (!formation) {
@@ -804,7 +885,7 @@
   }
 
   function getMissionDanger(state, mission) {
-    return Math.max(0, (mission.danger || 0) - (state.gear.robe || 0) * gear.robe.dangerReductionPerLevel);
+    return Math.max(0, (mission.danger || 0) - (state.gear.robe || 0) * gear.robe.dangerReductionPerLevel - getGearAffixBonus(state, 'dangerReduction'));
   }
 
   function completeMissionIfReady(state, now) {
@@ -1098,6 +1179,18 @@
     };
   }
 
+  function getGearQuality(state, gearId) {
+    const qualityIndex = state.gearQuality[gearId] || 0;
+    const affixId = state.gearAffixes[gearId] || null;
+    const affix = affixId ? gearAffixes[affixId] : null;
+    return {
+      qualityIndex,
+      qualityName: gearQualities[qualityIndex]?.name || gearQualities[0].name,
+      affixId,
+      affixName: affix?.name || '无词条',
+    };
+  }
+
   function getGoals(state) {
     return [
       {
@@ -1324,12 +1417,12 @@
     if (!refs.gearList) {
       return;
     }
-    const signature = `${getRealmUpgradeLimit(state)}|${Object.keys(gear).map((id) => `${id}:${state.gear[id] || 0}`).join('|')}`;
+    const signature = `${getRealmUpgradeLimit(state)}|${Object.keys(gear).map((id) => `${id}:${state.gear[id] || 0}:${state.gearQuality[id] || 0}:${state.gearAffixes[id] || ''}`).join('|')}`;
     if (!force && renderCache.gear === signature) {
       return;
     }
     refs.gearList.innerHTML = Object.values(gear)
-      .map((item) => renderUpgradeRow(item, state.gear[item.id] || 0, 'data-upgrade-gear'))
+      .map((item) => renderGearRow(item))
       .join('');
     renderCache.gear = signature;
   }
@@ -1362,6 +1455,33 @@
           <small>${maxed ? '已达上限' : realmLocked ? `${getUpgradeTier(nextLevel).name}需更高境界` : `升级需 ${formatReward(cost)}`}</small>
         </div>
         <button ${actionAttribute}="${item.id}" ${maxed || realmLocked ? 'disabled' : ''}>升级</button>
+      </div>
+    `;
+  }
+
+  function renderGearRow(item) {
+    const level = state.gear[item.id] || 0;
+    const maxed = level >= item.maxLevel;
+    const nextLevel = level + 1;
+    const realmLocked = nextLevel > getRealmUpgradeLimit(state);
+    const tier = getUpgradeTier(Math.max(1, maxed ? level : nextLevel));
+    const quality = getGearQuality(state, item.id);
+    const nextQuality = quality.qualityIndex + 1;
+    const qualityMaxed = quality.qualityIndex >= gearQualities.length - 1;
+    const upgradeCost = maxed || realmLocked ? null : item.cost(nextLevel);
+    const refineCost = qualityMaxed || level <= 0 ? null : getRefineCost(nextQuality);
+    return `
+      <div class="system-row">
+        <div>
+          <strong>${item.name} <small>${tier.name} ${level} / ${item.maxLevel} · ${quality.qualityName}</small></strong>
+          <span>${getUpgradeEffectText(item.id)} · 词条：${quality.affixName}</span>
+          <small>${maxed ? '已达上限' : realmLocked ? `${getUpgradeTier(nextLevel).name}需更高境界` : `升级需 ${formatReward(upgradeCost)}`}</small>
+          <small>${qualityMaxed ? '品质已满' : level <= 0 ? '先升级后可淬炼' : `淬炼需 ${formatReward(refineCost)}`}</small>
+        </div>
+        <div class="row-actions">
+          <button data-upgrade-gear="${item.id}" ${maxed || realmLocked ? 'disabled' : ''}>升级</button>
+          <button data-refine-gear="${item.id}" ${qualityMaxed || level <= 0 ? 'disabled' : ''}>淬炼</button>
+        </div>
       </div>
     `;
   }
@@ -1489,9 +1609,10 @@
     const realm = getCurrentRealm(state);
     const buildingBonus = 1 + ((state.buildings.meditationSeat || 1) - 1) * buildings.meditationSeat.qiBonusPerLevel;
     const formationBonus = 1 + (state.formations.spiritGathering || 0) * formations.spiritGathering.qiBonusPerLevel;
+    const affixBonus = 1 + getGearAffixBonus(state, 'qiBonus');
     const pillBoost = state.pillBoostUntil && state.pillBoostUntil > now ? 1.4 : 1;
     const injuryPenalty = state.injuryUntil && state.injuryUntil > now ? 0.75 : 1;
-    return round(realm.qiRate * buildingBonus * formationBonus * pillBoost * injuryPenalty);
+    return round(realm.qiRate * buildingBonus * formationBonus * affixBonus * pillBoost * injuryPenalty);
   }
 
   function calculateBreakthroughChance(state, now = Date.now()) {
@@ -1511,10 +1632,12 @@
     const realmPower = (state.realmIndex + 1) * 55;
     const swordPower = (state.buildings.swordArray || 0) * buildings.swordArray.powerPerLevel;
     const gearPower = (state.gear.weapon || 0) * gear.weapon.powerPerLevel;
+    const gearQualityPower = Object.values(state.gearQuality || {}).reduce((total, qualityIndex) => total + (gearQualities[qualityIndex]?.powerBonus || 0), 0);
+    const affixPower = getGearAffixBonus(state, 'powerBonus');
     const formationPower = (state.formations.swordArray || 0) * formations.swordArray.powerPerLevel;
     const qiPower = Math.min(90, Math.floor((state.qi || 0) * 0.5));
     const demonPenalty = (state.heartDemon || 0) * 8;
-    return Math.max(10, Math.floor(realmPower + swordPower + gearPower + formationPower + qiPower - demonPenalty));
+    return Math.max(10, Math.floor(realmPower + swordPower + gearPower + gearQualityPower + affixPower + formationPower + qiPower - demonPenalty));
   }
 
   function calculateBreakthroughCarryQi(state, realm = getCurrentRealm(state)) {
@@ -1563,6 +1686,24 @@
     Object.keys(definitions).forEach((id) => {
       const level = Number(savedLevels && savedLevels[id]);
       normalized[id] = Math.min(definitions[id].maxLevel, Math.max(0, Math.floor(Number.isFinite(level) ? level : 0)));
+    });
+    return normalized;
+  }
+
+  function normalizeGearQuality(savedQuality) {
+    const normalized = {};
+    Object.keys(gear).forEach((id) => {
+      const quality = Number(savedQuality && savedQuality[id]);
+      normalized[id] = Math.min(gearQualities.length - 1, Math.max(0, Math.floor(Number.isFinite(quality) ? quality : 0)));
+    });
+    return normalized;
+  }
+
+  function normalizeGearAffixes(savedAffixes) {
+    const normalized = {};
+    Object.keys(gear).forEach((id) => {
+      const affixId = savedAffixes && savedAffixes[id];
+      normalized[id] = affixId && gearAffixes[affixId]?.slot === id ? affixId : null;
     });
     return normalized;
   }
@@ -1648,6 +1789,26 @@
 
   function canAfford(state, cost) {
     return Object.entries(cost).every(([resource, amount]) => (state[resource] || 0) >= amount);
+  }
+
+  function getRefineCost(nextQuality) {
+    return {
+      spiritStones: scaleCost(50, nextQuality),
+      artifacts: nextQuality,
+    };
+  }
+
+  function getDefaultAffixForGear(gearId) {
+    const defaults = {
+      weapon: 'swordIntent',
+      amulet: 'spiritVein',
+      robe: 'cloudStep',
+    };
+    return defaults[gearId] || null;
+  }
+
+  function getGearAffixBonus(state, key) {
+    return Object.values(state.gearAffixes || {}).reduce((total, affixId) => total + (gearAffixes[affixId]?.[key] || 0), 0);
   }
 
   function payResources(state, cost) {
