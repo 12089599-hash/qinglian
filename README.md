@@ -16,6 +16,8 @@
 - 坊市可购买材料、装备和阵法资源
 - 炼丹需要时间，服丹后获得限时吐纳加速
 - 装备栏和阵法栏可升级，影响战力、吐纳和突破
+- 升级梯度分为凡阶、灵阶、玄阶、地阶，境界越高可升级上限越高
+- 中后期升级成本递增，洞府、装备、阵法分别消耗不同核心资源
 - 突破前可稳固根基，提高把握并缓冲心魔
 - 功能面板使用标签页切换，手机端使用底部导航
 
@@ -23,6 +25,18 @@
 
 直接用浏览器打开 `index.html`。
 
+## 发布到 GitHub Pages
+
+1. 在 GitHub 新建一个公开仓库，例如 `qinglan-dongfu`。
+2. 如果用 GitHub 网页上传，覆盖根目录的 `index.html`、`styles.css`、`browserGame.js`、`README.md`。
+3. 进入仓库 `Settings` -> `Pages`。
+4. `Build and deployment` 选择 `Deploy from a branch`。
+5. `Branch` 选择 `main`，目录选择 `/root`，保存。
+6. 等待部署完成后，GitHub 会给出一个可分享的网址。
+
+## 发布到 Netlify 或 Vercel
+
+把整个文件夹拖到 Netlify，或导入到 Vercel。构建命令留空，发布目录选择项目根目录。
 
 ## 文件说明
 

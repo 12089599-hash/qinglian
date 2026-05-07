@@ -10,6 +10,13 @@
     { name: '元婴初期', requiredQi: 18000, qiRate: 34, stoneRate: 1.85 },
   ];
 
+  const upgradeTiers = [
+    { name: '凡阶', minLevel: 1, maxLevel: 3, realmIndex: 0 },
+    { name: '灵阶', minLevel: 4, maxLevel: 6, realmIndex: 3 },
+    { name: '玄阶', minLevel: 7, maxLevel: 9, realmIndex: 5 },
+    { name: '地阶', minLevel: 10, maxLevel: 12, realmIndex: 7 },
+  ];
+
   const missions = {
     herbGathering: {
       id: 'herbGathering',
@@ -67,29 +74,29 @@
     alchemyFurnace: {
       id: 'alchemyFurnace',
       name: '炼丹炉',
-      maxLevel: 5,
-      cost: (level) => ({ spiritStones: level * 55, herbs: level * 8 }),
+      maxLevel: 12,
+      cost: (level) => ({ spiritStones: scaleCost(55, level), herbs: scaleCost(8, level) }),
       speedBonusPerLevel: 0.2,
     },
     meditationSeat: {
       id: 'meditationSeat',
       name: '蒲团',
-      maxLevel: 5,
-      cost: (level) => ({ spiritStones: level * 20, herbs: Math.max(0, (level - 1) * 4) }),
+      maxLevel: 12,
+      cost: (level) => ({ spiritStones: scaleCost(20, level), herbs: Math.max(0, scaleCost(4, level - 1)) }),
       qiBonusPerLevel: 0.2,
     },
     spiritField: {
       id: 'spiritField',
       name: '灵田',
-      maxLevel: 5,
-      cost: (level) => ({ spiritStones: level * 30 }),
+      maxLevel: 12,
+      cost: (level) => ({ spiritStones: scaleCost(30, level) }),
       herbRatePerLevel: 0.02,
     },
     swordArray: {
       id: 'swordArray',
       name: '剑阵',
-      maxLevel: 5,
-      cost: (level) => ({ spiritStones: level * 45, beastCores: Math.max(0, level - 1) }),
+      maxLevel: 12,
+      cost: (level) => ({ spiritStones: scaleCost(45, level), beastCores: Math.max(0, scaleCost(1, level - 1)) }),
       powerPerLevel: 28,
     },
   };
@@ -122,22 +129,22 @@
     weapon: {
       id: 'weapon',
       name: '武器',
-      maxLevel: 5,
-      cost: (level) => ({ spiritStones: level * 80, beastCores: level }),
+      maxLevel: 12,
+      cost: (level) => ({ spiritStones: scaleCost(80, level), beastCores: scaleCost(1, level) }),
       powerPerLevel: 35,
     },
     amulet: {
       id: 'amulet',
       name: '护符',
-      maxLevel: 5,
-      cost: (level) => ({ spiritStones: level * 70, beastCores: level }),
+      maxLevel: 12,
+      cost: (level) => ({ spiritStones: scaleCost(70, level), beastCores: scaleCost(1, level) }),
       breakthroughPerLevel: 0.03,
     },
     robe: {
       id: 'robe',
       name: '法袍',
-      maxLevel: 5,
-      cost: (level) => ({ spiritStones: level * 60, beastCores: level }),
+      maxLevel: 12,
+      cost: (level) => ({ spiritStones: scaleCost(60, level), beastCores: scaleCost(1, level) }),
       dangerReductionPerLevel: 10,
     },
   };
@@ -146,22 +153,22 @@
     spiritGathering: {
       id: 'spiritGathering',
       name: '聚灵阵',
-      maxLevel: 5,
-      cost: (level) => ({ spiritStones: level * 70, arrayFlags: level }),
+      maxLevel: 12,
+      cost: (level) => ({ spiritStones: scaleCost(70, level), arrayFlags: scaleCost(1, level) }),
       qiBonusPerLevel: 0.1,
     },
     mountainGuard: {
       id: 'mountainGuard',
       name: '护山阵',
-      maxLevel: 5,
-      cost: (level) => ({ spiritStones: level * 75, arrayFlags: level }),
+      maxLevel: 12,
+      cost: (level) => ({ spiritStones: scaleCost(75, level), arrayFlags: scaleCost(1, level) }),
       stabilityPerLevel: 0.03,
     },
     swordArray: {
       id: 'swordArray',
       name: '剑阵',
-      maxLevel: 5,
-      cost: (level) => ({ spiritStones: level * 80, beastCores: level, arrayFlags: level }),
+      maxLevel: 12,
+      cost: (level) => ({ spiritStones: scaleCost(80, level), beastCores: scaleCost(1, level), arrayFlags: scaleCost(1, level) }),
       powerPerLevel: 26,
     },
   };
@@ -240,6 +247,7 @@
     heartDemon: document.querySelector('[data-heart-demon]'),
     power: document.querySelector('[data-power]'),
     breakthroughChance: document.querySelector('[data-breakthrough-chance]'),
+    upgradeLimit: document.querySelector('[data-upgrade-limit]'),
     progress: document.querySelector('[data-progress]'),
     progressText: document.querySelector('[data-progress-text]'),
     mission: document.querySelector('[data-mission]'),
@@ -620,6 +628,10 @@
       return;
     }
     const nextLevel = currentLevel + 1;
+    if (nextLevel > getRealmUpgradeLimit(state)) {
+      addLog(state, now, `${getUpgradeTier(nextLevel).name}升级需要更高境界。`);
+      return { ok: false, reason: 'realmLocked' };
+    }
     const cost = building.cost(nextLevel);
     if (!canAfford(state, cost)) {
       addLog(state, now, `升级${building.name}需要${formatReward(cost)}。`);
@@ -639,6 +651,10 @@
     if (currentLevel >= item.maxLevel) {
       addLog(state, now, `${item.name}已升至当前上限。`);
       return { ok: false, reason: 'maxLevel' };
+    }
+    if (currentLevel + 1 > getRealmUpgradeLimit(state)) {
+      addLog(state, now, `${getUpgradeTier(currentLevel + 1).name}装备需要更高境界。`);
+      return { ok: false, reason: 'realmLocked' };
     }
     const cost = item.cost(currentLevel + 1);
     if (!canAfford(state, cost)) {
@@ -660,6 +676,10 @@
     if (currentLevel >= formation.maxLevel) {
       addLog(state, now, `${formation.name}已升至当前上限。`);
       return { ok: false, reason: 'maxLevel' };
+    }
+    if (currentLevel + 1 > getRealmUpgradeLimit(state)) {
+      addLog(state, now, `${getUpgradeTier(currentLevel + 1).name}阵法需要更高境界。`);
+      return { ok: false, reason: 'realmLocked' };
     }
     const cost = formation.cost(currentLevel + 1);
     if (!canAfford(state, cost)) {
@@ -797,6 +817,10 @@
     if (refs.foundation) {
       refs.foundation.textContent = `${state.foundationStability || 0} / 3`;
     }
+    if (refs.upgradeLimit) {
+      const limit = getRealmUpgradeLimit(state);
+      refs.upgradeLimit.textContent = `${getUpgradeTier(limit).name} ${limit}`;
+    }
 
     const logSignature = state.log.map((entry) => `${entry.time}:${entry.text}`).join('|');
     if (forceLists || renderCache.log !== logSignature) {
@@ -831,11 +855,22 @@
     document.querySelectorAll('[data-building-cost]').forEach((costLabel) => {
       const building = buildings[costLabel.dataset.buildingCost];
       const currentLevel = state.buildings[building.id] || 0;
+      const nextLevel = currentLevel + 1;
       if (currentLevel >= building.maxLevel) {
         costLabel.textContent = '已达上限';
         return;
       }
-      costLabel.textContent = `升级需${formatReward(building.cost(currentLevel + 1))}`;
+      if (nextLevel > getRealmUpgradeLimit(state)) {
+        costLabel.textContent = `${getUpgradeTier(nextLevel).name}需更高境界`;
+        return;
+      }
+      costLabel.textContent = `${getUpgradeTier(nextLevel).name}升级需${formatReward(building.cost(nextLevel))}`;
+    });
+
+    document.querySelectorAll('[data-upgrade-building]').forEach((button) => {
+      const building = buildings[button.dataset.upgradeBuilding];
+      const nextLevel = (state.buildings[building.id] || 0) + 1;
+      button.disabled = nextLevel > building.maxLevel || nextLevel > getRealmUpgradeLimit(state);
     });
   }
 
@@ -966,6 +1001,14 @@
 
   function getCurrentRealm(state) {
     return realms[state.realmIndex] || realms[0];
+  }
+
+  function getUpgradeTier(level) {
+    return upgradeTiers.find((tier) => level >= tier.minLevel && level <= tier.maxLevel) || upgradeTiers[upgradeTiers.length - 1];
+  }
+
+  function getRealmUpgradeLimit(state) {
+    return upgradeTiers.reduce((limit, tier) => (state.realmIndex >= tier.realmIndex ? tier.maxLevel : limit), upgradeTiers[0].maxLevel);
   }
 
   function getGoals(state) {
@@ -1149,7 +1192,7 @@
     if (!refs.gearList) {
       return;
     }
-    const signature = Object.keys(gear).map((id) => `${id}:${state.gear[id] || 0}`).join('|');
+    const signature = `${getRealmUpgradeLimit(state)}|${Object.keys(gear).map((id) => `${id}:${state.gear[id] || 0}`).join('|')}`;
     if (!force && renderCache.gear === signature) {
       return;
     }
@@ -1163,7 +1206,7 @@
     if (!refs.formationList) {
       return;
     }
-    const signature = Object.keys(formations).map((id) => `${id}:${state.formations[id] || 0}`).join('|');
+    const signature = `${getRealmUpgradeLimit(state)}|${Object.keys(formations).map((id) => `${id}:${state.formations[id] || 0}`).join('|')}`;
     if (!force && renderCache.formations === signature) {
       return;
     }
@@ -1175,15 +1218,18 @@
 
   function renderUpgradeRow(item, level, actionAttribute) {
     const maxed = level >= item.maxLevel;
-    const cost = maxed ? null : item.cost(level + 1);
+    const nextLevel = level + 1;
+    const realmLocked = nextLevel > getRealmUpgradeLimit(state);
+    const tier = getUpgradeTier(Math.max(1, maxed ? level : nextLevel));
+    const cost = maxed || realmLocked ? null : item.cost(nextLevel);
     return `
       <div class="system-row">
         <div>
-          <strong>${item.name} <small>${level} / ${item.maxLevel}</small></strong>
+          <strong>${item.name} <small>${tier.name} ${level} / ${item.maxLevel}</small></strong>
           <span>${getUpgradeEffectText(item.id)}</span>
-          <small>${maxed ? '已达上限' : `升级需 ${formatReward(cost)}`}</small>
+          <small>${maxed ? '已达上限' : realmLocked ? `${getUpgradeTier(nextLevel).name}需更高境界` : `升级需 ${formatReward(cost)}`}</small>
         </div>
-        <button ${actionAttribute}="${item.id}" ${maxed ? 'disabled' : ''}>升级</button>
+        <button ${actionAttribute}="${item.id}" ${maxed || realmLocked ? 'disabled' : ''}>升级</button>
       </div>
     `;
   }
@@ -1536,6 +1582,14 @@
 
   function round(value) {
     return Math.round(value * 100) / 100;
+  }
+
+  function scaleCost(base, level) {
+    if (level <= 0) {
+      return 0;
+    }
+    const tierMultiplier = 1 + Math.floor((level - 1) / 3) * 1.5;
+    return Math.ceil(base * level * tierMultiplier);
   }
 
   function getDateKey(now = Date.now()) {
