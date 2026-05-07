@@ -59,6 +59,10 @@
               <dd data-artifacts>0</dd>
             </div>
             <div>
+              <dt>阵旗</dt>
+              <dd data-array-flags>0</dd>
+            </div>
+            <div>
               <dt>心魔</dt>
               <dd data-heart-demon>0</dd>
             </div>
@@ -90,6 +94,21 @@
           <ol data-goals class="goal-list"></ol>
         </article>
 
+        <article class="panel daily-panel">
+          <header>
+            <h2>日常</h2>
+            <span data-daily-status class="goal-count">完成 3 个目标解锁</span>
+          </header>
+          <div data-daily-list class="daily-list"></div>
+        </article>
+
+        <article class="panel market-panel">
+          <header>
+            <h2>坊市</h2>
+          </header>
+          <div data-market-list class="market-list"></div>
+        </article>
+
         <article class="panel">
           <header>
             <h2>洞府</h2>
@@ -118,22 +137,34 @@
             <h2>历练</h2>
           </header>
           <div class="mission-list">
-            <button data-start-mission="herbGathering">
-              <strong>采集灵草</strong>
-              <span>30 秒，灵草与少量灵石</span>
-            </button>
-            <button data-start-mission="cavePatrol">
-              <strong>巡守洞府</strong>
-              <span>55 秒，灵石与灵气</span>
-            </button>
-            <button data-start-mission="marketTrade">
-              <strong>坊市交易</strong>
-              <span>90 秒，较多灵石</span>
-            </button>
-            <button data-start-mission="mistyValley">
-              <strong>雾隐秘境</strong>
-              <span>120 秒，战力不足会受伤</span>
-            </button>
+            <div class="mission-card">
+              <button data-start-mission="herbGathering"><strong>采集灵草</strong><span>30 秒，灵草与少量灵石</span></button>
+              <button data-auto-mission="herbGathering" class="mini-button">自动</button>
+            </div>
+            <div class="mission-card">
+              <button data-start-mission="cavePatrol"><strong>巡守洞府</strong><span>55 秒，灵石与灵气</span></button>
+              <button data-auto-mission="cavePatrol" class="mini-button">自动</button>
+            </div>
+            <div class="mission-card">
+              <button data-start-mission="marketTrade"><strong>坊市交易</strong><span>90 秒，较多灵石</span></button>
+              <button data-auto-mission="marketTrade" class="mini-button">自动</button>
+            </div>
+            <div class="mission-card">
+              <button data-start-mission="mistyValley"><strong>雾隐秘境</strong><span>120 秒，均衡秘境，产出妖核与法器</span></button>
+              <button data-auto-mission="mistyValley" class="mini-button">自动</button>
+            </div>
+            <div class="mission-card">
+              <button data-start-mission="herbValley"><strong>灵草谷</strong><span>70 秒，低风险，灵草多</span></button>
+              <button data-auto-mission="herbValley" class="mini-button">自动</button>
+            </div>
+            <div class="mission-card">
+              <button data-start-mission="ancientSwordTomb"><strong>古剑冢</strong><span>140 秒，中风险，法器多</span></button>
+              <button data-auto-mission="ancientSwordTomb" class="mini-button">自动</button>
+            </div>
+            <div class="mission-card">
+              <button data-start-mission="demonRift"><strong>魔气裂隙</strong><span>180 秒，高收益，但心魔风险高</span></button>
+              <button data-auto-mission="demonRift" class="mini-button">自动</button>
+            </div>
           </div>
         </article>
 

@@ -37,6 +37,30 @@
       reward: { spiritStones: 35, qi: 90, beastCores: 1, artifacts: 1 },
       failurePenalty: { qi: -45, heartDemon: 1 },
     },
+    herbValley: {
+      id: 'herbValley',
+      name: '灵草谷',
+      duration: 70,
+      danger: 80,
+      reward: { herbs: 14, spiritStones: 14, qi: 45 },
+      failurePenalty: { qi: -20 },
+    },
+    ancientSwordTomb: {
+      id: 'ancientSwordTomb',
+      name: '古剑冢',
+      duration: 140,
+      danger: 145,
+      reward: { artifacts: 2, spiritStones: 50, beastCores: 1 },
+      failurePenalty: { qi: -60, heartDemon: 1 },
+    },
+    demonRift: {
+      id: 'demonRift',
+      name: '魔气裂隙',
+      duration: 180,
+      danger: 180,
+      reward: { beastCores: 3, spiritStones: 90, qi: 120, heartDemon: 1 },
+      failurePenalty: { qi: -90, heartDemon: 2 },
+    },
   };
 
   const buildings = {
@@ -63,6 +87,58 @@
     },
   };
 
+  const dailyTasks = {
+    dailyCultivation: {
+      id: 'dailyCultivation',
+      title: '今日吐纳',
+      detail: '累计修炼即可领取基础补给',
+      reward: { spiritStones: 35, qi: 80 },
+    },
+    dailyMission: {
+      id: 'dailyMission',
+      title: '今日历练',
+      detail: '完成任意历练后领取额外材料',
+      reward: { herbs: 8, spiritStones: 25 },
+    },
+    dailyMarket: {
+      id: 'dailyMarket',
+      title: '坊市问价',
+      detail: '每日补贴一笔交易本金',
+      reward: { spiritStones: 45 },
+    },
+  };
+
+  const marketItems = {
+    herbBundle: {
+      id: 'herbBundle',
+      name: '灵草包',
+      type: '材料',
+      cost: { spiritStones: 40 },
+      reward: { herbs: 12 },
+    },
+    beastCoreShard: {
+      id: 'beastCoreShard',
+      name: '妖核碎片',
+      type: '材料',
+      cost: { spiritStones: 75 },
+      reward: { beastCores: 1 },
+    },
+    spiritSword: {
+      id: 'spiritSword',
+      name: '下品灵剑',
+      type: '装备',
+      cost: { spiritStones: 80 },
+      reward: { artifacts: 1 },
+    },
+    arrayManual: {
+      id: 'arrayManual',
+      name: '小周天阵旗',
+      type: '阵法',
+      cost: { spiritStones: 90, beastCores: 1 },
+      reward: { arrayFlags: 1 },
+    },
+  };
+
   const saveKey = 'idle-xianxia-save-v1';
   const refs = {
     realm: document.querySelector('[data-realm]'),
@@ -73,6 +149,7 @@
     pills: document.querySelector('[data-pills]'),
     beastCores: document.querySelector('[data-beast-cores]'),
     artifacts: document.querySelector('[data-artifacts]'),
+    arrayFlags: document.querySelector('[data-array-flags]'),
     heartDemon: document.querySelector('[data-heart-demon]'),
     power: document.querySelector('[data-power]'),
     breakthroughChance: document.querySelector('[data-breakthrough-chance]'),
@@ -82,6 +159,9 @@
     missionTime: document.querySelector('[data-mission-time]'),
     goals: document.querySelector('[data-goals]'),
     goalCount: document.querySelector('[data-goal-count]'),
+    dailyList: document.querySelector('[data-daily-list]'),
+    dailyStatus: document.querySelector('[data-daily-status]'),
+    marketList: document.querySelector('[data-market-list]'),
     offlineDialog: document.querySelector('[data-offline-dialog]'),
     offlineSummary: document.querySelector('[data-offline-summary]'),
     toastStack: document.querySelector('[data-toast-stack]'),
@@ -121,9 +201,39 @@
     });
   });
 
+  document.querySelectorAll('[data-auto-mission]').forEach((button) => {
+    button.addEventListener('click', () => {
+      toggleAutoMission(state, button.dataset.autoMission);
+      saveState();
+      render();
+    });
+  });
+
   document.querySelectorAll('[data-upgrade-building]').forEach((button) => {
     button.addEventListener('click', () => {
       upgradeBuilding(state, button.dataset.upgradeBuilding);
+      saveState();
+      render();
+    });
+  });
+
+  document.querySelectorAll('[data-claim-daily]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const result = claimDailyTask(state, button.dataset.claimDaily);
+      if (result.ok) {
+        showToast('日常完成', `获得${formatReward(result.reward)}。`);
+      }
+      saveState();
+      render();
+    });
+  });
+
+  document.querySelectorAll('[data-buy-market]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const result = buyMarketItem(state, button.dataset.buyMarket);
+      if (result.ok) {
+        showToast('坊市交易', `获得${formatReward(result.reward)}。`);
+      }
       saveState();
       render();
     });
@@ -149,12 +259,17 @@
       pills: 0,
       beastCores: 0,
       artifacts: 0,
+      arrayFlags: 0,
       realmIndex: 0,
       heartDemon: 0,
       insight: 0,
       injuryUntil: 0,
       craftedPills: 0,
       completedMissions: {},
+      claimedGoals: {},
+      autoMissionId: null,
+      dailyClaims: {},
+      marketPurchases: {},
       buildings: {
         meditationSeat: 1,
         spiritField: 0,
@@ -177,6 +292,11 @@
     state.insight = Math.max(0, Number(state.insight) || 0);
     state.craftedPills = Math.max(0, Number(state.craftedPills) || 0);
     state.completedMissions = normalizeCompletedMissions(state.completedMissions);
+    state.claimedGoals = normalizeClaimedGoals(state.claimedGoals);
+    state.autoMissionId = missions[state.autoMissionId] ? state.autoMissionId : null;
+    state.arrayFlags = Math.max(0, Number(state.arrayFlags) || 0);
+    state.dailyClaims = normalizeNestedClaims(state.dailyClaims);
+    state.marketPurchases = normalizeNestedClaims(state.marketPurchases);
     state.buildings = normalizeBuildings(state.buildings);
     state.log = Array.isArray(state.log) ? state.log.slice(0, 20) : [];
     state.activeMission = state.activeMission && missions[state.activeMission.id] ? state.activeMission : null;
@@ -318,12 +438,14 @@
       state.injuryUntil = now + 90 * 1000;
       addLog(state, now, `挑战「${mission.name}」失利，负伤退回洞府。`);
       showToast('历练失利', `${mission.name} 战力不足，负伤并滋生心魔。`, 'warning');
+      restartAutoMission(state, mission.id, now);
       return;
     }
     applyResources(state, mission.reward);
     state.completedMissions[mission.id] = (state.completedMissions[mission.id] || 0) + 1;
     addLog(state, now, `完成「${mission.name}」，收获${formatReward(mission.reward)}。`);
     showToast('历练完成', `${mission.name} 收获${formatReward(mission.reward)}。`);
+    restartAutoMission(state, mission.id, now);
   }
 
   function render() {
@@ -340,6 +462,7 @@
     refs.pills.textContent = Math.floor(state.pills);
     refs.beastCores.textContent = Math.floor(state.beastCores);
     refs.artifacts.textContent = Math.floor(state.artifacts);
+    if (refs.arrayFlags) refs.arrayFlags.textContent = Math.floor(state.arrayFlags);
     refs.heartDemon.textContent = Math.floor(state.heartDemon);
     refs.power.textContent = calculatePower(state);
     refs.breakthroughChance.textContent = `${Math.round(calculateBreakthroughChance(state) * 100)}%`;
@@ -359,9 +482,17 @@
       .join('');
 
     renderGoals();
+    renderDailyTasks();
+    renderMarket();
 
     document.querySelectorAll('[data-start-mission]').forEach((button) => {
       button.disabled = Boolean(state.activeMission);
+    });
+
+    document.querySelectorAll('[data-auto-mission]').forEach((button) => {
+      const active = state.autoMissionId === button.dataset.autoMission;
+      button.classList.toggle('active', active);
+      button.textContent = active ? '自动中' : '自动';
     });
 
     document.querySelectorAll('[data-building-level]').forEach((level) => {
@@ -515,26 +646,144 @@
         title: '突破至炼气三层',
         detail: '提高吐纳效率，开启更稳定的秘境收益',
         completed: state.realmIndex >= 2,
+        claimed: Boolean(state.claimedGoals.realmThree),
+        reward: { spiritStones: 80, pills: 1 },
       },
       {
         id: 'spiritField',
         title: '建成一阶灵田',
         detail: '让洞府开始自动生长灵草',
         completed: (state.buildings.spiritField || 0) >= 1,
+        claimed: Boolean(state.claimedGoals.spiritField),
+        reward: { herbs: 10, spiritStones: 30 },
       },
       {
         id: 'mistyValley',
         title: '完成一次雾隐秘境',
         detail: '获得妖核或法器，准备强化剑阵',
         completed: (state.completedMissions.mistyValley || 0) >= 1,
+        claimed: Boolean(state.claimedGoals.mistyValley),
+        reward: { beastCores: 1, spiritStones: 60 },
       },
       {
         id: 'firstPill',
         title: '炼成一枚聚气丹',
         detail: '突破前用丹药快速补足灵气',
         completed: (state.craftedPills || 0) >= 1,
+        claimed: Boolean(state.claimedGoals.firstPill),
+        reward: { qi: 120, spiritStones: 25 },
       },
     ];
+  }
+
+  function isDailyUnlocked(state) {
+    return getGoals(state).filter((goal) => goal.completed).length >= 3;
+  }
+
+  function getDailyTasks(state, dateKey = getDateKey()) {
+    const unlocked = isDailyUnlocked(state);
+    const claims = state.dailyClaims[dateKey] || {};
+    return Object.values(dailyTasks).map((task) => ({
+      ...task,
+      unlocked,
+      claimed: Boolean(claims[task.id]),
+    }));
+  }
+
+  function renderDailyTasks() {
+    if (!refs.dailyList || !refs.dailyStatus) {
+      return;
+    }
+
+    const tasks = getDailyTasks(state);
+    const unlocked = tasks.every((task) => task.unlocked);
+    refs.dailyStatus.textContent = unlocked ? '今日可领取' : '完成 3 个目标解锁';
+    refs.dailyList.innerHTML = tasks
+      .map((task) => `
+        <button data-claim-daily="${task.id}" ${!task.unlocked || task.claimed ? 'disabled' : ''}>
+          <strong>${task.title}</strong>
+          <span>${task.detail}</span>
+          <small>${task.claimed ? '已完成' : `奖励 ${formatReward(task.reward)}`}</small>
+        </button>
+      `)
+      .join('');
+
+    refs.dailyList.querySelectorAll('[data-claim-daily]').forEach((button) => {
+      button.addEventListener('click', () => {
+        const result = claimDailyTask(state, button.dataset.claimDaily);
+        if (result.ok) {
+          showToast('日常完成', `获得${formatReward(result.reward)}。`);
+        }
+        saveState();
+        render();
+      });
+    });
+  }
+
+  function renderMarket() {
+    if (!refs.marketList) {
+      return;
+    }
+
+    refs.marketList.innerHTML = Object.values(marketItems)
+      .map((item) => `
+        <button data-buy-market="${item.id}">
+          <strong>${item.name} · ${item.type}</strong>
+          <span>获得 ${formatReward(item.reward)}</span>
+          <small>价格 ${formatReward(item.cost)}</small>
+        </button>
+      `)
+      .join('');
+
+    refs.marketList.querySelectorAll('[data-buy-market]').forEach((button) => {
+      button.addEventListener('click', () => {
+        const result = buyMarketItem(state, button.dataset.buyMarket);
+        if (result.ok) {
+          showToast('坊市交易', `获得${formatReward(result.reward)}。`);
+        }
+        saveState();
+        render();
+      });
+    });
+  }
+
+  function claimDailyTask(state, taskId, dateKey = getDateKey(), now = Date.now()) {
+    const task = dailyTasks[taskId];
+    if (!task) {
+      return { ok: false, reason: 'unknownTask' };
+    }
+    if (!isDailyUnlocked(state)) {
+      return { ok: false, reason: 'locked' };
+    }
+    state.dailyClaims[dateKey] ||= {};
+    if (state.dailyClaims[dateKey][taskId]) {
+      return { ok: false, reason: 'alreadyClaimed' };
+    }
+    applyResources(state, task.reward);
+    state.dailyClaims[dateKey][taskId] = true;
+    addLog(state, now, `完成日常「${task.title}」，获得${formatReward(task.reward)}。`);
+    return { ok: true, reward: task.reward };
+  }
+
+  function buyMarketItem(state, itemId, now = Date.now()) {
+    const item = marketItems[itemId];
+    if (!item) {
+      return { ok: false, reason: 'unknownItem' };
+    }
+    if (!canAfford(state, item.cost)) {
+      addLog(state, now, `购买${item.name}需要${formatReward(item.cost)}。`);
+      showToast('灵石不足', `购买${item.name}需要${formatReward(item.cost)}。`, 'warning');
+      return { ok: false, reason: 'notEnoughResources' };
+    }
+    Object.entries(item.cost).forEach(([resource, amount]) => {
+      state[resource] = round((state[resource] || 0) - amount);
+    });
+    applyResources(state, item.reward);
+    const dateKey = getDateKey(now);
+    state.marketPurchases[dateKey] ||= {};
+    state.marketPurchases[dateKey][itemId] = (state.marketPurchases[dateKey][itemId] || 0) + 1;
+    addLog(state, now, `坊市购得${item.name}，获得${formatReward(item.reward)}。`);
+    return { ok: true, reward: item.reward };
   }
 
   function renderGoals() {
@@ -553,9 +802,48 @@
             <strong>${goal.title}</strong>
             <small>${goal.detail}</small>
           </div>
+          ${goal.completed ? `<button data-claim-goal="${goal.id}" ${goal.claimed ? 'disabled' : ''}>${goal.claimed ? '已领' : '领取'}</button>` : ''}
         </li>
       `)
       .join('');
+
+    refs.goals.querySelectorAll('[data-claim-goal]').forEach((button) => {
+      button.addEventListener('click', () => {
+        const result = claimGoalReward(state, button.dataset.claimGoal);
+        if (result.ok) {
+          showToast('目标奖励', `获得${formatReward(result.reward)}。`);
+        }
+        saveState();
+        render();
+      });
+    });
+  }
+
+  function claimGoalReward(state, goalId, now = Date.now()) {
+    const goal = getGoals(state).find((candidate) => candidate.id === goalId);
+    if (!goal) {
+      return { ok: false, reason: 'unknownGoal' };
+    }
+    if (!goal.completed) {
+      return { ok: false, reason: 'notCompleted' };
+    }
+    if (state.claimedGoals[goalId]) {
+      return { ok: false, reason: 'alreadyClaimed' };
+    }
+
+    applyResources(state, goal.reward);
+    state.claimedGoals[goalId] = true;
+    addLog(state, now, `领取「${goal.title}」奖励：${formatReward(goal.reward)}。`);
+    return { ok: true, reward: goal.reward };
+  }
+
+  function toggleAutoMission(state, missionId, now = Date.now()) {
+    if (!missions[missionId]) {
+      return;
+    }
+
+    state.autoMissionId = state.autoMissionId === missionId ? null : missionId;
+    addLog(state, now, state.autoMissionId ? `已设为自动历练：${missions[missionId].name}。` : '已停止自动历练。');
   }
 
   function applyOfflineProgress(state, seconds, now = Date.now()) {
@@ -615,9 +903,10 @@
     const realmPower = (state.realmIndex + 1) * 55;
     const swordPower = (state.buildings.swordArray || 0) * buildings.swordArray.powerPerLevel;
     const artifactPower = (state.artifacts || 0) * 22;
+    const arrayPower = (state.arrayFlags || 0) * 35;
     const qiPower = Math.min(90, Math.floor((state.qi || 0) * 0.5));
     const demonPenalty = (state.heartDemon || 0) * 8;
-    return Math.max(10, Math.floor(realmPower + swordPower + artifactPower + qiPower - demonPenalty));
+    return Math.max(10, Math.floor(realmPower + swordPower + artifactPower + arrayPower + qiPower - demonPenalty));
   }
 
   function calculateBreakthroughCarryQi(state, realm = getCurrentRealm(state)) {
@@ -642,6 +931,40 @@
     return normalized;
   }
 
+  function normalizeClaimedGoals(savedGoals) {
+    if (!savedGoals || typeof savedGoals !== 'object') {
+      return {};
+    }
+
+    return Object.fromEntries(Object.entries(savedGoals).filter(([, claimed]) => Boolean(claimed)));
+  }
+
+  function normalizeNestedClaims(savedClaims) {
+    if (!savedClaims || typeof savedClaims !== 'object') {
+      return {};
+    }
+    return Object.fromEntries(
+      Object.entries(savedClaims)
+        .filter(([, value]) => value && typeof value === 'object')
+        .map(([key, value]) => [key, { ...value }]),
+    );
+  }
+
+  function restartAutoMission(state, completedMissionId, now) {
+    const missionId = state.autoMissionId;
+    if (!missionId || missionId !== completedMissionId || !missions[missionId]) {
+      return;
+    }
+
+    const mission = missions[missionId];
+    state.activeMission = {
+      id: mission.id,
+      startedAt: now,
+      endsAt: now + mission.duration * 1000,
+    };
+    addLog(state, now, `自动继续「${mission.name}」。`);
+  }
+
   function snapshotResources(state) {
     return {
       qi: state.qi || 0,
@@ -649,6 +972,7 @@
       herbs: state.herbs || 0,
       beastCores: state.beastCores || 0,
       artifacts: state.artifacts || 0,
+      arrayFlags: state.arrayFlags || 0,
     };
   }
 
@@ -685,7 +1009,7 @@
   }
 
   function formatReward(reward) {
-    const names = { qi: '灵气', herbs: '灵草', spiritStones: '灵石', pills: '丹药', beastCores: '妖核', artifacts: '法器', heartDemon: '心魔' };
+    const names = { qi: '灵气', herbs: '灵草', spiritStones: '灵石', pills: '丹药', beastCores: '妖核', artifacts: '法器', arrayFlags: '阵旗', heartDemon: '心魔' };
     return Object.entries(reward)
       .map(([key, amount]) => `${amount} ${names[key] || key}`)
       .join('、');
@@ -700,5 +1024,9 @@
 
   function round(value) {
     return Math.round(value * 100) / 100;
+  }
+
+  function getDateKey(now = Date.now()) {
+    return new Date(now).toISOString().slice(0, 10);
   }
 })();

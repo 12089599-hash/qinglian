@@ -215,12 +215,22 @@ small {
 }
 
 .mission-list,
+.daily-list,
+.market-list,
 .upgrade-list {
   display: grid;
   gap: 10px;
 }
 
-.mission-list button,
+.mission-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 62px;
+  gap: 8px;
+}
+
+.mission-card > button:first-child,
+.daily-list button,
+.market-list button,
 .upgrade-list button {
   display: grid;
   min-height: 70px;
@@ -230,11 +240,30 @@ small {
   text-align: left;
 }
 
+.mini-button {
+  min-height: 70px;
+  padding: 0 8px;
+  color: var(--gold);
+}
+
+.mini-button.active {
+  border-color: rgba(232, 198, 106, 0.82);
+  color: #17130b;
+  background: var(--gold);
+}
+
 .mission-list span,
+.daily-list span,
+.market-list span,
 .upgrade-list span {
   color: var(--muted);
   font-size: 0.86rem;
   font-weight: 600;
+}
+
+.daily-list small,
+.market-list small {
+  color: var(--gold);
 }
 
 .upgrade-list small {
@@ -276,7 +305,7 @@ small {
 
 .goal-list li {
   display: grid;
-  grid-template-columns: 28px 1fr;
+  grid-template-columns: 28px 1fr auto;
   gap: 10px;
   align-items: start;
   min-height: 58px;
@@ -305,6 +334,12 @@ small {
 .goal-list strong,
 .goal-list small {
   display: block;
+}
+
+.goal-list button {
+  min-height: 32px;
+  padding: 0 10px;
+  color: var(--gold);
 }
 
 .goal-list small {
