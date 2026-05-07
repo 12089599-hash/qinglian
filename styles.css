@@ -135,9 +135,34 @@ h2 {
 
 .dashboard {
   display: grid;
-  grid-template-columns: minmax(360px, 1.05fr) repeat(3, minmax(230px, 0.75fr));
+  grid-template-columns: minmax(360px, 0.95fr) minmax(360px, 1.05fr);
   gap: 14px;
   margin-top: 14px;
+}
+
+.section-tabs {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.section-tabs button {
+  min-height: 38px;
+}
+
+.section-tabs button.active {
+  border-color: rgba(232, 198, 106, 0.82);
+  color: #17130b;
+  background: var(--gold);
+}
+
+[data-panel] {
+  display: none;
+}
+
+[data-panel].active {
+  display: block;
 }
 
 .panel {
@@ -436,7 +461,7 @@ small {
 
 @media (max-width: 1120px) {
   .dashboard {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: 1fr;
   }
 
   .log-panel {
@@ -445,8 +470,8 @@ small {
 }
 
 @media (max-width: 760px) {
-  .dashboard {
-    grid-template-columns: 1fr;
+  .section-tabs {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 

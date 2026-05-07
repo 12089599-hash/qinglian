@@ -23,6 +23,15 @@
         </div>
       </section>
 
+      <nav class="section-tabs" aria-label="功能切换">
+        <button data-tab="goals" class="active">目标</button>
+        <button data-tab="daily">日常</button>
+        <button data-tab="market">坊市</button>
+        <button data-tab="cave">洞府</button>
+        <button data-tab="missions">历练</button>
+        <button data-tab="log">日志</button>
+      </nav>
+
       <section class="dashboard" aria-label="修行面板">
         <article class="panel stats-panel">
           <header>
@@ -78,6 +87,10 @@
               <dt>当前行动</dt>
               <dd><span data-mission>闭关修炼</span> <small data-mission-time>待命</small></dd>
             </div>
+            <div>
+              <dt>丹药加速</dt>
+              <dd data-pill-boost>未服丹</dd>
+            </div>
           </dl>
           <div class="action-row">
             <button data-craft-pill>炼丹</button>
@@ -86,7 +99,7 @@
           </div>
         </article>
 
-        <article class="panel goals-panel">
+        <article class="panel goals-panel active" data-panel="goals">
           <header>
             <h2>修仙目标</h2>
             <span data-goal-count class="goal-count">0 / 4</span>
@@ -94,7 +107,7 @@
           <ol data-goals class="goal-list"></ol>
         </article>
 
-        <article class="panel daily-panel">
+        <article class="panel daily-panel" data-panel="daily">
           <header>
             <h2>日常</h2>
             <span data-daily-status class="goal-count">完成 3 个目标解锁</span>
@@ -102,14 +115,14 @@
           <div data-daily-list class="daily-list"></div>
         </article>
 
-        <article class="panel market-panel">
+        <article class="panel market-panel" data-panel="market">
           <header>
             <h2>坊市</h2>
           </header>
           <div data-market-list class="market-list"></div>
         </article>
 
-        <article class="panel">
+        <article class="panel" data-panel="cave">
           <header>
             <h2>洞府</h2>
           </header>
@@ -132,7 +145,7 @@
           </div>
         </article>
 
-        <article class="panel">
+        <article class="panel" data-panel="missions">
           <header>
             <h2>历练</h2>
           </header>
@@ -168,7 +181,7 @@
           </div>
         </article>
 
-        <article class="panel log-panel">
+        <article class="panel log-panel" data-panel="log">
           <header>
             <h2>修行日志</h2>
           </header>

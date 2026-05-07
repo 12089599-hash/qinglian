@@ -157,6 +157,7 @@
     progressText: document.querySelector('[data-progress-text]'),
     mission: document.querySelector('[data-mission]'),
     missionTime: document.querySelector('[data-mission-time]'),
+    pillBoost: document.querySelector('[data-pill-boost]'),
     goals: document.querySelector('[data-goals]'),
     goalCount: document.querySelector('[data-goal-count]'),
     dailyList: document.querySelector('[data-daily-list]'),
@@ -170,6 +171,8 @@
   };
 
   const ctx = refs.canvas.getContext('2d');
+  const renderCache = {};
+  let activeTab = localStorage.getItem('idle-xianxia-active-tab') || 'goals';
   let pendingOfflineSummary = null;
   let state = loadState();
   let lastFrameAt = performance.now();
@@ -217,25 +220,44 @@
     });
   });
 
-  document.querySelectorAll('[data-claim-daily]').forEach((button) => {
-    button.addEventListener('click', () => {
-      const result = claimDailyTask(state, button.dataset.claimDaily);
-      if (result.ok) {
-        showToast('日常完成', `获得${formatReward(result.reward)}。`);
-      }
-      saveState();
-      render();
-    });
+  refs.goals?.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-claim-goal]');
+    if (!button) return;
+    const result = claimGoalReward(state, button.dataset.claimGoal);
+    if (result.ok) {
+      showToast('目标奖励', `获得${formatReward(result.reward)}。`);
+    }
+    saveState();
+    render(true);
   });
 
-  document.querySelectorAll('[data-buy-market]').forEach((button) => {
+  refs.dailyList?.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-claim-daily]');
+    if (!button) return;
+    const result = claimDailyTask(state, button.dataset.claimDaily);
+    if (result.ok) {
+      showToast('日常完成', `获得${formatReward(result.reward)}。`);
+    }
+    saveState();
+    render(true);
+  });
+
+  refs.marketList?.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-buy-market]');
+    if (!button) return;
+    const result = buyMarketItem(state, button.dataset.buyMarket);
+    if (result.ok) {
+      showToast('坊市交易', `获得${formatReward(result.reward)}。`);
+    }
+    saveState();
+    render(true);
+  });
+
+  document.querySelectorAll('[data-tab]').forEach((button) => {
     button.addEventListener('click', () => {
-      const result = buyMarketItem(state, button.dataset.buyMarket);
-      if (result.ok) {
-        showToast('坊市交易', `获得${formatReward(result.reward)}。`);
-      }
-      saveState();
-      render();
+      activeTab = button.dataset.tab;
+      localStorage.setItem('idle-xianxia-active-tab', activeTab);
+      renderTabs();
     });
   });
 
@@ -264,6 +286,8 @@
       heartDemon: 0,
       insight: 0,
       injuryUntil: 0,
+      pillBoostUntil: 0,
+      activeAlchemy: null,
       craftedPills: 0,
       completedMissions: {},
       claimedGoals: {},
@@ -290,6 +314,8 @@
     state.realmIndex = Math.min(realms.length - 1, Math.max(0, Math.floor(Number(state.realmIndex) || 0)));
     state.heartDemon = Math.max(0, Number(state.heartDemon) || 0);
     state.insight = Math.max(0, Number(state.insight) || 0);
+    state.pillBoostUntil = Math.max(0, Number(state.pillBoostUntil) || 0);
+    state.activeAlchemy = normalizeAlchemy(state.activeAlchemy);
     state.craftedPills = Math.max(0, Number(state.craftedPills) || 0);
     state.completedMissions = normalizeCompletedMissions(state.completedMissions);
     state.claimedGoals = normalizeClaimedGoals(state.claimedGoals);
@@ -318,7 +344,7 @@
   function updateGame(state, deltaSeconds, now = Date.now()) {
     const seconds = Math.max(0, Math.min(deltaSeconds, 60 * 60 * 12));
     const realm = getCurrentRealm(state);
-    state.qi = round(state.qi + calculateQiRate(state) * seconds);
+    state.qi = round(state.qi + calculateQiRate(state, now) * seconds);
     state.stoneCarry += realm.stoneRate * seconds;
     state.herbCarry += (state.buildings.spiritField || 0) * buildings.spiritField.herbRatePerLevel * seconds;
 
@@ -335,6 +361,7 @@
     }
 
     state.totalCultivationSeconds += seconds;
+    completeAlchemyIfReady(state, now);
     completeMissionIfReady(state, now);
     state.lastUpdatedAt = now;
   }
@@ -379,15 +406,21 @@
   }
 
   function craftPill(state, now = Date.now()) {
+    if (state.activeAlchemy) {
+      addLog(state, now, '丹炉正在炼制，暂时不能再开一炉。');
+      return;
+    }
     if (state.herbs < 8 || state.spiritStones < 12) {
       addLog(state, now, '炼制聚气丹需要 8 株灵草和 12 枚灵石。');
       return;
     }
     state.herbs -= 8;
     state.spiritStones -= 12;
-    state.pills += 1;
-    state.craftedPills += 1;
-    addLog(state, now, '丹炉火候正好，炼成一枚聚气丹。');
+    state.activeAlchemy = {
+      startedAt: now,
+      endsAt: now + 45 * 1000,
+    };
+    addLog(state, now, '丹炉起火，开始炼制聚气丹。');
   }
 
   function upgradeBuilding(state, buildingId, now = Date.now()) {
@@ -420,7 +453,20 @@
     }
     state.pills -= 1;
     state.qi = round(state.qi + 65 + state.realmIndex * 30);
-    addLog(state, now, '服下一枚聚气丹，灵气在经脉中散开。');
+    state.pillBoostUntil = Math.max(state.pillBoostUntil || 0, now) + 120 * 1000;
+    addLog(state, now, '服下一枚聚气丹，吐纳速度暂时提升。');
+  }
+
+  function completeAlchemyIfReady(state, now) {
+    if (!state.activeAlchemy || now < state.activeAlchemy.endsAt) {
+      return;
+    }
+
+    state.activeAlchemy = null;
+    state.pills += 1;
+    state.craftedPills += 1;
+    addLog(state, now, '丹炉火候正好，炼成一枚聚气丹。');
+    showToast('炼丹完成', '获得 1 枚聚气丹。');
   }
 
   function completeMissionIfReady(state, now) {
@@ -448,7 +494,7 @@
     restartAutoMission(state, mission.id, now);
   }
 
-  function render() {
+  function render(forceLists = false) {
     const realm = getCurrentRealm(state);
     const progress = Math.max(0, Math.min(1, state.qi / realm.requiredQi));
     const remainingQi = Math.max(0, realm.requiredQi - state.qi);
@@ -456,7 +502,7 @@
 
     refs.realm.textContent = realm.name;
     refs.qi.textContent = `${Math.floor(state.qi)} / ${realm.requiredQi}`;
-    refs.qiRate.textContent = `${calculateQiRate(state).toFixed(1)} / 秒`;
+    refs.qiRate.textContent = `${calculateQiRate(state, Date.now()).toFixed(1)} / 秒`;
     refs.stones.textContent = Math.floor(state.spiritStones);
     refs.herbs.textContent = Math.floor(state.herbs);
     refs.pills.textContent = Math.floor(state.pills);
@@ -472,18 +518,31 @@
     if (activeMission) {
       refs.mission.textContent = activeMission.name;
       refs.missionTime.textContent = formatDuration((state.activeMission.endsAt - Date.now()) / 1000);
+    } else if (state.activeAlchemy) {
+      refs.mission.textContent = '炼制聚气丹';
+      refs.missionTime.textContent = formatDuration((state.activeAlchemy.endsAt - Date.now()) / 1000);
     } else {
       refs.mission.textContent = '闭关修炼';
       refs.missionTime.textContent = '待命';
     }
 
-    refs.log.innerHTML = state.log
-      .map((entry) => `<li><time>${new Date(entry.time).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}</time>${entry.text}</li>`)
-      .join('');
+    if (refs.pillBoost) {
+      const secondsLeft = Math.max(0, Math.ceil(((state.pillBoostUntil || 0) - Date.now()) / 1000));
+      refs.pillBoost.textContent = secondsLeft > 0 ? formatDuration(secondsLeft) : '未服丹';
+    }
 
-    renderGoals();
-    renderDailyTasks();
-    renderMarket();
+    const logSignature = state.log.map((entry) => `${entry.time}:${entry.text}`).join('|');
+    if (forceLists || renderCache.log !== logSignature) {
+      refs.log.innerHTML = state.log
+        .map((entry) => `<li><time>${new Date(entry.time).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}</time>${entry.text}</li>`)
+        .join('');
+      renderCache.log = logSignature;
+    }
+
+    renderGoals(forceLists);
+    renderDailyTasks(forceLists);
+    renderMarket(forceLists);
+    renderTabs();
 
     document.querySelectorAll('[data-start-mission]').forEach((button) => {
       button.disabled = Boolean(state.activeMission);
@@ -690,7 +749,7 @@
     }));
   }
 
-  function renderDailyTasks() {
+  function renderDailyTasks(force = false) {
     if (!refs.dailyList || !refs.dailyStatus) {
       return;
     }
@@ -698,6 +757,11 @@
     const tasks = getDailyTasks(state);
     const unlocked = tasks.every((task) => task.unlocked);
     refs.dailyStatus.textContent = unlocked ? '今日可领取' : '完成 3 个目标解锁';
+    const signature = tasks.map((task) => `${task.id}:${task.unlocked}:${task.claimed}`).join('|');
+    if (!force && renderCache.daily === signature) {
+      return;
+    }
+
     refs.dailyList.innerHTML = tasks
       .map((task) => `
         <button data-claim-daily="${task.id}" ${!task.unlocked || task.claimed ? 'disabled' : ''}>
@@ -707,21 +771,16 @@
         </button>
       `)
       .join('');
-
-    refs.dailyList.querySelectorAll('[data-claim-daily]').forEach((button) => {
-      button.addEventListener('click', () => {
-        const result = claimDailyTask(state, button.dataset.claimDaily);
-        if (result.ok) {
-          showToast('日常完成', `获得${formatReward(result.reward)}。`);
-        }
-        saveState();
-        render();
-      });
-    });
+    renderCache.daily = signature;
   }
 
-  function renderMarket() {
+  function renderMarket(force = false) {
     if (!refs.marketList) {
+      return;
+    }
+
+    const signature = Object.keys(marketItems).join('|');
+    if (!force && renderCache.market === signature) {
       return;
     }
 
@@ -734,17 +793,7 @@
         </button>
       `)
       .join('');
-
-    refs.marketList.querySelectorAll('[data-buy-market]').forEach((button) => {
-      button.addEventListener('click', () => {
-        const result = buyMarketItem(state, button.dataset.buyMarket);
-        if (result.ok) {
-          showToast('坊市交易', `获得${formatReward(result.reward)}。`);
-        }
-        saveState();
-        render();
-      });
-    });
+    renderCache.market = signature;
   }
 
   function claimDailyTask(state, taskId, dateKey = getDateKey(), now = Date.now()) {
@@ -786,7 +835,7 @@
     return { ok: true, reward: item.reward };
   }
 
-  function renderGoals() {
+  function renderGoals(force = false) {
     if (!refs.goals || !refs.goalCount) {
       return;
     }
@@ -794,6 +843,11 @@
     const goals = getGoals(state);
     const completed = goals.filter((goal) => goal.completed).length;
     refs.goalCount.textContent = `${completed} / ${goals.length}`;
+    const signature = goals.map((goal) => `${goal.id}:${goal.completed}:${goal.claimed}`).join('|');
+    if (!force && renderCache.goals === signature) {
+      return;
+    }
+
     refs.goals.innerHTML = goals
       .map((goal) => `
         <li class="${goal.completed ? 'completed' : ''}">
@@ -806,17 +860,7 @@
         </li>
       `)
       .join('');
-
-    refs.goals.querySelectorAll('[data-claim-goal]').forEach((button) => {
-      button.addEventListener('click', () => {
-        const result = claimGoalReward(state, button.dataset.claimGoal);
-        if (result.ok) {
-          showToast('目标奖励', `获得${formatReward(result.reward)}。`);
-        }
-        saveState();
-        render();
-      });
-    });
+    renderCache.goals = signature;
   }
 
   function claimGoalReward(state, goalId, now = Date.now()) {
@@ -882,11 +926,11 @@
     pendingOfflineSummary = null;
   }
 
-  function calculateQiRate(state) {
+  function calculateQiRate(state, now = Date.now()) {
     const realm = getCurrentRealm(state);
     const buildingBonus = 1 + ((state.buildings.meditationSeat || 1) - 1) * buildings.meditationSeat.qiBonusPerLevel;
-    const pillBoost = state.pills > 0 ? 1.15 : 1;
-    const injuryPenalty = state.injuryUntil && state.injuryUntil > Date.now() ? 0.75 : 1;
+    const pillBoost = state.pillBoostUntil && state.pillBoostUntil > now ? 1.4 : 1;
+    const injuryPenalty = state.injuryUntil && state.injuryUntil > now ? 0.75 : 1;
     return round(realm.qiRate * buildingBonus * pillBoost * injuryPenalty);
   }
 
@@ -937,6 +981,16 @@
     }
 
     return Object.fromEntries(Object.entries(savedGoals).filter(([, claimed]) => Boolean(claimed)));
+  }
+
+  function normalizeAlchemy(alchemy) {
+    if (!alchemy) {
+      return null;
+    }
+    return {
+      startedAt: Number(alchemy.startedAt) || Date.now(),
+      endsAt: Number(alchemy.endsAt) || Date.now(),
+    };
   }
 
   function normalizeNestedClaims(savedClaims) {
@@ -1001,6 +1055,15 @@
     }
 
     setTimeout(() => toast.remove(), 4200);
+  }
+
+  function renderTabs() {
+    document.querySelectorAll('[data-tab]').forEach((button) => {
+      button.classList.toggle('active', button.dataset.tab === activeTab);
+    });
+    document.querySelectorAll('[data-panel]').forEach((panel) => {
+      panel.classList.toggle('active', panel.dataset.panel === activeTab);
+    });
   }
 
   function addLog(state, time, text) {
