@@ -9,6 +9,7 @@ import {
   MAINLINE_CHAPTERS,
   MISSION_MAPS,
   MISSION_EVENTS,
+  REALMS,
   assignSectDisciple,
   applyOfflineProgress,
   calculateBreakthroughChance,
@@ -24,6 +25,7 @@ import {
   equipLootEquipment,
   empowerLootEquipment,
   getGoals,
+  getNextGuidance,
   getMainlineChapters,
   getDailyTasks,
   getMapStatuses,
@@ -39,6 +41,7 @@ import {
   consumePill,
   refineGear,
   recruitDisciple,
+  reviveGameState,
   stabilizeFoundation,
   startMission,
   toggleAutoMission,
@@ -69,6 +72,44 @@ test('cultivation accumulates resources over time', () => {
   assert.equal(state.totalCultivationSeconds, 10);
 });
 
+test('realm pacing prevents rushing to nascent soul in a short session', () => {
+  const state = createGameState(1000);
+  state.buildings.meditationSeat = 6;
+  state.formations.spiritGathering = 4;
+  state.cultivationPaths.formation = 3;
+  state.permanentBonuses.qiRate = 0.12;
+  state.inventoryPills.gatherQiPill = 12;
+  state.pills = 12;
+
+  for (let minute = 1; minute <= 120; minute += 1) {
+    updateGame(state, 60, 1000 + minute * 60_000);
+    if (minute % 12 === 0 && state.inventoryPills.gatherQiPill > 0) {
+      consumePill(state, 'gatherQiPill', 1000 + minute * 60_000);
+    }
+    if (state.qi >= REALMS[state.realmIndex].requiredQi) {
+      performBreakthrough(state, 1000 + minute * 60_000, () => 0);
+    }
+  }
+
+  assert.equal(REALMS[7].requiredQi >= 700_000, true);
+  assert.equal(state.realmIndex < 7, true);
+});
+
+test('legacy saves are rebalanced without wiping progress', () => {
+  const state = reviveGameState({
+    qi: 999_999,
+    realmIndex: 1,
+    spiritStones: 1234,
+    completedMissions: { herbGathering: 5 },
+  }, 1000);
+
+  assert.equal(state.realmIndex, 1);
+  assert.equal(state.spiritStones, 1234);
+  assert.equal(state.completedMissions.herbGathering, 5);
+  assert.equal(state.qi <= Math.ceil(REALMS[1].requiredQi * 1.15), true);
+  assert.equal(state.balanceVersion, 2);
+});
+
 test('breakthrough advances realm and consumes qi on a successful attempt', () => {
   const state = createGameState(1000);
   state.qi = 180;
@@ -77,13 +118,13 @@ test('breakthrough advances realm and consumes qi on a successful attempt', () =
 
   assert.equal(result.ok, true);
   assert.equal(state.realmIndex, 1);
-  assert.equal(state.qi, 40);
-  assert.equal(getRealmProgress(state), 0.15384615384615385);
+  assert.equal(state.qi, 10);
+  assert.equal(getRealmProgress(state), 0.014285714285714285);
 });
 
 test('failed breakthrough creates heart demon pressure', () => {
   const state = createGameState(1000);
-  state.qi = 120;
+  state.qi = 170;
 
   const result = performBreakthrough(state, 1000, () => 0.99);
 
@@ -91,7 +132,7 @@ test('failed breakthrough creates heart demon pressure', () => {
   assert.equal(result.reason, 'failed');
   assert.equal(state.realmIndex, 0);
   assert.equal(state.heartDemon, 1);
-  assert.equal(state.qi, 60);
+  assert.equal(state.qi, 85);
   assert.equal(calculateBreakthroughChance(state), 0.6);
 });
 
@@ -179,7 +220,7 @@ test('clear heart and meridian pills affect breakthrough preparation', () => {
   assert.equal(meridian.ok, true);
   assert.equal(state.heartDemon, 1);
   assert.equal(state.breakthroughBoostUntil, 181_000);
-  assert.equal(calculateBreakthroughChance({ ...state, qi: 120 }, 2_000), 0.82);
+  assert.equal(calculateBreakthroughChance({ ...state, qi: 120 }, 2_000), 0.72);
 });
 
 test('gear and formations upgrade real cultivation stats', () => {
@@ -227,8 +268,8 @@ test('gear affixes support cultivation and exploration roles', () => {
   refineGear(state, 'amulet', 1000, () => 0);
   refineGear(state, 'robe', 1000, () => 0);
 
-  assert.equal(calculateQiRate(state, 2000), 4.54);
-  assert.equal(getMissionStatus(state, 'mistyValley').recommendedPower, 87);
+  assert.equal(calculateQiRate(state, 2000), 4.1);
+  assert.equal(getMissionStatus(state, 'mistyValley').recommendedPower, 152);
 });
 
 test('cultivation paths are gated by realm stage and choose a dominant path', () => {
@@ -332,7 +373,7 @@ test('daily tasks require progress before claiming', () => {
 
 test('stabilizing foundation raises chance and softens breakthrough failure', () => {
   const state = createGameState(1000);
-  state.qi = 120;
+  state.qi = 192;
   state.spiritStones = 40;
   state.herbs = 10;
 
@@ -341,7 +382,7 @@ test('stabilizing foundation raises chance and softens breakthrough failure', ()
   const failed = performBreakthrough(state, 2000, () => 0.99);
 
   assert.equal(prepared.ok, true);
-  assert.equal(chance, 0.9);
+  assert.equal(chance, 0.8);
   assert.equal(failed.ok, false);
   assert.equal(state.heartDemon, 0);
 });
@@ -365,7 +406,7 @@ test('new exploration routes grant distinct rewards', () => {
   const state = createGameState(1000);
   state.realmIndex = 4;
   state.qi = 600;
-  state.gear.weapon = 2;
+  state.gear.weapon = 6;
 
   startMission(state, 'herbValley', 1000);
   updateGame(state, 70, 71_000);
@@ -502,6 +543,24 @@ test('map bosses unlock from exploration and grant one-time permanent rewards', 
   assert.equal(repeated.reason, 'alreadyDefeated');
 });
 
+test('next guidance points players toward the clearest progression step', () => {
+  const state = createGameState(1000);
+
+  assert.equal(getNextGuidance(state).title, '积攒灵气');
+
+  state.qi = REALMS[0].requiredQi;
+  assert.equal(getNextGuidance(state).title, '可以突破');
+
+  state.qi = 220;
+  state.realmIndex = 2;
+  state.completedMissions.herbGathering = 2;
+  state.completedMissions.cavePatrol = 1;
+  state.completedMissions.marketTrade = 2;
+  state.gear.weapon = 2;
+
+  assert.equal(getNextGuidance(state).title, '挑战青岚山魈');
+});
+
 test('loot dismantling creates strengthening material and empowerment improves bonuses', () => {
   const state = createGameState(1000);
   state.realmIndex = 3;
@@ -610,7 +669,7 @@ test('mainline chapters require claimed objectives before chapter rewards', () =
   state.craftedPills = 1;
 
   const chapters = getMainlineChapters(state);
-  assert.equal(MAINLINE_CHAPTERS.length >= 3, true);
+  assert.equal(MAINLINE_CHAPTERS.length >= 5, true);
   assert.equal(chapters[0].completed, true);
   assert.equal(chapters[0].allObjectivesClaimed, false);
 
@@ -641,7 +700,7 @@ test('mainline chapter rewards provide permanent growth bonuses', () => {
   claimChapterReward(state, 'qinglanStart', 1000);
 
   assert.equal(state.permanentBonuses.qiRate, 0.03);
-  assert.equal(calculateQiRate(state, 2000), 4.33);
+  assert.equal(calculateQiRate(state, 2000), 3.91);
 });
 
 test('daily tasks unlock after three novice goals are complete', () => {
@@ -656,7 +715,7 @@ test('daily tasks unlock after three novice goals are complete', () => {
 
   assert.equal(tasks.every((task) => task.unlocked), true);
   assert.equal(claimed.ok, true);
-  assert.equal(state.spiritStones, 113);
+  assert.equal(state.spiritStones, 95);
   assert.equal(state.dailyClaims['1970-01-01'].dailyCultivation, true);
 });
 
@@ -698,6 +757,6 @@ test('offline progress returns a resource summary', () => {
 
   assert.equal(summary.seconds, 100);
   assert.equal(summary.qi, 180);
-  assert.equal(summary.spiritStones, 12);
+  assert.equal(summary.spiritStones, 10);
   assert.equal(summary.herbs, 2);
 });

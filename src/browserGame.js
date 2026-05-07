@@ -1,14 +1,16 @@
 (function () {
   const realms = [
-    { name: '炼气一层', requiredQi: 100, qiRate: 1.8, stoneRate: 0.12 },
-    { name: '炼气二层', requiredQi: 260, qiRate: 2.8, stoneRate: 0.18 },
-    { name: '炼气三层', requiredQi: 520, qiRate: 4.2, stoneRate: 0.26 },
-    { name: '筑基初期', requiredQi: 1100, qiRate: 6.4, stoneRate: 0.38 },
-    { name: '筑基中期', requiredQi: 2200, qiRate: 9.2, stoneRate: 0.54 },
-    { name: '金丹初成', requiredQi: 4800, qiRate: 14, stoneRate: 0.82 },
-    { name: '金丹圆满', requiredQi: 9200, qiRate: 22, stoneRate: 1.25 },
-    { name: '元婴初期', requiredQi: 18000, qiRate: 34, stoneRate: 1.85 },
+    { name: '炼气一层', requiredQi: 160, qiRate: 1.8, stoneRate: 0.1 },
+    { name: '炼气二层', requiredQi: 700, qiRate: 2.6, stoneRate: 0.14 },
+    { name: '炼气三层', requiredQi: 2200, qiRate: 3.8, stoneRate: 0.2 },
+    { name: '筑基初期', requiredQi: 8200, qiRate: 5.8, stoneRate: 0.3 },
+    { name: '筑基中期', requiredQi: 26000, qiRate: 8.2, stoneRate: 0.44 },
+    { name: '金丹初成', requiredQi: 85000, qiRate: 12, stoneRate: 0.66 },
+    { name: '金丹圆满', requiredQi: 260000, qiRate: 17.5, stoneRate: 0.95 },
+    { name: '元婴初期', requiredQi: 720000, qiRate: 26, stoneRate: 1.4 },
   ];
+
+  const currentBalanceVersion = 2;
 
   const upgradeTiers = [
     { name: '凡阶', minLevel: 1, maxLevel: 3, realmIndex: 0 },
@@ -55,7 +57,7 @@
       map: '雾隐秘境',
       unlockRealmIndex: 2,
       duration: 120,
-      danger: 115,
+      danger: 180,
       reward: { spiritStones: 35, qi: 90, beastCores: 1, artifacts: 1 },
       rareEvery: 4,
       rareReward: { meridianPill: 1 },
@@ -69,7 +71,7 @@
       map: '灵草谷',
       unlockRealmIndex: 1,
       duration: 70,
-      danger: 80,
+      danger: 120,
       reward: { herbs: 14, spiritStones: 14, qi: 45 },
       rareEvery: 3,
       rareReward: { clearHeartPill: 1 },
@@ -83,7 +85,7 @@
       map: '古剑冢',
       unlockRealmIndex: 3,
       duration: 140,
-      danger: 145,
+      danger: 330,
       reward: { artifacts: 2, spiritStones: 50, beastCores: 1 },
       rareEvery: 3,
       rareReward: { beastCores: 2, arrayFlags: 1 },
@@ -97,7 +99,7 @@
       map: '魔气裂隙',
       unlockRealmIndex: 4,
       duration: 180,
-      danger: 180,
+      danger: 520,
       reward: { beastCores: 3, spiritStones: 90, qi: 120, heartDemon: 1 },
       rareEvery: 4,
       rareReward: { meridianPill: 1, arrayFlags: 1 },
@@ -111,7 +113,7 @@
       map: '上古遗迹',
       unlockRealmIndex: 5,
       duration: 240,
-      danger: 260,
+      danger: 820,
       reward: { spiritStones: 150, beastCores: 4, arrayFlags: 2, qi: 180 },
       rareEvery: 5,
       rareReward: { artifacts: 3, meridianPill: 1 },
@@ -130,7 +132,7 @@
       explorationTarget: 5,
       reputationPerMission: 6,
       masteryBonus: { qiRate: 0.03 },
-      boss: { name: '青岚山魈', title: '山门首领', power: 130, reward: { spiritStones: 120, powerBonus: 24, forgingEssence: 2 }, reputation: 25, failurePenalty: { qi: -35, heartDemon: 1 } },
+      boss: { name: '青岚山魈', title: '山门首领', power: 180, reward: { spiritStones: 120, powerBonus: 24, forgingEssence: 2 }, reputation: 25, failurePenalty: { qi: -35, heartDemon: 1 } },
     },
     herbValley: {
       id: 'herbValley',
@@ -141,7 +143,7 @@
       explorationTarget: 6,
       reputationPerMission: 7,
       masteryBonus: { qiRate: 0.02 },
-      boss: { name: '百年药灵', title: '谷中灵魄', power: 190, reward: { herbs: 36, qiRateBonus: 0.02, forgingEssence: 3 }, reputation: 30, failurePenalty: { qi: -45 } },
+      boss: { name: '百年药灵', title: '谷中灵魄', power: 300, reward: { herbs: 36, qiRateBonus: 0.02, forgingEssence: 3 }, reputation: 30, failurePenalty: { qi: -45 } },
     },
     mistyValley: {
       id: 'mistyValley',
@@ -152,7 +154,7 @@
       explorationTarget: 5,
       reputationPerMission: 8,
       masteryBonus: { dangerReduction: 6 },
-      boss: { name: '雾隐妖', title: '秘境守影', power: 240, reward: { beastCores: 3, artifacts: 1, powerBonus: 32, forgingEssence: 4 }, reputation: 35, failurePenalty: { qi: -65, heartDemon: 1 } },
+      boss: { name: '雾隐妖', title: '秘境守影', power: 420, reward: { beastCores: 3, artifacts: 1, powerBonus: 32, forgingEssence: 4 }, reputation: 35, failurePenalty: { qi: -65, heartDemon: 1 } },
     },
     swordTomb: {
       id: 'swordTomb',
@@ -163,7 +165,7 @@
       explorationTarget: 6,
       reputationPerMission: 9,
       masteryBonus: { power: 14 },
-      boss: { name: '无名剑魂', title: '剑冢残念', power: 330, reward: { artifacts: 3, beastCores: 2, powerBonus: 48, forgingEssence: 5 }, reputation: 40, failurePenalty: { qi: -90, heartDemon: 1 } },
+      boss: { name: '无名剑魂', title: '剑冢残念', power: 650, reward: { artifacts: 3, beastCores: 2, powerBonus: 48, forgingEssence: 5 }, reputation: 40, failurePenalty: { qi: -90, heartDemon: 1 } },
     },
     demonRift: {
       id: 'demonRift',
@@ -174,7 +176,7 @@
       explorationTarget: 7,
       reputationPerMission: 10,
       masteryBonus: { power: 18, dangerReduction: 4 },
-      boss: { name: '裂隙魔影', title: '魔气化身', power: 460, reward: { beastCores: 5, arrayFlags: 2, powerBonus: 64, forgingEssence: 6 }, reputation: 45, failurePenalty: { qi: -120, heartDemon: 2 } },
+      boss: { name: '裂隙魔影', title: '魔气化身', power: 950, reward: { beastCores: 5, arrayFlags: 2, powerBonus: 64, forgingEssence: 6 }, reputation: 45, failurePenalty: { qi: -120, heartDemon: 2 } },
     },
     ancientRuins: {
       id: 'ancientRuins',
@@ -185,7 +187,7 @@
       explorationTarget: 8,
       reputationPerMission: 12,
       masteryBonus: { qiRate: 0.015, power: 16 },
-      boss: { name: '残阵守灵', title: '遗迹阵枢', power: 620, reward: { spiritStones: 320, arrayFlags: 4, qiRateBonus: 0.03, forgingEssence: 8 }, reputation: 55, failurePenalty: { qi: -160, heartDemon: 2 } },
+      boss: { name: '残阵守灵', title: '遗迹阵枢', power: 1300, reward: { spiritStones: 320, arrayFlags: 4, qiRateBonus: 0.03, forgingEssence: 8 }, reputation: 55, failurePenalty: { qi: -160, heartDemon: 2 } },
     },
   };
 
@@ -607,6 +609,78 @@
         },
       ],
     },
+    {
+      id: 'riftSuppression',
+      title: '裂隙镇守',
+      subtitle: '金丹之后不再只看境界，需要首领、宗门和战利品共同支撑。',
+      reward: { spiritStones: 520, powerBonus: 90, forgingEssence: 4 },
+      objectives: [
+        {
+          id: 'goldenCoreCompletion',
+          title: '金丹圆满',
+          detail: '境界达到金丹圆满，打开地阶成长上限',
+          completed: (state) => state.realmIndex >= 6,
+          reward: { spiritStones: 260, meridianPill: 1 },
+        },
+        {
+          id: 'demonBoss',
+          title: '镇压裂隙魔影',
+          detail: '完成魔气裂隙探索并击败地图首领',
+          completed: (state) => Boolean(state.defeatedBosses.demonRift),
+          reward: { beastCores: 4, arrayFlags: 2 },
+        },
+        {
+          id: 'empoweredLoot',
+          title: '强化一件战利品',
+          detail: '任意具名战利品强化至 2 级',
+          completed: (state) => (state.lootEquipment || []).some((item) => (item.level || 0) >= 2),
+          reward: { forgingEssence: 3, spiritStones: 220 },
+        },
+        {
+          id: 'sectReputation',
+          title: '宗门初具名望',
+          detail: '宗门声望达到 20',
+          completed: (state) => (state.sectReputation || 0) >= 20,
+          reward: { herbs: 40, spiritStones: 240 },
+        },
+      ],
+    },
+    {
+      id: 'nascentSoulSect',
+      title: '元婴开宗',
+      subtitle: '镇守遗迹、扩张宗门，把个人修为转化为长期洞天底蕴。',
+      reward: { spiritStones: 900, qiRateBonus: 0.08, powerBonus: 140 },
+      objectives: [
+        {
+          id: 'nascentSoulRealm',
+          title: '踏入元婴',
+          detail: '境界达到元婴初期',
+          completed: (state) => state.realmIndex >= 7,
+          reward: { spiritStones: 520, meridianPill: 2 },
+        },
+        {
+          id: 'ancientRuinsBoss',
+          title: '镇压残阵守灵',
+          detail: '完成上古遗迹探索并击败地图首领',
+          completed: (state) => Boolean(state.defeatedBosses.ancientRuins),
+          reward: { arrayFlags: 4, forgingEssence: 4 },
+        },
+        {
+          id: 'sectSixDisciples',
+          title: '宗门六徒',
+          detail: '招募 6 名弟子，形成稳定委托循环',
+          completed: (state) => (state.sectDisciples || 0) >= 6,
+          reward: { spiritStones: 360, herbs: 60 },
+        },
+        {
+          id: 'earthTierFormation',
+          title: '地阶阵法',
+          detail: '任意阵法达到 7 级',
+          completed: (state) => Object.values(state.formations || {}).some((level) => level >= 7),
+          reward: { powerBonus: 60, qiRateBonus: 0.03 },
+        },
+      ],
+    },
   ];
 
   const saveKey = 'idle-xianxia-save-v1';
@@ -630,6 +704,7 @@
     upgradeLimit: document.querySelector('[data-upgrade-limit]'),
     progress: document.querySelector('[data-progress]'),
     progressText: document.querySelector('[data-progress-text]'),
+    nextGuidance: document.querySelector('[data-next-guidance]'),
     mission: document.querySelector('[data-mission]'),
     missionTime: document.querySelector('[data-mission-time]'),
     pillBoost: document.querySelector('[data-pill-boost]'),
@@ -909,6 +984,16 @@
     });
   });
 
+  refs.nextGuidance?.addEventListener('click', () => {
+    const tab = refs.nextGuidance.dataset.gotoTab;
+    if (!panelTabs.includes(tab)) {
+      return;
+    }
+    activeTab = tab;
+    localStorage.setItem('idle-xianxia-active-tab', activeTab);
+    renderTabs();
+  });
+
   document.querySelector('[data-reset]').addEventListener('click', () => {
     localStorage.removeItem(saveKey);
     state = createGameState();
@@ -923,6 +1008,7 @@
 
   function createGameState(now = Date.now()) {
     return {
+      balanceVersion: currentBalanceVersion,
       qi: 0,
       spiritStones: 0,
       herbs: 0,
@@ -1023,6 +1109,11 @@
   function reviveGameState(saved, now = Date.now()) {
     const state = Object.assign(createGameState(now), saved);
     state.realmIndex = Math.min(realms.length - 1, Math.max(0, Math.floor(Number(state.realmIndex) || 0)));
+    state.qi = Math.max(0, Number(state.qi) || 0);
+    if ((saved?.balanceVersion || 0) < currentBalanceVersion) {
+      state.qi = Math.min(state.qi, round(getCurrentRealm(state).requiredQi * 1.15));
+    }
+    state.balanceVersion = currentBalanceVersion;
     state.heartDemon = Math.max(0, Number(state.heartDemon) || 0);
     state.insight = Math.max(0, Number(state.insight) || 0);
     state.pillBoostUntil = Math.max(0, Number(state.pillBoostUntil) || 0);
@@ -1435,6 +1526,11 @@
     refs.breakthroughChance.textContent = `${Math.round(calculateBreakthroughChance(state, Date.now()) * 100)}%`;
     refs.progress.style.width = `${progress * 100}%`;
     refs.progressText.textContent = remainingQi > 0 ? `距突破还差 ${Math.ceil(remainingQi)} 灵气` : '灵气圆满，可以尝试突破';
+    if (refs.nextGuidance) {
+      const guidance = getNextGuidance(state);
+      refs.nextGuidance.innerHTML = `<strong>${guidance.title}</strong><span>${guidance.detail}</span>`;
+      refs.nextGuidance.dataset.gotoTab = guidance.tab || 'goals';
+    }
 
     if (activeMission) {
       refs.mission.textContent = activeMission.name;
@@ -1815,6 +1911,53 @@
   function getActiveMainlineChapter(state) {
     const chapters = getMainlineChapters(state);
     return chapters.find((chapter) => !chapter.locked && !chapter.rewardClaimed) || chapters[chapters.length - 1];
+  }
+
+  function getNextGuidance(state) {
+    const activeMission = state.activeMission ? missions[state.activeMission.id] : null;
+    if (activeMission) {
+      return { title: `正在历练：${activeMission.name}`, detail: '等待历练完成，或先处理丹房、装备和宗门委托。', tab: 'missions' };
+    }
+    if (state.activeAlchemy) {
+      const recipe = pillRecipes[state.activeAlchemy.recipeId] || pillRecipes.gatherQiPill;
+      return { title: `正在炼制${recipe.name}`, detail: '丹成后服用或继续排下一炉，能明显提高突破准备效率。', tab: 'alchemy' };
+    }
+    const realm = getCurrentRealm(state);
+    if ((state.qi || 0) >= realm.requiredQi && state.realmIndex < realms.length - 1) {
+      return { title: '可以突破', detail: `灵气已满，当前突破把握 ${Math.round(calculateBreakthroughChance(state) * 100)}%。`, tab: 'goals' };
+    }
+    if ((state.realmIndex || 0) <= 1) {
+      return { title: '积攒灵气', detail: `距离下一次突破还差 ${Math.ceil(Math.max(0, realm.requiredQi - (state.qi || 0)))} 灵气。`, tab: 'goals' };
+    }
+    const readyBoss = getMapStatuses(state).find((map) => map.boss.status === 'ready' && calculatePower(state) >= map.boss.power);
+    if (readyBoss) {
+      return { title: `挑战${readyBoss.boss.name}`, detail: `${readyBoss.name}探索已足，镇压首领可获得永久成长和炼器精魄。`, tab: 'missions' };
+    }
+    const chapter = getMainlineChapters(state).find((candidate) => !candidate.locked && !candidate.rewardClaimed);
+    const claimableObjective = chapter?.objectives.find((objective) => objective.completed && !objective.claimed);
+    if (claimableObjective) {
+      return { title: `领取${claimableObjective.title}`, detail: `目标已完成，可领取 ${formatReward(claimableObjective.reward)}。`, tab: 'goals' };
+    }
+    const nextObjective = chapter?.objectives.find((objective) => !objective.completed);
+    if (nextObjective) {
+      return { title: nextObjective.title, detail: nextObjective.detail, tab: getGuidanceTabForObjective(nextObjective.id) };
+    }
+    const sect = getSectStatus(state);
+    if (sect.unlocked && sect.idle > 0) {
+      return { title: '分配宗门弟子', detail: '空闲弟子不会产出，把弟子派去采药、采矿或护山。', tab: 'sect' };
+    }
+    return { title: '继续积累底蕴', detail: '刷地图声望、强化战利品、提升洞府和阵法，准备下一轮突破。', tab: 'missions' };
+  }
+
+  function getGuidanceTabForObjective(objectiveId) {
+    if (/Mission|Trial|Boss|demon|Ruins|Tomb|Valley|Rift|realm|Realm/i.test(objectiveId)) {
+      return objectiveId.toLowerCase().includes('realm') ? 'goals' : 'missions';
+    }
+    if (/Pill|alchemy/i.test(objectiveId)) return 'alchemy';
+    if (/Gear|Armament|Loot|Formation/i.test(objectiveId)) return 'gear';
+    if (/sect|Disciple/i.test(objectiveId)) return 'sect';
+    if (/Field|building/i.test(objectiveId)) return 'cave';
+    return 'goals';
   }
 
   function isDailyUnlocked(state) {
@@ -3158,8 +3301,12 @@
     if (level <= 0) {
       return 0;
     }
-    const tierMultiplier = 1 + Math.floor((level - 1) / 3) * 1.5;
-    return Math.ceil(base * level * tierMultiplier);
+    if (level <= 3) {
+      return Math.ceil(base * level);
+    }
+    const tierMultiplier = 1 + Math.floor((level - 1) / 3) * 2.4;
+    const lateMultiplier = Math.pow(1.13, level - 3);
+    return Math.ceil(base * level * tierMultiplier * lateMultiplier);
   }
 
   function getDateKey(now = Date.now()) {
