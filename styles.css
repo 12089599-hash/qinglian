@@ -1680,7 +1680,39 @@ small {
   }
 
   body[data-active-tab="overview"] .stats-panel {
-    display: block;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  body[data-active-tab="overview"] .stats-panel > .attribute-card {
+    order: 1;
+    margin-top: 0;
+  }
+
+  body[data-active-tab="overview"] .stats-panel > header {
+    order: 2;
+    margin-bottom: 0;
+  }
+
+  body[data-active-tab="overview"] .stats-panel > .vital-grid {
+    order: 3;
+  }
+
+  body[data-active-tab="overview"] .stats-panel > .state-drawer {
+    order: 4;
+  }
+
+  body[data-active-tab="overview"] .stats-panel > .resource-drawer:not(.state-drawer) {
+    order: 5;
+  }
+
+  body[data-active-tab="overview"] .stats-panel > .action-row {
+    order: 6;
+  }
+
+  body[data-active-tab="overview"] .stats-panel > .resource-drawer {
+    margin-top: 0;
   }
 
   .section-tabs {

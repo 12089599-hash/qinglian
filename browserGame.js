@@ -5329,6 +5329,7 @@
     const activeGroup = getTabGroup(activeTab);
     document.body.dataset.activeTab = activeTab;
     document.body.dataset.activeGroup = activeGroup;
+    syncMobileOverviewDrawers();
     document.querySelectorAll('[data-tab-group]').forEach((button) => {
       button.classList.toggle('active', button.dataset.tabGroup === activeGroup);
     });
@@ -5337,6 +5338,17 @@
       panel.classList.toggle('active', panel.dataset.panel === activeTab);
     });
     renderGearSections();
+  }
+
+  function syncMobileOverviewDrawers() {
+    const layoutSignature = `${activeTab}:${isMobileLayout() ? 'mobile' : 'desktop'}`;
+    if (renderCache.mobileOverviewDrawers === layoutSignature) {
+      return;
+    }
+    renderCache.mobileOverviewDrawers = layoutSignature;
+    document.querySelectorAll('.stats-panel > .resource-drawer').forEach((drawer) => {
+      drawer.open = !isMobileLayout();
+    });
   }
 
   function getTabGroup(tabId) {
