@@ -537,10 +537,12 @@ small {
 }
 
 .detail-row {
+  display: block;
   align-items: start;
 }
 
 .detail-row summary {
+  display: block;
   min-width: 0;
 }
 
@@ -551,14 +553,16 @@ small {
     rgba(255, 255, 255, 0.035);
 }
 
-.detail-row .detail-stack {
-  grid-column: 1 / -1;
-}
-
 .row-actions {
   display: grid;
   gap: 8px;
   min-width: 72px;
+}
+
+.detail-row .row-actions {
+  grid-template-columns: repeat(auto-fit, minmax(84px, 1fr));
+  min-width: 0;
+  margin-top: 10px;
 }
 
 .sect-summary {
