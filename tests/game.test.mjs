@@ -9,7 +9,11 @@ import {
   MAINLINE_CHAPTERS,
   MISSION_MAPS,
   MISSION_EVENTS,
+  OPPORTUNITIES,
   REALMS,
+  SECT_LEVELS,
+  SPIRIT_BEASTS,
+  TREASURES,
   assignSectDisciple,
   applyOfflineProgress,
   calculateBreakthroughChance,
@@ -28,6 +32,8 @@ import {
   getNextGuidance,
   getMainlineChapters,
   getDailyTasks,
+  getCharacterProfile,
+  getEquipmentDetails,
   getMapStatuses,
   getMissionStatus,
   getGearQuality,
@@ -42,14 +48,17 @@ import {
   refineGear,
   recruitDisciple,
   reviveGameState,
+  resolveOpportunity,
   stabilizeFoundation,
   startMission,
+  trainSpiritBeast,
   toggleAutoMission,
   updateGame,
   upgradeBuilding,
   upgradeCultivationPath,
   upgradeFormation,
   upgradeGear,
+  upgradeTreasure,
 } from '../src/gameCore.mjs';
 
 function test(name, fn) {
@@ -632,6 +641,100 @@ test('sect disciples turn assignments into long-term idle rewards', () => {
   assert.equal(state.herbs > 0, true);
   assert.equal(state.sectReputation, 2);
   assert.equal(state.beastCores, 1);
+});
+
+test('sect reputation unlocks levels and named disciples gain commission experience', () => {
+  const state = createGameState(1000);
+  state.realmIndex = 3;
+  state.spiritStones = 1_000;
+  state.herbs = 300;
+
+  recruitDisciple(state, 1000);
+  recruitDisciple(state, 2000);
+  const earlySect = getSectStatus(state);
+
+  assert.equal(SECT_LEVELS[0].name, '外门草创');
+  assert.equal(earlySect.levelName, '外门草创');
+  assert.equal(earlySect.roster.length, 2);
+  assert.equal(typeof earlySect.roster[0].aptitude, 'number');
+  assert.equal(earlySect.roster[0].job, 'idle');
+
+  assignSectDisciple(state, 'herbGarden', 1, 3000);
+  updateGame(state, 300, 303_000);
+  const trainedSect = getSectStatus(state);
+
+  assert.equal(trainedSect.roster[0].job, 'herbGarden');
+  assert.equal(trainedSect.roster[0].experience > 0, true);
+
+  state.sectReputation = 95;
+  const grownSect = getSectStatus(state);
+  assert.equal(grownSect.levelName, '内门成形');
+  assert.equal(grownSect.capacity > earlySect.capacity, true);
+});
+
+test('mission opportunities offer choices and resolve rewards or costs', () => {
+  const state = createGameState(1000);
+  state.realmIndex = 3;
+  state.gear.weapon = 5;
+  state.qi = 600;
+  state.spiritStones = 500;
+
+  startMission(state, 'ancientSwordTomb', 1000);
+  updateGame(state, 140, 141_000);
+
+  assert.equal(OPPORTUNITIES.swordEcho.name, '剑冢回响');
+  assert.equal(state.activeOpportunity.id, 'swordEcho');
+
+  const resolved = resolveOpportunity(state, 'temperSword', 142_000, () => 0);
+
+  assert.equal(resolved.ok, true);
+  assert.equal(state.activeOpportunity, null);
+  assert.equal(state.permanentBonuses.power, 18);
+  assert.equal(state.forgingEssence, 2);
+});
+
+test('magic treasures and spirit beasts add long term stat bonuses', () => {
+  const state = createGameState(1000);
+  state.spiritStones = 1_000;
+  state.herbs = 300;
+  state.artifacts = 10;
+  state.forgingEssence = 10;
+  state.beastCores = 10;
+
+  const treasure = upgradeTreasure(state, 'lifeBoundSeal', 1000);
+  const beast = trainSpiritBeast(state, 'cloudFox', 2000);
+
+  assert.equal(TREASURES.lifeBoundSeal.name, '本命青印');
+  assert.equal(SPIRIT_BEASTS.cloudFox.name, '云纹灵狐');
+  assert.equal(treasure.ok, true);
+  assert.equal(beast.ok, true);
+  assert.equal(state.treasures.lifeBoundSeal, 1);
+  assert.equal(state.spiritBeasts.cloudFox, 1);
+  assert.equal(calculateBreakthroughChance({ ...state, qi: 160 }, 3000) > 0.75, true);
+  assert.equal(calculateQiRate(state, 3000) > 1.8, true);
+});
+
+test('character profile and equipment details expose concrete attribute sources', () => {
+  const state = createGameState(1000);
+  state.realmIndex = 3;
+  state.qi = 120;
+  state.spiritStones = 500;
+  state.artifacts = 5;
+  state.gear.weapon = 2;
+  state.gear.amulet = 1;
+  state.gear.robe = 1;
+
+  refineGear(state, 'weapon', 1000, () => 0);
+  const profile = getCharacterProfile(state, 2000);
+  const equipment = getEquipmentDetails(state);
+  const weapon = equipment.gear.find((item) => item.id === 'weapon');
+
+  assert.equal(profile.combatPower.value, calculatePower(state));
+  assert.equal(profile.attributes.some((attribute) => attribute.id === 'attack' && attribute.value > 0), true);
+  assert.equal(profile.attributes.some((attribute) => attribute.id === 'cultivationSpeed' && attribute.sources.length > 0), true);
+  assert.equal(weapon.qualityName, '下品');
+  assert.equal(weapon.affix.name, '剑意');
+  assert.equal(weapon.effects.some((effect) => effect.label === '战力' && effect.value > 0), true);
 });
 
 test('goals describe early cultivation progress', () => {

@@ -246,6 +246,64 @@ dd {
   font-weight: 800;
 }
 
+.attribute-card {
+  margin-top: 14px;
+  border: 1px solid rgba(232, 198, 106, 0.2);
+  border-radius: 8px;
+  padding: 12px;
+  background:
+    linear-gradient(135deg, rgba(232, 198, 106, 0.08), rgba(125, 211, 183, 0.06)),
+    rgba(255, 255, 255, 0.03);
+}
+
+.attribute-card header {
+  margin-bottom: 10px;
+}
+
+.attribute-card h3 {
+  margin: 0;
+  color: var(--gold);
+  font-size: 0.92rem;
+}
+
+.attribute-card header span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.attribute-list {
+  display: grid;
+  gap: 8px;
+}
+
+.attribute-row {
+  border: 1px solid rgba(245, 238, 220, 0.09);
+  border-radius: 8px;
+  padding: 10px;
+  background: rgba(0, 0, 0, 0.16);
+}
+
+.attribute-row strong {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: #f4e7bd;
+  font-size: 0.92rem;
+}
+
+.attribute-row strong span {
+  color: var(--jade);
+  font-variant-numeric: tabular-nums;
+}
+
+.attribute-row small {
+  display: block;
+  margin-top: 5px;
+  color: #aeb7ad;
+  line-height: 1.35;
+}
+
 small {
   color: var(--jade);
   font-size: 0.78rem;
@@ -460,7 +518,7 @@ small {
 
 .sect-summary {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr)) auto;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
   gap: 10px;
   align-items: stretch;
 }
@@ -486,6 +544,102 @@ small {
   margin-top: 6px;
   color: var(--gold);
   font-size: 1.2rem;
+}
+
+.disciple-roster {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.disciple-roster div {
+  border: 1px solid rgba(245, 238, 220, 0.1);
+  border-radius: 8px;
+  padding: 11px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.disciple-roster strong,
+.disciple-roster small,
+.disciple-roster span {
+  display: block;
+}
+
+.disciple-roster strong {
+  color: var(--paper);
+}
+
+.disciple-roster strong small {
+  margin-top: 4px;
+  color: var(--jade);
+  font-weight: 700;
+}
+
+.disciple-roster span {
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.opportunity-box {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 14px;
+  border: 1px solid rgba(232, 198, 106, 0.36);
+  border-radius: 8px;
+  padding: 14px;
+  background:
+    linear-gradient(135deg, rgba(232, 198, 106, 0.14), rgba(125, 211, 183, 0.08)),
+    rgba(0, 0, 0, 0.2);
+}
+
+.opportunity-box[hidden] {
+  display: none;
+}
+
+.opportunity-box span,
+.opportunity-box small,
+.opportunity-box strong {
+  display: block;
+}
+
+.opportunity-box > div > span {
+  color: var(--jade);
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.opportunity-box > div > strong {
+  margin-top: 4px;
+  color: var(--gold);
+  font-size: 1.1rem;
+}
+
+.opportunity-box small {
+  margin-top: 5px;
+  color: #cbd5c2;
+  line-height: 1.35;
+}
+
+.opportunity-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.opportunity-actions button {
+  display: grid;
+  justify-items: start;
+  min-height: 94px;
+  padding: 12px;
+  text-align: left;
+}
+
+.opportunity-actions button span {
+  color: var(--muted);
+  font-size: 0.84rem;
+  font-weight: 600;
+  line-height: 1.35;
 }
 
 .mini-button {
@@ -913,6 +1067,11 @@ small {
     grid-template-columns: 1fr;
   }
 
+  .disciple-roster,
+  .opportunity-actions {
+    grid-template-columns: 1fr;
+  }
+
   .map-icon,
   .boss-mark {
     width: 36px;
@@ -954,5 +1113,9 @@ small {
 
   .row-actions {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .attribute-row strong {
+    display: grid;
   }
 }
