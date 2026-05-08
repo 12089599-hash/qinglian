@@ -56,6 +56,8 @@ assert.match(styles, /\.comparison-list/);
 assert.match(source, /result\.reason === 'notEnoughResources'/);
 assert.match(source, /data-opportunity-affordable/);
 assert.doesNotMatch(source, /data-resolve-opportunity="\$\{choice\.id\}" \$\{canAfford\(state, choice\.cost \|\| \{\}\) \? '' : 'disabled'\}/);
+assert.match(source, /function getOpportunityResourceSignature/);
+assert.doesNotMatch(source, /active \? `\$\{active\.id\}:\$\{state\.spiritStones\}:\$\{state\.artifacts\}:\$\{state\.arrayFlags\}:\$\{state\.qi\}` : 'none'/);
 
 function element() {
   return {

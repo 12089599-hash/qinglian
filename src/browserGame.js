@@ -2596,7 +2596,7 @@
       return;
     }
     const active = normalizeOpportunity(state.activeOpportunity);
-    const signature = active ? `${active.id}:${state.spiritStones}:${state.artifacts}:${state.arrayFlags}:${state.qi}` : 'none';
+    const signature = active ? `${active.id}:${getOpportunityResourceSignature(state, active.id)}` : 'none';
     if (!force && renderCache.opportunity === signature) {
       return;
     }
@@ -2628,6 +2628,15 @@
       </div>
     `;
     renderCache.opportunity = signature;
+  }
+
+  function getOpportunityResourceSignature(state, opportunityId) {
+    const opportunity = opportunities[opportunityId];
+    const keys = new Set();
+    opportunity?.choices.forEach((choice) => {
+      Object.keys(choice.cost || {}).forEach((key) => keys.add(key));
+    });
+    return [...keys].sort().map((key) => `${key}:${state[key] || 0}`).join('|');
   }
 
   function renderMissionReport(force = false) {
