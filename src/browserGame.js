@@ -1063,6 +1063,8 @@
     const result = resolveOpportunity(state, button.dataset.resolveOpportunity);
     if (result.ok) {
       showToast('机缘已定', `获得${formatReward(result.reward)}。`);
+    } else if (result.reason === 'notEnoughResources') {
+      showToast('机缘未成', `还需要${formatReward(result.cost)}。`, 'warning');
     } else if (result.reason === 'failed') {
       showToast('机缘反噬', '选择失手，已承受代价。', 'warning');
     }
@@ -2613,13 +2615,16 @@
         <small>${opportunity.detail}</small>
       </div>
       <div class="opportunity-actions">
-        ${opportunity.choices.map((choice) => `
-          <button data-resolve-opportunity="${choice.id}" ${canAfford(state, choice.cost || {}) ? '' : 'disabled'}>
+        ${opportunity.choices.map((choice) => {
+          const affordable = canAfford(state, choice.cost || {});
+          return `
+          <button data-resolve-opportunity="${choice.id}" data-opportunity-affordable="${affordable}" class="${affordable ? '' : 'unaffordable'}">
             <strong>${choice.title}</strong>
             <span>${choice.detail}</span>
             <small>${formatChoiceCostReward(choice)}</small>
           </button>
-        `).join('')}
+        `;
+        }).join('')}
       </div>
     `;
     renderCache.opportunity = signature;
@@ -2863,7 +2868,7 @@
     }
     if (!canAfford(state, choice.cost || {})) {
       addLog(state, now, `处理${opportunity.name}需要${formatReward(choice.cost)}。`);
-      return { ok: false, reason: 'notEnoughResources' };
+      return { ok: false, reason: 'notEnoughResources', opportunity, choice, cost: choice.cost || {} };
     }
 
     payResources(state, choice.cost || {});

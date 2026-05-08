@@ -895,6 +895,14 @@ small {
   line-height: 1.35;
 }
 
+.opportunity-actions button.unaffordable {
+  border-color: rgba(238, 181, 164, 0.24);
+}
+
+.opportunity-actions button.unaffordable small {
+  color: #eeb5a4;
+}
+
 .mission-report {
   display: grid;
   gap: 12px;

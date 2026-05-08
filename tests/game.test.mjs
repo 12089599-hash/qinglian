@@ -847,6 +847,21 @@ test('mission opportunities offer choices and resolve rewards or costs', () => {
   assert.equal(state.forgingEssence, 2);
 });
 
+test('mission opportunity choices return material requirements when unaffordable', () => {
+  const state = createGameState(1000);
+  state.activeOpportunity = { id: 'swordEcho', missionId: 'ancientSwordTomb', createdAt: 1000 };
+  state.artifacts = 0;
+
+  const result = resolveOpportunity(state, 'temperSword', 2000, () => 0);
+
+  assert.equal(result.ok, false);
+  assert.equal(result.reason, 'notEnoughResources');
+  assert.equal(result.opportunity.name, '剑冢回响');
+  assert.equal(result.choice.title, '以法器淬锋');
+  assert.deepEqual(result.cost, { artifacts: 1 });
+  assert.equal(state.activeOpportunity.id, 'swordEcho');
+});
+
 test('magic treasures and spirit beasts add long term stat bonuses', () => {
   const state = createGameState(1000);
   state.spiritStones = 1_000;

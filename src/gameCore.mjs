@@ -1919,7 +1919,7 @@ export function resolveOpportunity(state, choiceId, now = Date.now(), random = M
   }
   if (!canAfford(state, choice.cost ?? {})) {
     addLog(state, now, `处理${opportunity.name}需要${formatReward(choice.cost)}。`);
-    return { ok: false, reason: 'notEnoughResources' };
+    return { ok: false, reason: 'notEnoughResources', opportunity, choice, cost: choice.cost ?? {} };
   }
 
   payResources(state, choice.cost ?? {});

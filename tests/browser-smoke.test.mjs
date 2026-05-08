@@ -53,6 +53,9 @@ assert.match(source, /data-loot-filter/);
 assert.match(source, /function renderLootComparison/);
 assert.match(styles, /\.loot-toolbar/);
 assert.match(styles, /\.comparison-list/);
+assert.match(source, /result\.reason === 'notEnoughResources'/);
+assert.match(source, /data-opportunity-affordable/);
+assert.doesNotMatch(source, /data-resolve-opportunity="\$\{choice\.id\}" \$\{canAfford\(state, choice\.cost \|\| \{\}\) \? '' : 'disabled'\}/);
 
 function element() {
   return {
