@@ -704,6 +704,15 @@
       target: 1,
       reward: { spiritStones: 45 },
     },
+    dailyDepth: {
+      id: 'dailyDepth',
+      title: '秘境探层',
+      detail: '打通任意秘境层数，领取中期炼器补给',
+      progressKey: 'depthTrials',
+      target: 1,
+      unlockRealmIndex: 4,
+      reward: { forgingEssence: 1, arrayFlags: 1 },
+    },
   };
 
   const marketItems = {
@@ -2432,6 +2441,7 @@
     state.mapDepths[map.id] = Math.max(state.mapDepths[map.id] || 0, layer);
     addMapReputation(state, map.id, reputationGained);
     addDailyProgress(state, 'missions', 1, now);
+    addDailyProgress(state, 'depthTrials', 1, now);
     recordMissionReport(state, createDepthReport(state, map, layer, {
       outcome: 'success',
       reward,
@@ -3534,17 +3544,24 @@
     return getGoals(state).filter((goal) => goal.completed).length >= 3;
   }
 
+  function isDailyTaskUnlocked(state, task) {
+    return isDailyUnlocked(state) && (state.realmIndex || 0) >= (task.unlockRealmIndex || 0);
+  }
+
   function getDailyTasks(state, dateKey = getDateKey()) {
     const unlocked = isDailyUnlocked(state);
     const claims = state.dailyClaims[dateKey] || {};
     const progress = getDailyProgress(state, dateKey);
-    return Object.values(dailyTasks).map((task) => ({
-      ...task,
-      unlocked,
-      progress: Math.min(task.target, Math.floor(progress[task.progressKey] || 0)),
-      completed: (progress[task.progressKey] || 0) >= task.target,
-      claimed: Boolean(claims[task.id]),
-    }));
+    return Object.values(dailyTasks).map((task) => {
+      const taskUnlocked = unlocked && (state.realmIndex || 0) >= (task.unlockRealmIndex || 0);
+      return {
+        ...task,
+        unlocked: taskUnlocked,
+        progress: Math.min(task.target, Math.floor(progress[task.progressKey] || 0)),
+        completed: taskUnlocked && (progress[task.progressKey] || 0) >= task.target,
+        claimed: Boolean(claims[task.id]),
+      };
+    });
   }
 
   function renderDailyTasks(force = false) {
@@ -3553,7 +3570,7 @@
     }
 
     const tasks = getDailyTasks(state);
-    const unlocked = tasks.every((task) => task.unlocked);
+    const unlocked = isDailyUnlocked(state);
     const claimable = tasks.some((task) => task.unlocked && task.completed && !task.claimed);
     refs.dailyStatus.textContent = unlocked ? (claimable ? '有奖励可领取' : '今日进度') : '完成 3 个目标解锁';
     const signature = tasks.map((task) => `${task.id}:${task.unlocked}:${task.progress}:${task.completed}:${task.claimed}`).join('|');
@@ -3878,7 +3895,7 @@
     if (!task) {
       return { ok: false, reason: 'unknownTask' };
     }
-    if (!isDailyUnlocked(state)) {
+    if (!isDailyTaskUnlocked(state, task)) {
       return { ok: false, reason: 'locked' };
     }
     const progress = getDailyProgress(state, dateKey);
@@ -5439,12 +5456,13 @@
           cultivationSeconds: Math.max(0, Number(value.cultivationSeconds) || 0),
           missions: Math.max(0, Number(value.missions) || 0),
           marketBuys: Math.max(0, Number(value.marketBuys) || 0),
+          depthTrials: Math.max(0, Number(value.depthTrials) || 0),
         }]),
     );
   }
 
   function getDailyProgress(state, dateKey) {
-    state.dailyProgress[dateKey] ||= { cultivationSeconds: 0, missions: 0, marketBuys: 0 };
+    state.dailyProgress[dateKey] ||= { cultivationSeconds: 0, missions: 0, marketBuys: 0, depthTrials: 0 };
     return state.dailyProgress[dateKey];
   }
 

@@ -545,8 +545,8 @@ test('daily tasks require progress before claiming', () => {
   buyMarketItem(state, 'herbBundle', 395_000);
 
   const tasks = getDailyTasks(state, '1970-01-01');
-  assert.deepEqual(tasks.map((task) => task.progress), [300, 3, 1]);
-  assert.deepEqual(tasks.map((task) => task.completed), [true, true, true]);
+  assert.deepEqual(tasks.map((task) => task.progress), [300, 3, 1, 0]);
+  assert.deepEqual(tasks.map((task) => task.completed), [true, true, true, false]);
   assert.equal(claimDailyTask(state, 'dailyCultivation', '1970-01-01', 396_000).ok, true);
 });
 
@@ -1375,7 +1375,8 @@ test('daily tasks unlock after three novice goals are complete', () => {
   const tasks = getDailyTasks(state, '2026-05-07');
   const claimed = claimDailyTask(state, 'dailyCultivation', '1970-01-01', 302_000);
 
-  assert.equal(tasks.every((task) => task.unlocked), true);
+  assert.equal(tasks.filter((task) => (task.unlockRealmIndex ?? 0) === 0).every((task) => task.unlocked), true);
+  assert.equal(tasks.find((task) => task.id === 'dailyDepth').unlocked, false);
   assert.equal(claimed.ok, true);
   assert.equal(state.spiritStones, 48);
   assert.equal(state.dailyClaims['1970-01-01'].dailyCultivation, true);
@@ -1390,6 +1391,28 @@ test('daily tasks stay locked before enough novice goals are complete', () => {
   assert.equal(tasks.every((task) => task.unlocked), false);
   assert.equal(claimed.ok, false);
   assert.equal(claimed.reason, 'locked');
+});
+
+test('midgame daily depth task rewards pushing a secret realm layer', () => {
+  const state = createGameState(1000);
+  state.realmIndex = realmIndexByName('炼气五层');
+  state.buildings.spiritField = 1;
+  state.completedMissions.cavePatrol = 1;
+  state.permanentBonuses.power = 500;
+  const dateKey = '1970-01-01';
+
+  const before = getDailyTasks(state, dateKey).find((task) => task.id === 'dailyDepth');
+  const depth = getMapDepthStatus(state, 'qinglanMountain');
+  startMapDepthTrial(state, 'qinglanMountain', 1000);
+  updateGame(state, depth.duration + 1, 1000 + (depth.duration + 1) * 1000);
+  const after = getDailyTasks(state, dateKey).find((task) => task.id === 'dailyDepth');
+  const claimed = claimDailyTask(state, 'dailyDepth', dateKey, 200_000);
+
+  assert.equal(before.unlocked, true);
+  assert.equal(after.completed, true);
+  assert.equal(claimed.ok, true);
+  assert.equal(state.forgingEssence >= 1, true);
+  assert.equal(state.arrayFlags >= 1, true);
 });
 
 test('market sells materials equipment and formations', () => {

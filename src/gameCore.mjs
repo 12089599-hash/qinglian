@@ -918,6 +918,15 @@ export const DAILY_TASKS = {
     target: 1,
     reward: { spiritStones: 45 },
   },
+  dailyDepth: {
+    id: 'dailyDepth',
+    title: '秘境探层',
+    detail: '打通任意秘境层数，领取中期炼器补给',
+    progressKey: 'depthTrials',
+    target: 1,
+    unlockRealmIndex: 4,
+    reward: { forgingEssence: 1, arrayFlags: 1 },
+  },
 };
 
 export const MARKET_ITEMS = {
@@ -2498,17 +2507,24 @@ export function isDailyUnlocked(state) {
   return getGoals(state).filter((goal) => goal.completed).length >= 3;
 }
 
+function isDailyTaskUnlocked(state, task) {
+  return isDailyUnlocked(state) && (state.realmIndex ?? 0) >= (task.unlockRealmIndex ?? 0);
+}
+
 export function getDailyTasks(state, dateKey = getDateKey()) {
   const unlocked = isDailyUnlocked(state);
   const claims = state.dailyClaims?.[dateKey] ?? {};
   const progress = getDailyProgress(state, dateKey);
-  return Object.values(DAILY_TASKS).map((task) => ({
-    ...task,
-    unlocked,
-    progress: Math.min(task.target, Math.floor(progress[task.progressKey] ?? 0)),
-    completed: (progress[task.progressKey] ?? 0) >= task.target,
-    claimed: Boolean(claims[task.id]),
-  }));
+  return Object.values(DAILY_TASKS).map((task) => {
+    const taskUnlocked = unlocked && (state.realmIndex ?? 0) >= (task.unlockRealmIndex ?? 0);
+    return {
+      ...task,
+      unlocked: taskUnlocked,
+      progress: Math.min(task.target, Math.floor(progress[task.progressKey] ?? 0)),
+      completed: taskUnlocked && (progress[task.progressKey] ?? 0) >= task.target,
+      claimed: Boolean(claims[task.id]),
+    };
+  });
 }
 
 export function claimDailyTask(state, taskId, dateKey = getDateKey(), now = Date.now()) {
@@ -2516,7 +2532,7 @@ export function claimDailyTask(state, taskId, dateKey = getDateKey(), now = Date
   if (!task) {
     return { ok: false, reason: 'unknownTask' };
   }
-  if (!isDailyUnlocked(state)) {
+  if (!isDailyTaskUnlocked(state, task)) {
     return { ok: false, reason: 'locked' };
   }
   const progress = getDailyProgress(state, dateKey);
@@ -3332,6 +3348,7 @@ function completeMapDepthTrial(state, active, now) {
     reputationGained,
     now,
   }));
+  addDailyProgress(state, 'depthTrials', 1, now);
   addLog(state, now, `打通${map.name}秘境第 ${layer} 层，获得${formatReward(reward)}。`);
 }
 
@@ -4190,12 +4207,13 @@ function normalizeDailyProgress(progress) {
         cultivationSeconds: Math.max(0, Number(value.cultivationSeconds) || 0),
         missions: Math.max(0, Number(value.missions) || 0),
         marketBuys: Math.max(0, Number(value.marketBuys) || 0),
+        depthTrials: Math.max(0, Number(value.depthTrials) || 0),
       }]),
   );
 }
 
 function getDailyProgress(state, dateKey) {
-  state.dailyProgress[dateKey] ??= { cultivationSeconds: 0, missions: 0, marketBuys: 0 };
+  state.dailyProgress[dateKey] ??= { cultivationSeconds: 0, missions: 0, marketBuys: 0, depthTrials: 0 };
   return state.dailyProgress[dateKey];
 }
 

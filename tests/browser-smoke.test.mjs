@@ -134,6 +134,8 @@ assert.match(source, /result\.reason === 'notEnoughResources'/);
 assert.match(source, /data-opportunity-affordable/);
 assert.doesNotMatch(source, /data-resolve-opportunity="\$\{choice\.id\}" \$\{canAfford\(state, choice\.cost \|\| \{\}\) \? '' : 'disabled'\}/);
 assert.match(source, /function getOpportunityResourceSignature/);
+assert.match(source, /dailyDepth/);
+assert.match(source, /depthTrials/);
 assert.match(source, /function getSectRecommendation/);
 assert.match(source, /委托建议/);
 assert.doesNotMatch(source, /active \? `\$\{active\.id\}:\$\{state\.spiritStones\}:\$\{state\.artifacts\}:\$\{state\.arrayFlags\}:\$\{state\.qi\}` : 'none'/);
