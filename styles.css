@@ -441,6 +441,85 @@ small {
   gap: 16px;
 }
 
+.mission-map-layout {
+  display: grid;
+  grid-template-columns: minmax(170px, 220px) minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.mission-map-selector {
+  display: grid;
+  gap: 8px;
+}
+
+.mission-map-detail {
+  min-width: 0;
+}
+
+.map-select-button {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) auto;
+  gap: 9px;
+  align-items: center;
+  min-height: 58px;
+  padding: 9px;
+  text-align: left;
+}
+
+.map-select-button.active {
+  border-color: rgba(232, 198, 106, 0.84);
+  background:
+    linear-gradient(135deg, rgba(232, 198, 106, 0.2), rgba(125, 211, 183, 0.1)),
+    rgba(255, 255, 255, 0.04);
+}
+
+.map-select-button.locked {
+  opacity: 0.56;
+}
+
+.map-select-button > span:not(.map-select-icon),
+.map-select-button strong,
+.map-select-button small {
+  display: block;
+  min-width: 0;
+}
+
+.map-select-button strong {
+  color: var(--paper);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.map-select-button small {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 0.74rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.map-select-button em {
+  color: var(--jade);
+  font-size: 0.78rem;
+  font-style: normal;
+  font-weight: 900;
+}
+
+.map-select-icon {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(232, 198, 106, 0.46);
+  border-radius: 8px;
+  color: #17130b;
+  background: var(--gold);
+  font-weight: 900;
+}
+
 .map-group {
   display: grid;
   gap: 10px;
@@ -563,6 +642,28 @@ small {
   gap: 4px;
   padding: 12px;
   text-align: left;
+}
+
+.mission-card-details {
+  grid-column: 1 / -1;
+  border: 1px solid rgba(245, 238, 220, 0.1);
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.mission-card-details summary {
+  cursor: pointer;
+  color: var(--gold);
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.mission-card-details small {
+  display: block;
+  margin-top: 6px;
+  color: var(--muted);
+  line-height: 1.4;
 }
 
 .system-split {
@@ -1420,6 +1521,14 @@ small {
 
   .chapter-track {
     grid-template-columns: 1fr;
+  }
+
+  .mission-map-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .mission-map-selector {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .map-heading,

@@ -206,6 +206,7 @@
       boss: { name: '残阵守灵', title: '遗迹阵枢', power: 1300, reward: { spiritStones: 320, arrayFlags: 4, qiRateBonus: 0.03, forgingEssence: 8 }, reputation: 55, failurePenalty: { qi: -160, heartDemon: 2 } },
     },
   };
+  const missionMapIds = Object.keys(missionMaps);
 
   const mapMasteryTiers = [
     { level: 0, name: '初探', reputation: 0 },
@@ -878,6 +879,10 @@
   if (!lootFilters.includes(activeLootFilter)) {
     activeLootFilter = 'all';
   }
+  let activeMissionMapId = localStorage.getItem('idle-xianxia-mission-map') || missionMapIds[0];
+  if (!missionMaps[activeMissionMapId]) {
+    activeMissionMapId = missionMapIds[0];
+  }
   let pendingOfflineSummary = null;
   let state = loadState();
   let lastFrameAt = performance.now();
@@ -1105,6 +1110,13 @@
   });
 
   refs.missionList?.addEventListener('click', (event) => {
+    const mapButton = event.target.closest('[data-select-mission-map]');
+    if (mapButton) {
+      activeMissionMapId = mapButton.dataset.selectMissionMap;
+      localStorage.setItem('idle-xianxia-mission-map', activeMissionMapId);
+      render(true);
+      return;
+    }
     const startButton = event.target.closest('[data-start-mission]');
     if (startButton) {
       startMission(state, startButton.dataset.startMission);
@@ -2601,14 +2613,31 @@
     if (!refs.missionList) {
       return;
     }
-    const signature = `${state.realmIndex}|${state.autoMissionId || ''}|${state.activeMission?.id || ''}|${Object.keys(missions).map((id) => `${id}:${state.completedMissions[id] || 0}`).join('|')}|${Object.entries(state.mapReputation).map(([id, value]) => `${id}:${value}`).join('|')}|${Object.keys(state.defeatedBosses).join('|')}`;
+    const mapStatuses = getMapStatuses(state);
+    const selectedMapId = resolveActiveMissionMapId(mapStatuses);
+    const activeMap = mapStatuses.find((map) => map.id === selectedMapId) || mapStatuses[0];
+    const signature = `${selectedMapId}|${state.realmIndex}|${state.autoMissionId || ''}|${state.activeMission?.id || ''}|${Object.keys(missions).map((id) => `${id}:${state.completedMissions[id] || 0}`).join('|')}|${Object.entries(state.mapReputation).map(([id, value]) => `${id}:${value}`).join('|')}|${Object.keys(state.defeatedBosses).join('|')}`;
     if (!force && renderCache.missions === signature) {
       return;
     }
-    refs.missionList.innerHTML = getMapStatuses(state)
-      .map((map) => renderMapGroup(map))
-      .join('');
+    refs.missionList.innerHTML = `
+      <div class="mission-map-layout">
+        ${renderMapSelector(mapStatuses)}
+        <div class="mission-map-detail">
+          ${activeMap ? renderMapGroup(activeMap) : ''}
+        </div>
+      </div>
+    `;
     renderCache.missions = signature;
+  }
+
+  function resolveActiveMissionMapId(mapStatuses) {
+    if (mapStatuses.some((map) => map.id === activeMissionMapId)) {
+      return activeMissionMapId;
+    }
+    activeMissionMapId = mapStatuses.find((map) => map.unlocked)?.id || mapStatuses[0]?.id || missionMapIds[0];
+    localStorage.setItem('idle-xianxia-mission-map', activeMissionMapId);
+    return activeMissionMapId;
   }
 
   function renderOpportunity(force = false) {
@@ -2724,6 +2753,30 @@
     `;
   }
 
+  function renderMapSelector(mapStatuses) {
+    return `
+      <div class="mission-map-selector" role="tablist" aria-label="历练地图">
+        ${mapStatuses.map((map) => renderMapSelectButton(map)).join('')}
+      </div>
+    `;
+  }
+
+  function renderMapSelectButton(map) {
+    const active = map.id === activeMissionMapId;
+    const progress = Math.round(map.exploration.percent * 100);
+    const statusText = map.unlocked ? `${map.boss.omen.label} ${map.boss.omen.name}` : `${realms[map.unlockRealmIndex]?.name || '更高境界'}解锁`;
+    return `
+      <button class="map-select-button ${active ? 'active' : ''} ${map.unlocked ? '' : 'locked'}" data-select-mission-map="${map.id}" role="tab" aria-selected="${active}">
+        <span class="map-select-icon">${map.icon}</span>
+        <span>
+          <strong>${map.name}</strong>
+          <small>${statusText}</small>
+        </span>
+        <em>${progress}%</em>
+      </button>
+    `;
+  }
+
   function renderBossCard(map) {
     const statusText = {
       locked: '未解锁',
@@ -2757,9 +2810,13 @@
         <button data-start-mission="${mission.id}" ${running || !status.unlocked ? 'disabled' : ''}>
           <strong>${mission.name}</strong>
           <span>${status.unlocked ? `${formatDuration(mission.duration)} · ${status.omen.label} ${status.omen.name}` : lockedText}</span>
-          <small>${status.unlocked ? `${status.omen.detail} · ${status.omen.counsel}` : '缘机未至'} · 产出 ${formatReward(mission.reward)} · ${rareText} · ${eventText}</small>
+          <small>产出 ${formatReward(mission.reward)}</small>
         </button>
         <button data-auto-mission="${mission.id}" class="mini-button ${active ? 'active' : ''}" ${!status.unlocked ? 'disabled' : ''}>${active ? '自动中' : '自动'}</button>
+        <details class="mission-card-details">
+          <summary>展开详情</summary>
+          <small>${status.unlocked ? `${status.omen.detail} · ${status.omen.counsel}` : '缘机未至'} · ${rareText} · ${eventText}</small>
+        </details>
       </div>
     `;
   }
