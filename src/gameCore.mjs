@@ -920,6 +920,23 @@ export const GEAR_AFFIX_POOLS = {
   robe: ['cloudStep', 'guardedBody'],
 };
 
+export const GEAR_AFFIX_SETS = {
+  greenLotusFlow: {
+    id: 'greenLotusFlow',
+    name: '青莲流影',
+    detail: '剑气、灵脉与云步彼此牵引，行游与吐纳都更顺畅。',
+    affixes: ['swordIntent', 'spiritVein', 'cloudStep'],
+    bonuses: { powerBonus: 60, qiBonus: 0.06, dangerReduction: 12 },
+  },
+  xuanGateGuard: {
+    id: 'xuanGateGuard',
+    name: '玄门守心',
+    detail: '破阵、凝神与护体相互成势，叩关和历练更稳。',
+    affixes: ['breakerEdge', 'calmMind', 'guardedBody'],
+    bonuses: { powerBonus: 20, breakthrough: 0.05, dangerReduction: 18 },
+  },
+};
+
 export const CULTIVATION_PATHS = {
   sword: {
     id: 'sword',
@@ -1910,7 +1927,7 @@ function getDepthPressure(map, layer) {
 }
 
 function getDepthDanger(state, map, layer) {
-  return Math.max(0, getDepthPressure(map, layer) - getTieredLevelValue(state.gear?.robe ?? 0, GEAR.robe.dangerReductionPerLevel) - getGearAffixBonus(state, 'dangerReduction') - getEquippedLootBonus(state, 'dangerReduction') - getMapMasteryBonus(state, 'dangerReduction') - getTreasureBonus(state, 'dangerReduction') - getSpiritBeastBonus(state, 'dangerReduction') - getDaoHeartBonus(state, 'dangerReduction') - (state.buildings?.swordArray ?? 0) * BUILDINGS.swordArray.dangerReductionPerLevel - (state.cultivationPaths?.sword ?? 0) * CULTIVATION_PATHS.sword.dangerReductionPerLevel);
+  return Math.max(0, getDepthPressure(map, layer) - getTieredLevelValue(state.gear?.robe ?? 0, GEAR.robe.dangerReductionPerLevel) - getGearAffixBonus(state, 'dangerReduction') - getGearSetBonus(state, 'dangerReduction') - getEquippedLootBonus(state, 'dangerReduction') - getMapMasteryBonus(state, 'dangerReduction') - getTreasureBonus(state, 'dangerReduction') - getSpiritBeastBonus(state, 'dangerReduction') - getDaoHeartBonus(state, 'dangerReduction') - (state.buildings?.swordArray ?? 0) * BUILDINGS.swordArray.dangerReductionPerLevel - (state.cultivationPaths?.sword ?? 0) * CULTIVATION_PATHS.sword.dangerReductionPerLevel);
 }
 
 function getDepthDuration(map, layer) {
@@ -2097,9 +2114,10 @@ export function calculateQiRate(state, now = Date.now()) {
   const treasureBonus = 1 + getTreasureBonus(state, 'qiRate');
   const beastBonus = 1 + getSpiritBeastBonus(state, 'qiRate');
   const daoHeartBonus = 1 + getDaoHeartBonus(state, 'qiRate');
+  const setBonus = 1 + getGearSetBonus(state, 'qiBonus');
   const pillBoost = state.pillBoostUntil && state.pillBoostUntil > now ? 1.4 : 1;
   const injuryPenalty = state.injuryUntil && state.injuryUntil > now ? 0.75 : 1;
-  return round(realm.qiRate * buildingBonus * formationBonus * affixBonus * pathBonus * permanentBonus * lootBonus * masteryBonus * treasureBonus * beastBonus * daoHeartBonus * pillBoost * injuryPenalty);
+  return round(realm.qiRate * buildingBonus * formationBonus * affixBonus * pathBonus * permanentBonus * lootBonus * masteryBonus * treasureBonus * beastBonus * daoHeartBonus * setBonus * pillBoost * injuryPenalty);
 }
 
 export function calculateBreakthroughChance(state, now = Date.now()) {
@@ -2114,11 +2132,12 @@ export function calculateBreakthroughChance(state, now = Date.now()) {
   const treasureBonus = Math.min(0.12, getTreasureBonus(state, 'breakthrough'));
   const beastBonus = Math.min(0.08, getSpiritBeastBonus(state, 'breakthrough'));
   const daoHeartBonus = Math.min(0.1, getDaoHeartBonus(state, 'breakthrough'));
+  const setBonus = Math.min(0.08, getGearSetBonus(state, 'breakthrough'));
   const scriptureBonus = Math.min(0.12, (state.buildings?.scriptureLibrary ?? 0) * BUILDINGS.scriptureLibrary.breakthroughPerLevel);
   const pillBonus = state.breakthroughBoostUntil && state.breakthroughBoostUntil > now ? 0.12 : 0;
   const foundationBonus = Math.min(0.15, (state.foundationStability ?? 0) * 0.05);
   const heartDemonPenalty = Math.min(0.35, (state.heartDemon ?? 0) * 0.15);
-  return round(Math.max(0.25, Math.min(0.95, 0.75 + preparation + insightBonus + gearBonus + affixBonus + lootBonus + formationBonus + treasureBonus + beastBonus + daoHeartBonus + scriptureBonus + pillBonus + foundationBonus - heartDemonPenalty)));
+  return round(Math.max(0.25, Math.min(0.95, 0.75 + preparation + insightBonus + gearBonus + affixBonus + lootBonus + formationBonus + treasureBonus + beastBonus + daoHeartBonus + setBonus + scriptureBonus + pillBonus + foundationBonus - heartDemonPenalty)));
 }
 
 export function calculatePower(state) {
@@ -2128,6 +2147,7 @@ export function calculatePower(state) {
   const gearPower = getTieredLevelValue(state.gear?.weapon ?? 0, GEAR.weapon.powerPerLevel);
   const gearQualityPower = Object.values(state.gearQuality ?? {}).reduce((total, qualityIndex) => total + (GEAR_QUALITIES[qualityIndex]?.powerBonus ?? 0), 0);
   const affixPower = getGearAffixBonus(state, 'powerBonus');
+  const setPower = getGearSetBonus(state, 'powerBonus');
   const formationPower = (state.formations?.swordArray ?? 0) * FORMATIONS.swordArray.powerPerLevel;
   const permanentPower = state.permanentBonuses?.power ?? 0;
   const lootPower = getEquippedLootBonus(state, 'power');
@@ -2138,7 +2158,7 @@ export function calculatePower(state) {
   const sectPower = Math.floor((state.sectReputation ?? 0) / 20) * 4;
   const qiPower = Math.min(90, Math.floor((state.qi ?? 0) * 0.5));
   const demonPenalty = (state.heartDemon ?? 0) * 8;
-  return Math.max(10, Math.floor(realmPower + pathPower + swordPower + gearPower + gearQualityPower + affixPower + formationPower + permanentPower + lootPower + masteryPower + treasurePower + beastPower + daoHeartPower + sectPower + qiPower - demonPenalty));
+  return Math.max(10, Math.floor(realmPower + pathPower + swordPower + gearPower + gearQualityPower + affixPower + setPower + formationPower + permanentPower + lootPower + masteryPower + treasurePower + beastPower + daoHeartPower + sectPower + qiPower - demonPenalty));
 }
 
 function getRealmPower(state) {
@@ -2154,6 +2174,7 @@ export function getCharacterProfile(state, now = Date.now()) {
     { label: '兵刃品阶', value: getTieredLevelValue(state.gear?.weapon ?? 0, GEAR.weapon.powerPerLevel) },
     { label: '炼器品相', value: Object.values(state.gearQuality ?? {}).reduce((total, qualityIndex) => total + (GEAR_QUALITIES[qualityIndex]?.powerBonus ?? 0), 0) },
     { label: '灵纹词条', value: getGearAffixBonus(state, 'powerBonus') },
+    { label: '同调器象', value: getGearSetBonus(state, 'powerBonus') },
     { label: '剑阵杀意', value: (state.formations?.swordArray ?? 0) * FORMATIONS.swordArray.powerPerLevel },
     { label: '奇珍加持', value: getEquippedLootBonus(state, 'power') },
     { label: '地脉熟稔', value: getMapMasteryBonus(state, 'power') },
@@ -2168,6 +2189,7 @@ export function getCharacterProfile(state, now = Date.now()) {
     { label: '静室蒲团', value: ((state.buildings?.meditationSeat ?? 1) - 1) * BUILDINGS.meditationSeat.qiBonusPerLevel, mode: 'percent' },
     { label: '聚灵阵纹', value: (state.formations?.spiritGathering ?? 0) * FORMATIONS.spiritGathering.qiBonusPerLevel, mode: 'percent' },
     { label: '护符灵纹', value: getGearAffixBonus(state, 'qiBonus'), mode: 'percent' },
+    { label: '同调器象', value: getGearSetBonus(state, 'qiBonus'), mode: 'percent' },
     { label: '阵道感悟', value: (state.cultivationPaths?.formation ?? 0) * CULTIVATION_PATHS.formation.qiBonusPerLevel, mode: 'percent' },
     { label: '奇珍加持', value: getEquippedLootBonus(state, 'qiRate'), mode: 'percent' },
     { label: '地脉熟稔', value: getMapMasteryBonus(state, 'qiRate'), mode: 'percent' },
@@ -2181,6 +2203,7 @@ export function getCharacterProfile(state, now = Date.now()) {
     { label: '本命道基', value: 0.75, mode: 'percent' },
     { label: '护符护脉', value: Math.min(0.18, getTieredLevelValue(state.gear?.amulet ?? 0, GEAR.amulet.breakthroughPerLevel)), mode: 'percent' },
     { label: '灵纹词条', value: Math.min(0.08, getGearAffixBonus(state, 'breakthrough')), mode: 'percent' },
+    { label: '同调器象', value: Math.min(0.08, getGearSetBonus(state, 'breakthrough')), mode: 'percent' },
     { label: '护山阵势', value: Math.min(0.12, (state.formations?.mountainGuard ?? 0) * FORMATIONS.mountainGuard.stabilityPerLevel), mode: 'percent' },
     { label: '奇珍加持', value: Math.min(0.1, getEquippedLootBonus(state, 'breakthrough')), mode: 'percent' },
     { label: '法宝灵蕴', value: Math.min(0.12, getTreasureBonus(state, 'breakthrough')), mode: 'percent' },
@@ -2191,6 +2214,7 @@ export function getCharacterProfile(state, now = Date.now()) {
   ], true);
   const explorationSafety = getTieredLevelValue(state.gear?.robe ?? 0, GEAR.robe.dangerReductionPerLevel)
     + getGearAffixBonus(state, 'dangerReduction')
+    + getGearSetBonus(state, 'dangerReduction')
     + getEquippedLootBonus(state, 'dangerReduction')
     + getMapMasteryBonus(state, 'dangerReduction')
     + getTreasureBonus(state, 'dangerReduction')
@@ -2212,6 +2236,7 @@ export function getCharacterProfile(state, now = Date.now()) {
       { id: 'explorationSafety', label: '护体玄光', value: explorationSafety, sources: compactSources([
         { label: '法袍护身', value: getTieredLevelValue(state.gear?.robe ?? 0, GEAR.robe.dangerReductionPerLevel) },
         { label: '灵纹词条', value: getGearAffixBonus(state, 'dangerReduction') },
+        { label: '同调器象', value: getGearSetBonus(state, 'dangerReduction') },
         { label: '奇珍加持', value: getEquippedLootBonus(state, 'dangerReduction') },
         { label: '地脉熟稔', value: getMapMasteryBonus(state, 'dangerReduction') },
         { label: '法宝灵蕴', value: getTreasureBonus(state, 'dangerReduction') },
@@ -2233,6 +2258,31 @@ export function getGearQuality(state, gearId) {
     affixId,
     affixName: affix?.name ?? '无词条',
   };
+}
+
+export function getGearSetStatus(state) {
+  const activeAffixes = new Set(Object.entries(state.gearAffixes ?? {})
+    .filter(([gearId, affixId]) => (state.gear?.[gearId] ?? 0) > 0 && GEAR_AFFIXES[affixId])
+    .map(([, affixId]) => affixId));
+
+  return Object.values(GEAR_AFFIX_SETS).map((set) => {
+    const matchedAffixes = set.affixes.filter((affixId) => activeAffixes.has(affixId));
+    const active = matchedAffixes.length >= set.affixes.length;
+    return {
+      id: set.id,
+      name: set.name,
+      detail: set.detail,
+      matched: matchedAffixes.length,
+      total: set.affixes.length,
+      active,
+      effects: effectsFromBonusObject(set.bonuses),
+      affixes: set.affixes.map((affixId) => ({
+        id: affixId,
+        name: GEAR_AFFIXES[affixId]?.name ?? affixId,
+        active: activeAffixes.has(affixId),
+      })),
+    };
+  });
 }
 
 export function getEquipmentDetails(state) {
@@ -2270,8 +2320,13 @@ export function getEquipmentDetails(state) {
           chance: qualityMaxed || level <= 0 ? 0 : getRefineChance(state, quality.qualityIndex),
           cost: qualityMaxed || level <= 0 ? null : getRefineCost(nextQuality),
         },
+        reroll: {
+          available: level > 0 && quality.affixId !== null,
+          cost: level > 0 && quality.affixId ? getGearAffixRerollCost(state, item.id) : null,
+        },
       };
     }),
+    sets: getGearSetStatus(state),
     loot: (state.lootEquipment ?? []).map((item) => ({
       uid: item.uid,
       name: item.name,
@@ -3293,6 +3348,42 @@ export function refineGear(state, gearId, now = Date.now(), random = Math.random
   return { ok: true, quality: state.gearQuality[gearId], affix: state.gearAffixes[gearId] };
 }
 
+export function getGearAffixRerollCost(state, gearId) {
+  if (!GEAR[gearId]) {
+    return null;
+  }
+  const qualityIndex = state.gearQuality?.[gearId] ?? 0;
+  return {
+    spiritStones: 120 + qualityIndex * 50,
+    artifacts: 1,
+    forgingEssence: 2 + qualityIndex,
+  };
+}
+
+export function rerollGearAffix(state, gearId, now = Date.now(), random = Math.random) {
+  const gear = GEAR[gearId];
+  if (!gear) {
+    return { ok: false, reason: 'unknownGear' };
+  }
+  if ((state.gear?.[gearId] ?? 0) <= 0) {
+    return { ok: false, reason: 'notEquipped' };
+  }
+  const previousAffix = state.gearAffixes?.[gearId] ?? null;
+  if (!previousAffix) {
+    return { ok: false, reason: 'noAffix' };
+  }
+  const cost = getGearAffixRerollCost(state, gearId);
+  if (!canAfford(state, cost)) {
+    addLog(state, now, `洗练${gear.name}词条需要${formatReward(cost)}。`);
+    return { ok: false, reason: 'notEnoughResources', cost };
+  }
+
+  payResources(state, cost);
+  state.gearAffixes[gearId] = rollAffixForGear(gearId, random, previousAffix);
+  addLog(state, now, `${gear.name}洗练出词条「${GEAR_AFFIXES[state.gearAffixes[gearId]].name}」。`);
+  return { ok: true, previousAffix, affix: state.gearAffixes[gearId], cost };
+}
+
 export function stabilizeFoundation(state, now = Date.now()) {
   const cost = { spiritStones: 35, herbs: 8 };
   if (!canAfford(state, cost)) {
@@ -3716,7 +3807,7 @@ function getMissionDanger(state, mission, approachId = null) {
   const approach = getSelectedMissionApproach(state, mission, approachId);
   const pressure = getMissionPressure(state, mission);
   const approachPressure = round(pressure * (approach.dangerMultiplier ?? 1));
-  return Math.max(0, approachPressure - getTieredLevelValue(state.gear?.robe ?? 0, GEAR.robe.dangerReductionPerLevel) - getGearAffixBonus(state, 'dangerReduction') - getEquippedLootBonus(state, 'dangerReduction') - getMapMasteryBonus(state, 'dangerReduction') - getTreasureBonus(state, 'dangerReduction') - getSpiritBeastBonus(state, 'dangerReduction') - getDaoHeartBonus(state, 'dangerReduction') - (state.buildings?.swordArray ?? 0) * BUILDINGS.swordArray.dangerReductionPerLevel - (state.cultivationPaths?.sword ?? 0) * CULTIVATION_PATHS.sword.dangerReductionPerLevel);
+  return Math.max(0, approachPressure - getTieredLevelValue(state.gear?.robe ?? 0, GEAR.robe.dangerReductionPerLevel) - getGearAffixBonus(state, 'dangerReduction') - getGearSetBonus(state, 'dangerReduction') - getEquippedLootBonus(state, 'dangerReduction') - getMapMasteryBonus(state, 'dangerReduction') - getTreasureBonus(state, 'dangerReduction') - getSpiritBeastBonus(state, 'dangerReduction') - getDaoHeartBonus(state, 'dangerReduction') - (state.buildings?.swordArray ?? 0) * BUILDINGS.swordArray.dangerReductionPerLevel - (state.cultivationPaths?.sword ?? 0) * CULTIVATION_PATHS.sword.dangerReductionPerLevel);
 }
 
 function getMissionPressure(state, mission) {
@@ -4576,17 +4667,28 @@ function getDefaultAffixForGear(gearId) {
   return defaults[gearId] ?? null;
 }
 
-function rollAffixForGear(gearId, random = Math.random) {
-  const pool = GEAR_AFFIX_POOLS[gearId] ?? [getDefaultAffixForGear(gearId)].filter(Boolean);
-  if (!pool.length) {
+function rollAffixForGear(gearId, random = Math.random, excludeAffix = null) {
+  const fullPool = GEAR_AFFIX_POOLS[gearId] ?? [getDefaultAffixForGear(gearId)].filter(Boolean);
+  const pool = fullPool.filter((affixId) => affixId !== excludeAffix);
+  const candidates = pool.length ? pool : fullPool;
+  if (!candidates.length) {
     return null;
   }
-  const index = Math.min(pool.length - 1, Math.floor(random() * pool.length));
-  return pool[index] ?? getDefaultAffixForGear(gearId);
+  const index = Math.min(candidates.length - 1, Math.floor(random() * candidates.length));
+  return candidates[index] ?? getDefaultAffixForGear(gearId);
 }
 
 function getGearAffixBonus(state, key) {
   return Object.values(state.gearAffixes ?? {}).reduce((total, affixId) => total + (GEAR_AFFIXES[affixId]?.[key] ?? 0), 0);
+}
+
+function getGearSetBonus(state, key) {
+  return getGearSetStatus(state).reduce((total, set) => {
+    if (!set.active) {
+      return total;
+    }
+    return total + (GEAR_AFFIX_SETS[set.id]?.bonuses?.[key] ?? 0);
+  }, 0);
 }
 
 function getEquippedLootBonus(state, key) {

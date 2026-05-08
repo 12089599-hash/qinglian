@@ -1152,6 +1152,66 @@ small {
   font-size: 0.9rem;
 }
 
+.gear-set-panel {
+  display: grid;
+  gap: 10px;
+  border: 1px solid rgba(232, 198, 106, 0.24);
+  border-radius: 8px;
+  padding: 12px;
+  background:
+    linear-gradient(135deg, rgba(232, 198, 106, 0.1), rgba(125, 211, 183, 0.06)),
+    rgba(255, 255, 255, 0.026);
+}
+
+.gear-set-panel > strong {
+  color: var(--gold);
+  font-size: 0.9rem;
+}
+
+.gear-set-panel > div {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.gear-set-panel article {
+  border: 1px solid rgba(245, 238, 220, 0.1);
+  border-radius: 8px;
+  padding: 9px;
+  background: rgba(0, 0, 0, 0.14);
+}
+
+.gear-set-panel article.active {
+  border-color: rgba(125, 211, 183, 0.56);
+  background: rgba(125, 211, 183, 0.1);
+}
+
+.gear-set-panel span,
+.gear-set-panel em,
+.gear-set-panel small {
+  display: block;
+  line-height: 1.35;
+}
+
+.gear-set-panel span {
+  color: var(--paper);
+  font-weight: 900;
+}
+
+.gear-set-panel em {
+  margin-top: 4px;
+  color: var(--jade);
+  font-size: 0.78rem;
+  font-style: normal;
+  font-weight: 900;
+}
+
+.gear-set-panel small {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 0.74rem;
+}
+
 .loot-toolbar {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -2202,6 +2262,7 @@ small {
     grid-template-columns: 1fr;
   }
 
+  .gear-set-panel > div,
   .loot-toolbar,
   .mission-report header {
     grid-template-columns: 1fr;

@@ -6,6 +6,7 @@ import {
   DAO_HEARTS,
   FORMATIONS,
   GEAR,
+  GEAR_AFFIX_SETS,
   GEAR_QUALITIES,
   LOOT_EQUIPMENT,
   MAINLINE_CHAPTERS,
@@ -52,6 +53,8 @@ import {
   getMapStatuses,
   getMissionStatus,
   getGearQuality,
+  getGearSetStatus,
+  getGearAffixRerollCost,
   getSectStatus,
   getDominantPath,
   getRealmUpgradeLimit,
@@ -62,6 +65,7 @@ import {
   craftPill,
   consumePill,
   refineGear,
+  rerollGearAffix,
   recruitDisciple,
   refreshMarketStock,
   reviveGameState,
@@ -200,6 +204,31 @@ test('fourteen day boosted pacing does not consume the nascent soul ladder', () 
   }
 
   assert.equal(state.realmIndex < realmIndexByName('元婴三变'), true);
+});
+
+test('thirty day high end pacing still leaves nascent soul progression unfinished', () => {
+  const state = createGameState(1000);
+  state.buildings.meditationSeat = 20;
+  state.formations.spiritGathering = 14;
+  state.cultivationPaths.formation = 14;
+  state.permanentBonuses.qiRate = 0.55;
+  state.treasures.spiritLamp = 10;
+  state.spiritBeasts.cloudFox = 10;
+  state.inventoryPills.gatherQiPill = 900;
+  state.pills = 900;
+
+  for (let minute = 1; minute <= 30 * 24 * 60; minute += 1) {
+    updateGame(state, 60, 1000 + minute * 60_000);
+    if (minute % 60 === 0 && state.inventoryPills.gatherQiPill > 0) {
+      consumePill(state, 'gatherQiPill', 1000 + minute * 60_000);
+    }
+    while (state.qi >= REALMS[state.realmIndex].requiredQi && state.realmIndex < REALMS.length - 1) {
+      performBreakthrough(state, 1000 + minute * 60_000, () => 0);
+    }
+  }
+
+  assert.equal(state.realmIndex >= realmIndexByName('元婴一变'), true);
+  assert.equal(state.realmIndex < realmIndexByName('元婴九变'), true);
 });
 
 test('legacy realm saves migrate into the expanded realm track', () => {
@@ -442,6 +471,51 @@ test('gear affixes support cultivation and exploration roles', () => {
 
   assert.equal(calculateQiRate(state, 2000) > REALMS[state.realmIndex].qiRate, true);
   assert.equal(getMissionStatus(state, 'mistyValley').unlocked, true);
+});
+
+test('matching gear affixes activate set resonance bonuses', () => {
+  const state = createGameState(1000);
+  state.realmIndex = realmIndexByName('炼气八层');
+  state.gear.weapon = 1;
+  state.gear.amulet = 1;
+  state.gear.robe = 1;
+  state.gearQuality.weapon = 1;
+  state.gearQuality.amulet = 1;
+  state.gearQuality.robe = 1;
+  state.gearAffixes.weapon = 'swordIntent';
+  state.gearAffixes.amulet = 'spiritVein';
+  state.gearAffixes.robe = 'cloudStep';
+
+  const sets = getGearSetStatus(state);
+  const active = sets.find((set) => set.id === 'greenLotusFlow');
+
+  assert.equal(GEAR_AFFIX_SETS.greenLotusFlow.name, '青莲流影');
+  assert.equal(active.active, true);
+  assert.equal(active.matched, 3);
+  assert.equal(calculatePower(state), 350);
+  assert.equal(calculateQiRate(state, 2000), 5.72);
+  assert.equal(getMissionStatus(state, 'mistyValley').recommendedPower, 428);
+});
+
+test('gear affix reroll consumes materials and changes the slot affix', () => {
+  const state = createGameState(1000);
+  state.spiritStones = 260;
+  state.artifacts = 3;
+  state.forgingEssence = 4;
+  state.gear.weapon = 1;
+  state.gearQuality.weapon = 1;
+  state.gearAffixes.weapon = 'swordIntent';
+
+  const cost = getGearAffixRerollCost(state, 'weapon');
+  const rerolled = rerollGearAffix(state, 'weapon', 2000, () => 0);
+
+  assert.deepEqual(cost, { spiritStones: 170, artifacts: 1, forgingEssence: 3 });
+  assert.equal(rerolled.ok, true);
+  assert.equal(rerolled.previousAffix, 'swordIntent');
+  assert.equal(rerolled.affix, 'breakerEdge');
+  assert.equal(state.spiritStones, 90);
+  assert.equal(state.artifacts, 2);
+  assert.equal(state.forgingEssence, 1);
 });
 
 test('cultivation paths are gated by realm stage and choose a dominant path', () => {
