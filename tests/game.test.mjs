@@ -1418,6 +1418,34 @@ test('sect forging commission stabilizes late strengthening materials', () => {
   assert.equal(state.artifacts > 0, true);
 });
 
+test('sect mining remains supplemental rather than replacing travel income', () => {
+  function preparedSect() {
+    const state = createGameState(1000);
+    state.realmIndex = realmIndexByName('筑基一层');
+    state.spiritStones = 2_000;
+    state.herbs = 600;
+    recruitDisciple(state, 1000);
+    recruitDisciple(state, 2000);
+    recruitDisciple(state, 3000);
+    return state;
+  }
+
+  const baseline = preparedSect();
+  const state = preparedSect();
+  assignSectDisciple(state, 'mine', 1, 4000);
+  assignSectDisciple(state, 'mine', 1, 5000);
+  assignSectDisciple(state, 'mine', 1, 6000);
+  const before = state.spiritStones;
+  const baselineBefore = baseline.spiritStones;
+  updateGame(baseline, 3600, 3_607_000);
+  updateGame(state, 3600, 3_607_000);
+
+  const miningGain = (state.spiritStones - before) - (baseline.spiritStones - baselineBefore);
+
+  assert.equal(miningGain <= 420, true);
+  assert.equal(state.sectReputation <= 54, true);
+});
+
 test('mission opportunities offer choices and resolve rewards or costs', () => {
   const state = createGameState(1000);
   state.realmIndex = realmIndexByName('筑基一层');
@@ -1686,7 +1714,7 @@ test('map depth trials remain threatening compared with same-map routes', () => 
 
   assert.equal(route.unlocked, true);
   assert.equal(depth.nextLayer, 3);
-  assert.equal(depth.danger >= Math.round(route.recommendedPower * 0.65), true);
+  assert.equal(depth.danger >= Math.round(route.recommendedPower * 0.8), true);
 });
 
 test('market stock refreshes by day and enforces item limits', () => {

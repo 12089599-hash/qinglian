@@ -390,7 +390,7 @@ export const SECT_COMMISSIONS = {
     id: 'mine',
     name: '采矿委托',
     detail: '弟子整理灵脉碎矿，缓慢产出灵石。',
-    rates: { spiritStones: 0.05, reputation: 0.005 },
+    rates: { spiritStones: 0.035, reputation: 0.004 },
   },
   patrol: {
     id: 'patrol',
@@ -1921,7 +1921,7 @@ export function getMapDepthStatus(state, mapId) {
 }
 
 function getDepthPressure(map, layer) {
-  const base = Math.max(150, (map.boss?.power ?? 180) * 0.85 + (map.unlockRealmIndex ?? 0) * 16);
+  const base = Math.max(180, (map.boss?.power ?? 180) + (map.unlockRealmIndex ?? 0) * 24);
   const ramp = 1 + (layer - 1) * 0.2 + Math.pow(Math.max(0, layer - 1), 1.35) * 0.05;
   return Math.round(base * ramp);
 }
