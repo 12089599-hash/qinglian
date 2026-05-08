@@ -158,7 +158,7 @@ export const MISSIONS = {
     name: '上古遗迹',
     mapId: 'ancientRuins',
     map: '上古遗迹',
-    unlockRealmIndex: 18,
+    unlockRealmIndex: 21,
     duration: 240,
     danger: 820,
     reward: { spiritStones: 150, beastCores: 4, arrayFlags: 2, qi: 180 },
@@ -265,7 +265,7 @@ export const MISSION_MAPS = {
     name: '上古遗迹',
     icon: '遗',
     description: '旧时代残阵，通向更长线的宗门经营。',
-    unlockRealmIndex: 18,
+    unlockRealmIndex: 21,
     explorationTarget: 8,
     reputationPerMission: 12,
     masteryBonus: { qiRate: 0.015, power: 16 },
@@ -1838,13 +1838,13 @@ function getDepthReward(map, layer) {
   if (map.id === 'qinglanMountain' || map.id === 'herbValley') {
     reward.herbs = 4 + Math.ceil(layer * 1.4);
   }
-  if (layer % 3 === 0 || map.unlockRealmIndex >= 7) {
+  if (layer % 3 === 0 || (map.unlockRealmIndex >= 7 && layer % 2 === 0)) {
     reward.beastCores = Math.max(1, Math.ceil(layer / 8));
   }
-  if (layer % 4 === 0 || map.id === 'swordTomb') {
+  if (layer % 4 === 0 || (map.id === 'swordTomb' && layer % 2 === 0)) {
     reward.artifacts = Math.max(1, Math.ceil(layer / 10));
   }
-  if (layer % 5 === 0 || map.id === 'ancientRuins') {
+  if (layer % 5 === 0 || (map.id === 'ancientRuins' && layer % 2 === 0)) {
     reward.arrayFlags = Math.max(1, Math.ceil(layer / 12));
   }
   if (layer % 5 === 0) {

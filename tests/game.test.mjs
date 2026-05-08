@@ -1074,6 +1074,19 @@ test('midgame mission pressure requires preparation beyond realm unlock', () => 
   assert.equal(prepared.recommendedPower < unlocked.recommendedPower, true);
 });
 
+test('ancient ruins unlocks at mid golden core instead of the first turn', () => {
+  const state = createGameState(1000);
+  state.realmIndex = realmIndexByName('金丹一转');
+
+  assert.equal(getMissionStatus(state, 'ancientRuins').unlocked, false);
+  assert.equal(getMapStatuses(state).find((map) => map.id === 'ancientRuins').unlocked, false);
+
+  state.realmIndex = realmIndexByName('金丹四转');
+
+  assert.equal(getMissionStatus(state, 'ancientRuins').unlocked, true);
+  assert.equal(getMapStatuses(state).find((map) => map.id === 'ancientRuins').unlocked, true);
+});
+
 test('map readiness separates realm unlock from stable travel', () => {
   const state = createGameState(1000);
   state.realmIndex = realmIndexByName('筑基一层');
