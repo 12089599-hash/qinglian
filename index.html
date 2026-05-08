@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>青岚洞府</title>
-    <link rel="stylesheet" href="styles.css?v=202605081635" />
+    <link rel="stylesheet" href="styles.css?v=202605081705" />
   </head>
   <body>
     <main class="shell">
@@ -19,6 +19,20 @@
           </div>
           <div class="progress-track" aria-label="境界进度">
             <div data-progress class="progress-fill"></div>
+          </div>
+          <div class="mobile-cultivation-hud" aria-label="修行速览">
+            <span>
+              <small>灵气</small>
+              <strong data-hud-qi>0 / 25</strong>
+            </span>
+            <span>
+              <small>灵息</small>
+              <strong data-hud-rate>1.5 / 分钟</strong>
+            </span>
+            <span>
+              <small>行动</small>
+              <strong data-hud-action>闭关修炼</strong>
+            </span>
           </div>
           <button data-next-guidance class="next-guidance" type="button">
             <strong>积攒灵气</strong>
@@ -267,6 +281,6 @@
 
     <div data-toast-stack class="toast-stack" aria-live="polite"></div>
 
-    <script src="browserGame.js?v=202605081635"></script>
+    <script src="browserGame.js?v=202605081705"></script>
   </body>
 </html>

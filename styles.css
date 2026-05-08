@@ -133,6 +133,10 @@ h2 {
   transition: width 180ms linear;
 }
 
+.mobile-cultivation-hud {
+  display: none;
+}
+
 .next-guidance {
   display: grid;
   justify-items: start;
@@ -1713,6 +1717,44 @@ small {
 
   body[data-active-tab="overview"] .stats-panel > .resource-drawer {
     margin-top: 0;
+  }
+
+  .mobile-cultivation-hud {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  .mobile-cultivation-hud span {
+    min-width: 0;
+    border: 1px solid rgba(245, 238, 220, 0.12);
+    border-radius: 8px;
+    padding: 9px 10px;
+    background:
+      linear-gradient(135deg, rgba(125, 211, 183, 0.16), rgba(232, 198, 106, 0.08)),
+      rgba(16, 20, 25, 0.72);
+  }
+
+  .mobile-cultivation-hud small,
+  .mobile-cultivation-hud strong {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .mobile-cultivation-hud small {
+    color: #aeb7ad;
+    font-size: 0.68rem;
+    font-weight: 800;
+  }
+
+  .mobile-cultivation-hud strong {
+    margin-top: 3px;
+    color: #f5eedc;
+    font-size: 0.78rem;
+    font-variant-numeric: tabular-nums;
   }
 
   .section-tabs {

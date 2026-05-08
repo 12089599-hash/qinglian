@@ -947,6 +947,9 @@
     upgradeLimit: document.querySelector('[data-upgrade-limit]'),
     progress: document.querySelector('[data-progress]'),
     progressText: document.querySelector('[data-progress-text]'),
+    hudQi: document.querySelector('[data-hud-qi]'),
+    hudRate: document.querySelector('[data-hud-rate]'),
+    hudAction: document.querySelector('[data-hud-action]'),
     nextGuidance: document.querySelector('[data-next-guidance]'),
     mission: document.querySelector('[data-mission]'),
     missionTime: document.querySelector('[data-mission-time]'),
@@ -2194,6 +2197,8 @@
     refs.realm.textContent = realm.name;
     refs.qi.textContent = `${Math.floor(state.qi)} / ${realm.requiredQi}`;
     refs.qiRate.textContent = `${formatRate(calculateQiRate(state, Date.now()))} / 分钟`;
+    if (refs.hudQi) refs.hudQi.textContent = `${Math.floor(state.qi)} / ${realm.requiredQi}`;
+    if (refs.hudRate) refs.hudRate.textContent = `${formatRate(calculateQiRate(state, Date.now()))} / 分钟`;
     refs.stones.textContent = Math.floor(state.spiritStones);
     refs.herbs.textContent = Math.floor(state.herbs);
     refs.pills.textContent = Math.floor(state.pills);
@@ -2228,6 +2233,7 @@
       refs.mission.textContent = '闭关修炼';
       refs.missionTime.textContent = '待命';
     }
+    if (refs.hudAction) refs.hudAction.textContent = refs.mission.textContent;
 
     if (refs.pillBoost) {
       const secondsLeft = Math.max(0, Math.ceil(((state.pillBoostUntil || 0) - Date.now()) / 1000));
