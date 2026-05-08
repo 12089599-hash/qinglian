@@ -39,6 +39,8 @@ assert.equal(browserVersion, coreVersion);
 
 const mirroredObjects = [
   ['DAO_HEARTS', 'daoHearts'],
+  ['MISSION_APPROACHES', 'missionApproaches'],
+  ['MAP_SPECIAL_DROPS', 'mapSpecialDrops'],
   ['BUILDINGS', 'buildings'],
   ['GEAR', 'gear'],
   ['FORMATIONS', 'formations'],

@@ -9,7 +9,9 @@ import {
   GEAR_QUALITIES,
   LOOT_EQUIPMENT,
   MAINLINE_CHAPTERS,
+  MAP_SPECIAL_DROPS,
   MISSION_MAPS,
+  MISSION_APPROACHES,
   MISSION_EVENTS,
   OPPORTUNITIES,
   REALMS,
@@ -65,6 +67,7 @@ import {
   stabilizeFoundation,
   startMapDepthTrial,
   startMission,
+  setMissionApproach,
   trainSpiritBeast,
   toggleLootLock,
   toggleAutoMission,
@@ -737,6 +740,50 @@ test('mission completion records a readable settlement report', () => {
   assert.equal(report.event.name, '残剑鸣匣');
   assert.equal(report.event.equipmentName, '青锋剑');
   assert.equal(report.summary.includes('收获'), true);
+});
+
+test('mission approaches alter rewards and settlement reports', () => {
+  const state = createGameState(1000);
+  state.realmIndex = realmIndexByName('筑基一层');
+  state.gear.weapon = 12;
+  state.gear.robe = 9;
+  state.cultivationPaths.sword = 6;
+  state.formations.swordArray = 6;
+  state.permanentBonuses.power = 900;
+
+  const selected = setMissionApproach(state, 'swordTomb', 'relicSearch', 1000);
+  const started = startMission(state, 'ancientSwordTomb', 2000);
+  updateGame(state, 154, 156_000);
+
+  assert.equal(selected.ok, true);
+  assert.equal(started.ok, true);
+  assert.equal(MISSION_APPROACHES.relicSearch.name, '探遗');
+  assert.equal(state.missionApproaches.swordTomb, 'relicSearch');
+  assert.equal(state.lastMissionReport.approach.name, '探遗');
+  assert.equal(state.lastMissionReport.approachRewardText.includes('法器'), true);
+  assert.equal(state.artifacts > 3, true);
+});
+
+test('map special drop pools reward route specific exploration', () => {
+  const state = createGameState(1000);
+  state.realmIndex = realmIndexByName('筑基一层');
+  state.gear.weapon = 12;
+  state.gear.robe = 9;
+  state.cultivationPaths.sword = 6;
+  state.formations.swordArray = 6;
+  state.permanentBonuses.power = 900;
+  setMissionApproach(state, 'swordTomb', 'relicSearch', 1000);
+
+  startMission(state, 'ancientSwordTomb', 1000);
+  updateGame(state, 154, 155_000);
+  startMission(state, 'ancientSwordTomb', 156_000);
+  updateGame(state, 154, 310_000);
+
+  assert.equal(MAP_SPECIAL_DROPS.swordTomb.relicSearch.name, '剑冢残片');
+  assert.equal(state.mapSpecialDrops.swordTomb.relicSearch, 1);
+  assert.equal(state.lastMissionReport.specialDrop.name, '剑冢残片');
+  assert.equal(state.lastMissionReport.specialDropText.includes('炼器精魄'), true);
+  assert.equal(state.forgingEssence >= 2, true);
 });
 
 test('map bosses unlock from exploration and grant one-time permanent rewards', () => {

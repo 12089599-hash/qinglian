@@ -247,6 +247,53 @@
     { level: 4, name: '镇域', reputation: 140 },
   ];
 
+  const missionApproaches = {
+    balanced: { id: 'balanced', name: '循迹', detail: '按原路线稳步行游，收益和劫象保持均衡。', rewardBonus: {}, durationMultiplier: 1, dangerMultiplier: 1, dropEvery: 0 },
+    herbSeeking: { id: 'herbSeeking', name: '寻药', detail: '放慢脚步辨认草木灵机，偏向灵草和清心收获。', rewardBonus: { herbs: 0.45 }, durationMultiplier: 1.05, dangerMultiplier: 0.96, dropEvery: 2 },
+    monsterHunt: { id: 'monsterHunt', name: '猎妖', detail: '主动追索妖踪，妖核更多，但劫象会更重。', rewardBonus: { beastCores: 0.55, spiritStones: 0.12 }, durationMultiplier: 1, dangerMultiplier: 1.12, dropEvery: 2 },
+    relicSearch: { id: 'relicSearch', name: '探遗', detail: '搜寻残器旧阵，偏向法器、阵旗和炼器精魄。', rewardBonus: { artifacts: 0.5, arrayFlags: 0.35, forgingEssence: 0.3 }, durationMultiplier: 1.1, dangerMultiplier: 1.05, dropEvery: 2 },
+    daoInquiry: { id: 'daoInquiry', name: '问道', detail: '静观地脉与残念，偏向灵气、悟道和破境准备。', rewardBonus: { qi: 0.35, insight: 0.35 }, durationMultiplier: 1.12, dangerMultiplier: 1.02, dropEvery: 2 },
+  };
+
+  const mapSpecialDrops = {
+    qinglanMountain: {
+      herbSeeking: { name: '山阴灵苗', reward: { herbs: 8 } },
+      monsterHunt: { name: '山魈残爪', reward: { beastCores: 1 } },
+      relicSearch: { name: '旧府残器', reward: { artifacts: 1 } },
+      daoInquiry: { name: '青岚地脉', reward: { qi: 80, insight: 1 } },
+    },
+    herbValley: {
+      herbSeeking: { name: '百草灵芽', reward: { herbs: 18, clearHeartPill: 1 } },
+      monsterHunt: { name: '药谷妖胆', reward: { beastCores: 1, herbs: 6 } },
+      relicSearch: { name: '药锄残器', reward: { artifacts: 1, forgingEssence: 1 } },
+      daoInquiry: { name: '药性心悟', reward: { insight: 1, qi: 110 } },
+    },
+    mistyValley: {
+      herbSeeking: { name: '雾隐灵芝', reward: { herbs: 14, meridianPill: 1 } },
+      monsterHunt: { name: '雾妖晶核', reward: { beastCores: 2 } },
+      relicSearch: { name: '雾纹残甲', reward: { artifacts: 1, forgingEssence: 1 } },
+      daoInquiry: { name: '雾中观息', reward: { qi: 160, insight: 1 } },
+    },
+    swordTomb: {
+      herbSeeking: { name: '剑苔灵草', reward: { herbs: 16, clearHeartPill: 1 } },
+      monsterHunt: { name: '剑冢煞核', reward: { beastCores: 2 } },
+      relicSearch: { name: '剑冢残片', reward: { artifacts: 1, forgingEssence: 2 } },
+      daoInquiry: { name: '剑鸣残悟', reward: { insight: 1, qi: 180 } },
+    },
+    demonRift: {
+      herbSeeking: { name: '魔隙幽草', reward: { herbs: 20, clearHeartPill: 1 } },
+      monsterHunt: { name: '裂隙魔核', reward: { beastCores: 3, heartDemon: 1 } },
+      relicSearch: { name: '镇魔阵旗', reward: { arrayFlags: 2, forgingEssence: 2 } },
+      daoInquiry: { name: '镇煞心印', reward: { insight: 1, meridianPill: 1 } },
+    },
+    ancientRuins: {
+      herbSeeking: { name: '遗迹灵根', reward: { herbs: 24, meridianPill: 1 } },
+      monsterHunt: { name: '守灵妖核', reward: { beastCores: 4 } },
+      relicSearch: { name: '上古残阵', reward: { artifacts: 2, arrayFlags: 2, forgingEssence: 3 } },
+      daoInquiry: { name: '古修残悟', reward: { insight: 2, qi: 260 } },
+    },
+  };
+
   const sectCommissions = {
     herbGarden: { id: 'herbGarden', name: '采药委托', detail: '弟子巡山采药，稳定补充灵草。', rates: { herbs: 0.05, reputation: 0.01 } },
     mine: { id: 'mine', name: '采矿委托', detail: '弟子整理灵脉碎矿，缓慢产出灵石。', rates: { spiritStones: 0.08, reputation: 0.008 } },
@@ -1290,6 +1337,17 @@
       render(true);
       return;
     }
+    const approachButton = event.target.closest('[data-select-approach]');
+    if (approachButton) {
+      const [mapId, approachId] = approachButton.dataset.selectApproach.split(':');
+      const result = setMissionApproach(state, mapId, approachId);
+      if (result.ok) {
+        showToast('路线已定', `${missionMaps[mapId].name}改走「${result.approach.name}」。`);
+      }
+      saveState();
+      render(true);
+      return;
+    }
     const startButton = event.target.closest('[data-start-mission]');
     if (startButton) {
       startMission(state, startButton.dataset.startMission);
@@ -1532,6 +1590,8 @@
       completedMissions: {},
       mapReputation: {},
       mapDepths: {},
+      missionApproaches: {},
+      mapSpecialDrops: {},
       defeatedBosses: {},
       claimedGoals: {},
       claimedChapterRewards: {},
@@ -1645,6 +1705,8 @@
     state.completedMissions = normalizeCompletedMissions(state.completedMissions);
     state.mapReputation = normalizeMapValues(state.mapReputation);
     state.mapDepths = normalizeMapDepths(state.mapDepths);
+    state.missionApproaches = normalizeMissionApproaches(state.missionApproaches);
+    state.mapSpecialDrops = normalizeMapSpecialDrops(state.mapSpecialDrops);
     state.defeatedBosses = normalizeDefeatedBosses(state.defeatedBosses);
     state.claimedGoals = normalizeClaimedGoals(state.claimedGoals);
     state.claimedChapterRewards = normalizeClaimedGoals(state.claimedChapterRewards);
@@ -1818,7 +1880,20 @@
     return { ok: true, status };
   }
 
-  function startMission(state, missionId, now = Date.now()) {
+  function setMissionApproach(state, mapId, approachId, now = Date.now()) {
+    if (!missionMaps[mapId]) {
+      return { ok: false, reason: 'unknownMap' };
+    }
+    if (!missionApproaches[approachId]) {
+      return { ok: false, reason: 'unknownApproach' };
+    }
+    state.missionApproaches ||= {};
+    state.missionApproaches[mapId] = approachId;
+    addLog(state, now, `${missionMaps[mapId].name}改走「${missionApproaches[approachId].name}」路线。`);
+    return { ok: true, mapId, approach: missionApproaches[approachId] };
+  }
+
+  function startMission(state, missionId, now = Date.now(), approachId = null) {
     if (state.activeMission || !missions[missionId]) {
       return;
     }
@@ -1827,12 +1902,15 @@
       addLog(state, now, `境界不足，暂不能进入「${mission.map || mission.name}」。`);
       return;
     }
+    const approach = getSelectedMissionApproach(state, mission, approachId);
+    const duration = getMissionDuration(mission, approach.id);
     state.activeMission = {
       id: mission.id,
+      approachId: approach.id,
       startedAt: now,
-      endsAt: now + mission.duration * 1000,
+      endsAt: now + duration * 1000,
     };
-    addLog(state, now, `外出执行「${mission.name}」。`);
+    addLog(state, now, `外出执行「${mission.name}」，路线「${approach.name}」。`);
   }
 
   function craftPill(state, recipeId = 'gatherQiPill', now = Date.now()) {
@@ -2053,9 +2131,79 @@
     showToast('炼丹完成', `获得 1 枚${recipe.name}。`);
   }
 
-  function getMissionDanger(state, mission) {
+  function getMissionApproachOptions(state, mapId) {
+    const selected = getSelectedMapApproach(state, mapId);
+    const specialDrops = mapSpecialDrops[mapId] || {};
+    return Object.values(missionApproaches).map((approach) => ({
+      ...approach,
+      selected: approach.id === selected.id,
+      specialDrop: getMapSpecialDropTemplate(mapId, approach.id),
+      specialDropCount: state.mapSpecialDrops?.[mapId]?.[approach.id] || 0,
+      locked: approach.id !== 'balanced' && !specialDrops[approach.id],
+    }));
+  }
+
+  function getSelectedMissionApproach(state, mission, explicitApproachId = null) {
+    return getSelectedMapApproach(state, getMissionMapId(mission), explicitApproachId);
+  }
+
+  function getSelectedMapApproach(state, mapId, explicitApproachId = null) {
+    const approachId = explicitApproachId || state.missionApproaches?.[mapId] || 'balanced';
+    return missionApproaches[approachId] || missionApproaches.balanced;
+  }
+
+  function getMissionDuration(mission, approachId = 'balanced') {
+    const approach = missionApproaches[approachId] || missionApproaches.balanced;
+    return Math.max(10, Math.round(mission.duration * (approach.durationMultiplier || 1)));
+  }
+
+  function getMissionApproachReward(mission, approachId = 'balanced') {
+    const approach = missionApproaches[approachId] || missionApproaches.balanced;
+    return filterCost(Object.fromEntries(
+      Object.entries(approach.rewardBonus || {}).map(([resource, multiplier]) => {
+        const base = mission.reward?.[resource] || 0;
+        if (resource === 'insight') {
+          return [resource, base > 0 ? Math.max(1, Math.ceil(base * multiplier)) : approachId === 'daoInquiry' ? 1 : 0];
+        }
+        return [resource, base > 0 ? Math.max(1, Math.ceil(base * multiplier)) : 0];
+      }),
+    ));
+  }
+
+  function mergeRewards(baseReward = {}, bonusReward = {}) {
+    const merged = { ...baseReward };
+    Object.entries(bonusReward).forEach(([resource, amount]) => {
+      merged[resource] = round((merged[resource] || 0) + amount);
+    });
+    return filterCost(merged);
+  }
+
+  function getMapSpecialDropTemplate(mapId, approachId) {
+    return mapSpecialDrops[mapId]?.[approachId] || null;
+  }
+
+  function resolveMapSpecialDrop(state, mission, approachId, completedCount, now) {
+    const mapId = getMissionMapId(mission);
+    const template = getMapSpecialDropTemplate(mapId, approachId);
+    const approach = missionApproaches[approachId] || missionApproaches.balanced;
+    const every = template?.every || approach.dropEvery || 0;
+    if (!template || every <= 0 || completedCount <= 0 || completedCount % every !== 0) {
+      return null;
+    }
+    applyResources(state, template.reward || {});
+    state.mapSpecialDrops ||= {};
+    state.mapSpecialDrops[mapId] ||= {};
+    state.mapSpecialDrops[mapId][approachId] = (state.mapSpecialDrops[mapId][approachId] || 0) + 1;
+    const drop = { name: template.name, reward: template.reward || {}, approachId };
+    addLog(state, now, `${missionMaps[mapId]?.name || mission.name}路线收获「${template.name}」：${formatReward(template.reward || {})}。`);
+    return drop;
+  }
+
+  function getMissionDanger(state, mission, approachId = null) {
+    const approach = getSelectedMissionApproach(state, mission, approachId);
     const pressure = getMissionPressure(state, mission);
-    return Math.max(0, pressure - getTieredLevelValue(state.gear.robe || 0, gear.robe.dangerReductionPerLevel) - getGearAffixBonus(state, 'dangerReduction') - getEquippedLootBonus(state, 'dangerReduction') - getMapMasteryBonus(state, 'dangerReduction') - getTreasureBonus(state, 'dangerReduction') - getSpiritBeastBonus(state, 'dangerReduction') - getDaoHeartBonus(state, 'dangerReduction') - (state.buildings.swordArray || 0) * buildings.swordArray.dangerReductionPerLevel - (state.cultivationPaths.sword || 0) * cultivationPaths.sword.dangerReductionPerLevel);
+    const approachPressure = round(pressure * (approach.dangerMultiplier || 1));
+    return Math.max(0, approachPressure - getTieredLevelValue(state.gear.robe || 0, gear.robe.dangerReductionPerLevel) - getGearAffixBonus(state, 'dangerReduction') - getEquippedLootBonus(state, 'dangerReduction') - getMapMasteryBonus(state, 'dangerReduction') - getTreasureBonus(state, 'dangerReduction') - getSpiritBeastBonus(state, 'dangerReduction') - getDaoHeartBonus(state, 'dangerReduction') - (state.buildings.swordArray || 0) * buildings.swordArray.dangerReductionPerLevel - (state.cultivationPaths.sword || 0) * cultivationPaths.sword.dangerReductionPerLevel);
   }
 
   function getMissionPressure(state, mission) {
@@ -2088,13 +2236,19 @@
     if (!mission) {
       return;
     }
-    const danger = getMissionDanger(state, mission);
+    const approach = getSelectedMissionApproach(state, mission, active.approachId);
+    const approachReward = getMissionApproachReward(mission, approach.id);
+    const missionReward = mergeRewards(mission.reward, approachReward);
+    const danger = getMissionDanger(state, mission, approach.id);
     if (danger && calculatePower(state) < danger) {
       applyResources(state, mission.failurePenalty);
       state.injuryUntil = now + 90 * 1000;
       state.lastMissionReport = createMissionReport(state, mission, {
         outcome: 'failure',
         reward: mission.failurePenalty || {},
+        approach,
+        approachReward: {},
+        specialDrop: null,
         reputationGained: 0,
         eventResult: null,
         rareReward: null,
@@ -2105,7 +2259,7 @@
       restartAutoMission(state, mission.id, now);
       return;
     }
-    applyResources(state, mission.reward);
+    applyResources(state, missionReward);
     state.completedMissions[mission.id] = (state.completedMissions[mission.id] || 0) + 1;
     const mapId = getMissionMapId(mission);
     const reputationGained = missionMaps[mapId]?.reputationPerMission || 0;
@@ -2123,18 +2277,25 @@
       addLog(state, now, `深入「${mission.map || mission.name}」有所感悟，额外获得${formatReward(mission.rareReward)}。`);
       showToast('稀有收获', `${mission.name} 额外获得${formatReward(mission.rareReward)}。`);
     }
+    const specialDrop = resolveMapSpecialDrop(state, mission, approach.id, state.completedMissions[mission.id], now);
+    if (specialDrop) {
+      showToast('路线收获', `${specialDrop.name} · ${formatReward(specialDrop.reward)}`);
+    }
     maybeCreateOpportunity(state, mission, now);
     addDailyProgress(state, 'missions', 1, now);
     state.lastMissionReport = createMissionReport(state, mission, {
       outcome: 'success',
-      reward: mission.reward,
+      reward: missionReward,
+      approach,
+      approachReward,
+      specialDrop,
       reputationGained,
       eventResult,
       rareReward,
       now,
     });
-    addLog(state, now, `完成「${mission.name}」，收获${formatReward(mission.reward)}。`);
-    showToast('历练完成', `${mission.name} 收获${formatReward(mission.reward)}。`);
+    addLog(state, now, `完成「${mission.name}」，收获${formatReward(missionReward)}。`);
+    showToast('历练完成', `${mission.name} 收获${formatReward(missionReward)}。`);
     triggerBattleFeedback('pulse');
     restartAutoMission(state, mission.id, now);
   }
@@ -2207,10 +2368,12 @@
     };
   }
 
-  function createMissionReport(state, mission, { outcome, reward, reputationGained = 0, eventResult = null, rareReward = null, now = Date.now() }) {
+  function createMissionReport(state, mission, { outcome, reward, approach = getSelectedMissionApproach(state, mission), approachReward = {}, specialDrop = null, reputationGained = 0, eventResult = null, rareReward = null, now = Date.now() }) {
     const mapId = getMissionMapId(mission);
     const map = missionMaps[mapId];
     const rewardText = formatReward(reward);
+    const approachRewardText = formatReward(approachReward);
+    const specialDropText = specialDrop ? formatReward(specialDrop.reward || {}) : '';
     const rareRewardText = rareReward ? formatReward(rareReward) : '';
     const event = eventResult?.event ? {
       id: eventResult.event.id,
@@ -2230,8 +2393,13 @@
       mapId,
       mapName: map?.name || mission.map || mission.name,
       outcome,
+      approach: approach ? { id: approach.id, name: approach.name } : null,
       reward: reward || {},
       rewardText,
+      approachReward: approachReward || {},
+      approachRewardText,
+      specialDrop,
+      specialDropText,
       rareReward: rareReward || null,
       rareRewardText,
       reputationGained,
@@ -2720,6 +2888,8 @@
     if (!mission) {
       return { exists: false, unlocked: false };
     }
+    const approach = getSelectedMissionApproach(state, mission);
+    const approachReward = getMissionApproachReward(mission, approach.id);
     const completed = state.completedMissions[missionId] || 0;
     const rareEvery = mission.rareEvery || 0;
     const rareStep = rareEvery && completed > 0 && completed % rareEvery === 0 ? rareEvery : completed % rareEvery;
@@ -2732,6 +2902,11 @@
       unlockRealmIndex: mission.unlockRealmIndex || 0,
       recommendedPower: getMissionDanger(state, mission),
       omen: getMissionOmen(state, mission),
+      approach,
+      approaches: getMissionApproachOptions(state, getMissionMapId(mission)),
+      approachReward,
+      rewardPreview: mergeRewards(mission.reward, approachReward),
+      specialDrop: getMapSpecialDropTemplate(getMissionMapId(mission), approach.id),
       completed,
       rareProgress: rareEvery ? `${rareStep} / ${rareEvery}` : '',
       rareReward: mission.rareReward || null,
@@ -2756,6 +2931,8 @@
         },
         reputation: state.mapReputation[map.id] || 0,
         mastery: getMapMastery(state, map.id),
+        approachOptions: getMissionApproachOptions(state, map.id),
+        selectedApproach: getSelectedMapApproach(state, map.id),
         depth: getMapDepthStatus(state, map.id),
         boss: {
           ...map.boss,
@@ -3342,7 +3519,7 @@
       return;
     }
     const report = state.lastMissionReport;
-    const signature = report ? `${report.id}:${report.outcome}:${report.rewardText}:${report.rareRewardText}:${report.event?.id || ''}` : 'none';
+    const signature = report ? `${report.id}:${report.outcome}:${report.rewardText}:${report.approach?.id || ''}:${report.approachRewardText || ''}:${report.specialDropText || ''}:${report.rareRewardText}:${report.event?.id || ''}` : 'none';
     if (!force && renderCache.missionReport === signature) {
       return;
     }
@@ -3367,6 +3544,8 @@
         <div><span>去处</span><strong>${report.mapName}</strong></div>
         <div><span>声望</span><strong>${report.reputationGained ? `+${report.reputationGained}` : '-'}</strong></div>
         <div><span>产出</span><strong>${report.rewardText || '-'}</strong></div>
+        ${report.approach ? `<div><span>路线</span><strong>${report.approach.name}${report.approachRewardText ? ` · ${report.approachRewardText}` : ''}</strong></div>` : ''}
+        ${report.specialDropText ? `<div><span>路线收获</span><strong>${report.specialDrop.name} · ${report.specialDropText}</strong></div>` : ''}
         ${report.rareRewardText ? `<div><span>稀有</span><strong>${report.rareRewardText}</strong></div>` : ''}
         ${report.event ? `<div><span>奇遇</span><strong>${report.event.name}${report.event.equipmentName ? ` · ${report.event.equipmentName}` : ''}</strong></div>` : ''}
       </div>
@@ -3394,12 +3573,30 @@
           <small>声望 ${Math.floor(map.reputation)}</small>
           <small>${map.unlocked ? `${map.boss.omen.label} ${map.boss.omen.name}` : `${realms[map.unlockRealmIndex]?.name || '更高境界'}解锁`}</small>
         </div>
+        ${renderApproachSelector(map)}
         ${renderDepthCard(map)}
         ${renderBossCard(map)}
         <div class="mission-list">
           ${routeList.map((mission) => renderMissionCard(mission)).join('')}
         </div>
       </section>
+    `;
+  }
+
+  function renderApproachSelector(map) {
+    if (!map.approachOptions?.length) {
+      return '';
+    }
+    return `
+      <div class="approach-selector" aria-label="${map.name}历练路线">
+        ${map.approachOptions.map((approach) => `
+          <button data-select-approach="${map.id}:${approach.id}" class="${approach.selected ? 'active' : ''}" ${approach.locked || !map.unlocked ? 'disabled' : ''} type="button">
+            <strong>${approach.name}</strong>
+            <span>${approach.detail}</span>
+            <small>${approach.specialDrop ? `专属 ${approach.specialDrop.name} · ${formatReward(approach.specialDrop.reward)}` : '保持原收益'}</small>
+          </button>
+        `).join('')}
+      </div>
     `;
   }
 
@@ -3472,17 +3669,19 @@
     const lockedText = status.unlocked ? '' : `${realms[status.unlockRealmIndex]?.name || '更高境界'}解锁`;
     const rareText = mission.rareReward ? `稀有 ${status.rareProgress} · ${formatReward(mission.rareReward)}` : '无稀有奖励';
     const eventText = mission.events?.length ? `奇遇 ${mission.events.map((id) => missionEvents[id]?.name).filter(Boolean).join(' / ')}` : '无奇遇';
+    const approachText = `${status.approach.name}${status.approachReward && formatReward(status.approachReward) ? ` · 路线 ${formatReward(status.approachReward)}` : ''}`;
+    const specialText = status.specialDrop ? `专属 ${status.specialDrop.name} · ${formatReward(status.specialDrop.reward)}` : '无专属掉落';
     return `
       <div class="mission-card ${status.unlocked ? '' : 'locked'}">
         <button data-start-mission="${mission.id}" ${running || !status.unlocked ? 'disabled' : ''}>
           <strong>${mission.name}</strong>
-          <span>${status.unlocked ? `${formatDuration(mission.duration)} · ${status.omen.label} ${status.omen.name}` : lockedText}</span>
-          <small>产出 ${formatReward(mission.reward)}</small>
+          <span>${status.unlocked ? `${formatDuration(getMissionDuration(mission, status.approach.id))} · ${status.omen.label} ${status.omen.name} · ${approachText}` : lockedText}</span>
+          <small>产出 ${formatReward(status.rewardPreview)}</small>
         </button>
         <button data-auto-mission="${mission.id}" class="mini-button ${active ? 'active' : ''}" ${!status.unlocked ? 'disabled' : ''}>${active ? '自动中' : '自动'}</button>
         <details class="mission-card-details">
           <summary>展开详情</summary>
-          <small>${status.unlocked ? `${status.omen.detail} · ${status.omen.counsel}` : '缘机未至'} · ${rareText} · ${eventText}</small>
+          <small>${status.unlocked ? `${status.omen.detail} · ${status.omen.counsel}` : '缘机未至'} · ${rareText} · ${specialText} · ${eventText}</small>
         </details>
       </div>
     `;
@@ -4550,6 +4749,36 @@
     return normalized;
   }
 
+  function normalizeMissionApproaches(values) {
+    if (!values || typeof values !== 'object') {
+      return {};
+    }
+    return Object.fromEntries(
+      Object.entries(values).filter(([mapId, approachId]) => missionMaps[mapId] && missionApproaches[approachId]),
+    );
+  }
+
+  function normalizeMapSpecialDrops(values) {
+    if (!values || typeof values !== 'object') {
+      return {};
+    }
+    const normalized = {};
+    Object.entries(values).forEach(([mapId, drops]) => {
+      if (!missionMaps[mapId] || !drops || typeof drops !== 'object') {
+        return;
+      }
+      const valid = Object.fromEntries(
+        Object.entries(drops)
+          .filter(([approachId]) => missionApproaches[approachId])
+          .map(([approachId, count]) => [approachId, Math.max(0, Math.floor(Number(count) || 0))]),
+      );
+      if (Object.keys(valid).length) {
+        normalized[mapId] = valid;
+      }
+    });
+    return normalized;
+  }
+
   function normalizeMission(mission) {
     if (!mission) {
       return null;
@@ -4574,6 +4803,7 @@
     }
     return {
       id: mission.id,
+      approachId: missionApproaches[mission.approachId] ? mission.approachId : null,
       startedAt: Number(mission.startedAt) || Date.now(),
       endsAt: Number(mission.endsAt) || Date.now(),
     };
@@ -4755,8 +4985,13 @@
       mapId,
       mapName: missionMaps[mapId]?.name || mission.map || mission.name,
       outcome,
+      approach: report.approach && missionApproaches[report.approach.id] ? { id: report.approach.id, name: missionApproaches[report.approach.id].name } : null,
       reward,
       rewardText: formatReward(reward),
+      approachReward: report.approachReward && typeof report.approachReward === 'object' ? { ...report.approachReward } : {},
+      approachRewardText: formatReward(report.approachReward || {}),
+      specialDrop: report.specialDrop?.name ? { name: report.specialDrop.name, reward: report.specialDrop.reward || {}, approachId: report.specialDrop.approachId || null } : null,
+      specialDropText: report.specialDrop?.reward ? formatReward(report.specialDrop.reward) : '',
       rareReward,
       rareRewardText: rareReward ? formatReward(rareReward) : '',
       reputationGained: Math.max(0, Number(report.reputationGained) || 0),
@@ -4986,12 +5221,14 @@
     }
 
     const mission = missions[missionId];
+    const approach = getSelectedMissionApproach(state, mission);
     state.activeMission = {
       id: mission.id,
+      approachId: approach.id,
       startedAt: now,
-      endsAt: now + mission.duration * 1000,
+      endsAt: now + getMissionDuration(mission, approach.id) * 1000,
     };
-    addLog(state, now, `自动继续「${mission.name}」。`);
+    addLog(state, now, `自动继续「${mission.name}」，路线「${approach.name}」。`);
   }
 
   function snapshotResources(state) {

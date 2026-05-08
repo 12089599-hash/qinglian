@@ -692,6 +692,52 @@ small {
   gap: 8px 14px;
 }
 
+.approach-selector {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(116px, 1fr));
+  gap: 8px;
+}
+
+.approach-selector button {
+  display: grid;
+  min-height: 86px;
+  justify-items: start;
+  gap: 4px;
+  padding: 9px;
+  text-align: left;
+}
+
+.approach-selector button.active {
+  border-color: rgba(232, 198, 106, 0.82);
+  background:
+    linear-gradient(135deg, rgba(232, 198, 106, 0.18), rgba(125, 211, 183, 0.09)),
+    rgba(255, 255, 255, 0.04);
+}
+
+.approach-selector strong,
+.approach-selector span,
+.approach-selector small {
+  display: block;
+  min-width: 0;
+}
+
+.approach-selector strong {
+  color: var(--paper);
+  font-size: 0.86rem;
+}
+
+.approach-selector span {
+  color: var(--muted);
+  font-size: 0.74rem;
+  line-height: 1.35;
+}
+
+.approach-selector small {
+  color: var(--gold);
+  font-size: 0.72rem;
+  line-height: 1.35;
+}
+
 .boss-card {
   display: grid;
   grid-template-columns: 42px minmax(0, 1fr) auto;
@@ -1941,12 +1987,28 @@ small {
   }
 
   .mission-map-selector::-webkit-scrollbar,
+  .approach-selector::-webkit-scrollbar,
   .building-grid::-webkit-scrollbar {
     display: none;
   }
 
   .map-select-button {
     flex: 0 0 172px;
+    scroll-snap-align: start;
+  }
+
+  .approach-selector {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+  }
+
+  .approach-selector button {
+    flex: 0 0 136px;
+    min-height: 92px;
     scroll-snap-align: start;
   }
 

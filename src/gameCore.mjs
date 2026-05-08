@@ -288,6 +288,93 @@ export const MAP_MASTERY_TIERS = [
   { level: 4, name: '镇域', reputation: 140 },
 ];
 
+export const MISSION_APPROACHES = {
+  balanced: {
+    id: 'balanced',
+    name: '循迹',
+    detail: '按原路线稳步行游，收益和劫象保持均衡。',
+    rewardBonus: {},
+    durationMultiplier: 1,
+    dangerMultiplier: 1,
+    dropEvery: 0,
+  },
+  herbSeeking: {
+    id: 'herbSeeking',
+    name: '寻药',
+    detail: '放慢脚步辨认草木灵机，偏向灵草和清心收获。',
+    rewardBonus: { herbs: 0.45 },
+    durationMultiplier: 1.05,
+    dangerMultiplier: 0.96,
+    dropEvery: 2,
+  },
+  monsterHunt: {
+    id: 'monsterHunt',
+    name: '猎妖',
+    detail: '主动追索妖踪，妖核更多，但劫象会更重。',
+    rewardBonus: { beastCores: 0.55, spiritStones: 0.12 },
+    durationMultiplier: 1,
+    dangerMultiplier: 1.12,
+    dropEvery: 2,
+  },
+  relicSearch: {
+    id: 'relicSearch',
+    name: '探遗',
+    detail: '搜寻残器旧阵，偏向法器、阵旗和炼器精魄。',
+    rewardBonus: { artifacts: 0.5, arrayFlags: 0.35, forgingEssence: 0.3 },
+    durationMultiplier: 1.1,
+    dangerMultiplier: 1.05,
+    dropEvery: 2,
+  },
+  daoInquiry: {
+    id: 'daoInquiry',
+    name: '问道',
+    detail: '静观地脉与残念，偏向灵气、悟道和破境准备。',
+    rewardBonus: { qi: 0.35, insight: 0.35 },
+    durationMultiplier: 1.12,
+    dangerMultiplier: 1.02,
+    dropEvery: 2,
+  },
+};
+
+export const MAP_SPECIAL_DROPS = {
+  qinglanMountain: {
+    herbSeeking: { name: '山阴灵苗', reward: { herbs: 8 } },
+    monsterHunt: { name: '山魈残爪', reward: { beastCores: 1 } },
+    relicSearch: { name: '旧府残器', reward: { artifacts: 1 } },
+    daoInquiry: { name: '青岚地脉', reward: { qi: 80, insight: 1 } },
+  },
+  herbValley: {
+    herbSeeking: { name: '百草灵芽', reward: { herbs: 18, clearHeartPill: 1 } },
+    monsterHunt: { name: '药谷妖胆', reward: { beastCores: 1, herbs: 6 } },
+    relicSearch: { name: '药锄残器', reward: { artifacts: 1, forgingEssence: 1 } },
+    daoInquiry: { name: '药性心悟', reward: { insight: 1, qi: 110 } },
+  },
+  mistyValley: {
+    herbSeeking: { name: '雾隐灵芝', reward: { herbs: 14, meridianPill: 1 } },
+    monsterHunt: { name: '雾妖晶核', reward: { beastCores: 2 } },
+    relicSearch: { name: '雾纹残甲', reward: { artifacts: 1, forgingEssence: 1 } },
+    daoInquiry: { name: '雾中观息', reward: { qi: 160, insight: 1 } },
+  },
+  swordTomb: {
+    herbSeeking: { name: '剑苔灵草', reward: { herbs: 16, clearHeartPill: 1 } },
+    monsterHunt: { name: '剑冢煞核', reward: { beastCores: 2 } },
+    relicSearch: { name: '剑冢残片', reward: { artifacts: 1, forgingEssence: 2 } },
+    daoInquiry: { name: '剑鸣残悟', reward: { insight: 1, qi: 180 } },
+  },
+  demonRift: {
+    herbSeeking: { name: '魔隙幽草', reward: { herbs: 20, clearHeartPill: 1 } },
+    monsterHunt: { name: '裂隙魔核', reward: { beastCores: 3, heartDemon: 1 } },
+    relicSearch: { name: '镇魔阵旗', reward: { arrayFlags: 2, forgingEssence: 2 } },
+    daoInquiry: { name: '镇煞心印', reward: { insight: 1, meridianPill: 1 } },
+  },
+  ancientRuins: {
+    herbSeeking: { name: '遗迹灵根', reward: { herbs: 24, meridianPill: 1 } },
+    monsterHunt: { name: '守灵妖核', reward: { beastCores: 4 } },
+    relicSearch: { name: '上古残阵', reward: { artifacts: 2, arrayFlags: 2, forgingEssence: 3 } },
+    daoInquiry: { name: '古修残悟', reward: { insight: 2, qi: 260 } },
+  },
+};
+
 export const SECT_COMMISSIONS = {
   herbGarden: {
     id: 'herbGarden',
@@ -1127,6 +1214,8 @@ export function createGameState(now = Date.now()) {
     completedMissions: {},
     mapReputation: {},
     mapDepths: {},
+    missionApproaches: {},
+    mapSpecialDrops: {},
     defeatedBosses: {},
     claimedGoals: {},
     claimedChapterRewards: {},
@@ -1262,6 +1351,8 @@ export function reviveGameState(saved, now = Date.now()) {
   state.completedMissions = normalizeCompletedMissions(state.completedMissions);
   state.mapReputation = normalizeMapValues(state.mapReputation);
   state.mapDepths = normalizeMapDepths(state.mapDepths);
+  state.missionApproaches = normalizeMissionApproaches(state.missionApproaches);
+  state.mapSpecialDrops = normalizeMapSpecialDrops(state.mapSpecialDrops);
   state.defeatedBosses = normalizeDefeatedBosses(state.defeatedBosses);
   state.claimedGoals = normalizeClaimedGoals(state.claimedGoals);
   state.claimedChapterRewards = normalizeClaimedGoals(state.claimedChapterRewards);
@@ -1606,6 +1697,8 @@ export function getMissionStatus(state, missionId) {
   if (!mission) {
     return { exists: false, unlocked: false };
   }
+  const approach = getSelectedMissionApproach(state, mission);
+  const approachReward = getMissionApproachReward(mission, approach.id);
   const completed = state.completedMissions?.[missionId] ?? 0;
   const rareEvery = mission.rareEvery ?? 0;
   const rareStep = rareEvery && completed > 0 && completed % rareEvery === 0 ? rareEvery : completed % rareEvery;
@@ -1618,6 +1711,11 @@ export function getMissionStatus(state, missionId) {
     unlockRealmIndex: mission.unlockRealmIndex ?? 0,
     recommendedPower: getMissionDanger(state, mission),
     omen: getMissionOmen(state, mission),
+    approach,
+    approaches: getMissionApproachOptions(state, getMissionMapId(mission)),
+    approachReward,
+    rewardPreview: mergeRewards(mission.reward, approachReward),
+    specialDrop: getMapSpecialDropTemplate(getMissionMapId(mission), approach.id),
     completed,
     rareProgress: rareEvery ? `${rareStep} / ${rareEvery}` : '',
     rareReward: mission.rareReward ?? null,
@@ -1648,6 +1746,8 @@ export function getMapStatuses(state) {
       },
       reputation: state.mapReputation?.[map.id] ?? 0,
       mastery,
+      approachOptions: getMissionApproachOptions(state, map.id),
+      selectedApproach: getSelectedMapApproach(state, map.id),
       depth: getMapDepthStatus(state, map.id),
       boss: {
         ...map.boss,
@@ -2789,7 +2889,20 @@ export function startMapDepthTrial(state, mapId, now = Date.now()) {
   return { ok: true, status };
 }
 
-export function startMission(state, missionId, now = Date.now()) {
+export function setMissionApproach(state, mapId, approachId, now = Date.now()) {
+  if (!MISSION_MAPS[mapId]) {
+    return { ok: false, reason: 'unknownMap' };
+  }
+  if (!MISSION_APPROACHES[approachId]) {
+    return { ok: false, reason: 'unknownApproach' };
+  }
+  state.missionApproaches ??= {};
+  state.missionApproaches[mapId] = approachId;
+  addLog(state, now, `${MISSION_MAPS[mapId].name}改走「${MISSION_APPROACHES[approachId].name}」路线。`);
+  return { ok: true, mapId, approach: MISSION_APPROACHES[approachId] };
+}
+
+export function startMission(state, missionId, now = Date.now(), approachId = null) {
   if (state.activeMission) {
     return { ok: false, reason: 'busy' };
   }
@@ -2803,12 +2916,15 @@ export function startMission(state, missionId, now = Date.now()) {
     return { ok: false, reason: 'realmLocked' };
   }
 
+  const approach = getSelectedMissionApproach(state, mission, approachId);
+  const duration = getMissionDuration(mission, approach.id);
   state.activeMission = {
     id: mission.id,
+    approachId: approach.id,
     startedAt: now,
-    endsAt: now + mission.duration * 1000,
+    endsAt: now + duration * 1000,
   };
-  addLog(state, now, `外出执行「${mission.name}」。`);
+  addLog(state, now, `外出执行「${mission.name}」，路线「${approach.name}」。`);
   return { ok: true };
 }
 
@@ -3042,13 +3158,19 @@ function completeMissionIfReady(state, now) {
     return;
   }
 
-  const danger = getMissionDanger(state, mission);
+  const approach = getSelectedMissionApproach(state, mission, active.approachId);
+  const approachReward = getMissionApproachReward(mission, approach.id);
+  const missionReward = mergeRewards(mission.reward, approachReward);
+  const danger = getMissionDanger(state, mission, approach.id);
   if (danger && calculatePower(state) < danger) {
     applyResources(state, mission.failurePenalty);
     state.injuryUntil = now + 90 * 1000;
     state.lastMissionReport = createMissionReport(state, mission, {
       outcome: 'failure',
       reward: mission.failurePenalty ?? {},
+      approach,
+      approachReward: {},
+      specialDrop: null,
       reputationGained: 0,
       eventResult: null,
       rareReward: null,
@@ -3059,7 +3181,7 @@ function completeMissionIfReady(state, now) {
     return;
   }
 
-  applyResources(state, mission.reward);
+  applyResources(state, missionReward);
   state.completedMissions[mission.id] = (state.completedMissions[mission.id] ?? 0) + 1;
   const mapId = getMissionMapId(mission);
   const reputationGained = MISSION_MAPS[mapId]?.reputationPerMission ?? 0;
@@ -3075,17 +3197,21 @@ function completeMissionIfReady(state, now) {
     rareReward = mission.rareReward;
     addLog(state, now, `深入「${mission.map ?? mission.name}」有所感悟，额外获得${formatReward(mission.rareReward)}。`);
   }
+  const specialDrop = resolveMapSpecialDrop(state, mission, approach.id, state.completedMissions[mission.id], now);
   maybeCreateOpportunity(state, mission, now);
   addDailyProgress(state, 'missions', 1, now);
   state.lastMissionReport = createMissionReport(state, mission, {
     outcome: 'success',
-    reward: mission.reward,
+    reward: missionReward,
+    approach,
+    approachReward,
+    specialDrop,
     reputationGained,
     eventResult,
     rareReward,
     now,
   });
-  addLog(state, now, `完成「${mission.name}」，收获${formatReward(mission.reward)}。`);
+  addLog(state, now, `完成「${mission.name}」，收获${formatReward(missionReward)}。`);
   restartAutoMission(state, mission.id, now);
 }
 
@@ -3166,10 +3292,80 @@ function completeAlchemyIfReady(state, now) {
   addLog(state, now, `丹炉火候正好，炼成一枚${recipe.name}。`);
 }
 
-function createMissionReport(state, mission, { outcome, reward, reputationGained = 0, eventResult = null, rareReward = null, now = Date.now() }) {
+export function getMissionApproachOptions(state, mapId) {
+  const selected = getSelectedMapApproach(state, mapId);
+  const specialDrops = MAP_SPECIAL_DROPS[mapId] ?? {};
+  return Object.values(MISSION_APPROACHES).map((approach) => ({
+    ...approach,
+    selected: approach.id === selected.id,
+    specialDrop: getMapSpecialDropTemplate(mapId, approach.id),
+    specialDropCount: state.mapSpecialDrops?.[mapId]?.[approach.id] ?? 0,
+    locked: approach.id !== 'balanced' && !specialDrops[approach.id],
+  }));
+}
+
+function getSelectedMissionApproach(state, mission, explicitApproachId = null) {
+  return getSelectedMapApproach(state, getMissionMapId(mission), explicitApproachId);
+}
+
+function getSelectedMapApproach(state, mapId, explicitApproachId = null) {
+  const approachId = explicitApproachId || state.missionApproaches?.[mapId] || 'balanced';
+  return MISSION_APPROACHES[approachId] ?? MISSION_APPROACHES.balanced;
+}
+
+function getMissionDuration(mission, approachId = 'balanced') {
+  const approach = MISSION_APPROACHES[approachId] ?? MISSION_APPROACHES.balanced;
+  return Math.max(10, Math.round(mission.duration * (approach.durationMultiplier ?? 1)));
+}
+
+function getMissionApproachReward(mission, approachId = 'balanced') {
+  const approach = MISSION_APPROACHES[approachId] ?? MISSION_APPROACHES.balanced;
+  return filterCost(Object.fromEntries(
+    Object.entries(approach.rewardBonus ?? {}).map(([resource, multiplier]) => {
+      const base = mission.reward?.[resource] ?? 0;
+      if (resource === 'insight') {
+        return [resource, base > 0 ? Math.max(1, Math.ceil(base * multiplier)) : approachId === 'daoInquiry' ? 1 : 0];
+      }
+      return [resource, base > 0 ? Math.max(1, Math.ceil(base * multiplier)) : 0];
+    }),
+  ));
+}
+
+function mergeRewards(baseReward = {}, bonusReward = {}) {
+  const merged = { ...baseReward };
+  Object.entries(bonusReward).forEach(([resource, amount]) => {
+    merged[resource] = round((merged[resource] ?? 0) + amount);
+  });
+  return filterCost(merged);
+}
+
+function getMapSpecialDropTemplate(mapId, approachId) {
+  return MAP_SPECIAL_DROPS[mapId]?.[approachId] ?? null;
+}
+
+function resolveMapSpecialDrop(state, mission, approachId, completedCount, now) {
+  const mapId = getMissionMapId(mission);
+  const template = getMapSpecialDropTemplate(mapId, approachId);
+  const approach = MISSION_APPROACHES[approachId] ?? MISSION_APPROACHES.balanced;
+  const every = template?.every ?? approach.dropEvery ?? 0;
+  if (!template || every <= 0 || completedCount <= 0 || completedCount % every !== 0) {
+    return null;
+  }
+  applyResources(state, template.reward ?? {});
+  state.mapSpecialDrops ??= {};
+  state.mapSpecialDrops[mapId] ??= {};
+  state.mapSpecialDrops[mapId][approachId] = (state.mapSpecialDrops[mapId][approachId] ?? 0) + 1;
+  const drop = { name: template.name, reward: template.reward ?? {}, approachId };
+  addLog(state, now, `${MISSION_MAPS[mapId]?.name ?? mission.name}路线收获「${template.name}」：${formatReward(template.reward ?? {})}。`);
+  return drop;
+}
+
+function createMissionReport(state, mission, { outcome, reward, approach = getSelectedMissionApproach(state, mission), approachReward = {}, specialDrop = null, reputationGained = 0, eventResult = null, rareReward = null, now = Date.now() }) {
   const mapId = getMissionMapId(mission);
   const map = MISSION_MAPS[mapId];
   const rewardText = formatReward(reward);
+  const approachRewardText = formatReward(approachReward);
+  const specialDropText = specialDrop ? formatReward(specialDrop.reward ?? {}) : '';
   const rareRewardText = rareReward ? formatReward(rareReward) : '';
   const event = eventResult?.event ? {
     id: eventResult.event.id,
@@ -3189,8 +3385,13 @@ function createMissionReport(state, mission, { outcome, reward, reputationGained
     mapId,
     mapName: map?.name ?? mission.map ?? mission.name,
     outcome,
+    approach: approach ? { id: approach.id, name: approach.name } : null,
     reward: reward ?? {},
     rewardText,
+    approachReward: approachReward ?? {},
+    approachRewardText,
+    specialDrop,
+    specialDropText,
     rareReward: rareReward ?? null,
     rareRewardText,
     reputationGained,
@@ -3201,9 +3402,11 @@ function createMissionReport(state, mission, { outcome, reward, reputationGained
   };
 }
 
-function getMissionDanger(state, mission) {
+function getMissionDanger(state, mission, approachId = null) {
+  const approach = getSelectedMissionApproach(state, mission, approachId);
   const pressure = getMissionPressure(state, mission);
-  return Math.max(0, pressure - getTieredLevelValue(state.gear?.robe ?? 0, GEAR.robe.dangerReductionPerLevel) - getGearAffixBonus(state, 'dangerReduction') - getEquippedLootBonus(state, 'dangerReduction') - getMapMasteryBonus(state, 'dangerReduction') - getTreasureBonus(state, 'dangerReduction') - getSpiritBeastBonus(state, 'dangerReduction') - getDaoHeartBonus(state, 'dangerReduction') - (state.buildings?.swordArray ?? 0) * BUILDINGS.swordArray.dangerReductionPerLevel - (state.cultivationPaths?.sword ?? 0) * CULTIVATION_PATHS.sword.dangerReductionPerLevel);
+  const approachPressure = round(pressure * (approach.dangerMultiplier ?? 1));
+  return Math.max(0, approachPressure - getTieredLevelValue(state.gear?.robe ?? 0, GEAR.robe.dangerReductionPerLevel) - getGearAffixBonus(state, 'dangerReduction') - getEquippedLootBonus(state, 'dangerReduction') - getMapMasteryBonus(state, 'dangerReduction') - getTreasureBonus(state, 'dangerReduction') - getSpiritBeastBonus(state, 'dangerReduction') - getDaoHeartBonus(state, 'dangerReduction') - (state.buildings?.swordArray ?? 0) * BUILDINGS.swordArray.dangerReductionPerLevel - (state.cultivationPaths?.sword ?? 0) * CULTIVATION_PATHS.sword.dangerReductionPerLevel);
 }
 
 function getMissionPressure(state, mission) {
@@ -3251,6 +3454,7 @@ function normalizeMission(mission) {
   }
   return {
     id: mission.id,
+    approachId: MISSION_APPROACHES[mission.approachId] ? mission.approachId : null,
     startedAt: Number(mission.startedAt) || Date.now(),
     endsAt: Number(mission.endsAt) || Date.now(),
   };
@@ -3385,6 +3589,36 @@ function normalizeMapDepths(values) {
   );
 }
 
+function normalizeMissionApproaches(values) {
+  if (!values || typeof values !== 'object') {
+    return {};
+  }
+  return Object.fromEntries(
+    Object.entries(values).filter(([mapId, approachId]) => MISSION_MAPS[mapId] && MISSION_APPROACHES[approachId]),
+  );
+}
+
+function normalizeMapSpecialDrops(values) {
+  if (!values || typeof values !== 'object') {
+    return {};
+  }
+  const normalized = {};
+  Object.entries(values).forEach(([mapId, drops]) => {
+    if (!MISSION_MAPS[mapId] || !drops || typeof drops !== 'object') {
+      return;
+    }
+    const valid = Object.fromEntries(
+      Object.entries(drops)
+        .filter(([approachId]) => MISSION_APPROACHES[approachId])
+        .map(([approachId, count]) => [approachId, Math.max(0, Math.floor(Number(count) || 0))]),
+    );
+    if (Object.keys(valid).length) {
+      normalized[mapId] = valid;
+    }
+  });
+  return normalized;
+}
+
 function normalizeDefeatedBosses(defeatedBosses) {
   if (!defeatedBosses || typeof defeatedBosses !== 'object') {
     return {};
@@ -3500,8 +3734,13 @@ function normalizeMissionReport(report) {
     mapId,
     mapName: MISSION_MAPS[mapId]?.name ?? mission.map ?? mission.name,
     outcome,
+    approach: report.approach && MISSION_APPROACHES[report.approach.id] ? { id: report.approach.id, name: MISSION_APPROACHES[report.approach.id].name } : null,
     reward,
     rewardText: formatReward(reward),
+    approachReward: report.approachReward && typeof report.approachReward === 'object' ? { ...report.approachReward } : {},
+    approachRewardText: formatReward(report.approachReward ?? {}),
+    specialDrop: report.specialDrop?.name ? { name: report.specialDrop.name, reward: report.specialDrop.reward ?? {}, approachId: report.specialDrop.approachId ?? null } : null,
+    specialDropText: report.specialDrop?.reward ? formatReward(report.specialDrop.reward) : '',
     rareReward,
     rareRewardText: rareReward ? formatReward(rareReward) : '',
     reputationGained: Math.max(0, Number(report.reputationGained) || 0),
@@ -3657,12 +3896,14 @@ function restartAutoMission(state, completedMissionId, now) {
   }
 
   const mission = MISSIONS[missionId];
+  const approach = getSelectedMissionApproach(state, mission);
   state.activeMission = {
     id: mission.id,
+    approachId: approach.id,
     startedAt: now,
-    endsAt: now + mission.duration * 1000,
+    endsAt: now + getMissionDuration(mission, approach.id) * 1000,
   };
-  addLog(state, now, `自动继续「${mission.name}」。`);
+  addLog(state, now, `自动继续「${mission.name}」，路线「${approach.name}」。`);
 }
 
 function snapshotResources(state) {
