@@ -36,6 +36,7 @@ import {
   organizeLootEquipment,
   getGoals,
   getNextGuidance,
+  getResourceGuidance,
   getMainlineChapters,
   getDailyTasks,
   getMarketStock,
@@ -175,6 +176,30 @@ test('seven day boosted pacing remains before nascent soul', () => {
   }
 
   assert.equal(state.realmIndex < realmIndexByName('元婴一变'), true);
+});
+
+test('fourteen day boosted pacing does not consume the nascent soul ladder', () => {
+  const state = createGameState(1000);
+  state.buildings.meditationSeat = 18;
+  state.formations.spiritGathering = 12;
+  state.cultivationPaths.formation = 12;
+  state.permanentBonuses.qiRate = 0.45;
+  state.treasures.spiritLamp = 8;
+  state.spiritBeasts.cloudFox = 8;
+  state.inventoryPills.gatherQiPill = 400;
+  state.pills = 400;
+
+  for (let minute = 1; minute <= 14 * 24 * 60; minute += 1) {
+    updateGame(state, 60, 1000 + minute * 60_000);
+    if (minute % 90 === 0 && state.inventoryPills.gatherQiPill > 0) {
+      consumePill(state, 'gatherQiPill', 1000 + minute * 60_000);
+    }
+    while (state.qi >= REALMS[state.realmIndex].requiredQi && state.realmIndex < REALMS.length - 1) {
+      performBreakthrough(state, 1000 + minute * 60_000, () => 0);
+    }
+  }
+
+  assert.equal(state.realmIndex < realmIndexByName('元婴三变'), true);
 });
 
 test('legacy realm saves migrate into the expanded realm track', () => {
@@ -892,6 +917,54 @@ test('next guidance points players toward the clearest progression step', () => 
   state.gear.weapon = 2;
 
   assert.equal(getNextGuidance(state).title, '挑战青岚山魈');
+});
+
+test('resource guidance points forging shortages to relic routes and forge commissions', () => {
+  const state = createGameState(1000);
+  state.realmIndex = realmIndexByName('筑基一层');
+  state.spiritStones = 2000;
+  state.herbs = 200;
+  state.beastCores = 40;
+  state.arrayFlags = 40;
+  state.artifacts = 0;
+  state.forgingEssence = 0;
+  state.sectDisciples = 2;
+  state.lootEquipment = [{
+    uid: 'loot-test-sword',
+    templateId: 'qingfengSword',
+    name: '青锋剑',
+    slot: 'weapon',
+    quality: 1,
+    level: 3,
+    bonuses: { power: 72 },
+  }];
+
+  const guidance = getResourceGuidance(state);
+
+  assert.equal(guidance.stable, false);
+  assert.equal(guidance.items.some((item) => item.resource === 'forgingEssence'), true);
+  assert.equal(guidance.items.some((item) => item.resource === 'artifacts'), true);
+  assert.equal(guidance.primary.route.mapId, 'swordTomb');
+  assert.equal(guidance.primary.route.approachId, 'relicSearch');
+  assert.equal(guidance.primary.commission.id, 'forge');
+});
+
+test('resource guidance points beast core shortages to hunter routes and patrol commissions', () => {
+  const state = createGameState(1000);
+  state.realmIndex = realmIndexByName('炼气八层');
+  state.spiritStones = 1600;
+  state.herbs = 200;
+  state.beastCores = 0;
+  state.artifacts = 30;
+  state.arrayFlags = 30;
+  state.forgingEssence = 30;
+  state.sectDisciples = 1;
+
+  const guidance = getResourceGuidance(state);
+
+  assert.equal(guidance.primary.resource, 'beastCores');
+  assert.equal(guidance.primary.route.approachId, 'monsterHunt');
+  assert.equal(guidance.primary.commission.id, 'patrol');
 });
 
 test('loot dismantling creates strengthening material and empowerment improves bonuses', () => {

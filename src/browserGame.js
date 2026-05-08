@@ -301,6 +301,17 @@
     forge: { id: 'forge', name: '炼器委托', detail: '弟子整理残器与炉火，缓慢沉淀法器和炼器精魄。', rates: { artifacts: 0.006, forgingEssence: 0.004, reputation: 0.008 } },
   };
 
+  const resourceGuides = {
+    spiritStones: { label: '灵石', priority: 0.9, mapIds: ['qinglanMountain'], missionId: 'marketTrade', approachId: 'balanced', commissionId: 'mine', detail: '洞府、装备和坊市刷新都会消耗灵石。' },
+    herbs: { label: '灵草', priority: 1, mapIds: ['herbValley', 'qinglanMountain'], missionId: 'herbValley', approachId: 'herbSeeking', commissionId: 'herbGarden', detail: '炼丹、灵田和丹修成长都需要稳定灵草。' },
+    beastCores: { label: '妖核', priority: 1.25, mapIds: ['demonRift', 'mistyValley', 'qinglanMountain'], missionId: 'mistyValley', approachId: 'monsterHunt', commissionId: 'patrol', detail: '武器、法袍、剑阵和护脉丹容易被妖核卡住。' },
+    artifacts: { label: '法器', priority: 1.2, mapIds: ['swordTomb', 'mistyValley', 'qinglanMountain'], missionId: 'ancientSwordTomb', approachId: 'relicSearch', commissionId: 'forge', detail: '法器可用于淬炼、分解和炼器阁营建。' },
+    arrayFlags: { label: '阵旗', priority: 1.15, mapIds: ['ancientRuins', 'demonRift', 'swordTomb', 'qinglanMountain'], missionId: 'demonRift', approachId: 'relicSearch', commissionId: null, marketItemId: 'arrayFlagPack', detail: '阵法、静室高阶和藏经阁会持续消耗阵旗。' },
+    forgingEssence: { label: '炼器精魄', priority: 1.35, mapIds: ['swordTomb', 'mistyValley', 'qinglanMountain'], missionId: 'ancientSwordTomb', approachId: 'relicSearch', commissionId: 'forge', marketItemId: 'forgingAsh', detail: '战利品强化、法宝和炼器阁中后期都需要炼器精魄。' },
+    insight: { label: '悟道', priority: 1.05, mapIds: ['ancientRuins', 'demonRift', 'swordTomb', 'qinglanMountain'], missionId: 'ancientRuins', approachId: 'daoInquiry', commissionId: null, marketItemId: 'insightScroll', detail: '悟道支撑藏经阁高阶和后续功法沉淀。' },
+    qi: { label: '灵气', priority: 0.55, mapIds: ['swordTomb', 'herbValley', 'qinglanMountain'], missionId: 'cavePatrol', approachId: 'daoInquiry', commissionId: null, detail: '灵气不足时，问道路线、丹药和长期吐纳更重要。' },
+  };
+
   const sectLevels = [
     { level: 1, name: '外门草创', reputation: 0, capacityBonus: 0, commissionBonus: 0 },
     { level: 2, name: '山门初立', reputation: 30, capacityBonus: 1, commissionBonus: 0.06 },
@@ -1043,6 +1054,7 @@
     marketList: document.querySelector('[data-market-list]'),
     opportunity: document.querySelector('[data-opportunity]'),
     missionReport: document.querySelector('[data-mission-report]'),
+    resourceGuidance: document.querySelector('[data-resource-guidance]'),
     missionList: document.querySelector('[data-mission-list]'),
     subTabs: document.querySelector('[data-sub-tabs]'),
     gearSubTabs: document.querySelector('[data-gear-subtabs]'),
@@ -2648,6 +2660,7 @@
     renderSect(forceLists);
     renderOpportunity(forceLists);
     renderMissionReport(forceLists);
+    renderResourceGuidance(forceLists);
     renderMissions(forceLists);
     renderTabs();
 
@@ -3434,6 +3447,19 @@
     return mainlineChapters[0].objectives.map((objective) => hydrateMainlineObjective(state, objective));
   }
 
+  function getResourceGuidance(state) {
+    const needs = collectResourceNeeds(state);
+    const items = Object.values(needs)
+      .map((need) => hydrateResourceNeed(state, need))
+      .sort((a, b) => b.score - a.score || b.shortfall - a.shortfall)
+      .slice(0, 3);
+    if (!items.length) {
+      return { stable: true, primary: null, items: [], summary: '当前资源缺口不明显，可以继续刷地图声望、推进秘境层数或准备下一次破境。' };
+    }
+    const primary = items[0];
+    return { stable: false, primary, items, summary: `${primary.label}缺口最明显，${primary.route.detail}` };
+  }
+
   function getMainlineChapters(state) {
     return mainlineChapters.map((chapter, index) => {
       const locked = !isMainlineChapterUnlocked(state, index);
@@ -3525,6 +3551,12 @@
     const sect = getSectStatus(state);
     if (sect.unlocked && sect.idle > 0) {
       return { title: '分配宗门弟子', detail: '空闲弟子不会产出，把弟子派去采药、采矿或护山。', tab: 'sect' };
+    }
+    const resourceGuidance = getResourceGuidance(state);
+    if (!resourceGuidance.stable && resourceGuidance.primary) {
+      const primary = resourceGuidance.primary;
+      const commissionText = primary.commission?.unlocked ? `，宗门可派${primary.commission.name}` : '';
+      return { title: `补足${primary.label}`, detail: `${primary.demandText}，${primary.route.detail}${commissionText}。`, tab: primary.route.unlocked ? 'missions' : 'market' };
     }
     return { title: '继续积累底蕴', detail: '刷地图声望、强化战利品、提升洞府和阵法，准备下一轮突破。', tab: 'missions' };
   }
@@ -3636,6 +3668,54 @@
         .join('')}
     `;
     renderCache.market = signature;
+  }
+
+  function renderResourceGuidance(force = false) {
+    if (!refs.resourceGuidance) {
+      return;
+    }
+    const guidance = getResourceGuidance(state);
+    const signature = guidance.stable
+      ? 'stable'
+      : guidance.items.map((item) => `${item.resource}:${item.shortfall}:${item.route.mapId}:${item.route.approachId}:${item.commission?.id || ''}:${item.commission?.unlocked ? 1 : 0}`).join('|');
+    if (!force && renderCache.resourceGuidance === signature) {
+      return;
+    }
+    if (guidance.stable || !guidance.primary) {
+      refs.resourceGuidance.innerHTML = `
+        <div class="resource-guidance-card">
+          <div>
+            <strong>寻材指引 <small>底蕴均衡</small></strong>
+            <span>${guidance.summary}</span>
+          </div>
+          <div class="resource-guidance-list">
+            <div><b>可做</b><small>推进秘境层数、刷地图声望或整备下一件装备。</small></div>
+          </div>
+        </div>
+      `;
+      renderCache.resourceGuidance = signature;
+      return;
+    }
+    const primary = guidance.primary;
+    const routeText = primary.route.unlocked
+      ? `${primary.route.mapName} · ${primary.route.approachName}`
+      : `${primary.route.unlockRealmName}后解锁 ${primary.route.mapName}`;
+    refs.resourceGuidance.innerHTML = `
+      <div class="resource-guidance-card">
+        <div>
+          <strong>寻材指引 <small>${primary.label}缺口 ${primary.shortfall}</small></strong>
+          <span>${primary.demandText}，${primary.route.detail}。</span>
+          <small>${primary.detail}</small>
+        </div>
+        <div class="resource-guidance-list">
+          <div><b>行游</b><small>${routeText}${primary.route.missionName ? ` · 可刷${primary.route.missionName}` : ''}</small></div>
+          ${primary.commission ? `<div><b>宗门</b><small>${primary.commission.unlocked ? `派弟子做${primary.commission.name}` : `解锁后可做${primary.commission.name}`}</small></div>` : ''}
+          ${primary.market ? `<div><b>坊市</b><small>${primary.market.unlocked ? `留意${primary.market.name}` : `${primary.market.unlockRealmName}后留意${primary.market.name}`}</small></div>` : ''}
+          ${guidance.items.slice(1).map((item) => `<div><b>${item.label}</b><small>缺 ${item.shortfall} · ${item.route.mapName}${item.commission?.unlocked ? ` · ${item.commission.name}` : ''}</small></div>`).join('')}
+        </div>
+      </div>
+    `;
+    renderCache.resourceGuidance = signature;
   }
 
   function renderMissions(force = false) {
@@ -5563,6 +5643,138 @@
 
   function canAfford(state, cost) {
     return Object.entries(cost).every(([resource, amount]) => getResourceAmount(state, resource) >= amount);
+  }
+
+  function collectResourceNeeds(state) {
+    const needs = {};
+    const addCost = (label, cost, weight = 1) => {
+      if (!cost || !Object.keys(cost).length || canAfford(state, cost)) return;
+      Object.entries(cost).forEach(([resource, amount]) => {
+        const guide = resourceGuides[resource];
+        if (!guide || amount <= 0) return;
+        const shortfall = Math.max(0, amount - getResourceAmount(state, resource));
+        if (shortfall <= 0) return;
+        needs[resource] ||= { resource, label: guide.label, shortfall: 0, maxShortfall: 0, score: 0, demandLabels: new Set() };
+        needs[resource].shortfall += shortfall;
+        needs[resource].maxShortfall = Math.max(needs[resource].maxShortfall, shortfall);
+        needs[resource].score += shortfall * weight * guide.priority;
+        needs[resource].demandLabels.add(label);
+      });
+    };
+
+    Object.values(buildings).forEach((building) => {
+      const level = state.buildings?.[building.id] || 0;
+      const nextLevel = level + 1;
+      if (nextLevel <= building.maxLevel && nextLevel <= getCaveUpgradeLimit(state)) {
+        addCost(`洞府·${building.name}`, building.cost(nextLevel), building.id === 'meditationSeat' || building.id === 'swordArray' ? 1.15 : 1);
+      }
+    });
+    Object.values(gear).forEach((item) => {
+      const level = state.gear?.[item.id] || 0;
+      const nextLevel = level + 1;
+      if (nextLevel <= item.maxLevel && nextLevel <= getRealmUpgradeLimit(state)) {
+        addCost(`装备·${item.name}`, item.cost(nextLevel), 1.25);
+      }
+    });
+    Object.values(formations).forEach((formation) => {
+      const level = state.formations?.[formation.id] || 0;
+      const nextLevel = level + 1;
+      if (nextLevel <= formation.maxLevel && nextLevel <= getRealmUpgradeLimit(state)) {
+        addCost(`阵法·${formation.name}`, formation.cost(nextLevel), 1.2);
+      }
+    });
+    Object.values(cultivationPaths).forEach((path) => {
+      const level = state.cultivationPaths?.[path.id] || 0;
+      const nextLevel = level + 1;
+      if (nextLevel <= path.maxLevel && nextLevel <= getRealmUpgradeLimit(state)) {
+        addCost(`功法·${path.name}`, path.cost(nextLevel), 1.05);
+      }
+    });
+    (state.lootEquipment || [])
+      .filter((item) => (item.level || 0) < getLootMaxLevel(item))
+      .slice(0, 4)
+      .forEach((item) => addCost(`战利品·${item.name}`, getLootEmpowerCost((item.level || 0) + 1), 1.35));
+    Object.values(treasures).forEach((treasure) => {
+      const level = state.treasures?.[treasure.id] || 0;
+      if (level < treasure.maxLevel) addCost(`法宝·${treasure.name}`, treasure.cost(level + 1), 0.95);
+    });
+    Object.values(spiritBeasts).forEach((beast) => {
+      const level = state.spiritBeasts?.[beast.id] || 0;
+      if (level < beast.maxLevel) addCost(`灵兽·${beast.name}`, beast.cost(level + 1), 0.9);
+    });
+    if (!state.activeAlchemy) {
+      const recipe = Object.values(pillRecipes).find((candidate) => (state.buildings?.alchemyFurnace || 0) >= candidate.unlockLevel);
+      if (recipe) addCost(`丹房·${recipe.name}`, recipe.cost, 0.75);
+    }
+
+    const realm = getCurrentRealm(state);
+    const qiShortfall = Math.max(0, realm.requiredQi - (state.qi || 0));
+    if (qiShortfall > Math.max(120, calculateQiRate(state) * 30)) {
+      const qiWeight = Object.keys(needs).length ? 0.05 : resourceGuides.qi.priority;
+      needs.qi ||= { resource: 'qi', label: resourceGuides.qi.label, shortfall: 0, maxShortfall: 0, score: 0, demandLabels: new Set() };
+      needs.qi.shortfall += qiShortfall;
+      needs.qi.maxShortfall = Math.max(needs.qi.maxShortfall, qiShortfall);
+      needs.qi.score += Math.sqrt(qiShortfall) * qiWeight;
+      needs.qi.demandLabels.add(`破境·${realm.name}`);
+    }
+    return needs;
+  }
+
+  function hydrateResourceNeed(state, need) {
+    const guide = resourceGuides[need.resource];
+    const demandLabels = [...need.demandLabels].slice(0, 3);
+    return {
+      resource: need.resource,
+      label: guide.label,
+      shortfall: Math.ceil(need.maxShortfall || need.shortfall),
+      score: round(need.score),
+      detail: guide.detail,
+      demandLabels,
+      demandText: `${demandLabels.join('、')}需要${guide.label}`,
+      route: getResourceRoute(state, need.resource),
+      commission: getResourceCommission(state, guide.commissionId),
+      market: getResourceMarketItem(state, guide.marketItemId),
+    };
+  }
+
+  function getResourceRoute(state, resource) {
+    const guide = resourceGuides[resource] || resourceGuides.spiritStones;
+    const mapId = guide.mapIds.find((candidate) => (state.realmIndex || 0) >= (missionMaps[candidate]?.unlockRealmIndex || 0)) || guide.mapIds[guide.mapIds.length - 1] || 'qinglanMountain';
+    const map = missionMaps[mapId] || missionMaps.qinglanMountain;
+    const mission = getResourceMission(mapId, guide.missionId);
+    const approach = missionApproaches[guide.approachId] || missionApproaches.balanced;
+    const unlocked = (state.realmIndex || 0) >= (map.unlockRealmIndex || 0);
+    const unlockRealm = realms[map.unlockRealmIndex]?.name || '更高境界';
+    return {
+      mapId: map.id,
+      mapName: map.name,
+      missionId: mission?.id || null,
+      missionName: mission?.name || map.name,
+      approachId: approach.id,
+      approachName: approach.name,
+      unlocked,
+      unlockRealmName: unlockRealm,
+      detail: unlocked ? `去${map.name}走「${approach.name}」路线` : `${unlockRealm}后可去${map.name}走「${approach.name}」路线`,
+    };
+  }
+
+  function getResourceMission(mapId, preferredMissionId) {
+    if (preferredMissionId && missions[preferredMissionId] && getMissionMapId(missions[preferredMissionId]) === mapId) {
+      return missions[preferredMissionId];
+    }
+    return Object.values(missions).find((mission) => getMissionMapId(mission) === mapId) || null;
+  }
+
+  function getResourceCommission(state, commissionId) {
+    const commission = commissionId ? sectCommissions[commissionId] : null;
+    if (!commission) return null;
+    return { id: commission.id, name: commission.name, detail: commission.detail, unlocked: isSectUnlocked(state) };
+  }
+
+  function getResourceMarketItem(state, marketItemId) {
+    const item = marketItemId ? marketItems[marketItemId] : null;
+    if (!item) return null;
+    return { id: item.id, name: item.name, unlocked: (state.realmIndex || 0) >= (item.unlockRealmIndex || 0), unlockRealmName: realms[item.unlockRealmIndex]?.name || '更高境界' };
   }
 
   function getRefineCost(nextQuality) {

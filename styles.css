@@ -570,6 +570,62 @@ small {
   gap: 16px;
 }
 
+.resource-guidance {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.resource-guidance-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(180px, 0.9fr);
+  gap: 12px;
+  border: 1px solid rgba(232, 198, 106, 0.34);
+  border-radius: 8px;
+  padding: 12px;
+  background:
+    linear-gradient(135deg, rgba(232, 198, 106, 0.13), rgba(125, 211, 183, 0.08)),
+    rgba(255, 255, 255, 0.03);
+}
+
+.resource-guidance-card strong,
+.resource-guidance-card span,
+.resource-guidance-card small {
+  display: block;
+}
+
+.resource-guidance-card strong {
+  color: var(--gold);
+}
+
+.resource-guidance-card span {
+  margin-top: 5px;
+  color: var(--paper);
+  line-height: 1.45;
+}
+
+.resource-guidance-card small {
+  margin-top: 6px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.resource-guidance-list {
+  display: grid;
+  gap: 7px;
+}
+
+.resource-guidance-list div {
+  border: 1px solid rgba(245, 238, 220, 0.1);
+  border-radius: 8px;
+  padding: 8px;
+  background: rgba(0, 0, 0, 0.14);
+}
+
+.resource-guidance-list b {
+  color: var(--jade);
+}
+
 .mission-map-layout {
   display: grid;
   grid-template-columns: minmax(170px, 220px) minmax(0, 1fr);
@@ -2061,6 +2117,10 @@ small {
   }
 
   .mission-map-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .resource-guidance-card {
     grid-template-columns: 1fr;
   }
 
