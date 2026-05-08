@@ -2797,7 +2797,7 @@
         const intent = getGearIntent(item.slot);
         const nextEffects = maxed ? [] : effectsFromBonusObject(createLootBonuses(item.templateId, (item.level || 0) + 1));
         return `
-          <details class="system-row detail-row">
+          <details class="equipment-detail-card detail-row">
             <summary>
               <strong>${item.name} <small>${intent.name} · ${getSlotName(item.slot)} · ${gearQualities[item.quality]?.name || '凡品'} · +${item.level || 0}</small></strong>
               <span>${formatLootBonuses(item.bonuses)}</span>
@@ -2974,7 +2974,7 @@
     const upgradeCost = maxed || realmLocked ? null : definition.cost(nextLevel);
     const refineCost = qualityMaxed || level <= 0 ? null : getRefineCost(nextQuality);
     return `
-      <details class="system-row detail-row">
+      <details class="equipment-detail-card detail-row">
         <summary>
           <strong>${item.name} <small>${item.intent.name} · ${item.tier.name} ${level} / ${item.maxLevel} · ${item.qualityName}</small></strong>
           <span>${formatEffects(item.effects) || '尚未激活'}${item.affix.id ? ` · ${item.affix.name}` : ''}</span>

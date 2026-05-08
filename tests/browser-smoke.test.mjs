@@ -4,11 +4,17 @@ import vm from 'node:vm';
 
 const source = readFileSync(new URL('../browserGame.js', import.meta.url), 'utf8');
 const styles = readFileSync(new URL('../styles.css', import.meta.url), 'utf8');
+const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
 
 assert.match(source, /<details class="attribute-row">/);
 assert.match(source, /detail-row/);
 assert.match(source, /卦象/);
 assert.match(styles, /\.detail-row\s*\{\s*display: block;/);
+assert.doesNotMatch(source, /<details class="system-row detail-row">/);
+assert.match(source, /<details class="equipment-detail-card detail-row">/);
+assert.match(styles, /\.equipment-detail-card\s*\{/);
+assert.match(html, /styles\.css\?v=/);
+assert.match(html, /browserGame\.js\?v=/);
 
 function element() {
   return {

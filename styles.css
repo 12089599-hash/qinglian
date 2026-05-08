@@ -536,6 +536,37 @@ small {
   color: var(--gold);
 }
 
+.equipment-detail-card {
+  display: block;
+  min-height: 78px;
+  border: 1px solid rgba(245, 238, 220, 0.1);
+  border-radius: 8px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.equipment-detail-card strong,
+.equipment-detail-card span,
+.equipment-detail-card small {
+  display: block;
+  max-width: 100%;
+  line-height: 1.42;
+  overflow-wrap: break-word;
+  word-break: normal;
+}
+
+.equipment-detail-card span {
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
+.equipment-detail-card small {
+  margin-top: 5px;
+  color: var(--gold);
+}
+
 .detail-row {
   display: block;
   align-items: start;
