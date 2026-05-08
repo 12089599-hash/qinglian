@@ -2480,6 +2480,7 @@
     const specialDropText = specialDrop ? formatReward(specialDrop.reward || {}) : '';
     const rareRewardText = rareReward ? formatReward(rareReward) : '';
     const mapProgress = getReportMapProgress(state, mapId);
+    const challenge = getMissionChallengeSnapshot(state, mission, approach);
     const event = eventResult?.event ? {
       id: eventResult.event.id,
       name: eventResult.event.name,
@@ -2509,10 +2510,25 @@
       rareRewardText,
       reputationGained,
       mapProgress,
+      challenge,
       completedCount: state.completedMissions?.[mission.id] || 0,
       event,
       summary,
       time: now,
+    };
+  }
+
+  function getMissionChallengeSnapshot(state, mission, approach) {
+    const required = getMissionDanger(state, mission, approach?.id);
+    if (!required) {
+      return null;
+    }
+    const power = calculatePower(state);
+    return {
+      power,
+      required,
+      gap: power - required,
+      label: power >= required ? `${power} / ${required}` : `${power} / ${required} · 差 ${Math.ceil(required - power)}`,
     };
   }
 
@@ -3699,6 +3715,7 @@
         <div><span>去处</span><strong>${report.mapName}</strong></div>
         <div><span>声望</span><strong>${report.reputationGained ? `+${report.reputationGained}` : '-'}</strong></div>
         ${report.mapProgress ? `<div><span>地势</span><strong>${report.mapProgress.label}</strong></div>` : ''}
+        ${report.challenge ? `<div><span>道行</span><strong>${report.challenge.label}</strong></div>` : ''}
         <div><span>产出</span><strong>${report.rewardText || '-'}</strong></div>
         ${report.approach ? `<div><span>路线</span><strong>${report.approach.name}${report.approachRewardText ? ` · ${report.approachRewardText}` : ''}</strong></div>` : ''}
         ${report.specialDropText ? `<div><span>路线收获</span><strong>${report.specialDrop.name} · ${report.specialDropText}</strong></div>` : ''}
@@ -3801,7 +3818,7 @@
         <div>
           <strong>秘境层数 <small>${depth.clearedLayer} / ${depth.maxLayer}</small></strong>
           <span>${depth.maxed ? '此地秘境已尽数打通。' : `${depth.omen.label} ${depth.omen.name} · 第 ${depth.nextLayer} 层`}</span>
-          <small>${depth.maxed ? '可转往更高地图继续推进。' : `${formatDuration(depth.duration)} · 劫象 ${depth.danger} · 首通 ${formatReward(depth.reward)}`}</small>
+          <small>${depth.maxed ? '可转往更高地图继续推进。' : `${formatDuration(depth.duration)} · 道行 ${calculatePower(state)} / 劫象 ${depth.danger} · 首通 ${formatReward(depth.reward)}`}</small>
         </div>
         <button data-start-depth="${map.id}" ${depth.maxed || !depth.unlocked || state.activeMission ? 'disabled' : ''}>${depth.maxed ? '已圆满' : '深入'}</button>
       </div>
@@ -3822,6 +3839,7 @@
         <div>
           <strong>${map.boss.name} <small>${map.boss.title}</small></strong>
           <span>${map.boss.omen.detail} · ${map.boss.omen.counsel}</span>
+          <span>探索 ${map.exploration.cappedCompleted} / ${map.exploration.target} · 道行 ${calculatePower(state)} / ${map.boss.power}</span>
           <span>馈赠 ${formatReward(map.boss.reward)}</span>
         </div>
         <button data-challenge-boss="${map.id}" ${disabled ? 'disabled' : ''}>${statusText}</button>

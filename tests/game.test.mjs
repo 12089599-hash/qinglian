@@ -1109,6 +1109,7 @@ test('near-threshold mission failures still leave map scouting progress', () => 
   assert.equal(state.lastMissionReport.outcome, 'failure');
   assert.equal(state.lastMissionReport.reputationGained, 3);
   assert.equal(state.mapReputation.swordTomb, 3);
+  assert.match(state.lastMissionReport.challenge.label, /差/);
   assert.match(state.lastMissionReport.summary, /摸清/);
 });
 

@@ -90,6 +90,7 @@ assert.match(source, /data-dismiss-mission-report/);
 assert.match(source, /missionReportHistory/);
 assert.match(source, /mission-report-history/);
 assert.match(source, /mapProgress/);
+assert.match(source, /challenge/);
 assert.match(source, /readiness/);
 assert.match(source, /failurePreview/);
 assert.match(source, /formatApproachComparison/);

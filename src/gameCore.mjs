@@ -3515,6 +3515,7 @@ function createMissionReport(state, mission, { outcome, reward, approach = getSe
   const specialDropText = specialDrop ? formatReward(specialDrop.reward ?? {}) : '';
   const rareRewardText = rareReward ? formatReward(rareReward) : '';
   const mapProgress = getReportMapProgress(state, mapId);
+  const challenge = getMissionChallengeSnapshot(state, mission, approach);
   const event = eventResult?.event ? {
     id: eventResult.event.id,
     name: eventResult.event.name,
@@ -3544,10 +3545,25 @@ function createMissionReport(state, mission, { outcome, reward, approach = getSe
     rareRewardText,
     reputationGained,
     mapProgress,
+    challenge,
     completedCount: state.completedMissions?.[mission.id] ?? 0,
     event,
     summary,
     time: now,
+  };
+}
+
+function getMissionChallengeSnapshot(state, mission, approach) {
+  const required = getMissionDanger(state, mission, approach?.id);
+  if (!required) {
+    return null;
+  }
+  const power = calculatePower(state);
+  return {
+    power,
+    required,
+    gap: power - required,
+    label: power >= required ? `${power} / ${required}` : `${power} / ${required} · 差 ${Math.ceil(required - power)}`,
   };
 }
 
