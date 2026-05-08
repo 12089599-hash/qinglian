@@ -295,10 +295,10 @@
   };
 
   const sectCommissions = {
-    herbGarden: { id: 'herbGarden', name: '采药委托', detail: '弟子巡山采药，稳定补充灵草。', rates: { herbs: 0.05, reputation: 0.01 } },
-    mine: { id: 'mine', name: '采矿委托', detail: '弟子整理灵脉碎矿，缓慢产出灵石。', rates: { spiritStones: 0.08, reputation: 0.008 } },
-    patrol: { id: 'patrol', name: '护山委托', detail: '弟子巡守山门，偶得妖核并提升宗门名望。', rates: { beastCores: 0.01, reputation: 0.01 } },
-    forge: { id: 'forge', name: '炼器委托', detail: '弟子整理残器与炉火，缓慢沉淀法器和炼器精魄。', rates: { artifacts: 0.006, forgingEssence: 0.004, reputation: 0.008 } },
+    herbGarden: { id: 'herbGarden', name: '采药委托', detail: '弟子巡山采药，稳定补充灵草。', rates: { herbs: 0.035, reputation: 0.006 } },
+    mine: { id: 'mine', name: '采矿委托', detail: '弟子整理灵脉碎矿，缓慢产出灵石。', rates: { spiritStones: 0.05, reputation: 0.005 } },
+    patrol: { id: 'patrol', name: '护山委托', detail: '弟子巡守山门，偶得妖核并提升宗门名望。', rates: { beastCores: 0.0025, reputation: 0.006 } },
+    forge: { id: 'forge', name: '炼器委托', detail: '弟子整理残器与炉火，缓慢沉淀法器和炼器精魄。', rates: { artifacts: 0.0022, forgingEssence: 0.0014, reputation: 0.005 } },
   };
 
   const resourceGuides = {
@@ -3248,8 +3248,8 @@
   }
 
   function getDepthPressure(map, layer) {
-    const base = Math.max(70, (map.boss?.power || 180) * 0.35 + (map.unlockRealmIndex || 0) * 6);
-    const ramp = 1 + (layer - 1) * 0.16 + Math.pow(Math.max(0, layer - 1), 1.35) * 0.035;
+    const base = Math.max(150, (map.boss?.power || 180) * 0.85 + (map.unlockRealmIndex || 0) * 16);
+    const ramp = 1 + (layer - 1) * 0.2 + Math.pow(Math.max(0, layer - 1), 1.35) * 0.05;
     return Math.round(base * ramp);
   }
 
@@ -3670,6 +3670,9 @@
     if (claimableObjective) {
       return { title: `领取${claimableObjective.title}`, detail: `目标已完成，可领取 ${formatReward(claimableObjective.reward)}。`, tab: 'goals', action: 'claimGoal', targetId: claimableObjective.id };
     }
+    if (chapter?.completed && chapter.allObjectivesClaimed && !chapter.rewardClaimed) {
+      return { title: `领取${chapter.title}篇章`, detail: `篇章已圆满，可领取 ${formatReward(chapter.reward)}。`, tab: 'goals', action: 'claimChapter', targetId: chapter.id };
+    }
     const realm = getCurrentRealm(state);
     if ((state.qi || 0) >= realm.requiredQi && state.realmIndex < realms.length - 1) {
       return { title: '可以破境', detail: `灵气已满，当前破境天机 ${Math.round(calculateBreakthroughChance(state) * 100)}%。`, tab: 'overview', action: 'breakthrough' };
@@ -3839,23 +3842,25 @@
       return;
     }
     const guidance = getResourceGuidance(state);
+    const detailsOpen = isMobileLayout() ? '' : ' open';
+    const layoutMode = isMobileLayout() ? 'mobile' : 'desktop';
     const signature = guidance.stable
-      ? 'stable'
-      : guidance.items.map((item) => `${item.resource}:${item.shortfall}:${item.route.mapId}:${item.route.approachId}:${item.commission?.id || ''}:${item.commission?.unlocked ? 1 : 0}`).join('|');
+      ? `stable:${layoutMode}`
+      : `${layoutMode}:${guidance.items.map((item) => `${item.resource}:${item.shortfall}:${item.route.mapId}:${item.route.approachId}:${item.commission?.id || ''}:${item.commission?.unlocked ? 1 : 0}`).join('|')}`;
     if (!force && renderCache.resourceGuidance === signature) {
       return;
     }
     if (guidance.stable || !guidance.primary) {
       refs.resourceGuidance.innerHTML = `
-        <div class="resource-guidance-card">
-          <div>
+        <details class="resource-guidance-card resource-guidance-detail"${detailsOpen}>
+          <summary>
             <strong>寻材指引 <small>底蕴均衡</small></strong>
             <span>${guidance.summary}</span>
-          </div>
+          </summary>
           <div class="resource-guidance-list">
             <div><b>可做</b><small>推进秘境层数、刷地图声望或整备下一件装备。</small></div>
           </div>
-        </div>
+        </details>
       `;
       renderCache.resourceGuidance = signature;
       return;
@@ -3865,19 +3870,19 @@
       ? `${primary.route.mapName} · ${primary.route.approachName}`
       : `${primary.route.unlockRealmName}后解锁 ${primary.route.mapName}`;
     refs.resourceGuidance.innerHTML = `
-      <div class="resource-guidance-card">
-        <div>
+      <details class="resource-guidance-card resource-guidance-detail"${detailsOpen}>
+        <summary>
           <strong>寻材指引 <small>${primary.label}缺口 ${primary.shortfall}</small></strong>
           <span>${primary.demandText}，${primary.route.detail}。</span>
           <small>${primary.detail}</small>
-        </div>
+        </summary>
         <div class="resource-guidance-list">
           <div><b>行游</b><small>${routeText}${primary.route.missionName ? ` · 可刷${primary.route.missionName}` : ''}</small></div>
           ${primary.commission ? `<div><b>宗门</b><small>${primary.commission.unlocked ? `派弟子做${primary.commission.name}` : `解锁后可做${primary.commission.name}`}</small></div>` : ''}
           ${primary.market ? `<div><b>坊市</b><small>${primary.market.unlocked ? `留意${primary.market.name}` : `${primary.market.unlockRealmName}后留意${primary.market.name}`}</small></div>` : ''}
           ${guidance.items.slice(1).map((item) => `<div><b>${item.label}</b><small>缺 ${item.shortfall} · ${item.route.mapName}${item.commission?.unlocked ? ` · ${item.commission.name}` : ''}</small></div>`).join('')}
         </div>
-      </div>
+      </details>
     `;
     renderCache.resourceGuidance = signature;
   }
@@ -5212,6 +5217,8 @@
     const guidance = getNextGuidance(state);
     if (guidance.action === 'claimGoal') {
       showToast('主线可领', `「${guidance.title.replace(/^领取/, '')}」已完成，去主线领取奖励。`);
+    } else if (guidance.action === 'claimChapter') {
+      showToast('篇章可领', `「${guidance.title.replace(/^领取/, '')}」已圆满，去主线领取篇章奖励。`);
     }
   }
 

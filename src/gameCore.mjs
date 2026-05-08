@@ -384,25 +384,25 @@ export const SECT_COMMISSIONS = {
     id: 'herbGarden',
     name: '采药委托',
     detail: '弟子巡山采药，稳定补充灵草。',
-    rates: { herbs: 0.05, reputation: 0.01 },
+    rates: { herbs: 0.035, reputation: 0.006 },
   },
   mine: {
     id: 'mine',
     name: '采矿委托',
     detail: '弟子整理灵脉碎矿，缓慢产出灵石。',
-    rates: { spiritStones: 0.08, reputation: 0.008 },
+    rates: { spiritStones: 0.05, reputation: 0.005 },
   },
   patrol: {
     id: 'patrol',
     name: '护山委托',
     detail: '弟子巡守山门，偶得妖核并提升宗门名望。',
-    rates: { beastCores: 0.01, reputation: 0.01 },
+    rates: { beastCores: 0.0025, reputation: 0.006 },
   },
   forge: {
     id: 'forge',
     name: '炼器委托',
     detail: '弟子整理残器与炉火，缓慢沉淀法器和炼器精魄。',
-    rates: { artifacts: 0.006, forgingEssence: 0.004, reputation: 0.008 },
+    rates: { artifacts: 0.0022, forgingEssence: 0.0014, reputation: 0.005 },
   },
 };
 
@@ -1921,8 +1921,8 @@ export function getMapDepthStatus(state, mapId) {
 }
 
 function getDepthPressure(map, layer) {
-  const base = Math.max(70, (map.boss?.power ?? 180) * 0.35 + (map.unlockRealmIndex ?? 0) * 6);
-  const ramp = 1 + (layer - 1) * 0.16 + Math.pow(Math.max(0, layer - 1), 1.35) * 0.035;
+  const base = Math.max(150, (map.boss?.power ?? 180) * 0.85 + (map.unlockRealmIndex ?? 0) * 16);
+  const ramp = 1 + (layer - 1) * 0.2 + Math.pow(Math.max(0, layer - 1), 1.35) * 0.05;
   return Math.round(base * ramp);
 }
 
@@ -2607,6 +2607,15 @@ export function getNextGuidance(state) {
       tab: 'goals',
       action: 'claimGoal',
       targetId: claimableObjective.id,
+    };
+  }
+  if (chapter?.completed && chapter.allObjectivesClaimed && !chapter.rewardClaimed) {
+    return {
+      title: `领取${chapter.title}篇章`,
+      detail: `篇章已圆满，可领取 ${formatReward(chapter.reward)}。`,
+      tab: 'goals',
+      action: 'claimChapter',
+      targetId: chapter.id,
     };
   }
 

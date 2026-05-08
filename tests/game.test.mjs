@@ -1049,6 +1049,25 @@ test('next guidance routes early mainline objectives to their exact panels', () 
   assert.equal(pillGuidance.targetId, 'gatherQiPill');
 });
 
+test('next guidance prioritizes claimable chapter rewards after objectives are claimed', () => {
+  const state = createGameState(1000);
+  state.realmIndex = 1;
+  state.buildings.spiritField = 1;
+  state.completedMissions.cavePatrol = 1;
+  state.craftedPills = 1;
+
+  for (const goal of getMainlineChapters(state)[0].objectives) {
+    claimGoalReward(state, goal.id, 1000);
+  }
+
+  const guidance = getNextGuidance(state);
+
+  assert.equal(guidance.action, 'claimChapter');
+  assert.equal(guidance.tab, 'goals');
+  assert.equal(guidance.targetId, 'qinglanStart');
+  assert.match(guidance.title, /领取青岚初启/);
+});
+
 test('resource guidance points forging shortages to relic routes and forge commissions', () => {
   const state = createGameState(1000);
   state.realmIndex = realmIndexByName('筑基一层');
@@ -1339,7 +1358,7 @@ test('sect disciples turn assignments into long-term idle rewards', () => {
   const second = recruitDisciple(state, 1000);
   const assignedHerbs = assignSectDisciple(state, 'herbGarden', 1, 1000);
   const assignedPatrol = assignSectDisciple(state, 'patrol', 1, 1000);
-  updateGame(state, 120, 121_000);
+  updateGame(state, 900, 901_000);
 
   const sect = getSectStatus(state);
 
@@ -1350,8 +1369,8 @@ test('sect disciples turn assignments into long-term idle rewards', () => {
   assert.equal(sect.disciples, 2);
   assert.equal(sect.assigned, 2);
   assert.equal(state.herbs > 0, true);
-  assert.equal(state.sectReputation, 2);
-  assert.equal(state.beastCores, 1);
+  assert.equal(state.sectReputation, 10);
+  assert.equal(state.beastCores, 2);
 });
 
 test('sect reputation unlocks levels and named disciples gain commission experience', () => {
@@ -1655,6 +1674,19 @@ test('map depth trials scale difficulty and grant first-clear rewards', () => {
   assert.equal(state.lastMissionReport.mapName, '青岚山');
   assert.match(state.lastMissionReport.summary, /秘境/);
   assert.equal(state.spiritStones > 0, true);
+});
+
+test('map depth trials remain threatening compared with same-map routes', () => {
+  const state = createGameState(1000);
+  state.realmIndex = realmIndexByName('金丹一转');
+  state.mapDepths.demonRift = 2;
+
+  const route = getMissionStatus(state, 'demonRift');
+  const depth = getMapDepthStatus(state, 'demonRift');
+
+  assert.equal(route.unlocked, true);
+  assert.equal(depth.nextLayer, 3);
+  assert.equal(depth.danger >= Math.round(route.recommendedPower * 0.65), true);
 });
 
 test('market stock refreshes by day and enforces item limits', () => {
