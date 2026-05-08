@@ -10,6 +10,7 @@
   const realms = createRealmTrack();
 
   const currentBalanceVersion = 4;
+  const mapDepthMaxLayer = 30;
 
   function createRealmTrack() {
     return realmGroups.flatMap((group) => group.suffixes.map((suffix, index) => {
@@ -578,6 +579,8 @@
       id: 'herbBundle',
       name: '灵草包',
       type: '材料',
+      unlockRealmIndex: 0,
+      limit: 1,
       cost: { spiritStones: 40 },
       reward: { herbs: 12 },
     },
@@ -585,6 +588,8 @@
       id: 'beastCoreShard',
       name: '妖核碎片',
       type: '材料',
+      unlockRealmIndex: 0,
+      limit: 1,
       cost: { spiritStones: 75 },
       reward: { beastCores: 1 },
     },
@@ -592,6 +597,8 @@
       id: 'spiritSword',
       name: '下品灵剑',
       type: '装备',
+      unlockRealmIndex: 0,
+      limit: 1,
       cost: { spiritStones: 80 },
       reward: { artifacts: 1 },
     },
@@ -599,8 +606,64 @@
       id: 'arrayManual',
       name: '小周天阵旗',
       type: '阵法',
+      unlockRealmIndex: 0,
+      limit: 1,
       cost: { spiritStones: 90, beastCores: 1 },
       reward: { arrayFlags: 1 },
+    },
+    clearHeartBottle: {
+      id: 'clearHeartBottle',
+      name: '清心丹匣',
+      type: '丹药',
+      unlockRealmIndex: 4,
+      limit: 1,
+      cost: { spiritStones: 120, herbs: 6 },
+      reward: { clearHeartPill: 1 },
+    },
+    forgingAsh: {
+      id: 'forgingAsh',
+      name: '炉底精魄',
+      type: '炼器',
+      unlockRealmIndex: 7,
+      limit: 1,
+      cost: { spiritStones: 150, artifacts: 1 },
+      reward: { forgingEssence: 4 },
+    },
+    meridianPillBox: {
+      id: 'meridianPillBox',
+      name: '护脉丹匣',
+      type: '丹药',
+      unlockRealmIndex: 9,
+      limit: 1,
+      cost: { spiritStones: 220, beastCores: 1 },
+      reward: { meridianPill: 1 },
+    },
+    arrayFlagPack: {
+      id: 'arrayFlagPack',
+      name: '残阵旗包',
+      type: '阵法',
+      unlockRealmIndex: 9,
+      limit: 1,
+      cost: { spiritStones: 180, beastCores: 2 },
+      reward: { arrayFlags: 2 },
+    },
+    insightScroll: {
+      id: 'insightScroll',
+      name: '悟道残页',
+      type: '奇物',
+      unlockRealmIndex: 14,
+      limit: 1,
+      cost: { spiritStones: 360, arrayFlags: 1 },
+      reward: { insight: 1 },
+    },
+    treasureOre: {
+      id: 'treasureOre',
+      name: '玄铁灵砂',
+      type: '炼器',
+      unlockRealmIndex: 18,
+      limit: 1,
+      cost: { spiritStones: 460, beastCores: 2, artifacts: 1 },
+      reward: { forgingEssence: 8, artifacts: 1 },
     },
   };
 
@@ -1131,6 +1194,18 @@
       render(true);
       return;
     }
+    const depthButton = event.target.closest('[data-start-depth]');
+    if (depthButton) {
+      const result = startMapDepthTrial(state, depthButton.dataset.startDepth);
+      if (result.ok) {
+        showToast('秘境深入', `${result.status.mapName}第 ${result.status.nextLayer} 层。`);
+      } else if (result.reason === 'busy') {
+        showToast('正在行动', '当前行动结束后再深入秘境。', 'warning');
+      }
+      saveState();
+      render(true);
+      return;
+    }
     const bossButton = event.target.closest('[data-challenge-boss]');
     if (bossButton) {
       const result = challengeMapBoss(state, bossButton.dataset.challengeBoss);
@@ -1208,11 +1283,27 @@
   });
 
   refs.marketList?.addEventListener('click', (event) => {
+    const refreshButton = event.target.closest('[data-refresh-market]');
+    if (refreshButton) {
+      const result = refreshMarketStock(state);
+      if (result.ok) {
+        showToast('坊市换货', '货架已刷新。');
+      } else if (result.reason === 'notEnoughResources') {
+        showToast('灵石不足', `刷新需要${formatReward(result.cost)}。`, 'warning');
+      }
+      saveState();
+      render(true);
+      return;
+    }
     const button = event.target.closest('[data-buy-market]');
     if (!button) return;
     const result = buyMarketItem(state, button.dataset.buyMarket);
     if (result.ok) {
       showToast('坊市交易', `获得${formatReward(result.reward)}。`);
+    } else if (result.reason === 'soldOut') {
+      showToast('坊市售罄', '这件货物今日已购完。', 'warning');
+    } else if (result.reason === 'notEnoughResources') {
+      showToast('资源不足', '暂时买不起这件货物。', 'warning');
     }
     saveState();
     render(true);
@@ -1303,6 +1394,7 @@
       craftedPills: 0,
       completedMissions: {},
       mapReputation: {},
+      mapDepths: {},
       defeatedBosses: {},
       claimedGoals: {},
       claimedChapterRewards: {},
@@ -1314,6 +1406,8 @@
       dailyClaims: {},
       dailyProgress: {},
       marketPurchases: {},
+      marketStock: null,
+      marketRefreshes: {},
       gear: {
         weapon: 0,
         amulet: 0,
@@ -1405,6 +1499,7 @@
     state.craftedPills = Math.max(0, Number(state.craftedPills) || 0);
     state.completedMissions = normalizeCompletedMissions(state.completedMissions);
     state.mapReputation = normalizeMapValues(state.mapReputation);
+    state.mapDepths = normalizeMapDepths(state.mapDepths);
     state.defeatedBosses = normalizeDefeatedBosses(state.defeatedBosses);
     state.claimedGoals = normalizeClaimedGoals(state.claimedGoals);
     state.claimedChapterRewards = normalizeClaimedGoals(state.claimedChapterRewards);
@@ -1421,6 +1516,8 @@
     state.dailyClaims = normalizeNestedClaims(state.dailyClaims);
     state.dailyProgress = normalizeDailyProgress(state.dailyProgress);
     state.marketPurchases = normalizeNestedClaims(state.marketPurchases);
+    state.marketRefreshes = normalizeMarketRefreshes(state.marketRefreshes);
+    state.marketStock = normalizeMarketStock(state.marketStock, state);
     state.gear = normalizeLevels(state.gear, gear);
     state.gearQuality = normalizeGearQuality(state.gearQuality);
     state.gearAffixes = normalizeGearAffixes(state.gearAffixes);
@@ -1438,7 +1535,7 @@
     state.buildings = normalizeBuildings(state.buildings);
     state.pills = state.inventoryPills.gatherQiPill;
     state.log = Array.isArray(state.log) ? state.log.slice(0, 20) : [];
-    state.activeMission = state.activeMission && missions[state.activeMission.id] ? state.activeMission : null;
+    state.activeMission = normalizeMission(state.activeMission);
     state.lastUpdatedAt = Number.isFinite(state.lastUpdatedAt) ? state.lastUpdatedAt : now;
     return state;
   }
@@ -1511,6 +1608,34 @@
     state.breakthroughBoostUntil = 0;
     state.breakthroughCount += 1;
     addLog(state, now, `灵气贯通周天，突破至${getCurrentRealm(state).name}。`);
+  }
+
+  function startMapDepthTrial(state, mapId, now = Date.now()) {
+    if (state.activeMission) {
+      return { ok: false, reason: 'busy' };
+    }
+    const status = getMapDepthStatus(state, mapId);
+    if (!status.exists) {
+      return { ok: false, reason: 'unknownMap' };
+    }
+    if (!status.unlocked) {
+      addLog(state, now, `${status.mapName}秘境尚未感应，境界不足。`);
+      return { ok: false, reason: 'realmLocked' };
+    }
+    if (status.maxed) {
+      return { ok: false, reason: 'maxLayer' };
+    }
+
+    state.activeMission = {
+      type: 'mapDepth',
+      id: `depth:${mapId}:${status.nextLayer}`,
+      mapId,
+      layer: status.nextLayer,
+      startedAt: now,
+      endsAt: now + status.duration * 1000,
+    };
+    addLog(state, now, `深入${status.mapName}秘境第 ${status.nextLayer} 层。`);
+    return { ok: true, status };
   }
 
   function startMission(state, missionId, now = Date.now()) {
@@ -1774,6 +1899,10 @@
     if (!active || now < active.endsAt) {
       return;
     }
+    if (active.type === 'mapDepth') {
+      completeMapDepthTrial(state, active, now);
+      return;
+    }
     const mission = missions[active.id];
     state.activeMission = null;
     if (!mission) {
@@ -1830,6 +1959,74 @@
     restartAutoMission(state, mission.id, now);
   }
 
+  function completeMapDepthTrial(state, active, now) {
+    const map = missionMaps[active.mapId];
+    state.activeMission = null;
+    if (!map) {
+      return;
+    }
+    const layer = clampInteger(active.layer || 1, 1, mapDepthMaxLayer);
+    const danger = getDepthDanger(state, map, layer);
+    if (calculatePower(state) < danger) {
+      const penalty = {
+        qi: -Math.max(25, Math.round(layer * 12 + (map.unlockRealmIndex || 0) * 6)),
+        heartDemon: layer >= 8 ? 1 : 0,
+      };
+      applyResources(state, penalty);
+      state.injuryUntil = now + 120 * 1000;
+      state.lastMissionReport = createDepthReport(state, map, layer, {
+        outcome: 'failure',
+        reward: penalty,
+        reputationGained: 0,
+        now,
+      });
+      addLog(state, now, `${map.name}秘境第 ${layer} 层折返，劫象反噬。`);
+      showToast('秘境折返', `${map.name}第 ${layer} 层劫象过重。`, 'warning');
+      triggerBattleFeedback('shake');
+      return;
+    }
+
+    const reward = getDepthReward(map, layer);
+    const reputationGained = Math.ceil((map.reputationPerMission || 4) * 0.8 + layer / 3);
+    applyResources(state, reward);
+    state.mapDepths ||= {};
+    state.mapDepths[map.id] = Math.max(state.mapDepths[map.id] || 0, layer);
+    addMapReputation(state, map.id, reputationGained);
+    addDailyProgress(state, 'missions', 1, now);
+    state.lastMissionReport = createDepthReport(state, map, layer, {
+      outcome: 'success',
+      reward,
+      reputationGained,
+      now,
+    });
+    addLog(state, now, `打通${map.name}秘境第 ${layer} 层，获得${formatReward(reward)}。`);
+    showToast('秘境突破', `${map.name}第 ${layer} 层收获${formatReward(reward)}。`);
+    triggerBattleFeedback('pulse');
+  }
+
+  function createDepthReport(state, map, layer, { outcome, reward, reputationGained = 0, now = Date.now() }) {
+    const rewardText = formatReward(reward);
+    return {
+      id: `depth-${map.id}-${layer}-${now}`,
+      missionId: `depth:${map.id}`,
+      missionName: `${map.name}秘境第 ${layer} 层`,
+      mapId: map.id,
+      mapName: map.name,
+      outcome,
+      reward: reward || {},
+      rewardText,
+      rareReward: null,
+      rareRewardText: '',
+      reputationGained,
+      completedCount: state.mapDepths?.[map.id] || 0,
+      event: null,
+      summary: outcome === 'success'
+        ? `打通${map.name}秘境第 ${layer} 层，收获${rewardText}。`
+        : `${map.name}秘境第 ${layer} 层折返，劫象反噬${rewardText ? `：${rewardText}` : '。'}`,
+      time: now,
+    };
+  }
+
   function createMissionReport(state, mission, { outcome, reward, reputationGained = 0, eventResult = null, rareReward = null, now = Date.now() }) {
     const mapId = getMissionMapId(mission);
     const map = missionMaps[mapId];
@@ -1869,7 +2066,8 @@
     const realm = getCurrentRealm(state);
     const progress = Math.max(0, Math.min(1, state.qi / realm.requiredQi));
     const remainingQi = Math.max(0, realm.requiredQi - state.qi);
-    const activeMission = state.activeMission ? missions[state.activeMission.id] : null;
+    const activeMission = state.activeMission && !state.activeMission.type ? missions[state.activeMission.id] : null;
+    const activeDepth = state.activeMission?.type === 'mapDepth' ? state.activeMission : null;
 
     refs.realm.textContent = realm.name;
     refs.qi.textContent = `${Math.floor(state.qi)} / ${realm.requiredQi}`;
@@ -1894,7 +2092,11 @@
       refs.nextGuidance.dataset.gotoTab = guidance.tab || 'goals';
     }
 
-    if (activeMission) {
+    if (activeDepth) {
+      const map = missionMaps[activeDepth.mapId];
+      refs.mission.textContent = `${map?.name || '秘境'}第 ${activeDepth.layer} 层`;
+      refs.missionTime.textContent = formatDuration((activeDepth.endsAt - Date.now()) / 1000);
+    } else if (activeMission) {
       refs.mission.textContent = activeMission.name;
       refs.missionTime.textContent = formatDuration((state.activeMission.endsAt - Date.now()) / 1000);
     } else if (state.activeAlchemy) {
@@ -2203,6 +2405,7 @@
         },
         reputation: state.mapReputation[map.id] || 0,
         mastery: getMapMastery(state, map.id),
+        depth: getMapDepthStatus(state, map.id),
         boss: {
           ...map.boss,
           status: defeated ? 'defeated' : ready ? 'ready' : unlocked ? 'hidden' : 'locked',
@@ -2211,6 +2414,86 @@
         },
       };
     });
+  }
+
+  function getMapDepthStatus(state, mapId) {
+    const map = missionMaps[mapId];
+    if (!map) {
+      return { exists: false, unlocked: false };
+    }
+    const clearedLayer = clampInteger(state.mapDepths?.[mapId] || 0, 0, mapDepthMaxLayer);
+    const maxed = clearedLayer >= mapDepthMaxLayer;
+    const nextLayer = maxed ? mapDepthMaxLayer : clearedLayer + 1;
+    const unlocked = state.realmIndex >= map.unlockRealmIndex;
+    const pressure = maxed ? 0 : getDepthPressure(map, nextLayer);
+    const danger = maxed ? 0 : getDepthDanger(state, map, nextLayer);
+    const duration = getDepthDuration(map, nextLayer);
+    const reward = maxed ? {} : getDepthReward(map, nextLayer);
+
+    return {
+      exists: true,
+      mapId,
+      mapName: map.name,
+      clearedLayer,
+      nextLayer,
+      maxLayer: mapDepthMaxLayer,
+      unlocked,
+      maxed,
+      pressure,
+      danger,
+      duration,
+      reward,
+      omen: buildOmen({
+        power: calculatePower(state),
+        pressure: danger,
+        demon: nextLayer >= 8 ? 1 : 0,
+        mapMastery: getMapMastery(state, map.id).level,
+        unlocked,
+      }),
+    };
+  }
+
+  function getDepthPressure(map, layer) {
+    const base = Math.max(70, (map.boss?.power || 180) * 0.35 + (map.unlockRealmIndex || 0) * 6);
+    const ramp = 1 + (layer - 1) * 0.16 + Math.pow(Math.max(0, layer - 1), 1.35) * 0.035;
+    return Math.round(base * ramp);
+  }
+
+  function getDepthDanger(state, map, layer) {
+    return Math.max(0, getDepthPressure(map, layer) - getTieredLevelValue(state.gear?.robe || 0, gear.robe.dangerReductionPerLevel) - getGearAffixBonus(state, 'dangerReduction') - getEquippedLootBonus(state, 'dangerReduction') - getMapMasteryBonus(state, 'dangerReduction') - getTreasureBonus(state, 'dangerReduction') - getSpiritBeastBonus(state, 'dangerReduction') - (state.cultivationPaths?.sword || 0) * cultivationPaths.sword.dangerReductionPerLevel);
+  }
+
+  function getDepthDuration(map, layer) {
+    return Math.min(420, Math.round(70 + layer * 9 + (map.unlockRealmIndex || 0) * 2));
+  }
+
+  function getDepthReward(map, layer) {
+    const reward = {
+      spiritStones: Math.round(28 + layer * 10 + (map.unlockRealmIndex || 0) * 8),
+      qi: Math.round(35 + layer * 18 + (map.unlockRealmIndex || 0) * 6),
+    };
+    if (map.id === 'qinglanMountain' || map.id === 'herbValley') {
+      reward.herbs = 4 + Math.ceil(layer * 1.4);
+    }
+    if (layer % 3 === 0 || map.unlockRealmIndex >= 7) {
+      reward.beastCores = Math.max(1, Math.ceil(layer / 8));
+    }
+    if (layer % 4 === 0 || map.id === 'swordTomb') {
+      reward.artifacts = Math.max(1, Math.ceil(layer / 10));
+    }
+    if (layer % 5 === 0 || map.id === 'ancientRuins') {
+      reward.arrayFlags = Math.max(1, Math.ceil(layer / 12));
+    }
+    if (layer % 5 === 0) {
+      reward.forgingEssence = Math.max(1, Math.ceil(layer / 5));
+    }
+    if (layer % 10 === 0) {
+      reward.powerBonus = 8 + layer;
+    }
+    if (layer === mapDepthMaxLayer) {
+      reward.qiRateBonus = 0.02;
+    }
+    return reward;
   }
 
   function getMissionOmen(state, mission) {
@@ -2592,20 +2875,30 @@
       return;
     }
 
-    const signature = Object.keys(marketItems).join('|');
+    const stock = getMarketStock(state);
+    const signature = `${stock.dateKey}:${stock.refreshIndex}:${stock.items.map((item) => `${item.id}:${item.bought}:${item.remaining}`).join('|')}:${state.spiritStones}:${state.herbs}:${state.beastCores}:${state.artifacts}:${state.arrayFlags}`;
     if (!force && renderCache.market === signature) {
       return;
     }
 
-    refs.marketList.innerHTML = Object.values(marketItems)
-      .map((item) => `
-        <button data-buy-market="${item.id}">
+    refs.marketList.innerHTML = `
+      <div class="market-refresh-row">
+        <div>
+          <strong>今日货架 <small>第 ${stock.refreshIndex + 1} 轮</small></strong>
+          <span>货物随境界和刷新轮次变化，稀有材料会逐步上架。</span>
+        </div>
+        <button data-refresh-market>刷新 ${formatReward(stock.refreshCost)}</button>
+      </div>
+      ${stock.items
+        .map((item) => `
+        <button data-buy-market="${item.id}" ${item.soldOut ? 'disabled' : ''}>
           <strong>${item.name} · ${item.type}</strong>
           <span>获得 ${formatReward(item.reward)}</span>
-          <small>价格 ${formatReward(item.cost)}</small>
+          <small>${item.soldOut ? '今日售罄' : `价格 ${formatReward(item.cost)} · 限购 ${item.bought} / ${item.limit || 1}`}</small>
         </button>
       `)
-      .join('');
+        .join('')}
+    `;
     renderCache.market = signature;
   }
 
@@ -2616,7 +2909,7 @@
     const mapStatuses = getMapStatuses(state);
     const selectedMapId = resolveActiveMissionMapId(mapStatuses);
     const activeMap = mapStatuses.find((map) => map.id === selectedMapId) || mapStatuses[0];
-    const signature = `${selectedMapId}|${state.realmIndex}|${state.autoMissionId || ''}|${state.activeMission?.id || ''}|${Object.keys(missions).map((id) => `${id}:${state.completedMissions[id] || 0}`).join('|')}|${Object.entries(state.mapReputation).map(([id, value]) => `${id}:${value}`).join('|')}|${Object.keys(state.defeatedBosses).join('|')}`;
+    const signature = `${selectedMapId}|${state.realmIndex}|${state.autoMissionId || ''}|${state.activeMission?.id || ''}:${state.activeMission?.layer || ''}|${Object.keys(missions).map((id) => `${id}:${state.completedMissions[id] || 0}`).join('|')}|${Object.entries(state.mapReputation).map(([id, value]) => `${id}:${value}`).join('|')}|${Object.entries(state.mapDepths || {}).map(([id, value]) => `${id}:${value}`).join('|')}|${Object.keys(state.defeatedBosses).join('|')}`;
     if (!force && renderCache.missions === signature) {
       return;
     }
@@ -2745,6 +3038,7 @@
           <small>声望 ${Math.floor(map.reputation)}</small>
           <small>${map.unlocked ? `${map.boss.omen.label} ${map.boss.omen.name}` : `${realms[map.unlockRealmIndex]?.name || '更高境界'}解锁`}</small>
         </div>
+        ${renderDepthCard(map)}
         ${renderBossCard(map)}
         <div class="mission-list">
           ${routeList.map((mission) => renderMissionCard(mission)).join('')}
@@ -2774,6 +3068,23 @@
         </span>
         <em>${progress}%</em>
       </button>
+    `;
+  }
+
+  function renderDepthCard(map) {
+    const depth = map.depth;
+    if (!depth) {
+      return '';
+    }
+    return `
+      <div class="depth-card ${depth.maxed ? 'maxed' : ''}">
+        <div>
+          <strong>秘境层数 <small>${depth.clearedLayer} / ${depth.maxLayer}</small></strong>
+          <span>${depth.maxed ? '此地秘境已尽数打通。' : `${depth.omen.label} ${depth.omen.name} · 第 ${depth.nextLayer} 层`}</span>
+          <small>${depth.maxed ? '可转往更高地图继续推进。' : `${formatDuration(depth.duration)} · 劫象 ${depth.danger} · 首通 ${formatReward(depth.reward)}`}</small>
+        </div>
+        <button data-start-depth="${map.id}" ${depth.maxed || !depth.unlocked || state.activeMission ? 'disabled' : ''}>${depth.maxed ? '已圆满' : '深入'}</button>
+      </div>
     `;
   }
 
@@ -2843,23 +3154,72 @@
     return { ok: true, reward: task.reward };
   }
 
-  function buyMarketItem(state, itemId, now = Date.now()) {
+  function getMarketStock(state, dateKey = getDateKey()) {
+    state.marketStock = normalizeMarketStock(state.marketStock, state, dateKey);
+    if (!state.marketStock || state.marketStock.dateKey !== dateKey) {
+      state.marketStock = createMarketStock(state, dateKey, state.marketRefreshes?.[dateKey] || 0);
+    }
+    const purchases = state.marketPurchases?.[dateKey] || {};
+    return {
+      dateKey,
+      refreshIndex: state.marketStock.refreshIndex,
+      refreshCost: getMarketRefreshCost(state, dateKey),
+      items: state.marketStock.items.map((itemId) => {
+        const item = marketItems[itemId];
+        const bought = purchases[itemId] || 0;
+        return {
+          ...item,
+          bought,
+          remaining: Math.max(0, (item.limit || 1) - bought),
+          soldOut: bought >= (item.limit || 1),
+        };
+      }).filter(Boolean),
+    };
+  }
+
+  function refreshMarketStock(state, dateOrNow = getDateKey(), now = Date.now()) {
+    const dateKey = typeof dateOrNow === 'string' ? dateOrNow : getDateKey(dateOrNow);
+    const actionTime = typeof dateOrNow === 'string' ? now : dateOrNow;
+    const cost = getMarketRefreshCost(state, dateKey);
+    if (!canAfford(state, cost)) {
+      addLog(state, actionTime, `刷新坊市货架需要${formatReward(cost)}。`);
+      return { ok: false, reason: 'notEnoughResources', cost };
+    }
+    payResources(state, cost);
+    state.marketRefreshes ||= {};
+    state.marketRefreshes[dateKey] = (state.marketRefreshes[dateKey] || 0) + 1;
+    state.marketStock = createMarketStock(state, dateKey, state.marketRefreshes[dateKey]);
+    addLog(state, actionTime, '坊市货架已换新。');
+    return { ok: true, stock: getMarketStock(state, dateKey), cost };
+  }
+
+  function buyMarketItem(state, itemId, dateOrNow = Date.now(), now = Date.now()) {
+    const dateKey = typeof dateOrNow === 'string' ? dateOrNow : getDateKey(dateOrNow);
+    const actionTime = typeof dateOrNow === 'string' ? now : dateOrNow;
     const item = marketItems[itemId];
     if (!item) {
       return { ok: false, reason: 'unknownItem' };
     }
+    const stock = getMarketStock(state, dateKey);
+    const stockItem = stock.items.find((candidate) => candidate.id === itemId);
+    if (!stockItem) {
+      addLog(state, actionTime, `${item.name}今日未上架。`);
+      return { ok: false, reason: 'notInStock' };
+    }
+    if (stockItem.soldOut) {
+      return { ok: false, reason: 'soldOut' };
+    }
     if (!canAfford(state, item.cost)) {
-      addLog(state, now, `购买${item.name}需要${formatReward(item.cost)}。`);
+      addLog(state, actionTime, `购买${item.name}需要${formatReward(item.cost)}。`);
       showToast('灵石不足', `购买${item.name}需要${formatReward(item.cost)}。`, 'warning');
       return { ok: false, reason: 'notEnoughResources' };
     }
     payResources(state, item.cost);
     applyResources(state, item.reward);
-    addDailyProgress(state, 'marketBuys', 1, now);
-    const dateKey = getDateKey(now);
+    addDailyProgress(state, 'marketBuys', 1, actionTime);
     state.marketPurchases[dateKey] ||= {};
     state.marketPurchases[dateKey][itemId] = (state.marketPurchases[dateKey][itemId] || 0) + 1;
-    addLog(state, now, `坊市购得${item.name}，获得${formatReward(item.reward)}。`);
+    addLog(state, actionTime, `坊市购得${item.name}，获得${formatReward(item.reward)}。`);
     return { ok: true, reward: item.reward };
   }
 
@@ -3681,6 +4041,43 @@
     return normalized;
   }
 
+  function normalizeMapDepths(values) {
+    const normalized = {};
+    Object.keys(missionMaps).forEach((id) => {
+      normalized[id] = clampInteger(values?.[id] || 0, 0, mapDepthMaxLayer);
+    });
+    return normalized;
+  }
+
+  function normalizeMission(mission) {
+    if (!mission) {
+      return null;
+    }
+    if (mission.type === 'mapDepth') {
+      const mapId = mission.mapId;
+      if (!missionMaps[mapId]) {
+        return null;
+      }
+      const layer = clampInteger(mission.layer || 1, 1, mapDepthMaxLayer);
+      return {
+        type: 'mapDepth',
+        id: `depth:${mapId}:${layer}`,
+        mapId,
+        layer,
+        startedAt: Number(mission.startedAt) || Date.now(),
+        endsAt: Number(mission.endsAt) || Date.now(),
+      };
+    }
+    if (!missions[mission.id]) {
+      return null;
+    }
+    return {
+      id: mission.id,
+      startedAt: Number(mission.startedAt) || Date.now(),
+      endsAt: Number(mission.endsAt) || Date.now(),
+    };
+  }
+
   function normalizeDefeatedBosses(defeatedBosses) {
     if (!defeatedBosses || typeof defeatedBosses !== 'object') {
       return {};
@@ -3952,8 +4349,34 @@
     return Object.fromEntries(
       Object.entries(savedClaims)
         .filter(([, value]) => value && typeof value === 'object')
-        .map(([key, value]) => [key, { ...value }]),
+      .map(([key, value]) => [key, { ...value }]),
     );
+  }
+
+  function normalizeMarketRefreshes(refreshes) {
+    if (!refreshes || typeof refreshes !== 'object') {
+      return {};
+    }
+    return Object.fromEntries(
+      Object.entries(refreshes).map(([dateKey, count]) => [dateKey, Math.max(0, Math.floor(Number(count) || 0))]),
+    );
+  }
+
+  function normalizeMarketStock(stock, state, fallbackDateKey = getDateKey()) {
+    if (!stock || typeof stock !== 'object' || !Array.isArray(stock.items)) {
+      return createMarketStock(state, fallbackDateKey, state.marketRefreshes?.[fallbackDateKey] || 0);
+    }
+    const dateKey = typeof stock.dateKey === 'string' ? stock.dateKey : fallbackDateKey;
+    const refreshIndex = Math.max(0, Math.floor(Number(stock.refreshIndex) || 0));
+    const validItems = stock.items.filter((itemId) => marketItems[itemId] && (state.realmIndex || 0) >= (marketItems[itemId].unlockRealmIndex || 0));
+    if (!validItems.length) {
+      return createMarketStock(state, dateKey, refreshIndex);
+    }
+    return {
+      dateKey,
+      refreshIndex,
+      items: [...new Set(validItems)].slice(0, 6),
+    };
   }
 
   function normalizeDailyProgress(progress) {
@@ -3986,6 +4409,34 @@
     const pathLevel = state.cultivationPaths.alchemy || 0;
     const speedMultiplier = Math.max(0.35, 1 - furnaceLevel * buildings.alchemyFurnace.speedBonusPerLevel - pathLevel * cultivationPaths.alchemy.alchemySpeedPerLevel);
     return Math.max(10, Math.round(recipe.duration * speedMultiplier));
+  }
+
+  function createMarketStock(state, dateKey, refreshIndex = 0) {
+    const realmIndex = state.realmIndex || 0;
+    const pool = Object.values(marketItems)
+      .filter((item) => realmIndex >= (item.unlockRealmIndex || 0));
+    const guaranteed = ['herbBundle', 'beastCoreShard', 'spiritSword', 'arrayManual']
+      .filter((itemId) => pool.some((item) => item.id === itemId));
+    const rotating = pool
+      .filter((item) => !guaranteed.includes(item.id))
+      .sort((a, b) => hashString(`${dateKey}:${refreshIndex}:${realmIndex}:${a.id}`) - hashString(`${dateKey}:${refreshIndex}:${realmIndex}:${b.id}`))
+      .map((item) => item.id);
+    const shiftedGuaranteed = guaranteed
+      .map((itemId, index) => ({ itemId, rank: hashString(`${dateKey}:${refreshIndex}:base:${index}:${itemId}`) }))
+      .sort((a, b) => a.rank - b.rank)
+      .map((entry) => entry.itemId);
+    return {
+      dateKey,
+      refreshIndex,
+      items: [...shiftedGuaranteed, ...rotating].slice(0, Math.min(6, pool.length)),
+    };
+  }
+
+  function getMarketRefreshCost(state, dateKey = getDateKey()) {
+    const refreshCount = state.marketRefreshes?.[dateKey] || 0;
+    return {
+      spiritStones: Math.round(35 + refreshCount * 45 + (state.realmIndex || 0) * 4),
+    };
   }
 
   function restartAutoMission(state, completedMissionId, now) {
@@ -4730,6 +5181,10 @@
     const tierMultiplier = 1 + Math.floor((level - 1) / 3) * 2.4;
     const lateMultiplier = Math.pow(1.13, level - 3);
     return Math.ceil(base * level * tierMultiplier * lateMultiplier);
+  }
+
+  function hashString(value) {
+    return String(value).split('').reduce((hash, char) => ((hash << 5) - hash + char.charCodeAt(0)) >>> 0, 2166136261);
   }
 
   function getDateKey(now = Date.now()) {

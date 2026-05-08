@@ -33,9 +33,11 @@ import {
   getNextGuidance,
   getMainlineChapters,
   getDailyTasks,
+  getMarketStock,
   getCharacterProfile,
   getEquipmentDetails,
   getLootEmpowerCost,
+  getMapDepthStatus,
   getMapStatuses,
   getMissionStatus,
   getGearQuality,
@@ -49,9 +51,11 @@ import {
   consumePill,
   refineGear,
   recruitDisciple,
+  refreshMarketStock,
   reviveGameState,
   resolveOpportunity,
   stabilizeFoundation,
+  startMapDepthTrial,
   startMission,
   trainSpiritBeast,
   toggleLootLock,
@@ -1102,6 +1106,46 @@ test('market sells materials equipment and formations', () => {
   assert.equal(state.arrayFlags, 1);
   assert.equal(state.spiritStones, 50);
   assert.equal(calculatePower(state), 22);
+});
+
+test('map depth trials scale difficulty and grant first-clear rewards', () => {
+  const state = createGameState(1000);
+  state.permanentBonuses.power = 500;
+  const firstDepth = getMapDepthStatus(state, 'qinglanMountain');
+
+  const started = startMapDepthTrial(state, 'qinglanMountain', 1000);
+  updateGame(state, firstDepth.duration + 1, 1000 + (firstDepth.duration + 1) * 1000);
+  const secondDepth = getMapDepthStatus(state, 'qinglanMountain');
+
+  assert.equal(firstDepth.nextLayer, 1);
+  assert.equal(firstDepth.maxLayer, 30);
+  assert.equal(started.ok, true);
+  assert.equal(state.mapDepths.qinglanMountain, 1);
+  assert.equal(secondDepth.nextLayer, 2);
+  assert.equal(secondDepth.pressure > firstDepth.pressure, true);
+  assert.equal(state.lastMissionReport.mapName, '青岚山');
+  assert.match(state.lastMissionReport.summary, /秘境/);
+  assert.equal(state.spiritStones > 0, true);
+});
+
+test('market stock refreshes by day and enforces item limits', () => {
+  const state = createGameState(1000);
+  state.spiritStones = 1_000;
+  state.realmIndex = realmIndexByName('筑基一层');
+
+  const firstStock = getMarketStock(state, '2026-05-08');
+  const bought = buyMarketItem(state, firstStock.items[0].id, '2026-05-08', 1000);
+  const repeated = buyMarketItem(state, firstStock.items[0].id, '2026-05-08', 1000);
+  const refreshed = refreshMarketStock(state, '2026-05-08', 2000);
+  const secondStock = getMarketStock(state, '2026-05-08');
+
+  assert.equal(firstStock.items.length >= 4, true);
+  assert.equal(bought.ok, true);
+  assert.equal(repeated.ok, false);
+  assert.equal(repeated.reason, 'soldOut');
+  assert.equal(refreshed.ok, true);
+  assert.notDeepEqual(secondStock.items.map((item) => item.id), firstStock.items.map((item) => item.id));
+  assert.equal(secondStock.refreshCost.spiritStones > firstStock.refreshCost.spiritStones, true);
 });
 
 test('offline progress returns a resource summary', () => {
