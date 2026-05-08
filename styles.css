@@ -1241,6 +1241,10 @@ small {
   font-size: 0.74rem;
 }
 
+.reroll-warning {
+  color: #eeb5a4;
+}
+
 .loot-toolbar {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;

@@ -1484,6 +1484,7 @@
       activeBuildingId = upgradeButton.dataset.upgradeBuilding;
       localStorage.setItem('idle-xianxia-cave-building', activeBuildingId);
       if (result.ok) {
+        renderCache.cave = '';
         showToast('洞府升阶', `${buildings[activeBuildingId].name}升至 ${result.level} 级。`);
       } else if (result.reason === 'realmLocked') {
         showToast('境界未至', '此阶洞府需要更高境界。', 'warning');
@@ -2026,12 +2027,12 @@
   function upgradeBuilding(state, buildingId, now = Date.now()) {
     const building = buildings[buildingId];
     if (!building) {
-      return;
+      return { ok: false, reason: 'unknownBuilding' };
     }
     const currentLevel = state.buildings[buildingId] || 0;
     if (currentLevel >= building.maxLevel) {
       addLog(state, now, `${building.name}已升至当前上限。`);
-      return;
+      return { ok: false, reason: 'maxLevel' };
     }
     const nextLevel = currentLevel + 1;
     if (nextLevel > getCaveUpgradeLimit(state)) {
@@ -2041,11 +2042,12 @@
     const cost = building.cost(nextLevel);
     if (!canAfford(state, cost)) {
       addLog(state, now, `升级${building.name}需要${formatReward(cost)}。`);
-      return;
+      return { ok: false, reason: 'notEnoughResources' };
     }
     payResources(state, cost);
     state.buildings[buildingId] = nextLevel;
     addLog(state, now, `${building.name}升至 ${nextLevel} 级。`);
+    return { ok: true, level: nextLevel };
   }
 
   function upgradeGear(state, gearId, now = Date.now()) {
@@ -2137,6 +2139,38 @@
       artifacts: 1,
       forgingEssence: 2 + qualityIndex,
     };
+  }
+
+  function getGearAffixRerollPreview(state, gearId) {
+    const currentAffix = state.gearAffixes?.[gearId] || null;
+    const candidates = (gearAffixPools[gearId] || [])
+      .filter((affixId) => affixId !== currentAffix && gearAffixes[affixId]);
+    if (!currentAffix || !candidates.length) {
+      return { candidates: [], warnings: [] };
+    }
+
+    const beforeSets = getGearSetStatus(state);
+    const previewCandidates = candidates.map((affixId) => {
+      const afterState = {
+        ...state,
+        gearAffixes: {
+          ...(state.gearAffixes || {}),
+          [gearId]: affixId,
+        },
+      };
+      const setChanges = compareSetStatus(beforeSets, getGearSetStatus(afterState));
+      return {
+        affixId,
+        affixName: gearAffixes[affixId].name,
+        effects: effectsFromBonusObject(gearAffixes[affixId]),
+        setChanges,
+      };
+    });
+    const warnings = [...new Set(previewCandidates.flatMap((candidate) => candidate.setChanges
+      .filter((change) => change.status === 'lost')
+      .map((change) => `可能使${change.name}失效`)))];
+
+    return { candidates: previewCandidates, warnings };
   }
 
   function rerollGearAffix(state, gearId, now = Date.now(), random = Math.random) {
@@ -2482,6 +2516,7 @@
     }));
     addLog(state, now, `完成「${mission.name}」，收获${formatReward(missionReward)}。`);
     showToast('历练完成', `${mission.name} 收获${formatReward(missionReward)}。`);
+    showMainlineClaimHint();
     triggerBattleFeedback('pulse');
     restartAutoMission(state, mission.id, now);
   }
@@ -3504,6 +3539,7 @@
           reroll: {
             available: level > 0 && quality.affixId !== null,
             cost: level > 0 && quality.affixId ? getGearAffixRerollCost(state, item.id) : null,
+            preview: level > 0 && quality.affixId ? getGearAffixRerollPreview(state, item.id) : { candidates: [], warnings: [] },
           },
         };
       }),
@@ -4895,6 +4931,7 @@
             <small>${maxed ? '已达上限' : realmLocked ? `${getUpgradeTier(nextLevel).name}需更高境界` : `升级需 ${formatReward(upgradeCost)}`}</small>
             <small>${qualityMaxed ? '品质已满' : level <= 0 ? '先升级后可淬炼' : `淬炼 ${gearQualities[nextQuality]?.name || ''} · 火候 ${Math.round((item.refinement?.chance ?? gearQualities[item.qualityIndex]?.refineChance ?? 0) * 100)}% · ${formatReward(refineCost)}`}</small>
             <small>${item.reroll?.available ? `洗练词条 · ${formatReward(rerollCost)}` : '淬炼后可洗练词条'}</small>
+            ${item.reroll?.preview?.warnings?.length ? `<small class="reroll-warning">洗练风险：${item.reroll.preview.warnings.join('、')}</small>` : ''}
           </details>
         </div>
         <div class="row-actions">
@@ -5169,6 +5206,13 @@
       .join('');
     refs.offlineDialog.showModal();
     pendingOfflineSummary = null;
+  }
+
+  function showMainlineClaimHint() {
+    const guidance = getNextGuidance(state);
+    if (guidance.action === 'claimGoal') {
+      showToast('主线可领', `「${guidance.title.replace(/^领取/, '')}」已完成，去主线领取奖励。`);
+    }
   }
 
   function calculateQiRate(state, now = Date.now()) {
@@ -6002,9 +6046,24 @@
   }
 
   function compareGearAffixImpact(before, after) {
-    const setChanges = before.sets
+    return {
+      previousPower: before.power,
+      currentPower: after.power,
+      powerDelta: round(after.power - before.power),
+      previousQiRate: before.qiRate,
+      currentQiRate: after.qiRate,
+      qiRateDelta: round(after.qiRate - before.qiRate),
+      previousBreakthroughChance: before.breakthroughChance,
+      currentBreakthroughChance: after.breakthroughChance,
+      breakthroughChanceDelta: round(after.breakthroughChance - before.breakthroughChance),
+      setChanges: compareSetStatus(before.sets, after.sets),
+    };
+  }
+
+  function compareSetStatus(beforeSets, afterSets) {
+    return beforeSets
       .map((beforeSet) => {
-        const afterSet = after.sets.find((set) => set.id === beforeSet.id);
+        const afterSet = afterSets.find((set) => set.id === beforeSet.id);
         if (!afterSet || (beforeSet.matched === afterSet.matched && beforeSet.active === afterSet.active)) return null;
         let status = afterSet.matched > beforeSet.matched ? 'progress' : 'weakened';
         if (!beforeSet.active && afterSet.active) status = 'gained';
@@ -6021,19 +6080,6 @@
         };
       })
       .filter(Boolean);
-
-    return {
-      previousPower: before.power,
-      currentPower: after.power,
-      powerDelta: round(after.power - before.power),
-      previousQiRate: before.qiRate,
-      currentQiRate: after.qiRate,
-      qiRateDelta: round(after.qiRate - before.qiRate),
-      previousBreakthroughChance: before.breakthroughChance,
-      currentBreakthroughChance: after.breakthroughChance,
-      breakthroughChanceDelta: round(after.breakthroughChance - before.breakthroughChance),
-      setChanges,
-    };
   }
 
   function getEquippedLootBonus(state, key) {

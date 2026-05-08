@@ -488,6 +488,7 @@ test('matching gear affixes activate set resonance bonuses', () => {
 
   const sets = getGearSetStatus(state);
   const active = sets.find((set) => set.id === 'greenLotusFlow');
+  const weapon = getEquipmentDetails(state).gear.find((item) => item.id === 'weapon');
 
   assert.equal(GEAR_AFFIX_SETS.greenLotusFlow.name, '青莲流影');
   assert.equal(active.active, true);
@@ -495,6 +496,7 @@ test('matching gear affixes activate set resonance bonuses', () => {
   assert.equal(calculatePower(state), 350);
   assert.equal(calculateQiRate(state, 2000), 5.72);
   assert.equal(getMissionStatus(state, 'mistyValley').recommendedPower, 428);
+  assert.equal(weapon.reroll.preview.warnings[0], '可能使青莲流影失效');
 });
 
 test('gear affix reroll reports attribute and set impact', () => {

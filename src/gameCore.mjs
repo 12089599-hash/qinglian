@@ -2325,6 +2325,7 @@ export function getEquipmentDetails(state) {
         reroll: {
           available: level > 0 && quality.affixId !== null,
           cost: level > 0 && quality.affixId ? getGearAffixRerollCost(state, item.id) : null,
+          preview: level > 0 && quality.affixId ? getGearAffixRerollPreview(state, item.id) : { candidates: [], warnings: [] },
         },
       };
     }),
@@ -3367,6 +3368,38 @@ export function getGearAffixRerollCost(state, gearId) {
     artifacts: 1,
     forgingEssence: 2 + qualityIndex,
   };
+}
+
+function getGearAffixRerollPreview(state, gearId) {
+  const currentAffix = state.gearAffixes?.[gearId] ?? null;
+  const candidates = (GEAR_AFFIX_POOLS[gearId] ?? [])
+    .filter((affixId) => affixId !== currentAffix && GEAR_AFFIXES[affixId]);
+  if (!currentAffix || !candidates.length) {
+    return { candidates: [], warnings: [] };
+  }
+
+  const beforeSets = getGearSetStatus(state);
+  const previewCandidates = candidates.map((affixId) => {
+    const afterState = {
+      ...state,
+      gearAffixes: {
+        ...(state.gearAffixes ?? {}),
+        [gearId]: affixId,
+      },
+    };
+    const setChanges = compareSetStatus(beforeSets, getGearSetStatus(afterState));
+    return {
+      affixId,
+      affixName: GEAR_AFFIXES[affixId].name,
+      effects: effectsFromBonusObject(GEAR_AFFIXES[affixId]),
+      setChanges,
+    };
+  });
+  const warnings = [...new Set(previewCandidates.flatMap((candidate) => candidate.setChanges
+    .filter((change) => change.status === 'lost')
+    .map((change) => `可能使${change.name}失效`)))];
+
+  return { candidates: previewCandidates, warnings };
 }
 
 export function rerollGearAffix(state, gearId, now = Date.now(), random = Math.random) {
@@ -4736,9 +4769,24 @@ function getGearAffixImpactSnapshot(state, now) {
 }
 
 function compareGearAffixImpact(before, after) {
-  const setChanges = before.sets
+  return {
+    previousPower: before.power,
+    currentPower: after.power,
+    powerDelta: round(after.power - before.power),
+    previousQiRate: before.qiRate,
+    currentQiRate: after.qiRate,
+    qiRateDelta: round(after.qiRate - before.qiRate),
+    previousBreakthroughChance: before.breakthroughChance,
+    currentBreakthroughChance: after.breakthroughChance,
+    breakthroughChanceDelta: round(after.breakthroughChance - before.breakthroughChance),
+    setChanges: compareSetStatus(before.sets, after.sets),
+  };
+}
+
+function compareSetStatus(beforeSets, afterSets) {
+  return beforeSets
     .map((beforeSet) => {
-      const afterSet = after.sets.find((set) => set.id === beforeSet.id);
+      const afterSet = afterSets.find((set) => set.id === beforeSet.id);
       if (!afterSet || (beforeSet.matched === afterSet.matched && beforeSet.active === afterSet.active)) {
         return null;
       }
@@ -4760,19 +4808,6 @@ function compareGearAffixImpact(before, after) {
       };
     })
     .filter(Boolean);
-
-  return {
-    previousPower: before.power,
-    currentPower: after.power,
-    powerDelta: round(after.power - before.power),
-    previousQiRate: before.qiRate,
-    currentQiRate: after.qiRate,
-    qiRateDelta: round(after.qiRate - before.qiRate),
-    previousBreakthroughChance: before.breakthroughChance,
-    currentBreakthroughChance: after.breakthroughChance,
-    breakthroughChanceDelta: round(after.breakthroughChance - before.breakthroughChance),
-    setChanges,
-  };
 }
 
 function getEquippedLootBonus(state, key) {
