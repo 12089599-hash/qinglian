@@ -2951,6 +2951,7 @@
     return Object.values(missionMaps).map((map) => {
       const routes = Object.values(missions).filter((mission) => getMissionMapId(mission) === map.id);
       const completed = routes.reduce((total, mission) => total + (state.completedMissions[mission.id] || 0), 0);
+      const cappedCompleted = Math.min(completed, map.explorationTarget);
       const unlocked = state.realmIndex >= map.unlockRealmIndex;
       const defeated = Boolean(state.defeatedBosses[map.id]);
       const ready = unlocked && completed >= map.explorationTarget && !defeated;
@@ -2960,8 +2961,10 @@
         routes: routes.map((mission) => mission.id),
         exploration: {
           completed,
+          cappedCompleted,
           target: map.explorationTarget,
           percent: map.explorationTarget ? Math.min(1, completed / map.explorationTarget) : 1,
+          label: completed > map.explorationTarget ? `探索 ${map.explorationTarget} / ${map.explorationTarget} · 累计 ${completed}` : `探索 ${cappedCompleted} / ${map.explorationTarget}`,
         },
         reputation: state.mapReputation[map.id] || 0,
         mastery: getMapMastery(state, map.id),
@@ -3610,7 +3613,7 @@
           <span style="width:${Math.round(map.exploration.percent * 100)}%"></span>
         </div>
         <div class="map-meta">
-          <small>探索 ${map.exploration.completed} / ${map.exploration.target}</small>
+          <small>${map.exploration.label}</small>
           <small>声望 ${Math.floor(map.reputation)}</small>
           <small>${map.unlocked ? `${map.boss.omen.label} ${map.boss.omen.name}` : `${realms[map.unlockRealmIndex]?.name || '更高境界'}解锁`}</small>
         </div>

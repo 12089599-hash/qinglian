@@ -1733,6 +1733,7 @@ export function getMapStatuses(state) {
     const routes = Object.values(MISSIONS).filter((mission) => getMissionMapId(mission) === map.id);
     const completed = routes.reduce((total, mission) => total + (state.completedMissions?.[mission.id] ?? 0), 0);
     const target = map.explorationTarget;
+    const cappedCompleted = Math.min(completed, target);
     const unlocked = (state.realmIndex ?? 0) >= map.unlockRealmIndex;
     const defeated = Boolean(state.defeatedBosses?.[map.id]);
     const ready = unlocked && completed >= target && !defeated;
@@ -1747,8 +1748,10 @@ export function getMapStatuses(state) {
       routes: routes.map((mission) => mission.id),
       exploration: {
         completed,
+        cappedCompleted,
         target,
         percent: target ? Math.min(1, completed / target) : 1,
+        label: completed > target ? `探索 ${target} / ${target} · 累计 ${completed}` : `探索 ${cappedCompleted} / ${target}`,
       },
       reputation: state.mapReputation?.[map.id] ?? 0,
       mastery,

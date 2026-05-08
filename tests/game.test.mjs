@@ -1000,6 +1000,11 @@ test('map reputation and mastery grow from exploration', () => {
   assert.equal(state.mapReputation.qinglanMountain, 12);
   assert.equal(status.mastery.level, 1);
   assert.equal(status.mastery.name, '熟路');
+  assert.equal(status.exploration.label, '探索 2 / 5');
+
+  state.completedMissions.marketTrade = 8;
+  const capped = getMapStatuses(state).find((map) => map.id === 'qinglanMountain');
+  assert.equal(capped.exploration.label, '探索 5 / 5 · 累计 10');
   assert.equal(calculateQiRate(state, 88_000), 1.55);
 });
 
