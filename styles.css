@@ -610,6 +610,37 @@ small {
   font-size: 0.9rem;
 }
 
+.loot-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.loot-toolbar > button {
+  min-height: 36px;
+  padding: 0 12px;
+}
+
+.loot-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+}
+
+.loot-filters button {
+  min-height: 34px;
+  padding: 0 11px;
+  color: var(--muted);
+}
+
+.loot-filters button.active {
+  border-color: rgba(232, 198, 106, 0.78);
+  color: #17130b;
+  background: var(--gold);
+}
+
 .system-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -702,6 +733,40 @@ small {
   grid-template-columns: repeat(auto-fit, minmax(84px, 1fr));
   min-width: 0;
   margin-top: 10px;
+}
+
+.comparison-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.comparison-list small {
+  flex: 1 0 100%;
+  margin-top: 0;
+  color: var(--muted);
+}
+
+.comparison-list span {
+  margin-top: 0;
+  border: 1px solid rgba(245, 238, 220, 0.1);
+  border-radius: 999px;
+  padding: 4px 8px;
+  color: #d6dacb;
+  background: rgba(0, 0, 0, 0.16);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.comparison-list .gain {
+  border-color: rgba(125, 211, 183, 0.38);
+  color: #9be6c8;
+}
+
+.comparison-list .loss {
+  border-color: rgba(238, 181, 164, 0.38);
+  color: #eeb5a4;
 }
 
 .sect-summary {
@@ -827,6 +892,96 @@ small {
   color: var(--muted);
   font-size: 0.84rem;
   font-weight: 600;
+  line-height: 1.35;
+}
+
+.mission-report {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 14px;
+  border: 1px solid rgba(125, 211, 183, 0.34);
+  border-radius: 8px;
+  padding: 14px;
+  background:
+    linear-gradient(135deg, rgba(125, 211, 183, 0.13), rgba(232, 198, 106, 0.08)),
+    rgba(0, 0, 0, 0.2);
+}
+
+.mission-report[hidden] {
+  display: none;
+}
+
+.mission-report.failure {
+  border-color: rgba(238, 181, 164, 0.42);
+  background:
+    linear-gradient(135deg, rgba(238, 181, 164, 0.12), rgba(232, 198, 106, 0.06)),
+    rgba(0, 0, 0, 0.22);
+}
+
+.mission-report header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: start;
+}
+
+.mission-report header span,
+.mission-report header strong,
+.mission-report header small {
+  display: block;
+}
+
+.mission-report header span {
+  color: var(--jade);
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.mission-report header strong {
+  margin-top: 4px;
+  color: var(--gold);
+  font-size: 1.08rem;
+}
+
+.mission-report header small {
+  margin-top: 5px;
+  color: #cbd5c2;
+  line-height: 1.35;
+}
+
+.mission-report header button {
+  min-height: 34px;
+  padding: 0 12px;
+}
+
+.mission-report-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.mission-report-grid div {
+  border: 1px solid rgba(245, 238, 220, 0.1);
+  border-radius: 8px;
+  padding: 9px;
+  background: rgba(0, 0, 0, 0.14);
+}
+
+.mission-report-grid span,
+.mission-report-grid strong {
+  display: block;
+}
+
+.mission-report-grid span {
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.mission-report-grid strong {
+  margin-top: 4px;
+  color: var(--paper);
+  font-size: 0.9rem;
   line-height: 1.35;
 }
 
@@ -1268,6 +1423,19 @@ small {
   .disciple-roster,
   .opportunity-actions {
     grid-template-columns: 1fr;
+  }
+
+  .loot-toolbar,
+  .mission-report header {
+    grid-template-columns: 1fr;
+  }
+
+  .mission-report-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .loot-toolbar > button {
+    width: 100%;
   }
 
   .map-icon,

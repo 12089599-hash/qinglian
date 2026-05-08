@@ -815,6 +815,7 @@
     dailyStatus: document.querySelector('[data-daily-status]'),
     marketList: document.querySelector('[data-market-list]'),
     opportunity: document.querySelector('[data-opportunity]'),
+    missionReport: document.querySelector('[data-mission-report]'),
     missionList: document.querySelector('[data-mission-list]'),
     subTabs: document.querySelector('[data-sub-tabs]'),
     gearSubTabs: document.querySelector('[data-gear-subtabs]'),
@@ -855,6 +856,11 @@
   let activeGearSection = localStorage.getItem('idle-xianxia-gear-section') || 'wear';
   if (!gearSections.includes(activeGearSection)) {
     activeGearSection = 'wear';
+  }
+  const lootFilters = ['all', 'weapon', 'amulet', 'robe'];
+  let activeLootFilter = localStorage.getItem('idle-xianxia-loot-filter') || 'all';
+  if (!lootFilters.includes(activeLootFilter)) {
+    activeLootFilter = 'all';
   }
   let pendingOfflineSummary = null;
   let state = loadState();
@@ -946,6 +952,16 @@
       render(true);
       return;
     }
+    const lockButton = event.target.closest('[data-toggle-loot-lock]');
+    if (lockButton) {
+      const result = toggleLootLock(state, lockButton.dataset.toggleLootLock);
+      if (result.ok) {
+        showToast(result.locked ? '战利品锁定' : '战利品解锁', `${result.item.name}${result.locked ? '已保留' : '可整理'}。`);
+      }
+      saveState();
+      render(true);
+      return;
+    }
     const disassembleButton = event.target.closest('[data-disassemble-loot]');
     if (disassembleButton) {
       const result = disassembleLootEquipment(state, disassembleButton.dataset.disassembleLoot);
@@ -956,6 +972,26 @@
       saveState();
       render(true);
     }
+  });
+
+  document.querySelector('[data-organize-loot]')?.addEventListener('click', () => {
+    const result = organizeLootEquipment(state);
+    if (result.removed > 0) {
+      result.items.forEach((item) => openLootDetails.delete(item.uid));
+      showToast('战利品整理', `分解 ${result.removed} 件闲置装备，获得${formatReward(result.reward)}。`);
+    } else {
+      showToast('战利品整理', '没有可整理的闲置装备。');
+    }
+    saveState();
+    render(true);
+  });
+
+  document.querySelectorAll('[data-loot-filter]').forEach((button) => {
+    button.addEventListener('click', () => {
+      activeLootFilter = lootFilters.includes(button.dataset.lootFilter) ? button.dataset.lootFilter : 'all';
+      localStorage.setItem('idle-xianxia-loot-filter', activeLootFilter);
+      renderLoot(true);
+    });
   });
 
   refs.lootList?.addEventListener('toggle', (event) => {
@@ -969,6 +1005,16 @@
       openLootDetails.delete(detail.dataset.lootDetail);
     }
   }, true);
+
+  refs.missionReport?.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-dismiss-mission-report]');
+    if (!button) {
+      return;
+    }
+    state.lastMissionReport = null;
+    saveState();
+    renderMissionReport(true);
+  });
 
   refs.treasureList?.addEventListener('click', (event) => {
     const button = event.target.closest('[data-upgrade-treasure]');
@@ -1259,11 +1305,13 @@
         amulet: null,
         robe: null,
       },
+      lockedLoot: {},
       treasures: Object.fromEntries(Object.keys(treasures).map((id) => [id, 0])),
       spiritBeasts: Object.fromEntries(Object.keys(spiritBeasts).map((id) => [id, 0])),
       activeOpportunity: null,
       resolvedOpportunities: {},
       lastMissionEvent: null,
+      lastMissionReport: null,
       cultivationPaths: {
         sword: 0,
         alchemy: 0,
@@ -1344,11 +1392,13 @@
     state.gearAffixes = normalizeGearAffixes(state.gearAffixes);
     state.lootEquipment = normalizeLootEquipment(state.lootEquipment);
     state.equippedLoot = normalizeEquippedLoot(state.equippedLoot, state.lootEquipment);
+    state.lockedLoot = normalizeLockedLoot(state.lockedLoot, state.lootEquipment);
     state.treasures = normalizeLevels(state.treasures, treasures);
     state.spiritBeasts = normalizeLevels(state.spiritBeasts, spiritBeasts);
     state.activeOpportunity = normalizeOpportunity(state.activeOpportunity);
     state.resolvedOpportunities = normalizeResolvedOpportunities(state.resolvedOpportunities);
     state.lastMissionEvent = normalizeMissionEvent(state.lastMissionEvent);
+    state.lastMissionReport = normalizeMissionReport(state.lastMissionReport);
     state.cultivationPaths = normalizeLevels(state.cultivationPaths, cultivationPaths);
     state.formations = normalizeLevels(state.formations, formations);
     state.buildings = normalizeBuildings(state.buildings);
@@ -1699,6 +1749,14 @@
     if (danger && calculatePower(state) < danger) {
       applyResources(state, mission.failurePenalty);
       state.injuryUntil = now + 90 * 1000;
+      state.lastMissionReport = createMissionReport(state, mission, {
+        outcome: 'failure',
+        reward: mission.failurePenalty || {},
+        reputationGained: 0,
+        eventResult: null,
+        rareReward: null,
+        now,
+      });
       addLog(state, now, `挑战「${mission.name}」失利，负伤退回洞府。`);
       showToast('历练失利', `${mission.name} 道行不足，负伤并滋生心魔。`, 'warning');
       restartAutoMission(state, mission.id, now);
@@ -1707,23 +1765,70 @@
     applyResources(state, mission.reward);
     state.completedMissions[mission.id] = (state.completedMissions[mission.id] || 0) + 1;
     const mapId = getMissionMapId(mission);
-    addMapReputation(state, mapId, missionMaps[mapId]?.reputationPerMission || 0);
+    const reputationGained = missionMaps[mapId]?.reputationPerMission || 0;
+    addMapReputation(state, mapId, reputationGained);
     const event = resolveMissionEvent(mission, state.completedMissions[mission.id]);
+    let eventResult = null;
     if (event) {
-      const eventResult = applyMissionEvent(state, mission, event, now);
+      eventResult = applyMissionEvent(state, mission, event, now);
       showToast('历练奇遇', `${event.name}${eventResult.item ? ` · 获得${eventResult.item.name}` : ''}`);
     }
+    let rareReward = null;
     if (mission.rareEvery && state.completedMissions[mission.id] % mission.rareEvery === 0) {
       applyResources(state, mission.rareReward);
+      rareReward = mission.rareReward;
       addLog(state, now, `深入「${mission.map || mission.name}」有所感悟，额外获得${formatReward(mission.rareReward)}。`);
       showToast('稀有收获', `${mission.name} 额外获得${formatReward(mission.rareReward)}。`);
     }
     maybeCreateOpportunity(state, mission, now);
     addDailyProgress(state, 'missions', 1, now);
+    state.lastMissionReport = createMissionReport(state, mission, {
+      outcome: 'success',
+      reward: mission.reward,
+      reputationGained,
+      eventResult,
+      rareReward,
+      now,
+    });
     addLog(state, now, `完成「${mission.name}」，收获${formatReward(mission.reward)}。`);
     showToast('历练完成', `${mission.name} 收获${formatReward(mission.reward)}。`);
     triggerBattleFeedback('pulse');
     restartAutoMission(state, mission.id, now);
+  }
+
+  function createMissionReport(state, mission, { outcome, reward, reputationGained = 0, eventResult = null, rareReward = null, now = Date.now() }) {
+    const mapId = getMissionMapId(mission);
+    const map = missionMaps[mapId];
+    const rewardText = formatReward(reward);
+    const rareRewardText = rareReward ? formatReward(rareReward) : '';
+    const event = eventResult?.event ? {
+      id: eventResult.event.id,
+      name: eventResult.event.name,
+      reward: eventResult.event.reward || {},
+      rewardText: formatReward(eventResult.event.reward || {}),
+      equipmentName: eventResult.item?.name || null,
+    } : null;
+    const summary = outcome === 'success'
+      ? `完成「${mission.name}」，收获${rewardText || '少许历练'}${event?.equipmentName ? `，并得${event.equipmentName}` : ''}。`
+      : `「${mission.name}」失利，劫象反噬${rewardText ? `：${rewardText}` : '。'}`;
+
+    return {
+      id: `${mission.id}-${now}`,
+      missionId: mission.id,
+      missionName: mission.name,
+      mapId,
+      mapName: map?.name || mission.map || mission.name,
+      outcome,
+      reward: reward || {},
+      rewardText,
+      rareReward: rareReward || null,
+      rareRewardText,
+      reputationGained,
+      completedCount: state.completedMissions?.[mission.id] || 0,
+      event,
+      summary,
+      time: now,
+    };
   }
 
   function render(forceLists = false) {
@@ -1804,6 +1909,7 @@
     renderCultivation(forceLists);
     renderSect(forceLists);
     renderOpportunity(forceLists);
+    renderMissionReport(forceLists);
     renderMissions(forceLists);
     renderTabs();
 
@@ -2267,7 +2373,9 @@
         tier: getUpgradeTier(Math.max(1, item.level || 1)),
         intent: getGearIntent(item.slot),
         equipped: state.equippedLoot[item.slot] === item.uid,
+        locked: Boolean(state.lockedLoot?.[item.uid]),
         effects: effectsFromBonusObject(item.bonuses || {}),
+        comparison: compareLootEquipment(state, item),
         nextEffects: (item.level || 0) >= getLootMaxLevel(item) ? [] : effectsFromBonusObject(createLootBonuses(item.templateId, (item.level || 0) + 1)),
         empower: {
           maxed: (item.level || 0) >= getLootMaxLevel(item),
@@ -2515,6 +2623,43 @@
       </div>
     `;
     renderCache.opportunity = signature;
+  }
+
+  function renderMissionReport(force = false) {
+    if (!refs.missionReport) {
+      return;
+    }
+    const report = state.lastMissionReport;
+    const signature = report ? `${report.id}:${report.outcome}:${report.rewardText}:${report.rareRewardText}:${report.event?.id || ''}` : 'none';
+    if (!force && renderCache.missionReport === signature) {
+      return;
+    }
+    if (!report) {
+      refs.missionReport.hidden = true;
+      refs.missionReport.innerHTML = '';
+      renderCache.missionReport = signature;
+      return;
+    }
+    refs.missionReport.hidden = false;
+    refs.missionReport.classList.toggle('failure', report.outcome === 'failure');
+    refs.missionReport.innerHTML = `
+      <header>
+        <div>
+          <span>${report.outcome === 'success' ? '历练结算' : '历练折损'}</span>
+          <strong>${report.missionName}</strong>
+          <small>${report.summary}</small>
+        </div>
+        <button data-dismiss-mission-report aria-label="关闭历练结算">收起</button>
+      </header>
+      <div class="mission-report-grid">
+        <div><span>去处</span><strong>${report.mapName}</strong></div>
+        <div><span>声望</span><strong>${report.reputationGained ? `+${report.reputationGained}` : '-'}</strong></div>
+        <div><span>产出</span><strong>${report.rewardText || '-'}</strong></div>
+        ${report.rareRewardText ? `<div><span>稀有</span><strong>${report.rareRewardText}</strong></div>` : ''}
+        ${report.event ? `<div><span>奇遇</span><strong>${report.event.name}${report.event.equipmentName ? ` · ${report.event.equipmentName}` : ''}</strong></div>` : ''}
+      </div>
+    `;
+    renderCache.missionReport = signature;
   }
 
   function renderMapGroup(map) {
@@ -2862,48 +3007,75 @@
     if (!refs.lootList) {
       return;
     }
-    const signature = `${state.forgingEssence || 0}|${state.spiritStones}|${state.lootEquipment.map((item) => `${item.uid}:${item.level || 0}`).join('|')}|${Object.entries(state.equippedLoot).map(([slot, uid]) => `${slot}:${uid || ''}`).join('|')}`;
+    renderLootFilters();
+    const details = getEquipmentDetails(state).loot;
+    const signature = `${activeLootFilter}|${details.map((item) => `${item.uid}:${item.level || 0}:${item.locked ? 1 : 0}`).join('|')}|${Object.entries(state.equippedLoot).map(([slot, uid]) => `${slot}:${uid || ''}`).join('|')}`;
     if (!force && renderCache.loot === signature) {
       return;
     }
-    if (!state.lootEquipment.length) {
+    if (!details.length) {
       refs.lootList.innerHTML = '<div class="system-row muted-row"><div><strong>暂无战利品</strong><span>完成历练奇遇后，可能获得青锋剑、玄木护符、云纹法袍等装备。</span></div></div>';
       renderCache.loot = signature;
       return;
     }
-    refs.lootList.innerHTML = state.lootEquipment
+    const visibleLoot = activeLootFilter === 'all' ? details : details.filter((item) => item.slot === activeLootFilter);
+    if (!visibleLoot.length) {
+      refs.lootList.innerHTML = '<div class="system-row muted-row"><div><strong>当前筛选暂无战利品</strong><span>切换筛选或继续历练获取对应装备。</span></div></div>';
+      renderCache.loot = signature;
+      return;
+    }
+    refs.lootList.innerHTML = visibleLoot
       .map((item) => {
-        const equipped = state.equippedLoot[item.slot] === item.uid;
-        const maxLevel = getLootMaxLevel(item);
-        const maxed = (item.level || 0) >= maxLevel;
-        const empowerCost = maxed ? null : getLootEmpowerCost((item.level || 0) + 1);
-        const tier = getUpgradeTier(Math.max(1, item.level || 1));
-        const intent = getGearIntent(item.slot);
-        const nextEffects = maxed ? [] : effectsFromBonusObject(createLootBonuses(item.templateId, (item.level || 0) + 1));
+        const maxed = item.empower.maxed;
         return `
           <details class="equipment-detail-card detail-row" data-loot-detail="${item.uid}" ${openLootDetails.has(item.uid) ? 'open' : ''}>
             <summary>
-              <strong>${item.name} <small>${intent.name} · ${getSlotName(item.slot)} · ${gearQualities[item.quality]?.name || '凡品'} · +${item.level || 0}</small></strong>
-              <span>${formatLootBonuses(item.bonuses)}</span>
-              <small>展开查看器象和下阶变化</small>
+              <strong>${item.locked ? '锁 ' : ''}${item.name} <small>${item.intent.name} · ${getSlotName(item.slot)} · ${item.tier.name} · +${item.level || 0}</small></strong>
+              <span>${formatEffects(item.effects) || '尚未激活'}${item.equipped ? ' · 已穿戴' : ''}</span>
+              <small>${item.comparison.summary} · 展开查看器象、对比和下阶变化</small>
             </summary>
             <div class="detail-stack">
-              <small>器象：${intent.detail}</small>
-              <small>当前：${formatEffects(effectsFromBonusObject(item.bonuses || {})) || '尚未激活'}</small>
-              <small>下阶：${maxed ? '已至圆满' : formatEffects(nextEffects)}</small>
-              <small>阶位：${tier.name} · ${item.level || 0} / ${maxLevel}</small>
-              <small>${maxed ? '强化已满' : `强化需 ${formatReward(empowerCost)}`}</small>
+              <small>器象：${item.intent.detail}</small>
+              <small>当前：${formatEffects(item.effects) || '尚未激活'}</small>
+              <small>下阶：${maxed ? '已至圆满' : formatEffects(item.nextEffects)}</small>
+              <small>阶位：${item.tier.name} · ${item.level || 0} / ${item.maxLevel}</small>
+              <small>${maxed ? '强化已满' : `强化需 ${formatReward(item.empower.cost)}`}</small>
+              ${renderLootComparison(item.comparison)}
             </div>
             <div class="row-actions">
-              <button data-equip-loot="${item.uid}" ${equipped ? 'disabled' : ''}>${equipped ? '已穿戴' : '穿戴'}</button>
+              <button data-equip-loot="${item.uid}" ${item.equipped ? 'disabled' : ''}>${item.equipped ? '已穿戴' : '穿戴'}</button>
               <button data-empower-loot="${item.uid}" ${maxed ? 'disabled' : ''}>强化</button>
-              <button data-disassemble-loot="${item.uid}" ${equipped ? 'disabled' : ''}>分解</button>
+              <button data-toggle-loot-lock="${item.uid}">${item.locked ? '解锁' : '锁定'}</button>
+              <button data-disassemble-loot="${item.uid}" ${item.equipped || item.locked ? 'disabled' : ''}>分解</button>
             </div>
           </details>
         `;
       })
       .join('');
     renderCache.loot = signature;
+  }
+
+  function renderLootFilters() {
+    document.querySelectorAll('[data-loot-filter]').forEach((button) => {
+      const active = button.dataset.lootFilter === activeLootFilter;
+      button.classList.toggle('active', active);
+      button.setAttribute('aria-pressed', String(active));
+    });
+  }
+
+  function renderLootComparison(comparison) {
+    if (!comparison) {
+      return '';
+    }
+    if (!comparison.deltas.length) {
+      return `<div class="comparison-list"><small>对照 ${comparison.againstName}：${comparison.summary}</small></div>`;
+    }
+    return `
+      <div class="comparison-list">
+        <small>对照 ${comparison.againstName}</small>
+        ${comparison.deltas.map((effect) => `<span class="${effect.value >= 0 ? 'gain' : 'loss'}">${formatEffectDelta(effect)}</span>`).join('')}
+      </div>
+    `;
   }
 
   function renderFormations(force = false) {
@@ -3542,6 +3714,16 @@
     return slots;
   }
 
+  function normalizeLockedLoot(lockedLoot, lootItems) {
+    if (!lockedLoot || typeof lockedLoot !== 'object') {
+      return {};
+    }
+    const validUids = new Set((lootItems || []).map((item) => item.uid));
+    return Object.fromEntries(
+      Object.entries(lockedLoot).filter(([uid, locked]) => validUids.has(uid) && Boolean(locked)),
+    );
+  }
+
   function normalizeMissionEvent(event) {
     if (!event || !missionEvents[event.id]) {
       return null;
@@ -3553,6 +3735,42 @@
       reward: event.reward && typeof event.reward === 'object' ? { ...event.reward } : {},
       equipmentName: event.equipmentName || null,
       time: Number(event.time) || Date.now(),
+    };
+  }
+
+  function normalizeMissionReport(report) {
+    if (!report || typeof report !== 'object' || !missions[report.missionId]) {
+      return null;
+    }
+    const mission = missions[report.missionId];
+    const mapId = missionMaps[report.mapId] ? report.mapId : getMissionMapId(mission);
+    const outcome = report.outcome === 'failure' ? 'failure' : 'success';
+    const reward = report.reward && typeof report.reward === 'object' ? { ...report.reward } : {};
+    const rareReward = report.rareReward && typeof report.rareReward === 'object' ? { ...report.rareReward } : null;
+    const event = report.event && missionEvents[report.event.id] ? {
+      id: report.event.id,
+      name: missionEvents[report.event.id].name,
+      reward: report.event.reward && typeof report.event.reward === 'object' ? { ...report.event.reward } : {},
+      rewardText: formatReward(report.event.reward || {}),
+      equipmentName: report.event.equipmentName || null,
+    } : null;
+
+    return {
+      id: String(report.id || `${mission.id}-${Number(report.time) || Date.now()}`),
+      missionId: mission.id,
+      missionName: mission.name,
+      mapId,
+      mapName: missionMaps[mapId]?.name || mission.map || mission.name,
+      outcome,
+      reward,
+      rewardText: formatReward(reward),
+      rareReward,
+      rareRewardText: rareReward ? formatReward(rareReward) : '',
+      reputationGained: Math.max(0, Number(report.reputationGained) || 0),
+      completedCount: Math.max(0, Number(report.completedCount) || 0),
+      event,
+      summary: typeof report.summary === 'string' && report.summary ? report.summary : `${mission.name}结算已记录。`,
+      time: Number(report.time) || Date.now(),
     };
   }
 
@@ -3735,6 +3953,45 @@
       const item = state.lootEquipment?.find((candidate) => candidate.uid === uid);
       return total + (item?.bonuses?.[key] || 0);
     }, 0);
+  }
+
+  function compareLootEquipment(state, item) {
+    const equipped = getEquippedLoot(state, item.slot);
+    const baseline = equipped && equipped.uid !== item.uid ? equipped : null;
+    const keys = new Set([
+      ...Object.keys(item.bonuses || {}),
+      ...Object.keys(baseline?.bonuses || {}),
+    ]);
+    const deltaBonuses = {};
+    keys.forEach((key) => {
+      const value = round((item.bonuses?.[key] || 0) - (baseline?.bonuses?.[key] || 0));
+      if (value !== 0) {
+        deltaBonuses[key] = value;
+      }
+    });
+    const deltas = effectsFromBonusObject(deltaBonuses);
+    return {
+      againstUid: baseline?.uid || null,
+      againstName: baseline?.name || (equipped?.uid === item.uid ? item.name : '空位'),
+      deltas,
+      scoreDelta: round(getLootScore(item) - (baseline ? getLootScore(baseline) : 0)),
+      summary: deltas.length ? deltas.map(formatEffectDelta).join('、') : (equipped?.uid === item.uid ? '已穿戴' : '无明显变化'),
+    };
+  }
+
+  function getLootScore(item) {
+    return Object.entries(item?.bonuses || {}).reduce((total, [key, value]) => {
+      const weight = key === 'qiRate' || key === 'breakthrough' || key === 'herbRate' ? 1000 : 1;
+      return total + value * weight;
+    }, 0) + (item?.level || 0) * 2 + (item?.quality || 0) * 4;
+  }
+
+  function formatEffectDelta(effect) {
+    const sign = effect.value > 0 ? '+' : '';
+    if (effect.mode === 'percent') {
+      return `${effect.label} ${sign}${Math.round(effect.value * 100)}%`;
+    }
+    return `${effect.label} ${sign}${effect.value}`;
   }
 
   function getTreasureBonus(state, key) {
@@ -4012,6 +4269,11 @@
     };
   }
 
+  function getEquippedLoot(state, slot) {
+    const uid = state.equippedLoot?.[slot] || null;
+    return state.lootEquipment?.find((item) => item.uid === uid) || null;
+  }
+
   function equipLootEquipment(state, uid, now = Date.now()) {
     const item = state.lootEquipment?.find((candidate) => candidate.uid === uid);
     if (!item) {
@@ -4020,6 +4282,22 @@
     state.equippedLoot[item.slot] = item.uid;
     addLog(state, now, `换上${item.name}，${gear[item.slot]?.name || '装备'}气象一新。`);
     return { ok: true, item };
+  }
+
+  function toggleLootLock(state, uid, now = Date.now()) {
+    const item = state.lootEquipment?.find((candidate) => candidate.uid === uid);
+    if (!item) {
+      return { ok: false, reason: 'unknownLoot' };
+    }
+    state.lockedLoot ||= {};
+    const locked = !state.lockedLoot[uid];
+    if (locked) {
+      state.lockedLoot[uid] = true;
+    } else {
+      delete state.lockedLoot[uid];
+    }
+    addLog(state, now, locked ? `已锁定${item.name}，整理时会保留。` : `已解除${item.name}锁定。`);
+    return { ok: true, item, locked };
   }
 
   function disassembleLootEquipment(state, uid, now = Date.now()) {
@@ -4031,11 +4309,62 @@
     if (state.equippedLoot[item.slot] === item.uid) {
       return { ok: false, reason: 'equipped' };
     }
+    if (state.lockedLoot?.[item.uid]) {
+      return { ok: false, reason: 'locked' };
+    }
     state.lootEquipment.splice(itemIndex, 1);
+    if (state.lockedLoot) {
+      delete state.lockedLoot[item.uid];
+    }
     const reward = { forgingEssence: 2 + (item.level || 0), artifacts: 1 };
     applyResources(state, reward);
     addLog(state, now, `分解${item.name}，获得${formatReward(reward)}。`);
     return { ok: true, reward, item };
+  }
+
+  function organizeLootEquipment(state, now = Date.now()) {
+    const items = state.lootEquipment || [];
+    if (!items.length) {
+      return { ok: true, removed: 0, reward: {}, items: [] };
+    }
+
+    const keepUids = new Set(Object.values(state.equippedLoot || {}).filter(Boolean));
+    Object.entries(state.lockedLoot || {}).forEach(([uid, locked]) => {
+      if (locked) {
+        keepUids.add(uid);
+      }
+    });
+
+    Object.values(gear).forEach((gearItem) => {
+      const candidate = items
+        .filter((item) => item.slot === gearItem.id && !keepUids.has(item.uid))
+        .sort((a, b) => getLootScore(b) - getLootScore(a))[0];
+      if (candidate) {
+        keepUids.add(candidate.uid);
+      }
+    });
+
+    const removedItems = items.filter((item) => !keepUids.has(item.uid));
+    if (!removedItems.length) {
+      addLog(state, now, '整理战利品，没有可分解的闲置装备。');
+      return { ok: true, removed: 0, reward: {}, items: [] };
+    }
+
+    const reward = removedItems.reduce((total, item) => ({
+      forgingEssence: total.forgingEssence + 2 + (item.level || 0),
+      artifacts: total.artifacts + 1,
+    }), { forgingEssence: 0, artifacts: 0 });
+    state.lootEquipment = items.filter((item) => keepUids.has(item.uid));
+    if (state.lockedLoot) {
+      Object.keys(state.lockedLoot).forEach((uid) => {
+        if (!state.lootEquipment.some((item) => item.uid === uid)) {
+          delete state.lockedLoot[uid];
+        }
+      });
+    }
+    applyResources(state, reward);
+    addLog(state, now, `整理战利品，分解 ${removedItems.length} 件闲置装备，获得${formatReward(reward)}。`);
+    return { ok: true, removed: removedItems.length, reward, items: removedItems };
   }
 
   function empowerLootEquipment(state, uid, now = Date.now()) {

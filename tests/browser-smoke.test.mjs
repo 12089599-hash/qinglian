@@ -43,6 +43,16 @@ assert.match(source, /function renderGearSections/);
 assert.match(styles, /\.sub-tabs/);
 assert.match(styles, /\.vital-grid/);
 assert.match(styles, /\.gear-subtabs/);
+assert.match(html, /data-mission-report/);
+assert.match(source, /function renderMissionReport/);
+assert.match(source, /data-dismiss-mission-report/);
+assert.match(styles, /\.mission-report/);
+assert.match(source, /data-organize-loot/);
+assert.match(source, /data-toggle-loot-lock/);
+assert.match(source, /data-loot-filter/);
+assert.match(source, /function renderLootComparison/);
+assert.match(styles, /\.loot-toolbar/);
+assert.match(styles, /\.comparison-list/);
 
 function element() {
   return {

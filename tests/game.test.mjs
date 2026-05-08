@@ -28,6 +28,7 @@ import {
   disassembleLootEquipment,
   equipLootEquipment,
   empowerLootEquipment,
+  organizeLootEquipment,
   getGoals,
   getNextGuidance,
   getMainlineChapters,
@@ -53,6 +54,7 @@ import {
   stabilizeFoundation,
   startMission,
   trainSpiritBeast,
+  toggleLootLock,
   toggleAutoMission,
   updateGame,
   upgradeBuilding,
@@ -533,6 +535,27 @@ test('mission events can drop named equipment and equip it', () => {
   assert.equal(calculatePower(state) - before, 36);
 });
 
+test('mission completion records a readable settlement report', () => {
+  const state = createGameState(1000);
+  state.realmIndex = 3;
+  state.gear.weapon = 6;
+  state.gear.robe = 4;
+  state.cultivationPaths.sword = 3;
+
+  startMission(state, 'ancientSwordTomb', 1000);
+  updateGame(state, 140, 141_000);
+
+  const report = state.lastMissionReport;
+  assert.equal(report.outcome, 'success');
+  assert.equal(report.missionName, '古剑冢');
+  assert.equal(report.mapName, '古剑冢');
+  assert.equal(report.rewardText.includes('法器'), true);
+  assert.equal(report.reputationGained, MISSION_MAPS.swordTomb.reputationPerMission);
+  assert.equal(report.event.name, '残剑鸣匣');
+  assert.equal(report.event.equipmentName, '青锋剑');
+  assert.equal(report.summary.includes('收获'), true);
+});
+
 test('map bosses unlock from exploration and grant one-time permanent rewards', () => {
   const state = createGameState(1000);
   state.completedMissions.herbGathering = 2;
@@ -612,6 +635,37 @@ test('loot dismantling creates strengthening material and empowerment improves b
   assert.equal(state.lootEquipment[0].level, 1);
   assert.equal(state.lootEquipment[0].bonuses.power, 44);
   assert.equal(calculatePower(state) - before, 44);
+});
+
+test('loot details compare against equipped items and organize weak unlocked loot', () => {
+  const state = createGameState(1000);
+  state.lootEquipment = [
+    { uid: 'equipped-sword', templateId: 'qingfengSword', name: '旧青锋剑', slot: 'weapon', quality: 1, level: 0, bonuses: { power: 36 } },
+    { uid: 'better-sword', templateId: 'qingfengSword', name: '新青锋剑', slot: 'weapon', quality: 1, level: 2, bonuses: { power: 56 } },
+    { uid: 'weak-sword', templateId: 'qingfengSword', name: '残青锋剑', slot: 'weapon', quality: 1, level: 0, bonuses: { power: 24 } },
+    { uid: 'locked-robe', templateId: 'cloudthreadRobe', name: '留存法袍', slot: 'robe', quality: 1, level: 0, bonuses: { dangerReduction: 16 } },
+  ];
+  state.equippedLoot.weapon = 'equipped-sword';
+
+  const locked = toggleLootLock(state, 'locked-robe', 1000);
+  const details = getEquipmentDetails(state);
+  const better = details.loot.find((item) => item.uid === 'better-sword');
+
+  assert.equal(locked.ok, true);
+  assert.equal(better.comparison.againstName, '旧青锋剑');
+  assert.equal(better.comparison.deltas.find((delta) => delta.id === 'power').value, 20);
+  assert.equal(better.comparison.summary.includes('+20'), true);
+
+  const organized = organizeLootEquipment(state, 2000);
+
+  assert.equal(organized.ok, true);
+  assert.equal(organized.removed, 1);
+  assert.equal(state.lootEquipment.some((item) => item.uid === 'weak-sword'), false);
+  assert.equal(state.lootEquipment.some((item) => item.uid === 'equipped-sword'), true);
+  assert.equal(state.lootEquipment.some((item) => item.uid === 'better-sword'), true);
+  assert.equal(state.lootEquipment.some((item) => item.uid === 'locked-robe'), true);
+  assert.equal(state.forgingEssence, 2);
+  assert.equal(state.artifacts, 1);
 });
 
 test('equipment details expose cultivation intent and tiered growth preview', () => {

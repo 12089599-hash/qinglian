@@ -975,11 +975,13 @@ export function createGameState(now = Date.now()) {
       amulet: null,
       robe: null,
     },
+    lockedLoot: {},
     treasures: Object.fromEntries(Object.keys(TREASURES).map((id) => [id, 0])),
     spiritBeasts: Object.fromEntries(Object.keys(SPIRIT_BEASTS).map((id) => [id, 0])),
     activeOpportunity: null,
     resolvedOpportunities: {},
     lastMissionEvent: null,
+    lastMissionReport: null,
     cultivationPaths: {
       sword: 0,
       alchemy: 0,
@@ -1043,11 +1045,13 @@ export function reviveGameState(saved, now = Date.now()) {
   state.gearAffixes = normalizeGearAffixes(state.gearAffixes);
   state.lootEquipment = normalizeLootEquipment(state.lootEquipment);
   state.equippedLoot = normalizeEquippedLoot(state.equippedLoot, state.lootEquipment);
+  state.lockedLoot = normalizeLockedLoot(state.lockedLoot, state.lootEquipment);
   state.treasures = normalizeLevels(state.treasures, TREASURES);
   state.spiritBeasts = normalizeLevels(state.spiritBeasts, SPIRIT_BEASTS);
   state.activeOpportunity = normalizeOpportunity(state.activeOpportunity);
   state.resolvedOpportunities = normalizeResolvedOpportunities(state.resolvedOpportunities);
   state.lastMissionEvent = normalizeMissionEvent(state.lastMissionEvent);
+  state.lastMissionReport = normalizeMissionReport(state.lastMissionReport);
   state.cultivationPaths = normalizeLevels(state.cultivationPaths, CULTIVATION_PATHS);
   state.formations = normalizeLevels(state.formations, FORMATIONS);
   state.completedMissions = normalizeCompletedMissions(state.completedMissions);
@@ -1472,7 +1476,9 @@ export function getEquipmentDetails(state) {
       tier: getUpgradeTier(Math.max(1, item.level ?? 1)),
       intent: getGearIntent(item.slot),
       equipped: state.equippedLoot?.[item.slot] === item.uid,
+      locked: Boolean(state.lockedLoot?.[item.uid]),
       effects: effectsFromBonusObject(item.bonuses ?? {}),
+      comparison: compareLootEquipment(state, item),
       nextEffects: (item.level ?? 0) >= getLootMaxLevel(item) ? [] : effectsFromBonusObject(createLootBonuses(item.templateId, (item.level ?? 0) + 1)),
       empower: {
         maxed: (item.level ?? 0) >= getLootMaxLevel(item),
@@ -1522,6 +1528,22 @@ export function equipLootEquipment(state, uid, now = Date.now()) {
   return { ok: true, item };
 }
 
+export function toggleLootLock(state, uid, now = Date.now()) {
+  const item = state.lootEquipment?.find((candidate) => candidate.uid === uid);
+  if (!item) {
+    return { ok: false, reason: 'unknownLoot' };
+  }
+  state.lockedLoot ??= {};
+  const locked = !state.lockedLoot[uid];
+  if (locked) {
+    state.lockedLoot[uid] = true;
+  } else {
+    delete state.lockedLoot[uid];
+  }
+  addLog(state, now, locked ? `已锁定${item.name}，整理时会保留。` : `已解除${item.name}锁定。`);
+  return { ok: true, item, locked };
+}
+
 export function disassembleLootEquipment(state, uid, now = Date.now()) {
   const itemIndex = state.lootEquipment?.findIndex((candidate) => candidate.uid === uid) ?? -1;
   if (itemIndex < 0) {
@@ -1531,8 +1553,14 @@ export function disassembleLootEquipment(state, uid, now = Date.now()) {
   if (state.equippedLoot?.[item.slot] === item.uid) {
     return { ok: false, reason: 'equipped' };
   }
+  if (state.lockedLoot?.[item.uid]) {
+    return { ok: false, reason: 'locked' };
+  }
 
   state.lootEquipment.splice(itemIndex, 1);
+  if (state.lockedLoot) {
+    delete state.lockedLoot[item.uid];
+  }
   const reward = {
     forgingEssence: 2 + (item.level ?? 0),
     artifacts: 1,
@@ -1540,6 +1568,49 @@ export function disassembleLootEquipment(state, uid, now = Date.now()) {
   applyResources(state, reward);
   addLog(state, now, `分解${item.name}，获得${formatReward(reward)}。`);
   return { ok: true, reward, item };
+}
+
+export function organizeLootEquipment(state, now = Date.now()) {
+  const items = state.lootEquipment ?? [];
+  if (!items.length) {
+    return { ok: true, removed: 0, reward: {}, items: [] };
+  }
+
+  const keepUids = new Set(Object.values(state.equippedLoot ?? {}).filter(Boolean));
+  Object.entries(state.lockedLoot ?? {}).forEach(([uid, locked]) => {
+    if (locked) keepUids.add(uid);
+  });
+
+  Object.values(GEAR).forEach((gearItem) => {
+    const candidate = items
+      .filter((item) => item.slot === gearItem.id && !keepUids.has(item.uid))
+      .sort((a, b) => getLootScore(b) - getLootScore(a))[0];
+    if (candidate) {
+      keepUids.add(candidate.uid);
+    }
+  });
+
+  const removedItems = items.filter((item) => !keepUids.has(item.uid));
+  if (!removedItems.length) {
+    addLog(state, now, '整理战利品，没有可分解的闲置装备。');
+    return { ok: true, removed: 0, reward: {}, items: [] };
+  }
+
+  const reward = removedItems.reduce((total, item) => ({
+    forgingEssence: total.forgingEssence + 2 + (item.level ?? 0),
+    artifacts: total.artifacts + 1,
+  }), { forgingEssence: 0, artifacts: 0 });
+  state.lootEquipment = items.filter((item) => keepUids.has(item.uid));
+  if (state.lockedLoot) {
+    Object.keys(state.lockedLoot).forEach((uid) => {
+      if (!state.lootEquipment.some((item) => item.uid === uid)) {
+        delete state.lockedLoot[uid];
+      }
+    });
+  }
+  applyResources(state, reward);
+  addLog(state, now, `整理战利品，分解 ${removedItems.length} 件闲置装备，获得${formatReward(reward)}。`);
+  return { ok: true, removed: removedItems.length, reward, items: removedItems };
 }
 
 export function empowerLootEquipment(state, uid, now = Date.now()) {
@@ -2311,6 +2382,14 @@ function completeMissionIfReady(state, now) {
   if (danger && calculatePower(state) < danger) {
     applyResources(state, mission.failurePenalty);
     state.injuryUntil = now + 90 * 1000;
+    state.lastMissionReport = createMissionReport(state, mission, {
+      outcome: 'failure',
+      reward: mission.failurePenalty ?? {},
+      reputationGained: 0,
+      eventResult: null,
+      rareReward: null,
+      now,
+    });
     addLog(state, now, `挑战「${mission.name}」失利，负伤退回洞府。`);
     restartAutoMission(state, mission.id, now);
     return;
@@ -2319,17 +2398,29 @@ function completeMissionIfReady(state, now) {
   applyResources(state, mission.reward);
   state.completedMissions[mission.id] = (state.completedMissions[mission.id] ?? 0) + 1;
   const mapId = getMissionMapId(mission);
-  addMapReputation(state, mapId, MISSION_MAPS[mapId]?.reputationPerMission ?? 0);
+  const reputationGained = MISSION_MAPS[mapId]?.reputationPerMission ?? 0;
+  addMapReputation(state, mapId, reputationGained);
   const event = resolveMissionEvent(mission, state.completedMissions[mission.id]);
+  let eventResult = null;
   if (event) {
-    applyMissionEvent(state, mission, event, now);
+    eventResult = applyMissionEvent(state, mission, event, now);
   }
+  let rareReward = null;
   if (mission.rareEvery && state.completedMissions[mission.id] % mission.rareEvery === 0) {
     applyResources(state, mission.rareReward);
+    rareReward = mission.rareReward;
     addLog(state, now, `深入「${mission.map ?? mission.name}」有所感悟，额外获得${formatReward(mission.rareReward)}。`);
   }
   maybeCreateOpportunity(state, mission, now);
   addDailyProgress(state, 'missions', 1, now);
+  state.lastMissionReport = createMissionReport(state, mission, {
+    outcome: 'success',
+    reward: mission.reward,
+    reputationGained,
+    eventResult,
+    rareReward,
+    now,
+  });
   addLog(state, now, `完成「${mission.name}」，收获${formatReward(mission.reward)}。`);
   restartAutoMission(state, mission.id, now);
 }
@@ -2345,6 +2436,41 @@ function completeAlchemyIfReady(state, now) {
   state.pills = state.inventoryPills.gatherQiPill;
   state.craftedPills = (state.craftedPills ?? 0) + 1;
   addLog(state, now, `丹炉火候正好，炼成一枚${recipe.name}。`);
+}
+
+function createMissionReport(state, mission, { outcome, reward, reputationGained = 0, eventResult = null, rareReward = null, now = Date.now() }) {
+  const mapId = getMissionMapId(mission);
+  const map = MISSION_MAPS[mapId];
+  const rewardText = formatReward(reward);
+  const rareRewardText = rareReward ? formatReward(rareReward) : '';
+  const event = eventResult?.event ? {
+    id: eventResult.event.id,
+    name: eventResult.event.name,
+    reward: eventResult.event.reward ?? {},
+    rewardText: formatReward(eventResult.event.reward ?? {}),
+    equipmentName: eventResult.item?.name ?? null,
+  } : null;
+  const summary = outcome === 'success'
+    ? `完成「${mission.name}」，收获${rewardText || '少许历练'}${event?.equipmentName ? `，并得${event.equipmentName}` : ''}。`
+    : `「${mission.name}」失利，劫象反噬${rewardText ? `：${rewardText}` : '。'}`;
+
+  return {
+    id: `${mission.id}-${now}`,
+    missionId: mission.id,
+    missionName: mission.name,
+    mapId,
+    mapName: map?.name ?? mission.map ?? mission.name,
+    outcome,
+    reward: reward ?? {},
+    rewardText,
+    rareReward: rareReward ?? null,
+    rareRewardText,
+    reputationGained,
+    completedCount: state.completedMissions?.[mission.id] ?? 0,
+    event,
+    summary,
+    time: now,
+  };
 }
 
 function getMissionDanger(state, mission) {
@@ -2525,6 +2651,16 @@ function normalizeEquippedLoot(equippedLoot, lootEquipment) {
   return slots;
 }
 
+function normalizeLockedLoot(lockedLoot, lootEquipment) {
+  if (!lockedLoot || typeof lockedLoot !== 'object') {
+    return {};
+  }
+  const validUids = new Set((lootEquipment ?? []).map((item) => item.uid));
+  return Object.fromEntries(
+    Object.entries(lockedLoot).filter(([uid, locked]) => validUids.has(uid) && Boolean(locked)),
+  );
+}
+
 function normalizeMissionEvent(event) {
   if (!event || !MISSION_EVENTS[event.id]) {
     return null;
@@ -2536,6 +2672,42 @@ function normalizeMissionEvent(event) {
     reward: event.reward && typeof event.reward === 'object' ? { ...event.reward } : {},
     equipmentName: event.equipmentName ?? null,
     time: Number(event.time) || Date.now(),
+  };
+}
+
+function normalizeMissionReport(report) {
+  if (!report || typeof report !== 'object' || !MISSIONS[report.missionId]) {
+    return null;
+  }
+  const mission = MISSIONS[report.missionId];
+  const mapId = MISSION_MAPS[report.mapId] ? report.mapId : getMissionMapId(mission);
+  const outcome = report.outcome === 'failure' ? 'failure' : 'success';
+  const reward = report.reward && typeof report.reward === 'object' ? { ...report.reward } : {};
+  const rareReward = report.rareReward && typeof report.rareReward === 'object' ? { ...report.rareReward } : null;
+  const event = report.event && MISSION_EVENTS[report.event.id] ? {
+    id: report.event.id,
+    name: MISSION_EVENTS[report.event.id].name,
+    reward: report.event.reward && typeof report.event.reward === 'object' ? { ...report.event.reward } : {},
+    rewardText: formatReward(report.event.reward ?? {}),
+    equipmentName: report.event.equipmentName ?? null,
+  } : null;
+
+  return {
+    id: String(report.id ?? `${mission.id}-${Number(report.time) || Date.now()}`),
+    missionId: mission.id,
+    missionName: mission.name,
+    mapId,
+    mapName: MISSION_MAPS[mapId]?.name ?? mission.map ?? mission.name,
+    outcome,
+    reward,
+    rewardText: formatReward(reward),
+    rareReward,
+    rareRewardText: rareReward ? formatReward(rareReward) : '',
+    reputationGained: Math.max(0, Number(report.reputationGained) || 0),
+    completedCount: Math.max(0, Number(report.completedCount) || 0),
+    event,
+    summary: typeof report.summary === 'string' && report.summary ? report.summary : `${mission.name}结算已记录。`,
+    time: Number(report.time) || Date.now(),
   };
 }
 
@@ -2784,6 +2956,45 @@ function getEquippedLootBonus(state, key) {
     const item = state.lootEquipment?.find((candidate) => candidate.uid === uid);
     return total + (item?.bonuses?.[key] ?? 0);
   }, 0);
+}
+
+function compareLootEquipment(state, item) {
+  const equipped = getEquippedLoot(state, item.slot);
+  const baseline = equipped && equipped.uid !== item.uid ? equipped : null;
+  const keys = new Set([
+    ...Object.keys(item.bonuses ?? {}),
+    ...Object.keys(baseline?.bonuses ?? {}),
+  ]);
+  const deltaBonuses = {};
+  keys.forEach((key) => {
+    const value = round((item.bonuses?.[key] ?? 0) - (baseline?.bonuses?.[key] ?? 0));
+    if (value !== 0) {
+      deltaBonuses[key] = value;
+    }
+  });
+  const deltas = effectsFromBonusObject(deltaBonuses);
+  return {
+    againstUid: baseline?.uid ?? null,
+    againstName: baseline?.name ?? (equipped?.uid === item.uid ? item.name : '空位'),
+    deltas,
+    scoreDelta: round(getLootScore(item) - (baseline ? getLootScore(baseline) : 0)),
+    summary: deltas.length ? deltas.map(formatEffectDelta).join('、') : (equipped?.uid === item.uid ? '已穿戴' : '无明显变化'),
+  };
+}
+
+function getLootScore(item) {
+  return Object.entries(item?.bonuses ?? {}).reduce((total, [key, value]) => {
+    const weight = key === 'qiRate' || key === 'breakthrough' || key === 'herbRate' ? 1000 : 1;
+    return total + value * weight;
+  }, 0) + (item?.level ?? 0) * 2 + (item?.quality ?? 0) * 4;
+}
+
+function formatEffectDelta(effect) {
+  const sign = effect.value > 0 ? '+' : '';
+  if (effect.mode === 'percent') {
+    return `${effect.label} ${sign}${Math.round(effect.value * 100)}%`;
+  }
+  return `${effect.label} ${sign}${effect.value}`;
 }
 
 function getTreasureBonus(state, key) {
@@ -3066,6 +3277,7 @@ function applyMissionEvent(state, mission, event, now) {
   const rewardText = formatReward(event.reward ?? {});
   const equipmentText = item ? `，并获得${item.name}` : '';
   addLog(state, now, `奇遇「${event.name}」：${event.detail}${rewardText ? ` 获得${rewardText}` : ''}${equipmentText}。`);
+  return { event, item };
 }
 
 function addLootEquipment(state, templateId) {

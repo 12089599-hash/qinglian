@@ -194,6 +194,15 @@
             </section>
             <section data-gear-section-panel="loot">
               <h3>战利品</h3>
+              <div class="loot-toolbar">
+                <div class="loot-filters" aria-label="战利品筛选">
+                  <button data-loot-filter="all" class="active" aria-pressed="true">全部</button>
+                  <button data-loot-filter="weapon" aria-pressed="false">武器</button>
+                  <button data-loot-filter="amulet" aria-pressed="false">护符</button>
+                  <button data-loot-filter="robe" aria-pressed="false">法袍</button>
+                </div>
+                <button data-organize-loot>一键整理</button>
+              </div>
               <div data-loot-list class="system-list"></div>
             </section>
             <section data-gear-section-panel="treasures">
@@ -253,6 +262,7 @@
             <h2>历练</h2>
           </header>
           <div data-opportunity class="opportunity-box"></div>
+          <div data-mission-report class="mission-report" hidden></div>
           <div data-mission-list class="mission-map-list"></div>
         </article>
 
@@ -278,6 +288,6 @@
 
     <div data-toast-stack class="toast-stack" aria-live="polite"></div>
 
-    <script src="browserGame.js?v=202605081013"></script>
+    <script src="browserGame.js?v=202605081106"></script>
   </body>
 </html>
