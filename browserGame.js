@@ -986,14 +986,15 @@
   const ctx = refs.canvas.getContext('2d');
   const renderCache = {};
   const openLootDetails = new Set();
-  const panelTabs = ['goals', 'daily', 'market', 'alchemy', 'gear', 'cultivation', 'sect', 'cave', 'missions', 'log'];
+  const panelTabs = ['overview', 'goals', 'daily', 'market', 'alchemy', 'gear', 'cultivation', 'sect', 'cave', 'missions', 'log'];
   const tabGroups = {
-    practice: { label: '修行', tabs: ['goals', 'daily', 'cultivation'] },
+    practice: { label: '修行', tabs: ['overview', 'goals', 'daily', 'cultivation'] },
     travel: { label: '行游', tabs: ['missions'] },
     vault: { label: '库藏', tabs: ['market', 'alchemy', 'gear'] },
     mountain: { label: '山门', tabs: ['sect', 'cave', 'log'] },
   };
   const tabLabels = {
+    overview: '修行',
     goals: '主线',
     daily: '日常',
     market: '坊市',
@@ -1006,9 +1007,11 @@
     log: '日志',
   };
   const gearSections = ['wear', 'loot', 'treasures'];
-  let activeTab = localStorage.getItem('idle-xianxia-active-tab') || 'goals';
+  const isMobileLayout = () => typeof window !== 'undefined' && window.matchMedia?.('(max-width: 760px)').matches;
+  const storedActiveTab = localStorage.getItem('idle-xianxia-active-tab');
+  let activeTab = isMobileLayout() ? 'overview' : (storedActiveTab === 'overview' ? 'goals' : storedActiveTab || 'goals');
   if (!panelTabs.includes(activeTab)) {
-    activeTab = 'goals';
+    activeTab = isMobileLayout() ? 'overview' : 'goals';
   }
   let activeGearSection = localStorage.getItem('idle-xianxia-gear-section') || 'wear';
   if (!gearSections.includes(activeGearSection)) {
@@ -1413,10 +1416,19 @@
       if (!group) {
         return;
       }
+      if (button.dataset.tabGroup === 'practice' && isMobileLayout()) {
+        activeTab = 'overview';
+        localStorage.setItem('idle-xianxia-active-tab', activeTab);
+        localStorage.setItem('idle-xianxia-practice-tab', activeTab);
+        renderTabs();
+        window.scrollTo?.({ top: 0, behavior: 'smooth' });
+        return;
+      }
       const remembered = localStorage.getItem(`idle-xianxia-${button.dataset.tabGroup}-tab`);
       activeTab = group.tabs.includes(remembered) ? remembered : group.tabs[0];
       localStorage.setItem('idle-xianxia-active-tab', activeTab);
       renderTabs();
+      window.scrollTo?.({ top: 0, behavior: 'smooth' });
     });
   });
 
@@ -1429,6 +1441,7 @@
     localStorage.setItem('idle-xianxia-active-tab', activeTab);
     localStorage.setItem(`idle-xianxia-${getTabGroup(activeTab)}-tab`, activeTab);
     renderTabs();
+    window.scrollTo?.({ top: 0, behavior: 'smooth' });
   });
 
   refs.gearSubTabs?.addEventListener('click', (event) => {
@@ -5314,6 +5327,8 @@
 
   function renderTabs() {
     const activeGroup = getTabGroup(activeTab);
+    document.body.dataset.activeTab = activeTab;
+    document.body.dataset.activeGroup = activeGroup;
     document.querySelectorAll('[data-tab-group]').forEach((button) => {
       button.classList.toggle('active', button.dataset.tabGroup === activeGroup);
     });

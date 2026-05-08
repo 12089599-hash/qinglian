@@ -35,7 +35,12 @@ assert.match(html, />行游</);
 assert.match(html, />库藏</);
 assert.match(html, />山门</);
 assert.match(source, /const tabGroups/);
+assert.match(source, /panelTabs\s*=\s*\['overview'/);
+assert.match(source, /practice:\s*\{\s*label:\s*'修行',\s*tabs:\s*\['overview', 'goals', 'daily', 'cultivation'\]/);
+assert.match(source, /document\.body\.dataset\.activeTab\s*=\s*activeTab/);
 assert.match(source, /function renderSubTabs/);
+assert.match(styles, /body\[data-active-tab="overview"\]\s+\.stats-panel/);
+assert.match(styles, /body:not\(\[data-active-tab="overview"\]\)\s+\.stats-panel/);
 assert.match(html, /class="vital-grid"/);
 assert.match(html, /resource-drawer/);
 assert.match(html, /材料丹药/);
@@ -144,6 +149,7 @@ function documentWithoutOptionalPanels() {
   ]);
 
   return {
+    body: element(),
     createElement() {
       return element();
     },

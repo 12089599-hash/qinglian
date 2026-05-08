@@ -1675,6 +1675,14 @@ small {
 }
 
 @media (max-width: 760px) {
+  body:not([data-active-tab="overview"]) .stats-panel {
+    display: none;
+  }
+
+  body[data-active-tab="overview"] .stats-panel {
+    display: block;
+  }
+
   .section-tabs {
     display: flex;
     position: fixed;
