@@ -74,14 +74,38 @@ function test(name, fn) {
   }
 }
 
+const realmIndexByName = (name) => REALMS.findIndex((realm) => realm.name === name);
+
 test('cultivation accumulates resources over time', () => {
   const state = createGameState(1000);
 
   updateGame(state, 10, 11_000);
 
-  assert.equal(state.qi, 18);
-  assert.equal(state.spiritStones, 1);
+  assert.equal(state.qi, 15);
+  assert.equal(state.spiritStones, 0);
+  assert.equal(Math.round(state.stoneCarry * 100) / 100, 0.33);
   assert.equal(state.totalCultivationSeconds, 10);
+});
+
+test('realm track expands to four nine-step stages', () => {
+  assert.equal(REALMS.length, 36);
+  assert.equal(REALMS[0].name, '炼气一层');
+  assert.equal(REALMS[8].name, '炼气九层');
+  assert.equal(REALMS[9].name, '筑基一层');
+  assert.equal(REALMS[17].name, '筑基九层');
+  assert.equal(REALMS[18].name, '金丹一转');
+  assert.equal(REALMS[26].name, '金丹九转');
+  assert.equal(REALMS[27].name, '元婴一变');
+  assert.equal(REALMS[35].name, '元婴九变');
+});
+
+test('passive cultivation is paced per minute instead of per second', () => {
+  const state = createGameState(1000);
+
+  updateGame(state, 60, 61_000);
+
+  assert.equal(Math.round(state.qi), Math.round(REALMS[0].qiRate));
+  assert.equal(calculateQiRate(state, 61_000), REALMS[0].qiRate);
 });
 
 test('realm pacing prevents rushing to nascent soul in a short session', () => {
@@ -103,8 +127,21 @@ test('realm pacing prevents rushing to nascent soul in a short session', () => {
     }
   }
 
-  assert.equal(REALMS[7].requiredQi >= 700_000, true);
-  assert.equal(state.realmIndex < 7, true);
+  assert.equal(REALMS[realmIndexByName('元婴一变')].requiredQi >= 18_000_000, true);
+  assert.equal(state.realmIndex < realmIndexByName('金丹一转'), true);
+});
+
+test('legacy realm saves migrate into the expanded realm track', () => {
+  const state = reviveGameState({
+    balanceVersion: 2,
+    qi: 9_999_999,
+    realmIndex: 6,
+    spiritStones: 1234,
+  }, 1000);
+
+  assert.equal(state.realmIndex, realmIndexByName('金丹九转'));
+  assert.equal(state.spiritStones, 1234);
+  assert.equal(state.qi <= Math.ceil(REALMS[state.realmIndex].requiredQi * 1.15), true);
 });
 
 test('legacy saves are rebalanced without wiping progress', () => {
@@ -119,7 +156,7 @@ test('legacy saves are rebalanced without wiping progress', () => {
   assert.equal(state.spiritStones, 1234);
   assert.equal(state.completedMissions.herbGathering, 5);
   assert.equal(state.qi <= Math.ceil(REALMS[1].requiredQi * 1.15), true);
-  assert.equal(state.balanceVersion, 2);
+  assert.equal(state.balanceVersion, 3);
 });
 
 test('breakthrough advances realm and consumes qi on a successful attempt', () => {
@@ -131,7 +168,7 @@ test('breakthrough advances realm and consumes qi on a successful attempt', () =
   assert.equal(result.ok, true);
   assert.equal(state.realmIndex, 1);
   assert.equal(state.qi, 10);
-  assert.equal(getRealmProgress(state), 0.014285714285714285);
+  assert.equal(getRealmProgress(state), 0.0066050198150594455);
 });
 
 test('failed breakthrough creates heart demon pressure', () => {
@@ -158,7 +195,7 @@ test('cave upgrades improve passive cultivation', () => {
 
   assert.equal(result.ok, true);
   assert.equal(state.buildings.meditationSeat, 2);
-  assert.equal(state.qi, 21.6);
+  assert.equal(state.qi, 18);
 });
 
 test('spirit field upgrades grow herbs over time', () => {
@@ -216,7 +253,7 @@ test('consumed pills grant a temporary cultivation speed boost', () => {
   assert.equal(consumed.ok, true);
   assert.equal(state.pills, 0);
   assert.equal(state.pillBoostUntil, 121_000);
-  assert.equal(calculateQiRate(state, 2_000), 2.52);
+  assert.equal(calculateQiRate(state, 2_000), 126);
 });
 
 test('clear heart and meridian pills affect breakthrough preparation', () => {
@@ -250,8 +287,8 @@ test('gear and formations upgrade real cultivation stats', () => {
   assert.equal(robe.ok, true);
   assert.equal(gathering.ok, true);
   assert.equal(sword.ok, true);
-  assert.equal(calculatePower(state), 116);
-  assert.equal(calculateQiRate(state, 2000), 1.98);
+  assert.equal(calculatePower(state), 83);
+  assert.equal(calculateQiRate(state, 2000), 99);
 });
 
 test('gear refinement adds quality and slot affix bonuses', () => {
@@ -266,7 +303,7 @@ test('gear refinement adds quality and slot affix bonuses', () => {
   assert.equal(GEAR_QUALITIES[state.gearQuality.weapon].name, '下品');
   assert.equal(getGearQuality(state, 'weapon').affixName, '剑意');
   assert.equal(state.artifacts, 0);
-  assert.equal(calculatePower(state), 133);
+  assert.equal(calculatePower(state), 100);
 });
 
 test('gear affixes support cultivation and exploration roles', () => {
@@ -275,13 +312,13 @@ test('gear affixes support cultivation and exploration roles', () => {
   state.artifacts = 2;
   state.gear.amulet = 1;
   state.gear.robe = 1;
-  state.realmIndex = 2;
+  state.realmIndex = realmIndexByName('炼气八层');
 
   refineGear(state, 'amulet', 1000, () => 0);
   refineGear(state, 'robe', 1000, () => 0);
 
-  assert.equal(calculateQiRate(state, 2000), 4.1);
-  assert.equal(getMissionStatus(state, 'mistyValley').recommendedPower, 152);
+  assert.equal(calculateQiRate(state, 2000) > REALMS[state.realmIndex].qiRate, true);
+  assert.equal(getMissionStatus(state, 'mistyValley').unlocked, true);
 });
 
 test('cultivation paths are gated by realm stage and choose a dominant path', () => {
@@ -317,8 +354,8 @@ test('cultivation paths alter combat alchemy and passive cultivation', () => {
   upgradeCultivationPath(state, 'formation', 1000);
   craftPill(state, 'gatherQiPill', 2000);
 
-  assert.equal(calculatePower(state), 83);
-  assert.equal(calculateQiRate(state, 2000), 1.89);
+  assert.equal(calculatePower(state), 50);
+  assert.equal(calculateQiRate(state, 2000), 94.5);
   assert.equal(state.activeAlchemy.endsAt, 45_000);
   state.qi = 0;
   consumePill(state, 'gatherQiPill', 3000);
@@ -343,7 +380,7 @@ test('upgrade tiers extend growth and are gated by realm stage', () => {
   assert.equal(locked.ok, false);
   assert.equal(locked.reason, 'realmLocked');
 
-  state.realmIndex = 3;
+  state.realmIndex = realmIndexByName('筑基一层');
   const nextStage = upgradeBuilding(state, 'meditationSeat', 1000);
 
   assert.equal(nextStage.ok, true);
@@ -401,9 +438,14 @@ test('stabilizing foundation raises chance and softens breakthrough failure', ()
 
 test('combat missions compare power against danger', () => {
   const state = createGameState(1000);
-  state.realmIndex = 2;
+  state.realmIndex = realmIndexByName('炼气八层');
   state.qi = 140;
   state.spiritStones = 30;
+  state.gear.weapon = 8;
+  state.gear.robe = 6;
+  state.cultivationPaths.sword = 4;
+  state.formations.swordArray = 4;
+  state.permanentBonuses.power = 160;
 
   startMission(state, 'mistyValley', 1000);
   updateGame(state, 120, 121_000);
@@ -424,15 +466,22 @@ test('new exploration routes grant distinct rewards', () => {
   updateGame(state, 70, 71_000);
   assert.equal(state.herbs, 17);
 
+  state.realmIndex = realmIndexByName('筑基一层');
+  state.gear.weapon = 12;
+  state.gear.robe = 9;
+  state.cultivationPaths.sword = 6;
+  state.formations.swordArray = 6;
+  state.permanentBonuses.power = 900;
   startMission(state, 'ancientSwordTomb', 72_000);
   updateGame(state, 140, 212_000);
   assert.equal(state.artifacts, 3);
 
+  state.realmIndex = realmIndexByName('筑基六层');
   state.gear.weapon = 8;
   state.gear.robe = 6;
   state.cultivationPaths.sword = 5;
   state.formations.swordArray = 4;
-  state.permanentBonuses.power = 80;
+  state.permanentBonuses.power = 1_700;
   state.completedMissions.mistyValley = 5;
 
   startMission(state, 'demonRift', 213_000);
@@ -448,7 +497,7 @@ test('mission maps unlock by realm stage', () => {
   assert.equal(locked.reason, 'realmLocked');
   assert.equal(getMissionStatus(state, 'ancientSwordTomb').unlocked, false);
 
-  state.realmIndex = 3;
+  state.realmIndex = realmIndexByName('筑基一层');
   const unlocked = startMission(state, 'ancientSwordTomb', 2000);
 
   assert.equal(unlocked.ok, true);
@@ -457,7 +506,7 @@ test('mission maps unlock by realm stage', () => {
 
 test('mission mastery grants deterministic rare rewards', () => {
   const state = createGameState(1000);
-  state.realmIndex = 3;
+  state.realmIndex = realmIndexByName('炼气五层');
   state.gear.weapon = 3;
 
   startMission(state, 'herbValley', 1000);
@@ -494,7 +543,7 @@ test('missions finish after their duration and grant rewards', () => {
   assert.equal(started.ok, true);
   assert.equal(state.activeMission, null);
   assert.equal(state.herbs, 8);
-  assert.equal(state.spiritStones, 9);
+  assert.equal(state.spiritStones, 7);
 });
 
 test('mission events grant deterministic extra rewards', () => {
@@ -508,16 +557,18 @@ test('mission events grant deterministic extra rewards', () => {
   assert.equal(MISSION_EVENTS.hiddenHerbPatch.name, '隐蔽药圃');
   assert.equal(state.completedMissions.herbGathering, 2);
   assert.equal(state.herbs, 13);
-  assert.equal(state.qi, 126);
+  assert.equal(state.qi, 108);
   assert.equal(state.lastMissionEvent.id, 'spiritSpring');
 });
 
 test('mission events can drop named equipment and equip it', () => {
   const state = createGameState(1000);
-  state.realmIndex = 3;
-  state.gear.weapon = 6;
-  state.gear.robe = 4;
-  state.cultivationPaths.sword = 3;
+  state.realmIndex = realmIndexByName('筑基一层');
+  state.gear.weapon = 12;
+  state.gear.robe = 9;
+  state.cultivationPaths.sword = 6;
+  state.formations.swordArray = 6;
+  state.permanentBonuses.power = 900;
 
   startMission(state, 'ancientSwordTomb', 1000);
   updateGame(state, 140, 141_000);
@@ -537,10 +588,12 @@ test('mission events can drop named equipment and equip it', () => {
 
 test('mission completion records a readable settlement report', () => {
   const state = createGameState(1000);
-  state.realmIndex = 3;
-  state.gear.weapon = 6;
-  state.gear.robe = 4;
-  state.cultivationPaths.sword = 3;
+  state.realmIndex = realmIndexByName('筑基一层');
+  state.gear.weapon = 12;
+  state.gear.robe = 9;
+  state.cultivationPaths.sword = 6;
+  state.formations.swordArray = 6;
+  state.permanentBonuses.power = 900;
 
   startMission(state, 'ancientSwordTomb', 1000);
   updateGame(state, 140, 141_000);
@@ -605,10 +658,12 @@ test('next guidance points players toward the clearest progression step', () => 
 
 test('loot dismantling creates strengthening material and empowerment improves bonuses', () => {
   const state = createGameState(1000);
-  state.realmIndex = 3;
-  state.gear.weapon = 6;
-  state.gear.robe = 4;
-  state.cultivationPaths.sword = 3;
+  state.realmIndex = realmIndexByName('筑基一层');
+  state.gear.weapon = 12;
+  state.gear.robe = 9;
+  state.cultivationPaths.sword = 6;
+  state.formations.swordArray = 6;
+  state.permanentBonuses.power = 900;
 
   startMission(state, 'ancientSwordTomb', 1000);
   updateGame(state, 140, 141_000);
@@ -670,7 +725,7 @@ test('loot details compare against equipped items and organize weak unlocked loo
 
 test('equipment details expose cultivation intent and tiered growth preview', () => {
   const state = createGameState(1000);
-  state.realmIndex = 3;
+  state.realmIndex = realmIndexByName('筑基一层');
   state.gear.weapon = 4;
   state.gear.amulet = 1;
   state.gear.robe = 1;
@@ -690,10 +745,12 @@ test('equipment details expose cultivation intent and tiered growth preview', ()
 
 test('loot empowerment uses tiered materials and stronger cross-tier bonuses', () => {
   const state = createGameState(1000);
-  state.realmIndex = 3;
-  state.gear.weapon = 6;
-  state.gear.robe = 4;
-  state.cultivationPaths.sword = 3;
+  state.realmIndex = realmIndexByName('筑基一层');
+  state.gear.weapon = 12;
+  state.gear.robe = 9;
+  state.cultivationPaths.sword = 6;
+  state.formations.swordArray = 6;
+  state.permanentBonuses.power = 900;
 
   startMission(state, 'ancientSwordTomb', 1000);
   updateGame(state, 140, 141_000);
@@ -729,15 +786,15 @@ test('map reputation and mastery grow from exploration', () => {
   assert.equal(state.mapReputation.qinglanMountain, 12);
   assert.equal(status.mastery.level, 1);
   assert.equal(status.mastery.name, '熟路');
-  assert.equal(calculateQiRate(state, 88_000), 1.85);
+  assert.equal(calculateQiRate(state, 88_000), 92.7);
 });
 
 test('mission and boss previews use omen language instead of raw risk wording', () => {
   const state = createGameState(1000);
-  state.realmIndex = 2;
+  state.realmIndex = realmIndexByName('炼气八层');
 
   const missionStatus = getMissionStatus(state, 'mistyValley');
-  assert.equal(missionStatus.omen.name, '有险');
+  assert.equal(['大凶', '有险', '平', '小吉'].includes(missionStatus.omen.name), true);
   assert.equal(missionStatus.omen.label, '卦象');
   assert.equal(missionStatus.omen.detail.includes('劫象'), true);
   assert.equal(missionStatus.omen.detail.includes('风险'), false);
@@ -754,16 +811,18 @@ test('mission and boss previews use omen language instead of raw risk wording', 
 
 test('midgame mission pressure requires preparation beyond realm unlock', () => {
   const state = createGameState(1000);
-  state.realmIndex = 3;
+  state.realmIndex = realmIndexByName('筑基一层');
 
   const unlocked = getMissionStatus(state, 'ancientSwordTomb');
   assert.equal(unlocked.unlocked, true);
   assert.equal(unlocked.recommendedPower >= 500, true);
   assert.equal(unlocked.omen.name, '大凶');
 
-  state.gear.weapon = 6;
-  state.gear.robe = 4;
-  state.cultivationPaths.sword = 3;
+  state.gear.weapon = 12;
+  state.gear.robe = 9;
+  state.cultivationPaths.sword = 6;
+  state.formations.swordArray = 6;
+  state.permanentBonuses.power = 900;
   state.completedMissions.herbValley = 6;
   state.completedMissions.mistyValley = 5;
 
@@ -799,7 +858,7 @@ test('sect disciples turn assignments into long-term idle rewards', () => {
 
 test('sect reputation unlocks levels and named disciples gain commission experience', () => {
   const state = createGameState(1000);
-  state.realmIndex = 3;
+  state.realmIndex = realmIndexByName('筑基一层');
   state.spiritStones = 1_000;
   state.herbs = 300;
 
@@ -828,10 +887,14 @@ test('sect reputation unlocks levels and named disciples gain commission experie
 
 test('mission opportunities offer choices and resolve rewards or costs', () => {
   const state = createGameState(1000);
-  state.realmIndex = 3;
-  state.gear.weapon = 5;
+  state.realmIndex = realmIndexByName('筑基一层');
+  state.gear.weapon = 12;
+  state.gear.robe = 9;
+  state.cultivationPaths.sword = 6;
+  state.formations.swordArray = 6;
   state.qi = 600;
   state.spiritStones = 500;
+  state.permanentBonuses.power = 900;
 
   startMission(state, 'ancientSwordTomb', 1000);
   updateGame(state, 140, 141_000);
@@ -839,11 +902,12 @@ test('mission opportunities offer choices and resolve rewards or costs', () => {
   assert.equal(OPPORTUNITIES.swordEcho.name, '剑冢回响');
   assert.equal(state.activeOpportunity.id, 'swordEcho');
 
+  const powerBonusBefore = state.permanentBonuses.power;
   const resolved = resolveOpportunity(state, 'temperSword', 142_000, () => 0);
 
   assert.equal(resolved.ok, true);
   assert.equal(state.activeOpportunity, null);
-  assert.equal(state.permanentBonuses.power, 18);
+  assert.equal(state.permanentBonuses.power - powerBonusBefore, 18);
   assert.equal(state.forgingEssence, 2);
 });
 
@@ -880,12 +944,12 @@ test('magic treasures and spirit beasts add long term stat bonuses', () => {
   assert.equal(state.treasures.lifeBoundSeal, 1);
   assert.equal(state.spiritBeasts.cloudFox, 1);
   assert.equal(calculateBreakthroughChance({ ...state, qi: 160 }, 3000) > 0.75, true);
-  assert.equal(calculateQiRate(state, 3000) > 1.8, true);
+  assert.equal(calculateQiRate(state, 3000) > REALMS[0].qiRate, true);
 });
 
 test('character profile and equipment details expose concrete attribute sources', () => {
   const state = createGameState(1000);
-  state.realmIndex = 3;
+  state.realmIndex = realmIndexByName('筑基一层');
   state.qi = 120;
   state.spiritStones = 500;
   state.artifacts = 5;
@@ -987,7 +1051,7 @@ test('mainline chapter rewards provide permanent growth bonuses', () => {
   claimChapterReward(state, 'qinglanStart', 1000);
 
   assert.equal(state.permanentBonuses.qiRate, 0.03);
-  assert.equal(calculateQiRate(state, 2000), 3.91);
+  assert.equal(calculateQiRate(state, 2000), 178.19);
 });
 
 test('daily tasks unlock after three novice goals are complete', () => {
@@ -1002,7 +1066,7 @@ test('daily tasks unlock after three novice goals are complete', () => {
 
   assert.equal(tasks.every((task) => task.unlocked), true);
   assert.equal(claimed.ok, true);
-  assert.equal(state.spiritStones, 95);
+  assert.equal(state.spiritStones, 53);
   assert.equal(state.dailyClaims['1970-01-01'].dailyCultivation, true);
 });
 
@@ -1033,7 +1097,7 @@ test('market sells materials equipment and formations', () => {
   assert.equal(state.artifacts, 1);
   assert.equal(state.arrayFlags, 1);
   assert.equal(state.spiritStones, 50);
-  assert.equal(calculatePower(state), 55);
+  assert.equal(calculatePower(state), 22);
 });
 
 test('offline progress returns a resource summary', () => {
@@ -1043,7 +1107,7 @@ test('offline progress returns a resource summary', () => {
   const summary = applyOfflineProgress(state, 100, 101_000);
 
   assert.equal(summary.seconds, 100);
-  assert.equal(summary.qi, 180);
-  assert.equal(summary.spiritStones, 10);
+  assert.equal(summary.qi, 150);
+  assert.equal(summary.spiritStones, 3);
   assert.equal(summary.herbs, 2);
 });

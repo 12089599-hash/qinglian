@@ -1,22 +1,38 @@
 (function () {
-  const realms = [
-    { name: '炼气一层', requiredQi: 160, qiRate: 1.8, stoneRate: 0.1 },
-    { name: '炼气二层', requiredQi: 700, qiRate: 2.6, stoneRate: 0.14 },
-    { name: '炼气三层', requiredQi: 2200, qiRate: 3.8, stoneRate: 0.2 },
-    { name: '筑基初期', requiredQi: 8200, qiRate: 5.8, stoneRate: 0.3 },
-    { name: '筑基中期', requiredQi: 26000, qiRate: 8.2, stoneRate: 0.44 },
-    { name: '金丹初成', requiredQi: 85000, qiRate: 12, stoneRate: 0.66 },
-    { name: '金丹圆满', requiredQi: 260000, qiRate: 17.5, stoneRate: 0.95 },
-    { name: '元婴初期', requiredQi: 720000, qiRate: 26, stoneRate: 1.4 },
+  const realmGroups = [
+    { prefix: '炼气', suffixes: ['一层', '二层', '三层', '四层', '五层', '六层', '七层', '八层', '九层'], startQi: 160, endQi: 18_000, startRate: 90, endRate: 420, startStone: 2, endStone: 9 },
+    { prefix: '筑基', suffixes: ['一层', '二层', '三层', '四层', '五层', '六层', '七层', '八层', '九层'], startQi: 32_000, endQi: 820_000, startRate: 520, endRate: 1_450, startStone: 11, endStone: 26 },
+    { prefix: '金丹', suffixes: ['一转', '二转', '三转', '四转', '五转', '六转', '七转', '八转', '九转'], startQi: 1_200_000, endQi: 12_000_000, startRate: 1_750, endRate: 4_400, startStone: 32, endStone: 75 },
+    { prefix: '元婴', suffixes: ['一变', '二变', '三变', '四变', '五变', '六变', '七变', '八变', '九变'], startQi: 18_000_000, endQi: 110_000_000, startRate: 5_400, endRate: 12_500, startStone: 90, endStone: 180 },
   ];
 
-  const currentBalanceVersion = 2;
+  const legacyRealmIndexMap = [0, 1, 2, 9, 13, 18, 26, 27];
+  const realms = createRealmTrack();
+
+  const currentBalanceVersion = 3;
+
+  function createRealmTrack() {
+    return realmGroups.flatMap((group) => group.suffixes.map((suffix, index) => {
+      const progress = group.suffixes.length === 1 ? 0 : index / (group.suffixes.length - 1);
+      const qiProgress = Math.pow(progress, 1.24);
+      return {
+        name: `${group.prefix}${suffix}`,
+        requiredQi: Math.round(interpolate(group.startQi, group.endQi, qiProgress)),
+        qiRate: Math.round(interpolate(group.startRate, group.endRate, progress)),
+        stoneRate: round(interpolate(group.startStone, group.endStone, progress)),
+      };
+    }));
+  }
+
+  function interpolate(start, end, progress) {
+    return start + (end - start) * progress;
+  }
 
   const upgradeTiers = [
     { name: '凡阶', minLevel: 1, maxLevel: 3, realmIndex: 0, effectMultiplier: 1, costBase: 1, costStep: 1, essenceBase: 1, essenceStep: 1, lootBonusPerLevel: 0.22, percentBonusPerLevel: 0.01 },
-    { name: '灵阶', minLevel: 4, maxLevel: 6, realmIndex: 3, effectMultiplier: 1.35, costBase: 4.2, costStep: 1.35, essenceBase: 5, essenceStep: 2, lootBonusPerLevel: 0.32, percentBonusPerLevel: 0.014 },
-    { name: '玄阶', minLevel: 7, maxLevel: 9, realmIndex: 5, effectMultiplier: 1.85, costBase: 9.5, costStep: 2.1, essenceBase: 12, essenceStep: 4, lootBonusPerLevel: 0.46, percentBonusPerLevel: 0.02 },
-    { name: '地阶', minLevel: 10, maxLevel: 12, realmIndex: 7, effectMultiplier: 2.5, costBase: 18, costStep: 3.2, essenceBase: 24, essenceStep: 7, lootBonusPerLevel: 0.65, percentBonusPerLevel: 0.028 },
+    { name: '灵阶', minLevel: 4, maxLevel: 6, realmIndex: 9, effectMultiplier: 1.35, costBase: 4.2, costStep: 1.35, essenceBase: 5, essenceStep: 2, lootBonusPerLevel: 0.32, percentBonusPerLevel: 0.014 },
+    { name: '玄阶', minLevel: 7, maxLevel: 9, realmIndex: 18, effectMultiplier: 1.85, costBase: 9.5, costStep: 2.1, essenceBase: 12, essenceStep: 4, lootBonusPerLevel: 0.46, percentBonusPerLevel: 0.02 },
+    { name: '地阶', minLevel: 10, maxLevel: 12, realmIndex: 27, effectMultiplier: 2.5, costBase: 18, costStep: 3.2, essenceBase: 24, essenceStep: 7, lootBonusPerLevel: 0.65, percentBonusPerLevel: 0.028 },
   ];
 
   const missions = {
@@ -55,7 +71,7 @@
       name: '雾隐秘境',
       mapId: 'mistyValley',
       map: '雾隐秘境',
-      unlockRealmIndex: 2,
+      unlockRealmIndex: 7,
       duration: 120,
       danger: 180,
       reward: { spiritStones: 35, qi: 90, beastCores: 1, artifacts: 1 },
@@ -69,7 +85,7 @@
       name: '灵草谷',
       mapId: 'herbValley',
       map: '灵草谷',
-      unlockRealmIndex: 1,
+      unlockRealmIndex: 4,
       duration: 70,
       danger: 120,
       reward: { herbs: 14, spiritStones: 14, qi: 45 },
@@ -83,7 +99,7 @@
       name: '古剑冢',
       mapId: 'swordTomb',
       map: '古剑冢',
-      unlockRealmIndex: 3,
+      unlockRealmIndex: 9,
       duration: 140,
       danger: 330,
       reward: { artifacts: 2, spiritStones: 50, beastCores: 1 },
@@ -97,7 +113,7 @@
       name: '魔气裂隙',
       mapId: 'demonRift',
       map: '魔气裂隙',
-      unlockRealmIndex: 4,
+      unlockRealmIndex: 14,
       duration: 180,
       danger: 520,
       reward: { beastCores: 3, spiritStones: 90, qi: 120, heartDemon: 1 },
@@ -111,7 +127,7 @@
       name: '上古遗迹',
       mapId: 'ancientRuins',
       map: '上古遗迹',
-      unlockRealmIndex: 5,
+      unlockRealmIndex: 18,
       duration: 240,
       danger: 820,
       reward: { spiritStones: 150, beastCores: 4, arrayFlags: 2, qi: 180 },
@@ -139,7 +155,7 @@
       name: '灵草谷',
       icon: '草',
       description: '灵草丰茂，丹修和宗门补给的根基。',
-      unlockRealmIndex: 1,
+      unlockRealmIndex: 4,
       explorationTarget: 6,
       reputationPerMission: 7,
       masteryBonus: { qiRate: 0.02 },
@@ -150,7 +166,7 @@
       name: '雾隐秘境',
       icon: '雾',
       description: '雾气遮蔽感知，产出早期妖核和法器。',
-      unlockRealmIndex: 2,
+      unlockRealmIndex: 7,
       explorationTarget: 5,
       reputationPerMission: 8,
       masteryBonus: { dangerReduction: 6 },
@@ -161,7 +177,7 @@
       name: '古剑冢',
       icon: '剑',
       description: '残剑埋骨之地，剑修可借此淬炼道威。',
-      unlockRealmIndex: 3,
+      unlockRealmIndex: 9,
       explorationTarget: 6,
       reputationPerMission: 9,
       masteryBonus: { power: 14 },
@@ -172,7 +188,7 @@
       name: '魔气裂隙',
       icon: '魔',
       description: '魔气翻涌，收益更高也更考验稳定。',
-      unlockRealmIndex: 4,
+      unlockRealmIndex: 14,
       explorationTarget: 7,
       reputationPerMission: 10,
       masteryBonus: { power: 18, dangerReduction: 4 },
@@ -183,7 +199,7 @@
       name: '上古遗迹',
       icon: '遗',
       description: '旧时代残阵，通向更长线的宗门经营。',
-      unlockRealmIndex: 5,
+      unlockRealmIndex: 18,
       explorationTarget: 8,
       reputationPerMission: 12,
       masteryBonus: { qiRate: 0.015, power: 16 },
@@ -632,9 +648,9 @@
       objectives: [
         {
           id: 'foundationRealm',
-          title: '踏入筑基初期',
-          detail: '境界达到筑基初期，开启灵阶养成上限',
-          completed: (state) => state.realmIndex >= 3,
+          title: '踏入筑基一层',
+          detail: '境界达到筑基一层，开启灵阶养成上限',
+          completed: (state) => state.realmIndex >= 9,
           reward: { spiritStones: 120, herbs: 18 },
         },
         {
@@ -669,8 +685,8 @@
         {
           id: 'goldenCoreRealm',
           title: '凝成金丹',
-          detail: '境界达到金丹初成',
-          completed: (state) => state.realmIndex >= 5,
+          detail: '境界达到金丹一转',
+          completed: (state) => state.realmIndex >= 18,
           reward: { spiritStones: 220, meridianPill: 1 },
         },
         {
@@ -704,9 +720,9 @@
       objectives: [
         {
           id: 'goldenCoreCompletion',
-          title: '金丹圆满',
-          detail: '境界达到金丹圆满，打开地阶成长上限',
-          completed: (state) => state.realmIndex >= 6,
+          title: '金丹九转',
+          detail: '境界达到金丹九转，打开元婴前的长期成长目标',
+          completed: (state) => state.realmIndex >= 26,
           reward: { spiritStones: 260, meridianPill: 1 },
         },
         {
@@ -741,8 +757,8 @@
         {
           id: 'nascentSoulRealm',
           title: '踏入元婴',
-          detail: '境界达到元婴初期',
-          completed: (state) => state.realmIndex >= 7,
+          detail: '境界达到元婴一变',
+          completed: (state) => state.realmIndex >= 27,
           reward: { spiritStones: 520, meridianPill: 2 },
         },
         {
@@ -1357,9 +1373,13 @@
 
   function reviveGameState(saved, now = Date.now()) {
     const state = Object.assign(createGameState(now), saved);
+    const savedBalanceVersion = Number(saved?.balanceVersion) || 0;
     state.realmIndex = Math.min(realms.length - 1, Math.max(0, Math.floor(Number(state.realmIndex) || 0)));
+    if (savedBalanceVersion < 3) {
+      state.realmIndex = migrateLegacyRealmIndex(state.realmIndex);
+    }
     state.qi = Math.max(0, Number(state.qi) || 0);
-    if ((saved?.balanceVersion || 0) < currentBalanceVersion) {
+    if (savedBalanceVersion < currentBalanceVersion) {
       state.qi = Math.min(state.qi, round(getCurrentRealm(state).requiredQi * 1.15));
     }
     state.balanceVersion = currentBalanceVersion;
@@ -1425,8 +1445,8 @@
   function updateGame(state, deltaSeconds, now = Date.now()) {
     const seconds = Math.max(0, Math.min(deltaSeconds, 60 * 60 * 12));
     const realm = getCurrentRealm(state);
-    state.qi = round(state.qi + calculateQiRate(state, now) * seconds);
-    state.stoneCarry += realm.stoneRate * seconds;
+    state.qi = round(state.qi + (calculateQiRate(state, now) / 60) * seconds);
+    state.stoneCarry += (realm.stoneRate / 60) * seconds;
     state.herbCarry += ((state.buildings.spiritField || 0) * buildings.spiritField.herbRatePerLevel + getSpiritBeastBonus(state, 'herbRate')) * seconds;
 
     const stonesGained = Math.floor(state.stoneCarry);
@@ -1841,7 +1861,7 @@
 
     refs.realm.textContent = realm.name;
     refs.qi.textContent = `${Math.floor(state.qi)} / ${realm.requiredQi}`;
-    refs.qiRate.textContent = `${calculateQiRate(state, Date.now()).toFixed(1)} / 秒`;
+    refs.qiRate.textContent = `${Math.round(calculateQiRate(state, Date.now()))} / 分钟`;
     refs.stones.textContent = Math.floor(state.spiritStones);
     refs.herbs.textContent = Math.floor(state.herbs);
     refs.pills.textContent = Math.floor(state.pills);
@@ -2269,7 +2289,7 @@
   function getCharacterProfile(state, now = Date.now()) {
     const realm = getCurrentRealm(state);
     const attackSources = compactSources([
-      { label: '境界威压', value: (state.realmIndex + 1) * 55 },
+        { label: '境界威压', value: getRealmPower(state) },
       { label: '剑诀火候', value: (state.cultivationPaths.sword || 0) * cultivationPaths.sword.powerPerLevel },
       { label: '洞府剑阵', value: (state.buildings.swordArray || 0) * buildings.swordArray.powerPerLevel },
       { label: '兵刃品阶', value: getTieredLevelValue(state.gear.weapon || 0, gear.weapon.powerPerLevel) },
@@ -2319,7 +2339,7 @@
       combatPower: { label: '道行总纲', value: calculatePower(state), sources: attackSources },
       attributes: [
         { id: 'attack', label: '道威', value: attackSources.reduce((total, source) => total + source.value, 0), sources: attackSources },
-        { id: 'cultivationSpeed', label: '灵息', value: calculateQiRate(state, now), unit: '/秒', sources: cultivationSources },
+        { id: 'cultivationSpeed', label: '灵息', value: calculateQiRate(state, now), unit: '/分钟', sources: cultivationSources },
         { id: 'breakthrough', label: '破境天机', value: calculateBreakthroughChance(state, now), unit: '%', sources: breakthroughSources },
         { id: 'explorationSafety', label: '护体玄光', value: explorationSafety, sources: compactSources([
           { label: '法袍护身', value: getTieredLevelValue(state.gear.robe || 0, gear.robe.dangerReductionPerLevel) },
@@ -3552,7 +3572,7 @@
   }
 
   function calculatePower(state) {
-    const realmPower = (state.realmIndex + 1) * 55;
+    const realmPower = getRealmPower(state);
     const pathPower = (state.cultivationPaths.sword || 0) * cultivationPaths.sword.powerPerLevel;
     const swordPower = (state.buildings.swordArray || 0) * buildings.swordArray.powerPerLevel;
     const gearPower = getTieredLevelValue(state.gear.weapon || 0, gear.weapon.powerPerLevel);
@@ -3568,6 +3588,10 @@
     const qiPower = Math.min(90, Math.floor((state.qi || 0) * 0.5));
     const demonPenalty = (state.heartDemon || 0) * 8;
     return Math.max(10, Math.floor(realmPower + pathPower + swordPower + gearPower + gearQualityPower + affixPower + formationPower + permanentPower + lootPower + masteryPower + treasurePower + beastPower + sectPower + qiPower - demonPenalty));
+  }
+
+  function getRealmPower(state) {
+    return Math.round(((state.realmIndex || 0) + 1) * 22);
   }
 
   function calculateBreakthroughCarryQi(state, realm = getCurrentRealm(state)) {
@@ -3786,6 +3810,11 @@
       summary: typeof report.summary === 'string' && report.summary ? report.summary : `${mission.name}结算已记录。`,
       time: Number(report.time) || Date.now(),
     };
+  }
+
+  function migrateLegacyRealmIndex(realmIndex) {
+    const legacyIndex = clampInteger(realmIndex, 0, legacyRealmIndexMap.length - 1);
+    return legacyRealmIndexMap[legacyIndex] || 0;
   }
 
   function normalizeAlchemy(alchemy) {
@@ -4585,7 +4614,7 @@
       return `${source.label} ${source.value >= 0 ? '+' : ''}${Math.round(source.value * 100)}%`;
     }
     if (source.mode === 'base') {
-      return `${source.label} ${source.value}/秒`;
+      return `${source.label} ${source.value}/分钟`;
     }
     return `${source.label} ${source.value >= 0 ? '+' : ''}${source.value}`;
   }
