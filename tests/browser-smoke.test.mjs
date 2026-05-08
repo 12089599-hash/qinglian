@@ -123,6 +123,8 @@ assert.match(styles, /@media \(max-width: 760px\)[\s\S]*\.building-grid\s*\{[^}]
 assert.match(styles, /\.depth-card/);
 assert.match(styles, /\.market-refresh-row/);
 assert.match(source, /data-organize-loot/);
+assert.match(source, /getOrganizableLootCount/);
+assert.match(source, /暂无可整理/);
 assert.match(source, /data-toggle-loot-lock/);
 assert.match(source, /data-loot-filter/);
 assert.match(source, /function renderLootComparison/);
@@ -132,6 +134,8 @@ assert.match(source, /result\.reason === 'notEnoughResources'/);
 assert.match(source, /data-opportunity-affordable/);
 assert.doesNotMatch(source, /data-resolve-opportunity="\$\{choice\.id\}" \$\{canAfford\(state, choice\.cost \|\| \{\}\) \? '' : 'disabled'\}/);
 assert.match(source, /function getOpportunityResourceSignature/);
+assert.match(source, /function getSectRecommendation/);
+assert.match(source, /委托建议/);
 assert.doesNotMatch(source, /active \? `\$\{active\.id\}:\$\{state\.spiritStones\}:\$\{state\.artifacts\}:\$\{state\.arrayFlags\}:\$\{state\.qi\}` : 'none'/);
 
 function element() {

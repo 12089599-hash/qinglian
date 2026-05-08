@@ -4272,6 +4272,7 @@
     }
     renderLootFilters();
     const details = getEquipmentDetails(state).loot;
+    updateLootOrganizeButton();
     const signature = `${activeLootFilter}|${details.map((item) => `${item.uid}:${item.level || 0}:${item.locked ? 1 : 0}`).join('|')}|${Object.entries(state.equippedLoot).map(([slot, uid]) => `${slot}:${uid || ''}`).join('|')}`;
     if (!force && renderCache.loot === signature) {
       return;
@@ -4327,6 +4328,16 @@
       button.classList.toggle('active', active);
       button.setAttribute('aria-pressed', String(active));
     });
+  }
+
+  function updateLootOrganizeButton() {
+    const button = document.querySelector('[data-organize-loot]');
+    if (!button) {
+      return;
+    }
+    const count = getOrganizableLootCount(state);
+    button.disabled = count <= 0;
+    button.textContent = count > 0 ? `整理 ${count}` : '暂无可整理';
   }
 
   function renderLootComparison(comparison) {
@@ -4476,7 +4487,8 @@
     }
     const sect = getSectStatus(state);
     refs.sectStatus.textContent = sect.unlocked ? `${sect.levelName} · ${sect.disciples} / ${sect.capacity} 弟子` : '炼气三层后解锁';
-    const signature = `${sect.unlocked}:${sect.levelName}:${sect.disciples}:${sect.capacity}:${sect.assigned}:${sect.reputation}:${state.spiritStones}:${state.herbs}:${sect.roster.map((disciple) => `${disciple.id}:${disciple.level}:${Math.floor(disciple.experience)}:${disciple.job}`).join('|')}:${Object.entries(state.sectAssignments).map(([id, count]) => `${id}:${count}`).join('|')}`;
+    const recommendation = getSectRecommendation(state);
+    const signature = `${sect.unlocked}:${sect.levelName}:${sect.disciples}:${sect.capacity}:${sect.assigned}:${sect.reputation}:${state.spiritStones}:${state.herbs}:${state.beastCores}:${state.artifacts}:${state.forgingEssence}:${recommendation.id}:${sect.roster.map((disciple) => `${disciple.id}:${disciple.level}:${Math.floor(disciple.experience)}:${disciple.job}`).join('|')}:${Object.entries(state.sectAssignments).map(([id, count]) => `${id}:${count}`).join('|')}`;
     if (!force && renderCache.sect === signature) {
       return;
     }
@@ -4491,6 +4503,12 @@
         <div><span>宗门声望</span><strong>${sect.reputation}${sect.nextReputation ? ` / ${sect.nextReputation}` : ''}</strong></div>
         <div><span>空闲弟子</span><strong>${sect.idle}</strong></div>
         <button data-recruit-disciple ${sect.recruitCost ? '' : 'disabled'}>${sect.recruitCost ? `招募 ${formatReward(sect.recruitCost)}` : '弟子已满'}</button>
+      </div>
+      <div class="system-row muted-row">
+        <div>
+          <strong>委托建议 <small>${recommendation.title}</small></strong>
+          <span>${recommendation.detail}</span>
+        </div>
       </div>
       <div class="disciple-roster">
         ${sect.roster.length ? sect.roster.map((disciple) => `
@@ -4516,6 +4534,35 @@
       `).join('')}
     `;
     renderCache.sect = signature;
+  }
+
+  function getSectRecommendation(state) {
+    if ((state.forgingEssence || 0) < 6 || (state.artifacts || 0) < 4) {
+      return {
+        id: 'forge',
+        title: '炼器委托',
+        detail: '炼器精魄或法器偏少时，优先派弟子整理残器，支撑战利品强化和洞府炼器阁。',
+      };
+    }
+    if ((state.beastCores || 0) < 8) {
+      return {
+        id: 'patrol',
+        title: '护山委托',
+        detail: '妖核不足会卡住武器、法袍、剑阵和护脉丹，适合派弟子巡守山门。',
+      };
+    }
+    if ((state.herbs || 0) < 60) {
+      return {
+        id: 'herbGarden',
+        title: '采药委托',
+        detail: '灵草偏少会拖慢炼丹炉、灵田和日常丹药补给，适合先补采药。',
+      };
+    }
+    return {
+      id: 'mine',
+      title: '采矿委托',
+      detail: '当前材料较均衡，可让弟子采矿补灵石，用于洞府、装备和坊市刷新。',
+    };
   }
 
   function renderPathRow(path) {
@@ -5962,6 +6009,28 @@
     applyResources(state, reward);
     addLog(state, now, `整理战利品，分解 ${removedItems.length} 件闲置装备，获得${formatReward(reward)}。`);
     return { ok: true, removed: removedItems.length, reward, items: removedItems };
+  }
+
+  function getOrganizableLootCount(state) {
+    const items = state.lootEquipment || [];
+    if (!items.length) {
+      return 0;
+    }
+    const keepUids = new Set(Object.values(state.equippedLoot || {}).filter(Boolean));
+    Object.entries(state.lockedLoot || {}).forEach(([uid, locked]) => {
+      if (locked) {
+        keepUids.add(uid);
+      }
+    });
+    Object.values(gear).forEach((gearItem) => {
+      const candidate = items
+        .filter((item) => item.slot === gearItem.id && !keepUids.has(item.uid))
+        .sort((a, b) => getLootScore(b) - getLootScore(a))[0];
+      if (candidate) {
+        keepUids.add(candidate.uid);
+      }
+    });
+    return items.filter((item) => !keepUids.has(item.uid)).length;
   }
 
   function empowerLootEquipment(state, uid, now = Date.now()) {
