@@ -34,6 +34,7 @@ import {
   getDailyTasks,
   getCharacterProfile,
   getEquipmentDetails,
+  getLootEmpowerCost,
   getMapStatuses,
   getMissionStatus,
   getGearQuality,
@@ -602,6 +603,52 @@ test('loot dismantling creates strengthening material and empowerment improves b
   assert.equal(calculatePower(state) - before, 44);
 });
 
+test('equipment details expose cultivation intent and tiered growth preview', () => {
+  const state = createGameState(1000);
+  state.realmIndex = 3;
+  state.gear.weapon = 4;
+  state.gear.amulet = 1;
+  state.gear.robe = 1;
+
+  const details = getEquipmentDetails(state);
+  const weapon = details.gear.find((item) => item.id === 'weapon');
+  const amulet = details.gear.find((item) => item.id === 'amulet');
+
+  assert.equal(weapon.intent.name, '镇煞');
+  assert.equal(amulet.intent.name, '叩关');
+  assert.equal(weapon.tier.name, '灵阶');
+  assert.equal(weapon.effects.find((effect) => effect.id === 'power').value, 152);
+  assert.equal(weapon.nextEffects.find((effect) => effect.id === 'power').value > weapon.effects.find((effect) => effect.id === 'power').value, true);
+  assert.equal(weapon.refinement.nextQualityName, '下品');
+  assert.equal(weapon.refinement.chance, 0.82);
+});
+
+test('loot empowerment uses tiered materials and stronger cross-tier bonuses', () => {
+  const state = createGameState(1000);
+  state.realmIndex = 3;
+  state.gear.weapon = 3;
+
+  startMission(state, 'ancientSwordTomb', 1000);
+  updateGame(state, 140, 141_000);
+
+  const item = state.lootEquipment[0];
+  state.spiritStones = 10_000;
+  state.forgingEssence = 100;
+  state.artifacts = 10;
+
+  empowerLootEquipment(state, item.uid, 142_000);
+  empowerLootEquipment(state, item.uid, 143_000);
+  empowerLootEquipment(state, item.uid, 144_000);
+  const beforeTierCross = item.bonuses.power;
+  const crossed = empowerLootEquipment(state, item.uid, 145_000);
+
+  assert.equal(crossed.ok, true);
+  assert.equal(item.level, 4);
+  assert.equal(getLootEmpowerCost(4).artifacts, 1);
+  assert.equal(item.bonuses.power > beforeTierCross, true);
+  assert.equal(item.bonuses.power, 71);
+});
+
 test('map reputation and mastery grow from exploration', () => {
   const state = createGameState(1000);
 
@@ -616,6 +663,26 @@ test('map reputation and mastery grow from exploration', () => {
   assert.equal(status.mastery.level, 1);
   assert.equal(status.mastery.name, '熟路');
   assert.equal(calculateQiRate(state, 88_000), 1.85);
+});
+
+test('mission and boss previews use omen language instead of raw risk wording', () => {
+  const state = createGameState(1000);
+  state.realmIndex = 2;
+
+  const missionStatus = getMissionStatus(state, 'mistyValley');
+  assert.equal(missionStatus.omen.name, '有险');
+  assert.equal(missionStatus.omen.label, '卦象');
+  assert.equal(missionStatus.omen.detail.includes('劫象'), true);
+  assert.equal(missionStatus.omen.detail.includes('风险'), false);
+
+  state.completedMissions.herbGathering = 2;
+  state.completedMissions.cavePatrol = 1;
+  state.completedMissions.marketTrade = 2;
+  const bossStatus = getMapStatuses(state).find((map) => map.id === 'qinglanMountain');
+
+  assert.equal(bossStatus.boss.omen.label, '卦象');
+  assert.equal(['小吉', '平', '有险', '大凶'].includes(bossStatus.boss.omen.name), true);
+  assert.equal(bossStatus.boss.omen.counsel.startsWith('宜备：'), true);
 });
 
 test('sect disciples turn assignments into long-term idle rewards', () => {

@@ -284,6 +284,17 @@ dd {
   background: rgba(0, 0, 0, 0.16);
 }
 
+.attribute-row summary,
+.detail-row summary {
+  list-style: none;
+  cursor: pointer;
+}
+
+.attribute-row summary::-webkit-details-marker,
+.detail-row summary::-webkit-details-marker {
+  display: none;
+}
+
 .attribute-row strong {
   display: flex;
   justify-content: space-between;
@@ -301,6 +312,21 @@ dd {
   display: block;
   margin-top: 5px;
   color: #aeb7ad;
+  line-height: 1.35;
+}
+
+.source-list,
+.detail-stack {
+  display: grid;
+  gap: 6px;
+  margin-top: 9px;
+  padding-top: 9px;
+  border-top: 1px solid rgba(245, 238, 220, 0.09);
+}
+
+.source-list span,
+.detail-stack small {
+  color: #cbd5c2;
   line-height: 1.35;
 }
 
@@ -508,6 +534,25 @@ small {
 .system-row small {
   margin-top: 5px;
   color: var(--gold);
+}
+
+.detail-row {
+  align-items: start;
+}
+
+.detail-row summary {
+  min-width: 0;
+}
+
+.detail-row[open] {
+  border-color: rgba(232, 198, 106, 0.34);
+  background:
+    linear-gradient(135deg, rgba(232, 198, 106, 0.08), rgba(125, 211, 183, 0.045)),
+    rgba(255, 255, 255, 0.035);
+}
+
+.detail-row .detail-stack {
+  grid-column: 1 / -1;
 }
 
 .row-actions {

@@ -4,6 +4,10 @@ import vm from 'node:vm';
 
 const source = readFileSync(new URL('../browserGame.js', import.meta.url), 'utf8');
 
+assert.match(source, /<details class="attribute-row">/);
+assert.match(source, /detail-row/);
+assert.match(source, /卦象/);
+
 function element() {
   return {
     addEventListener() {},

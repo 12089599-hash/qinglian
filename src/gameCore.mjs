@@ -12,10 +12,10 @@ export const REALMS = [
 export const CURRENT_BALANCE_VERSION = 2;
 
 export const UPGRADE_TIERS = [
-  { name: '凡阶', minLevel: 1, maxLevel: 3, realmIndex: 0 },
-  { name: '灵阶', minLevel: 4, maxLevel: 6, realmIndex: 3 },
-  { name: '玄阶', minLevel: 7, maxLevel: 9, realmIndex: 5 },
-  { name: '地阶', minLevel: 10, maxLevel: 12, realmIndex: 7 },
+  { name: '凡阶', minLevel: 1, maxLevel: 3, realmIndex: 0, effectMultiplier: 1, costBase: 1, costStep: 1, essenceBase: 1, essenceStep: 1, lootBonusPerLevel: 0.22, percentBonusPerLevel: 0.01 },
+  { name: '灵阶', minLevel: 4, maxLevel: 6, realmIndex: 3, effectMultiplier: 1.35, costBase: 4.2, costStep: 1.35, essenceBase: 5, essenceStep: 2, lootBonusPerLevel: 0.32, percentBonusPerLevel: 0.014 },
+  { name: '玄阶', minLevel: 7, maxLevel: 9, realmIndex: 5, effectMultiplier: 1.85, costBase: 9.5, costStep: 2.1, essenceBase: 12, essenceStep: 4, lootBonusPerLevel: 0.46, percentBonusPerLevel: 0.02 },
+  { name: '地阶', minLevel: 10, maxLevel: 12, realmIndex: 7, effectMultiplier: 2.5, costBase: 18, costStep: 3.2, essenceBase: 24, essenceStep: 7, lootBonusPerLevel: 0.65, percentBonusPerLevel: 0.028 },
 ];
 
 export const MISSIONS = {
@@ -126,7 +126,7 @@ export const MISSION_MAPS = {
     id: 'qinglanMountain',
     name: '青岚山',
     icon: '山',
-    description: '洞府外山脉，适合打牢根基。',
+    description: '洞府外山脉，根基由此打牢。',
     unlockRealmIndex: 0,
     explorationTarget: 5,
     reputationPerMission: 6,
@@ -180,7 +180,7 @@ export const MISSION_MAPS = {
     id: 'swordTomb',
     name: '古剑冢',
     icon: '剑',
-    description: '残剑埋骨之地，适合剑修淬炼道威。',
+    description: '残剑埋骨之地，剑修可借此淬炼道威。',
     unlockRealmIndex: 3,
     explorationTarget: 6,
     reputationPerMission: 9,
@@ -324,7 +324,7 @@ export const OPPORTUNITIES = {
       {
         id: 'suppressDemon',
         title: '镇压魔念',
-        detail: '冒着心魔反噬风险，换取妖核和阵旗。',
+        detail: '直面心魔反噬，换取妖核和阵旗。',
         cost: {},
         reward: { beastCores: 2, arrayFlags: 1 },
         failurePenalty: { heartDemon: 1, qi: -90 },
@@ -354,7 +354,7 @@ export const TREASURES = {
   swordGourd: {
     id: 'swordGourd',
     name: '养剑葫',
-    detail: '温养剑气，凝练历练道威并压低秘境凶险。',
+    detail: '温养剑气，凝练历练道威并平息行游劫象。',
     maxLevel: 8,
     cost: (level) => ({ spiritStones: scaleCost(140, level), beastCores: level, forgingEssence: level * 2 }),
     bonuses: { power: 24, dangerReduction: 4 },
@@ -381,7 +381,7 @@ export const SPIRIT_BEASTS = {
   thunderTiger: {
     id: 'thunderTiger',
     name: '雷纹幼虎',
-    detail: '守山善战，凝练道威并降低外出历练风险。',
+    detail: '守山善战，凝练道威并护持外出行游。',
     maxLevel: 8,
     cost: (level) => ({ spiritStones: scaleCost(130, level), beastCores: level * 2 }),
     bonuses: { power: 22, dangerReduction: 5 },
@@ -532,22 +532,40 @@ export const GEAR = {
     id: 'weapon',
     name: '武器',
     maxLevel: 12,
-    cost: (level) => ({ spiritStones: scaleCost(80, level), beastCores: scaleCost(1, level) }),
+    cost: (level) => ({ spiritStones: tieredLinearCost(80, level), beastCores: tieredMaterialCost(1, level) }),
     powerPerLevel: 35,
   },
   amulet: {
     id: 'amulet',
     name: '护符',
     maxLevel: 12,
-    cost: (level) => ({ spiritStones: scaleCost(70, level), beastCores: scaleCost(1, level) }),
+    cost: (level) => ({ spiritStones: tieredLinearCost(70, level), beastCores: tieredMaterialCost(1, level) }),
     breakthroughPerLevel: 0.03,
   },
   robe: {
     id: 'robe',
     name: '法袍',
     maxLevel: 12,
-    cost: (level) => ({ spiritStones: scaleCost(60, level), beastCores: scaleCost(1, level) }),
+    cost: (level) => ({ spiritStones: tieredLinearCost(60, level), beastCores: tieredMaterialCost(1, level) }),
     dangerReductionPerLevel: 10,
+  },
+};
+
+export const GEAR_INTENTS = {
+  weapon: {
+    id: 'suppressEvil',
+    name: '镇煞',
+    detail: '剑气锋锐，可压住山门首领与秘境凶煞。',
+  },
+  amulet: {
+    id: 'knockGate',
+    name: '叩关',
+    detail: '符脉护持道基，破境前更容易稳住气机。',
+  },
+  robe: {
+    id: 'wanderGuard',
+    name: '行游',
+    detail: '云纹护身，外出历练时更能避开劫象。',
   },
 };
 
@@ -1076,6 +1094,50 @@ export function getRealmUpgradeLimit(state) {
   return UPGRADE_TIERS.reduce((limit, tier) => (realmIndex >= tier.realmIndex ? tier.maxLevel : limit), UPGRADE_TIERS[0].maxLevel);
 }
 
+function getGearIntent(slot) {
+  return GEAR_INTENTS[slot] ?? { id: 'balanced', name: '守中', detail: '气机均衡，可稳步修行。' };
+}
+
+function getTieredLevelValue(level, perLevel) {
+  const safeLevel = clampInteger(level, 0, UPGRADE_TIERS[UPGRADE_TIERS.length - 1].maxLevel);
+  if (safeLevel <= 0 || !perLevel) {
+    return 0;
+  }
+  const value = UPGRADE_TIERS.reduce((total, tier) => {
+    const counted = Math.max(0, Math.min(safeLevel, tier.maxLevel) - tier.minLevel + 1);
+    return total + counted * perLevel * tier.effectMultiplier;
+  }, 0);
+  return perLevel < 1 ? round(value) : Math.round(value);
+}
+
+function getTieredLootBonus(level) {
+  const safeLevel = clampInteger(level, 0, UPGRADE_TIERS[UPGRADE_TIERS.length - 1].maxLevel);
+  return round(UPGRADE_TIERS.reduce((total, tier) => {
+    const counted = Math.max(0, Math.min(safeLevel, tier.maxLevel) - tier.minLevel + 1);
+    return total + counted * tier.lootBonusPerLevel;
+  }, 0));
+}
+
+function getTieredPercentBonus(level) {
+  const safeLevel = clampInteger(level, 0, UPGRADE_TIERS[UPGRADE_TIERS.length - 1].maxLevel);
+  return round(UPGRADE_TIERS.reduce((total, tier) => {
+    const counted = Math.max(0, Math.min(safeLevel, tier.maxLevel) - tier.minLevel + 1);
+    return total + counted * tier.percentBonusPerLevel;
+  }, 0));
+}
+
+function tieredLinearCost(base, level) {
+  const tier = getUpgradeTier(level);
+  const tierLevel = Math.max(0, level - tier.minLevel);
+  return Math.ceil(base * (tier.costBase + tier.costStep * tierLevel));
+}
+
+function tieredMaterialCost(base, level) {
+  const tier = getUpgradeTier(level);
+  const tierLevel = Math.max(0, level - tier.minLevel);
+  return Math.ceil(base * (tier.essenceBase + tier.essenceStep * tierLevel));
+}
+
 export function getMissionStatus(state, missionId) {
   const mission = MISSIONS[missionId];
   if (!mission) {
@@ -1092,6 +1154,7 @@ export function getMissionStatus(state, missionId) {
     unlocked: (state.realmIndex ?? 0) >= (mission.unlockRealmIndex ?? 0),
     unlockRealmIndex: mission.unlockRealmIndex ?? 0,
     recommendedPower: getMissionDanger(state, mission),
+    omen: getMissionOmen(state, mission),
     completed,
     rareProgress: rareEvery ? `${rareStep} / ${rareEvery}` : '',
     rareReward: mission.rareReward ?? null,
@@ -1126,9 +1189,73 @@ export function getMapStatuses(state) {
         ...map.boss,
         status: defeated ? 'defeated' : ready ? 'ready' : unlocked ? 'hidden' : 'locked',
         defeated,
+        omen: getBossOmen(state, map),
       },
     };
   });
+}
+
+function getMissionOmen(state, mission) {
+  const pressure = getMissionDanger(state, mission);
+  const power = calculatePower(state);
+  return buildOmen({
+    power,
+    pressure,
+    demon: mission.failurePenalty?.heartDemon ?? 0,
+    mapMastery: getMapMastery(state, getMissionMapId(mission)).level,
+    unlocked: (state.realmIndex ?? 0) >= (mission.unlockRealmIndex ?? 0),
+  });
+}
+
+function getBossOmen(state, map) {
+  return buildOmen({
+    power: calculatePower(state),
+    pressure: map.boss.power,
+    demon: map.boss.failurePenalty?.heartDemon ?? 0,
+    mapMastery: getMapMastery(state, map.id).level,
+    unlocked: (state.realmIndex ?? 0) >= map.unlockRealmIndex,
+  });
+}
+
+function buildOmen({ power, pressure, demon = 0, mapMastery = 0, unlocked = true }) {
+  if (!unlocked) {
+    return {
+      label: '卦象',
+      name: '缘浅',
+      detail: '劫象未显，境界尚未引动此地气机。',
+      counsel: '宜备：先稳固境界，再循图而行。',
+    };
+  }
+  if (pressure <= 0) {
+    return {
+      label: '卦象',
+      name: '大吉',
+      detail: '劫象已平，气机顺遂。',
+      counsel: '宜备：可安心行游。',
+    };
+  }
+  const ratio = power / pressure;
+  const name = ratio >= 1.3 ? '小吉' : ratio >= 0.95 ? '平' : ratio >= 0.72 ? '有险' : '大凶';
+  const signs = [];
+  if (demon > 0) {
+    signs.push('魔息偏盛');
+  }
+  if (ratio < 1) {
+    signs.push('妖氛未散');
+  }
+  if (mapMastery <= 1) {
+    signs.push('地势未熟');
+  }
+  if (ratio < 1.15) {
+    signs.push('护持尚浅');
+  }
+  const detail = signs.length ? `劫象：${[...new Set(signs)].join('，')}` : '劫象：气机相合';
+  const counsel = ratio < 1
+    ? '宜备：先凝练道威，或温养法袍护身。'
+    : mapMastery <= 1
+      ? '宜备：多行游此地，熟悉地脉。'
+      : '宜备：气机已稳，可择机前往。';
+  return { label: '卦象', name, detail, counsel };
 }
 
 export function challengeMapBoss(state, mapId, now = Date.now()) {
@@ -1183,7 +1310,7 @@ export function calculateBreakthroughChance(state, now = Date.now()) {
   const overfill = Math.max(0, state.qi - realm.requiredQi);
   const preparation = Math.min(0.2, overfill / realm.requiredQi / 2);
   const insightBonus = Math.min(0.15, (state.insight ?? 0) * 0.03);
-  const gearBonus = Math.min(0.12, (state.gear?.amulet ?? 0) * GEAR.amulet.breakthroughPerLevel);
+  const gearBonus = Math.min(0.18, getTieredLevelValue(state.gear?.amulet ?? 0, GEAR.amulet.breakthroughPerLevel));
   const affixBonus = Math.min(0.08, getGearAffixBonus(state, 'breakthrough'));
   const lootBonus = Math.min(0.1, getEquippedLootBonus(state, 'breakthrough'));
   const formationBonus = Math.min(0.12, (state.formations?.mountainGuard ?? 0) * FORMATIONS.mountainGuard.stabilityPerLevel);
@@ -1199,7 +1326,7 @@ export function calculatePower(state) {
   const realmPower = (state.realmIndex + 1) * 55;
   const pathPower = (state.cultivationPaths?.sword ?? 0) * CULTIVATION_PATHS.sword.powerPerLevel;
   const swordPower = (state.buildings?.swordArray ?? 0) * BUILDINGS.swordArray.powerPerLevel;
-  const gearPower = (state.gear?.weapon ?? 0) * GEAR.weapon.powerPerLevel;
+  const gearPower = getTieredLevelValue(state.gear?.weapon ?? 0, GEAR.weapon.powerPerLevel);
   const gearQualityPower = Object.values(state.gearQuality ?? {}).reduce((total, qualityIndex) => total + (GEAR_QUALITIES[qualityIndex]?.powerBonus ?? 0), 0);
   const affixPower = getGearAffixBonus(state, 'powerBonus');
   const formationPower = (state.formations?.swordArray ?? 0) * FORMATIONS.swordArray.powerPerLevel;
@@ -1220,7 +1347,7 @@ export function getCharacterProfile(state, now = Date.now()) {
     { label: '境界威压', value: (state.realmIndex + 1) * 55 },
     { label: '剑诀火候', value: (state.cultivationPaths?.sword ?? 0) * CULTIVATION_PATHS.sword.powerPerLevel },
     { label: '洞府剑阵', value: (state.buildings?.swordArray ?? 0) * BUILDINGS.swordArray.powerPerLevel },
-    { label: '兵刃品阶', value: (state.gear?.weapon ?? 0) * GEAR.weapon.powerPerLevel },
+    { label: '兵刃品阶', value: getTieredLevelValue(state.gear?.weapon ?? 0, GEAR.weapon.powerPerLevel) },
     { label: '炼器品相', value: Object.values(state.gearQuality ?? {}).reduce((total, qualityIndex) => total + (GEAR_QUALITIES[qualityIndex]?.powerBonus ?? 0), 0) },
     { label: '灵纹词条', value: getGearAffixBonus(state, 'powerBonus') },
     { label: '剑阵杀意', value: (state.formations?.swordArray ?? 0) * FORMATIONS.swordArray.powerPerLevel },
@@ -1246,7 +1373,7 @@ export function getCharacterProfile(state, now = Date.now()) {
   ]);
   const breakthroughSources = compactSources([
     { label: '本命道基', value: 0.75, mode: 'percent' },
-    { label: '护符护脉', value: Math.min(0.12, (state.gear?.amulet ?? 0) * GEAR.amulet.breakthroughPerLevel), mode: 'percent' },
+    { label: '护符护脉', value: Math.min(0.18, getTieredLevelValue(state.gear?.amulet ?? 0, GEAR.amulet.breakthroughPerLevel)), mode: 'percent' },
     { label: '灵纹词条', value: Math.min(0.08, getGearAffixBonus(state, 'breakthrough')), mode: 'percent' },
     { label: '护山阵势', value: Math.min(0.12, (state.formations?.mountainGuard ?? 0) * FORMATIONS.mountainGuard.stabilityPerLevel), mode: 'percent' },
     { label: '奇珍加持', value: Math.min(0.1, getEquippedLootBonus(state, 'breakthrough')), mode: 'percent' },
@@ -1255,7 +1382,7 @@ export function getCharacterProfile(state, now = Date.now()) {
     { label: '根基沉淀', value: Math.min(0.15, (state.foundationStability ?? 0) * 0.05), mode: 'percent' },
     { label: '心魔侵扰', value: -Math.min(0.35, (state.heartDemon ?? 0) * 0.15), mode: 'percent' },
   ], true);
-  const explorationSafety = (state.gear?.robe ?? 0) * GEAR.robe.dangerReductionPerLevel
+  const explorationSafety = getTieredLevelValue(state.gear?.robe ?? 0, GEAR.robe.dangerReductionPerLevel)
     + getGearAffixBonus(state, 'dangerReduction')
     + getEquippedLootBonus(state, 'dangerReduction')
     + getMapMasteryBonus(state, 'dangerReduction')
@@ -1275,7 +1402,7 @@ export function getCharacterProfile(state, now = Date.now()) {
       { id: 'cultivationSpeed', label: '灵息', value: calculateQiRate(state, now), unit: '/秒', sources: cultivationSources },
       { id: 'breakthrough', label: '破境天机', value: calculateBreakthroughChance(state, now), unit: '%', sources: breakthroughSources },
       { id: 'explorationSafety', label: '护体玄光', value: explorationSafety, sources: compactSources([
-        { label: '法袍护身', value: (state.gear?.robe ?? 0) * GEAR.robe.dangerReductionPerLevel },
+        { label: '法袍护身', value: getTieredLevelValue(state.gear?.robe ?? 0, GEAR.robe.dangerReductionPerLevel) },
         { label: '灵纹词条', value: getGearAffixBonus(state, 'dangerReduction') },
         { label: '奇珍加持', value: getEquippedLootBonus(state, 'dangerReduction') },
         { label: '地脉熟稔', value: getMapMasteryBonus(state, 'dangerReduction') },
@@ -1305,15 +1432,35 @@ export function getEquipmentDetails(state) {
       const level = state.gear?.[item.id] ?? 0;
       const quality = getGearQuality(state, item.id);
       const affix = quality.affixId ? GEAR_AFFIXES[quality.affixId] : null;
+      const maxed = level >= item.maxLevel;
+      const nextLevel = level + 1;
+      const realmLocked = nextLevel > getRealmUpgradeLimit(state);
+      const qualityMaxed = quality.qualityIndex >= GEAR_QUALITIES.length - 1;
+      const nextQuality = quality.qualityIndex + 1;
       return {
         id: item.id,
         name: item.name,
         level,
         maxLevel: item.maxLevel,
+        tier: getUpgradeTier(Math.max(1, maxed ? level : nextLevel)),
+        intent: getGearIntent(item.id),
         qualityIndex: quality.qualityIndex,
         qualityName: quality.qualityName,
         affix: affix ? { id: affix.id, name: affix.name, effects: effectsFromBonusObject(affix) } : { id: null, name: '无词条', effects: [] },
         effects: getGearEffects(item.id, level, quality.qualityIndex, affix),
+        nextEffects: maxed ? [] : getGearEffects(item.id, nextLevel, quality.qualityIndex, affix),
+        upgrade: {
+          maxed,
+          realmLocked,
+          nextLevel,
+          cost: maxed || realmLocked ? null : item.cost(nextLevel),
+        },
+        refinement: {
+          maxed: qualityMaxed,
+          nextQualityName: qualityMaxed ? null : GEAR_QUALITIES[nextQuality]?.name,
+          chance: qualityMaxed || level <= 0 ? 0 : GEAR_QUALITIES[quality.qualityIndex]?.refineChance ?? 0,
+          cost: qualityMaxed || level <= 0 ? null : getRefineCost(nextQuality),
+        },
       };
     }),
     loot: (state.lootEquipment ?? []).map((item) => ({
@@ -1321,8 +1468,17 @@ export function getEquipmentDetails(state) {
       name: item.name,
       slot: item.slot,
       level: item.level ?? 0,
+      maxLevel: getLootMaxLevel(item),
+      tier: getUpgradeTier(Math.max(1, item.level ?? 1)),
+      intent: getGearIntent(item.slot),
       equipped: state.equippedLoot?.[item.slot] === item.uid,
       effects: effectsFromBonusObject(item.bonuses ?? {}),
+      nextEffects: (item.level ?? 0) >= getLootMaxLevel(item) ? [] : effectsFromBonusObject(createLootBonuses(item.templateId, (item.level ?? 0) + 1)),
+      empower: {
+        maxed: (item.level ?? 0) >= getLootMaxLevel(item),
+        nextLevel: (item.level ?? 0) + 1,
+        cost: (item.level ?? 0) >= getLootMaxLevel(item) ? null : getLootEmpowerCost((item.level ?? 0) + 1),
+      },
     })),
     treasures: Object.values(TREASURES).map((treasure) => {
       const level = state.treasures?.[treasure.id] ?? 0;
@@ -1410,10 +1566,20 @@ export function empowerLootEquipment(state, uid, now = Date.now()) {
 }
 
 export function getLootEmpowerCost(nextLevel) {
-  return {
-    spiritStones: scaleCost(90, nextLevel),
-    forgingEssence: nextLevel * 2,
+  const cost = {
+    spiritStones: tieredLinearCost(90, nextLevel),
+    forgingEssence: tieredMaterialCost(2, nextLevel),
   };
+  if (nextLevel >= 4) {
+    cost.artifacts = Math.ceil((nextLevel - 3) / 2);
+  }
+  if (nextLevel >= 7) {
+    cost.beastCores = Math.ceil((nextLevel - 6) / 2);
+  }
+  if (nextLevel >= 10) {
+    cost.arrayFlags = Math.ceil((nextLevel - 9) / 2);
+  }
+  return cost;
 }
 
 export function getDominantPath(state) {
@@ -2182,7 +2348,7 @@ function completeAlchemyIfReady(state, now) {
 }
 
 function getMissionDanger(state, mission) {
-  return Math.max(0, (mission.danger ?? 0) - (state.gear?.robe ?? 0) * GEAR.robe.dangerReductionPerLevel - getGearAffixBonus(state, 'dangerReduction') - getEquippedLootBonus(state, 'dangerReduction') - getMapMasteryBonus(state, 'dangerReduction') - getTreasureBonus(state, 'dangerReduction') - getSpiritBeastBonus(state, 'dangerReduction') - (state.cultivationPaths?.sword ?? 0) * CULTIVATION_PATHS.sword.dangerReductionPerLevel);
+  return Math.max(0, (mission.danger ?? 0) - getTieredLevelValue(state.gear?.robe ?? 0, GEAR.robe.dangerReductionPerLevel) - getGearAffixBonus(state, 'dangerReduction') - getEquippedLootBonus(state, 'dangerReduction') - getMapMasteryBonus(state, 'dangerReduction') - getTreasureBonus(state, 'dangerReduction') - getSpiritBeastBonus(state, 'dangerReduction') - (state.cultivationPaths?.sword ?? 0) * CULTIVATION_PATHS.sword.dangerReductionPerLevel);
 }
 
 function addLog(state, time, text) {
@@ -2621,13 +2787,13 @@ function getGearEffects(gearId, level, qualityIndex, affix) {
   const item = GEAR[gearId];
   const effects = [];
   if (item.powerPerLevel) {
-    effects.push({ id: 'power', label: '道威', value: level * item.powerPerLevel, mode: 'flat' });
+    effects.push({ id: 'power', label: '道威', value: getTieredLevelValue(level, item.powerPerLevel), mode: 'flat' });
   }
   if (item.breakthroughPerLevel) {
-    effects.push({ id: 'breakthrough', label: '破境天机', value: round(level * item.breakthroughPerLevel), mode: 'percent' });
+    effects.push({ id: 'breakthrough', label: '破境天机', value: getTieredLevelValue(level, item.breakthroughPerLevel), mode: 'percent' });
   }
   if (item.dangerReductionPerLevel) {
-    effects.push({ id: 'dangerReduction', label: '秘境风险', value: level * item.dangerReductionPerLevel, mode: 'reduction' });
+    effects.push({ id: 'dangerReduction', label: '劫象消解', value: getTieredLevelValue(level, item.dangerReductionPerLevel), mode: 'reduction' });
   }
   const qualityPower = GEAR_QUALITIES[qualityIndex]?.powerBonus ?? 0;
   if (qualityPower) {
@@ -2646,7 +2812,7 @@ function effectsFromBonusObject(bonuses, prefix = '') {
     qiRate: '灵息',
     qiBonus: '灵息',
     breakthrough: '破境天机',
-    dangerReduction: '秘境凶险',
+    dangerReduction: '劫象消解',
     herbRate: '灵草生长',
   };
   return Object.entries(bonuses)
@@ -2914,14 +3080,15 @@ function createLootItem(templateId, uid, level = 0) {
 
 function createLootBonuses(templateId, level = 0) {
   const template = LOOT_EQUIPMENT[templateId];
-  const multiplier = 1 + level * 0.22;
+  const multiplier = 1 + getTieredLootBonus(level);
+  const percentBonus = getTieredPercentBonus(level);
   return Object.fromEntries(
-    Object.entries(template.bonuses).map(([key, value]) => [key, key === 'breakthrough' || key === 'qiRate' ? round(value + level * 0.01) : Math.round(value * multiplier)]),
+    Object.entries(template.bonuses).map(([key, value]) => [key, key === 'breakthrough' || key === 'qiRate' ? round(value + percentBonus) : Math.round(value * multiplier)]),
   );
 }
 
 function getLootMaxLevel(itemOrTemplate) {
-  return Math.max(3, 3 + (itemOrTemplate?.quality ?? 0));
+  return Math.min(12, Math.max(3, 3 + (itemOrTemplate?.quality ?? 0) * 3));
 }
 
 function getResourceAmount(state, resource) {
