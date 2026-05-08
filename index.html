@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>青岚洞府</title>
-    <link rel="stylesheet" href="styles.css?v=202605081317" />
+    <link rel="stylesheet" href="styles.css?v=202605081530" />
   </head>
   <body>
     <main class="shell">
@@ -233,28 +233,7 @@
           <header>
             <h2>洞府</h2>
           </header>
-          <div class="upgrade-list">
-            <button data-upgrade-building="alchemyFurnace">
-              <strong>炼丹炉 <span data-building-level="alchemyFurnace">0</span> 级</strong>
-              <span>缩短炼丹时间，解锁丹方</span>
-              <small data-building-cost="alchemyFurnace">升级需灵石</small>
-            </button>
-            <button data-upgrade-building="meditationSeat">
-              <strong>蒲团 <span data-building-level="meditationSeat">1</span> 级</strong>
-              <span>提升灵息周天</span>
-              <small data-building-cost="meditationSeat">升级需灵石</small>
-            </button>
-            <button data-upgrade-building="spiritField">
-              <strong>灵田 <span data-building-level="spiritField">0</span> 级</strong>
-              <span>自动生长灵草</span>
-              <small data-building-cost="spiritField">升级需灵石</small>
-            </button>
-            <button data-upgrade-building="swordArray">
-              <strong>剑阵 <span data-building-level="swordArray">0</span> 级</strong>
-              <span>强化护山道威</span>
-              <small data-building-cost="swordArray">升级需灵石</small>
-            </button>
-          </div>
+          <div data-cave-list class="cave-panel"></div>
         </article>
 
         <article class="panel" data-panel="missions">
@@ -288,6 +267,6 @@
 
     <div data-toast-stack class="toast-stack" aria-live="polite"></div>
 
-    <script src="browserGame.js?v=202605081317"></script>
+    <script src="browserGame.js?v=202605081530"></script>
   </body>
 </html>

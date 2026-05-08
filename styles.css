@@ -710,6 +710,172 @@ small {
   border-color: rgba(232, 198, 106, 0.45);
 }
 
+.cave-panel {
+  display: grid;
+  gap: 12px;
+}
+
+.cave-stage-card {
+  display: grid;
+  gap: 12px;
+  border: 1px solid rgba(232, 198, 106, 0.36);
+  border-radius: 8px;
+  padding: 14px;
+  background:
+    linear-gradient(135deg, rgba(232, 198, 106, 0.12), rgba(125, 211, 183, 0.08)),
+    rgba(255, 255, 255, 0.035);
+}
+
+.cave-stage-card span,
+.cave-stage-card strong,
+.cave-stage-card small {
+  display: block;
+}
+
+.cave-stage-card span {
+  color: var(--jade);
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.cave-stage-card strong {
+  margin-top: 4px;
+  color: var(--gold);
+  font-size: 1.45rem;
+}
+
+.cave-stage-card small {
+  margin-top: 4px;
+  color: var(--muted);
+}
+
+.cave-progress {
+  overflow: hidden;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(245, 238, 220, 0.1);
+}
+
+.cave-progress i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--jade), var(--gold));
+}
+
+.cave-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.cave-summary-grid div,
+.building-effect-grid div {
+  border: 1px solid rgba(245, 238, 220, 0.1);
+  border-radius: 8px;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.cave-summary-grid span,
+.cave-summary-grid strong,
+.building-effect-grid span,
+.building-effect-grid strong {
+  display: block;
+}
+
+.cave-summary-grid span,
+.building-effect-grid span {
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.cave-summary-grid strong,
+.building-effect-grid strong {
+  margin-top: 5px;
+  color: var(--paper);
+  line-height: 1.35;
+}
+
+.building-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.building-card {
+  display: grid;
+  justify-items: start;
+  gap: 5px;
+  min-height: 118px;
+  border-color: rgba(245, 238, 220, 0.12);
+  padding: 12px;
+  text-align: left;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.building-card.active {
+  border-color: rgba(232, 198, 106, 0.72);
+  background: rgba(232, 198, 106, 0.13);
+}
+
+.building-card span {
+  color: var(--jade);
+  font-size: 0.75rem;
+  font-weight: 900;
+}
+
+.building-card strong {
+  color: var(--paper);
+  font-size: 1rem;
+}
+
+.building-card small,
+.building-card em {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-style: normal;
+  line-height: 1.35;
+}
+
+.building-detail-card {
+  border: 1px solid rgba(232, 198, 106, 0.28);
+  border-radius: 8px;
+  padding: 14px;
+  background: rgba(8, 13, 14, 0.42);
+}
+
+.building-detail-card header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+}
+
+.building-detail-card h3 {
+  margin: 3px 0 0;
+  color: var(--paper);
+}
+
+.building-detail-card header span {
+  color: var(--gold);
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.building-detail-card p {
+  margin: 10px 0 12px;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.building-effect-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
 .system-split {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1579,6 +1745,17 @@ small {
   .boss-card,
   .sect-summary {
     grid-template-columns: 1fr;
+  }
+
+  .cave-summary-grid,
+  .building-grid,
+  .building-effect-grid,
+  .building-detail-card header {
+    grid-template-columns: 1fr;
+  }
+
+  .building-card {
+    min-height: 94px;
   }
 
   .disciple-roster,

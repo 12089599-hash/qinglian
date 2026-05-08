@@ -1,15 +1,15 @@
 const REALM_GROUPS = [
-  { prefix: '炼气', suffixes: ['一层', '二层', '三层', '四层', '五层', '六层', '七层', '八层', '九层'], startQi: 25, endQi: 4_500, startRate: 1.5, endRate: 7, startStone: 2, endStone: 9 },
-  { prefix: '筑基', suffixes: ['一层', '二层', '三层', '四层', '五层', '六层', '七层', '八层', '九层'], startQi: 8_000, endQi: 85_000, startRate: 8.67, endRate: 24.17, startStone: 11, endStone: 26 },
-  { prefix: '金丹', suffixes: ['一转', '二转', '三转', '四转', '五转', '六转', '七转', '八转', '九转'], startQi: 130_000, endQi: 1_100_000, startRate: 29.17, endRate: 73.33, startStone: 32, endStone: 75 },
-  { prefix: '元婴', suffixes: ['一变', '二变', '三变', '四变', '五变', '六变', '七变', '八变', '九变'], startQi: 1_800_000, endQi: 8_000_000, startRate: 90, endRate: 208.33, startStone: 90, endStone: 180 },
+  { prefix: '炼气', suffixes: ['一层', '二层', '三层', '四层', '五层', '六层', '七层', '八层', '九层'], startQi: 25, endQi: 8_000, startRate: 1.5, endRate: 5.5, startStone: 2, endStone: 8 },
+  { prefix: '筑基', suffixes: ['一层', '二层', '三层', '四层', '五层', '六层', '七层', '八层', '九层'], startQi: 16_000, endQi: 220_000, startRate: 6, endRate: 16, startStone: 10, endStone: 24 },
+  { prefix: '金丹', suffixes: ['一转', '二转', '三转', '四转', '五转', '六转', '七转', '八转', '九转'], startQi: 360_000, endQi: 2_800_000, startRate: 18, endRate: 45, startStone: 28, endStone: 68 },
+  { prefix: '元婴', suffixes: ['一变', '二变', '三变', '四变', '五变', '六变', '七变', '八变', '九变'], startQi: 4_200_000, endQi: 20_000_000, startRate: 55, endRate: 115, startStone: 84, endStone: 170 },
 ];
 
 const LEGACY_REALM_INDEX_MAP = [0, 1, 2, 9, 13, 18, 26, 27];
 
 export const REALMS = createRealmTrack();
 
-export const CURRENT_BALANCE_VERSION = 4;
+export const CURRENT_BALANCE_VERSION = 5;
 export const MAP_DEPTH_MAX_LAYER = 30;
 
 function createRealmTrack() {
@@ -34,6 +34,36 @@ export const UPGRADE_TIERS = [
   { name: '灵阶', minLevel: 4, maxLevel: 6, realmIndex: 9, effectMultiplier: 1.35, costBase: 4.2, costStep: 1.35, essenceBase: 5, essenceStep: 2, lootBonusPerLevel: 0.32, percentBonusPerLevel: 0.014 },
   { name: '玄阶', minLevel: 7, maxLevel: 9, realmIndex: 18, effectMultiplier: 1.85, costBase: 9.5, costStep: 2.1, essenceBase: 12, essenceStep: 4, lootBonusPerLevel: 0.46, percentBonusPerLevel: 0.02 },
   { name: '地阶', minLevel: 10, maxLevel: 12, realmIndex: 27, effectMultiplier: 2.5, costBase: 18, costStep: 3.2, essenceBase: 24, essenceStep: 7, lootBonusPerLevel: 0.65, percentBonusPerLevel: 0.028 },
+];
+
+export const CAVE_STAGES = [
+  { level: 1, name: '荒岩初辟' },
+  { level: 2, name: '引泉入室' },
+  { level: 3, name: '青苔小筑' },
+  { level: 4, name: '竹扉幽府' },
+  { level: 5, name: '聚灵初庭' },
+  { level: 6, name: '云灯丹室' },
+  { level: 7, name: '听风别院' },
+  { level: 8, name: '剑痕外坛' },
+  { level: 9, name: '灵田成畦' },
+  { level: 10, name: '青岚内府' },
+  { level: 11, name: '玄炉温室' },
+  { level: 12, name: '玉阶藏经' },
+  { level: 13, name: '护山阵阙' },
+  { level: 14, name: '云壑洞庭' },
+  { level: 15, name: '星砂丹台' },
+  { level: 16, name: '灵脉中枢' },
+  { level: 17, name: '归元内景' },
+  { level: 18, name: '青霄府界' },
+  { level: 19, name: '半步洞天' },
+  { level: 20, name: '青岚洞天' },
+];
+
+export const CAVE_UPGRADE_TIERS = [
+  { name: '筑庐', minLevel: 1, maxLevel: 5, realmIndex: 0, costMultiplier: 1, materialMultiplier: 1 },
+  { name: '灵府', minLevel: 6, maxLevel: 10, realmIndex: 9, costMultiplier: 2.8, materialMultiplier: 2.2 },
+  { name: '玄庭', minLevel: 11, maxLevel: 15, realmIndex: 18, costMultiplier: 7.4, materialMultiplier: 4.4 },
+  { name: '洞天', minLevel: 16, maxLevel: 20, realmIndex: 27, costMultiplier: 18, materialMultiplier: 8 },
 ];
 
 export const MISSIONS = {
@@ -493,31 +523,77 @@ export const LOOT_EQUIPMENT = {
 export const BUILDINGS = {
   alchemyFurnace: {
     id: 'alchemyFurnace',
-    name: '炼丹炉',
-    maxLevel: 12,
-    cost: (level) => ({ spiritStones: scaleCost(55, level), herbs: scaleCost(8, level) }),
-    speedBonusPerLevel: 0.2,
+    name: '丹房',
+    detail: '温养丹炉火候，缩短炼丹时间并承接高阶丹方。',
+    maxLevel: 20,
+    cost: (level) => filterCost({
+      spiritStones: caveStoneCost(58, level),
+      herbs: caveMaterialCost(7, level),
+      beastCores: level >= 11 ? caveMaterialCost(1, level - 10) : 0,
+    }),
+    speedBonusPerLevel: 0.045,
   },
   meditationSeat: {
     id: 'meditationSeat',
-    name: '蒲团',
-    maxLevel: 12,
-    cost: (level) => ({ spiritStones: scaleCost(20, level), herbs: Math.max(0, scaleCost(4, level - 1)) }),
-    qiBonusPerLevel: 0.2,
+    name: '静室',
+    detail: '安置蒲团与聚息石，提升长期吐纳灵息。',
+    maxLevel: 20,
+    cost: (level) => filterCost({
+      spiritStones: caveStoneCost(24, level),
+      herbs: level >= 2 ? caveMaterialCost(4, level - 1) : 0,
+      arrayFlags: level >= 16 ? caveMaterialCost(1, level - 15) : 0,
+    }),
+    qiBonusPerLevel: 0.08,
   },
   spiritField: {
     id: 'spiritField',
     name: '灵田',
-    maxLevel: 12,
-    cost: (level) => ({ spiritStones: scaleCost(30, level) }),
+    detail: '开垦洞府药畦，离线和在线都会缓慢生长灵草。',
+    maxLevel: 20,
+    cost: (level) => filterCost({
+      spiritStones: caveStoneCost(34, level),
+      herbs: level >= 6 ? caveMaterialCost(5, level - 5) : 0,
+    }),
     herbRatePerLevel: 0.02,
   },
   swordArray: {
     id: 'swordArray',
     name: '剑阵',
-    maxLevel: 12,
-    cost: (level) => ({ spiritStones: scaleCost(45, level), beastCores: Math.max(0, scaleCost(1, level - 1)) }),
-    powerPerLevel: 28,
+    detail: '布置护山剑痕，凝练道威并压住外出劫象。',
+    maxLevel: 20,
+    cost: (level) => filterCost({
+      spiritStones: caveStoneCost(52, level),
+      beastCores: level >= 2 ? caveMaterialCost(1, level - 1) : 0,
+      arrayFlags: level >= 11 ? caveMaterialCost(1, level - 10) : 0,
+    }),
+    powerPerLevel: 24,
+    dangerReductionPerLevel: 2,
+  },
+  forgingHall: {
+    id: 'forgingHall',
+    name: '炼器阁',
+    detail: '归拢炉火与矿砂，提高淬炼把握和战利品分解收益。',
+    maxLevel: 20,
+    cost: (level) => filterCost({
+      spiritStones: caveStoneCost(66, level),
+      artifacts: level >= 2 ? caveMaterialCost(1, level - 1) : 0,
+      forgingEssence: level >= 11 ? caveMaterialCost(2, level - 10) : 0,
+    }),
+    refineChancePerLevel: 0.006,
+    dismantleBonusPerLevel: 0.025,
+  },
+  scriptureLibrary: {
+    id: 'scriptureLibrary',
+    name: '藏经阁',
+    detail: '收藏残卷与心得，提升破境天机并沉淀悟道。',
+    maxLevel: 20,
+    cost: (level) => filterCost({
+      spiritStones: caveStoneCost(72, level),
+      arrayFlags: level >= 6 ? caveMaterialCost(1, level - 5) : 0,
+      insight: level >= 16 ? caveMaterialCost(1, level - 15) : 0,
+    }),
+    breakthroughPerLevel: 0.006,
+    insightRatePerLevel: 0.00012,
   },
 };
 
@@ -1094,12 +1170,15 @@ export function createGameState(now = Date.now()) {
       meditationSeat: 1,
       spiritField: 0,
       swordArray: 0,
+      forgingHall: 0,
+      scriptureLibrary: 0,
     },
     activeMission: null,
     totalCultivationSeconds: 0,
     breakthroughCount: 0,
     stoneCarry: 0,
     herbCarry: 0,
+    insightCarry: 0,
     lastUpdatedAt: now,
     log: [
       { time: now, text: '你在青岚山开辟洞府，开始吐纳灵气。' },
@@ -1121,6 +1200,7 @@ export function reviveGameState(saved, now = Date.now()) {
   state.balanceVersion = CURRENT_BALANCE_VERSION;
   state.heartDemon = Math.max(0, Number(state.heartDemon) || 0);
   state.insight = Math.max(0, Number(state.insight) || 0);
+  state.insightCarry = Math.max(0, Number(state.insightCarry) || 0);
   state.pillBoostUntil = Math.max(0, Number(state.pillBoostUntil) || 0);
   state.breakthroughBoostUntil = Math.max(0, Number(state.breakthroughBoostUntil) || 0);
   state.foundationStability = Math.max(0, Number(state.foundationStability) || 0);
@@ -1186,6 +1266,115 @@ export function getUpgradeTier(level) {
 export function getRealmUpgradeLimit(state) {
   const realmIndex = state.realmIndex ?? 0;
   return UPGRADE_TIERS.reduce((limit, tier) => (realmIndex >= tier.realmIndex ? tier.maxLevel : limit), UPGRADE_TIERS[0].maxLevel);
+}
+
+export function getCaveUpgradeTier(level) {
+  return CAVE_UPGRADE_TIERS.find((tier) => level >= tier.minLevel && level <= tier.maxLevel) ?? CAVE_UPGRADE_TIERS[CAVE_UPGRADE_TIERS.length - 1];
+}
+
+export function getCaveUpgradeLimit(state) {
+  const realmIndex = state.realmIndex ?? 0;
+  return CAVE_UPGRADE_TIERS.reduce((limit, tier) => (realmIndex >= tier.realmIndex ? tier.maxLevel : limit), CAVE_UPGRADE_TIERS[0].maxLevel);
+}
+
+export function getCaveStage(state) {
+  const buildingIds = Object.keys(BUILDINGS);
+  const totalLevel = buildingIds.reduce((total, id) => total + clampInteger(state.buildings?.[id] ?? 0, 0, BUILDINGS[id].maxLevel), 0);
+  const level = Math.max(1, Math.min(CAVE_STAGES.length, Math.ceil(totalLevel / buildingIds.length)));
+  const stage = CAVE_STAGES[level - 1] ?? CAVE_STAGES[0];
+  const next = CAVE_STAGES[level] ?? null;
+  return {
+    ...stage,
+    totalLevel,
+    next,
+    maxLevel: CAVE_STAGES.length,
+  };
+}
+
+export function getCaveStatus(state) {
+  const stage = getCaveStage(state);
+  const upgradeLimit = getCaveUpgradeLimit(state);
+  const nextStageProgress = Math.min(1, stage.totalLevel / (stage.maxLevel * Object.keys(BUILDINGS).length));
+  return {
+    stage,
+    upgradeLimit,
+    nextStageProgress,
+    summary: getCaveSummary(state),
+    buildings: Object.values(BUILDINGS).map((building) => {
+      const level = clampInteger(state.buildings?.[building.id] ?? 0, 0, building.maxLevel);
+      const nextLevel = level + 1;
+      const maxed = level >= building.maxLevel;
+      const realmLocked = nextLevel > upgradeLimit;
+      return {
+        id: building.id,
+        name: building.name,
+        detail: building.detail,
+        level,
+        maxLevel: building.maxLevel,
+        tier: getCaveUpgradeTier(Math.max(1, maxed ? level : nextLevel)),
+        effects: getBuildingEffects(building.id, level),
+        nextEffects: maxed ? [] : getBuildingEffects(building.id, nextLevel),
+        upgrade: {
+          maxed,
+          realmLocked,
+          nextLevel,
+          cost: maxed || realmLocked ? null : building.cost(nextLevel),
+        },
+      };
+    }),
+  };
+}
+
+function getCaveSummary(state) {
+  const meditation = Math.max(0, (state.buildings?.meditationSeat ?? 1) - 1) * BUILDINGS.meditationSeat.qiBonusPerLevel;
+  const field = (state.buildings?.spiritField ?? 0) * BUILDINGS.spiritField.herbRatePerLevel;
+  const sword = (state.buildings?.swordArray ?? 0) * BUILDINGS.swordArray.powerPerLevel;
+  const furnace = (state.buildings?.alchemyFurnace ?? 0) * BUILDINGS.alchemyFurnace.speedBonusPerLevel;
+  const forging = (state.buildings?.forgingHall ?? 0) * BUILDINGS.forgingHall.refineChancePerLevel;
+  const scripture = (state.buildings?.scriptureLibrary ?? 0) * BUILDINGS.scriptureLibrary.breakthroughPerLevel;
+  return [
+    { id: 'qi', label: '灵息增幅', value: round(meditation), mode: 'percent' },
+    { id: 'herbs', label: '灵草生长', value: round(field * 60), suffix: ' / 分钟' },
+    { id: 'power', label: '护山道威', value: Math.round(sword) },
+    { id: 'alchemy', label: '丹火缩时', value: round(Math.min(0.65, furnace)), mode: 'percent' },
+    { id: 'forging', label: '淬炼把握', value: round(Math.min(0.12, forging)), mode: 'percent' },
+    { id: 'scripture', label: '破境天机', value: round(Math.min(0.12, scripture)), mode: 'percent' },
+  ];
+}
+
+function getBuildingEffects(buildingId, level) {
+  const safeLevel = clampInteger(level, 0, BUILDINGS[buildingId]?.maxLevel ?? 20);
+  if (safeLevel <= 0 && buildingId !== 'meditationSeat') {
+    return [];
+  }
+  if (buildingId === 'meditationSeat') {
+    return [{ id: 'qiRate', label: '灵息增幅', value: round(Math.max(0, safeLevel - 1) * BUILDINGS.meditationSeat.qiBonusPerLevel), mode: 'percent' }];
+  }
+  if (buildingId === 'spiritField') {
+    return [{ id: 'herbs', label: '灵草生长', value: round(safeLevel * BUILDINGS.spiritField.herbRatePerLevel * 60), suffix: ' / 分钟' }];
+  }
+  if (buildingId === 'alchemyFurnace') {
+    return [{ id: 'alchemySpeed', label: '丹火缩时', value: round(Math.min(0.65, safeLevel * BUILDINGS.alchemyFurnace.speedBonusPerLevel)), mode: 'percent' }];
+  }
+  if (buildingId === 'swordArray') {
+    return [
+      { id: 'power', label: '护山道威', value: safeLevel * BUILDINGS.swordArray.powerPerLevel },
+      { id: 'dangerReduction', label: '劫象消解', value: safeLevel * BUILDINGS.swordArray.dangerReductionPerLevel },
+    ];
+  }
+  if (buildingId === 'forgingHall') {
+    return [
+      { id: 'refineChance', label: '淬炼把握', value: round(Math.min(0.12, safeLevel * BUILDINGS.forgingHall.refineChancePerLevel)), mode: 'percent' },
+      { id: 'dismantle', label: '分解精魄', value: round(safeLevel * BUILDINGS.forgingHall.dismantleBonusPerLevel), mode: 'percent' },
+    ];
+  }
+  if (buildingId === 'scriptureLibrary') {
+    return [
+      { id: 'breakthrough', label: '破境天机', value: round(Math.min(0.12, safeLevel * BUILDINGS.scriptureLibrary.breakthroughPerLevel)), mode: 'percent' },
+      { id: 'insight', label: '悟道沉淀', value: round(safeLevel * BUILDINGS.scriptureLibrary.insightRatePerLevel * 3600), suffix: ' / 时辰' },
+    ];
+  }
+  return [];
 }
 
 function getGearIntent(slot) {
@@ -1334,7 +1523,7 @@ function getDepthPressure(map, layer) {
 }
 
 function getDepthDanger(state, map, layer) {
-  return Math.max(0, getDepthPressure(map, layer) - getTieredLevelValue(state.gear?.robe ?? 0, GEAR.robe.dangerReductionPerLevel) - getGearAffixBonus(state, 'dangerReduction') - getEquippedLootBonus(state, 'dangerReduction') - getMapMasteryBonus(state, 'dangerReduction') - getTreasureBonus(state, 'dangerReduction') - getSpiritBeastBonus(state, 'dangerReduction') - (state.cultivationPaths?.sword ?? 0) * CULTIVATION_PATHS.sword.dangerReductionPerLevel);
+  return Math.max(0, getDepthPressure(map, layer) - getTieredLevelValue(state.gear?.robe ?? 0, GEAR.robe.dangerReductionPerLevel) - getGearAffixBonus(state, 'dangerReduction') - getEquippedLootBonus(state, 'dangerReduction') - getMapMasteryBonus(state, 'dangerReduction') - getTreasureBonus(state, 'dangerReduction') - getSpiritBeastBonus(state, 'dangerReduction') - (state.buildings?.swordArray ?? 0) * BUILDINGS.swordArray.dangerReductionPerLevel - (state.cultivationPaths?.sword ?? 0) * CULTIVATION_PATHS.sword.dangerReductionPerLevel);
 }
 
 function getDepthDuration(map, layer) {
@@ -1491,10 +1680,11 @@ export function calculateBreakthroughChance(state, now = Date.now()) {
   const formationBonus = Math.min(0.12, (state.formations?.mountainGuard ?? 0) * FORMATIONS.mountainGuard.stabilityPerLevel);
   const treasureBonus = Math.min(0.12, getTreasureBonus(state, 'breakthrough'));
   const beastBonus = Math.min(0.08, getSpiritBeastBonus(state, 'breakthrough'));
+  const scriptureBonus = Math.min(0.12, (state.buildings?.scriptureLibrary ?? 0) * BUILDINGS.scriptureLibrary.breakthroughPerLevel);
   const pillBonus = state.breakthroughBoostUntil && state.breakthroughBoostUntil > now ? 0.12 : 0;
   const foundationBonus = Math.min(0.15, (state.foundationStability ?? 0) * 0.05);
   const heartDemonPenalty = Math.min(0.35, (state.heartDemon ?? 0) * 0.15);
-  return round(Math.max(0.25, Math.min(0.95, 0.75 + preparation + insightBonus + gearBonus + affixBonus + lootBonus + formationBonus + treasureBonus + beastBonus + pillBonus + foundationBonus - heartDemonPenalty)));
+  return round(Math.max(0.25, Math.min(0.95, 0.75 + preparation + insightBonus + gearBonus + affixBonus + lootBonus + formationBonus + treasureBonus + beastBonus + scriptureBonus + pillBonus + foundationBonus - heartDemonPenalty)));
 }
 
 export function calculatePower(state) {
@@ -1637,7 +1827,7 @@ export function getEquipmentDetails(state) {
         refinement: {
           maxed: qualityMaxed,
           nextQualityName: qualityMaxed ? null : GEAR_QUALITIES[nextQuality]?.name,
-          chance: qualityMaxed || level <= 0 ? 0 : GEAR_QUALITIES[quality.qualityIndex]?.refineChance ?? 0,
+          chance: qualityMaxed || level <= 0 ? 0 : getRefineChance(state, quality.qualityIndex),
           cost: qualityMaxed || level <= 0 ? null : getRefineCost(nextQuality),
         },
       };
@@ -1736,8 +1926,9 @@ export function disassembleLootEquipment(state, uid, now = Date.now()) {
   if (state.lockedLoot) {
     delete state.lockedLoot[item.uid];
   }
+  const dismantleMultiplier = 1 + (state.buildings?.forgingHall ?? 0) * BUILDINGS.forgingHall.dismantleBonusPerLevel;
   const reward = {
-    forgingEssence: 2 + (item.level ?? 0),
+    forgingEssence: Math.floor((2 + (item.level ?? 0)) * dismantleMultiplier),
     artifacts: 1,
   };
   applyResources(state, reward);
@@ -1771,8 +1962,9 @@ export function organizeLootEquipment(state, now = Date.now()) {
     return { ok: true, removed: 0, reward: {}, items: [] };
   }
 
+  const dismantleMultiplier = 1 + (state.buildings?.forgingHall ?? 0) * BUILDINGS.forgingHall.dismantleBonusPerLevel;
   const reward = removedItems.reduce((total, item) => ({
-    forgingEssence: total.forgingEssence + 2 + (item.level ?? 0),
+    forgingEssence: total.forgingEssence + Math.floor((2 + (item.level ?? 0)) * dismantleMultiplier),
     artifacts: total.artifacts + 1,
   }), { forgingEssence: 0, artifacts: 0 });
   state.lootEquipment = items.filter((item) => keepUids.has(item.uid));
@@ -2290,6 +2482,7 @@ export function updateGame(state, deltaSeconds, now = Date.now()) {
   state.qi = round(state.qi + (calculateQiRate(state, now) / 60) * seconds);
   state.stoneCarry += (realm.stoneRate / 60) * seconds;
   state.herbCarry += ((state.buildings?.spiritField ?? 0) * BUILDINGS.spiritField.herbRatePerLevel + getSpiritBeastBonus(state, 'herbRate')) * seconds;
+  state.insightCarry += ((state.buildings?.scriptureLibrary ?? 0) * BUILDINGS.scriptureLibrary.insightRatePerLevel) * seconds;
 
   const stonesGained = Math.floor(state.stoneCarry);
   if (stonesGained > 0) {
@@ -2301,6 +2494,12 @@ export function updateGame(state, deltaSeconds, now = Date.now()) {
   if (herbsGained > 0) {
     state.herbs += herbsGained;
     state.herbCarry = round(state.herbCarry - herbsGained);
+  }
+
+  const insightGained = Math.floor(state.insightCarry);
+  if (insightGained > 0) {
+    state.insight += insightGained;
+    state.insightCarry = round(state.insightCarry - insightGained);
   }
 
   state.totalCultivationSeconds += seconds;
@@ -2449,8 +2648,8 @@ export function upgradeBuilding(state, buildingId, now = Date.now()) {
   }
 
   const nextLevel = currentLevel + 1;
-  if (nextLevel > getRealmUpgradeLimit(state)) {
-    addLog(state, now, `${getUpgradeTier(nextLevel).name}升级需要更高境界。`);
+  if (nextLevel > getCaveUpgradeLimit(state)) {
+    addLog(state, now, `${getCaveUpgradeTier(nextLevel).name}洞府需要更高境界。`);
     return { ok: false, reason: 'realmLocked' };
   }
   const cost = building.cost(nextLevel);
@@ -2555,7 +2754,7 @@ export function refineGear(state, gearId, now = Date.now(), random = Math.random
     return { ok: false, reason: 'notEnoughResources' };
   }
   payResources(state, cost);
-  const chance = GEAR_QUALITIES[currentQuality].refineChance;
+  const chance = getRefineChance(state, currentQuality);
   if (random() > chance) {
     addLog(state, now, `淬炼${gear.name}火候不足，品质未提升。`);
     return { ok: false, reason: 'failed', chance };
@@ -2795,7 +2994,7 @@ function createMissionReport(state, mission, { outcome, reward, reputationGained
 
 function getMissionDanger(state, mission) {
   const pressure = getMissionPressure(state, mission);
-  return Math.max(0, pressure - getTieredLevelValue(state.gear?.robe ?? 0, GEAR.robe.dangerReductionPerLevel) - getGearAffixBonus(state, 'dangerReduction') - getEquippedLootBonus(state, 'dangerReduction') - getMapMasteryBonus(state, 'dangerReduction') - getTreasureBonus(state, 'dangerReduction') - getSpiritBeastBonus(state, 'dangerReduction') - (state.cultivationPaths?.sword ?? 0) * CULTIVATION_PATHS.sword.dangerReductionPerLevel);
+  return Math.max(0, pressure - getTieredLevelValue(state.gear?.robe ?? 0, GEAR.robe.dangerReductionPerLevel) - getGearAffixBonus(state, 'dangerReduction') - getEquippedLootBonus(state, 'dangerReduction') - getMapMasteryBonus(state, 'dangerReduction') - getTreasureBonus(state, 'dangerReduction') - getSpiritBeastBonus(state, 'dangerReduction') - (state.buildings?.swordArray ?? 0) * BUILDINGS.swordArray.dangerReductionPerLevel - (state.cultivationPaths?.sword ?? 0) * CULTIVATION_PATHS.sword.dangerReductionPerLevel);
 }
 
 function getMissionPressure(state, mission) {
@@ -2807,10 +3006,10 @@ function getMissionPressure(state, mission) {
   if (unlockStage < 3) {
     return baseDanger;
   }
-  const stageMultiplier = 1.52 + Math.max(0, unlockStage - 3) * 0.22;
+  const stageMultiplier = 1.6 + Math.max(0, unlockStage - 3) * 0.25;
   const rareEvery = Math.max(2, mission.rareEvery ?? 4);
   const completed = state.completedMissions?.[mission.id] ?? 0;
-  const deepeningMultiplier = Math.min(0.18, Math.floor(completed / rareEvery) * 0.03);
+  const deepeningMultiplier = Math.min(0.28, Math.floor(completed / rareEvery) * 0.04);
   return round(baseDanger * (stageMultiplier + deepeningMultiplier));
 }
 
@@ -3335,6 +3534,12 @@ function getRefineCost(nextQuality) {
   };
 }
 
+function getRefineChance(state, qualityIndex) {
+  const baseChance = GEAR_QUALITIES[qualityIndex]?.refineChance ?? 0;
+  const forgeBonus = Math.min(0.12, (state.buildings?.forgingHall ?? 0) * BUILDINGS.forgingHall.refineChancePerLevel);
+  return round(Math.min(0.95, baseChance + forgeBonus));
+}
+
 function getDefaultAffixForGear(gearId) {
   const defaults = {
     weapon: 'swordIntent',
@@ -3828,6 +4033,29 @@ function scaleCost(base, level) {
   const tierMultiplier = 1 + Math.floor((level - 1) / 3) * 2.4;
   const lateMultiplier = Math.pow(1.13, level - 3);
   return Math.ceil(base * level * tierMultiplier * lateMultiplier);
+}
+
+function caveStoneCost(base, level) {
+  if (level <= 0) {
+    return 0;
+  }
+  const tier = getCaveUpgradeTier(level);
+  const tierLevel = Math.max(0, level - tier.minLevel);
+  const longRamp = Math.pow(level, 1.16);
+  return Math.ceil(base * tier.costMultiplier * longRamp * (1 + tierLevel * 0.18));
+}
+
+function caveMaterialCost(base, level) {
+  if (level <= 0) {
+    return 0;
+  }
+  const tier = getCaveUpgradeTier(level);
+  const tierLevel = Math.max(0, level - tier.minLevel);
+  return Math.ceil(base * tier.materialMultiplier * Math.pow(level, 0.92) * (1 + tierLevel * 0.14));
+}
+
+function filterCost(cost) {
+  return Object.fromEntries(Object.entries(cost).filter(([, amount]) => amount > 0));
 }
 
 function hashString(value) {

@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {
   BUILDINGS,
+  CAVE_STAGES,
   CULTIVATION_PATHS,
   FORMATIONS,
   GEAR,
@@ -34,6 +35,9 @@ import {
   getMainlineChapters,
   getDailyTasks,
   getMarketStock,
+  getCaveStage,
+  getCaveStatus,
+  getCaveUpgradeLimit,
   getCharacterProfile,
   getEquipmentDetails,
   getLootEmpowerCost,
@@ -103,8 +107,10 @@ test('realm track expands to four nine-step stages', () => {
   assert.equal(REALMS[35].name, '元婴九变');
   assert.equal(REALMS[0].requiredQi, 25);
   assert.equal(REALMS[0].qiRate, 1.5);
-  assert.equal(REALMS[27].requiredQi, 1_800_000);
-  assert.equal(REALMS[27].qiRate, 90);
+  assert.equal(REALMS[17].requiredQi, 220_000);
+  assert.equal(REALMS[26].requiredQi, 2_800_000);
+  assert.equal(REALMS[27].requiredQi, 4_200_000);
+  assert.equal(REALMS[27].qiRate, 55);
 });
 
 test('passive cultivation is paced per minute instead of per second', () => {
@@ -139,6 +145,30 @@ test('realm pacing prevents rushing to nascent soul in a short session', () => {
   assert.equal(state.realmIndex < realmIndexByName('金丹一转'), true);
 });
 
+test('seven day boosted pacing remains before nascent soul', () => {
+  const state = createGameState(1000);
+  state.buildings.meditationSeat = 15;
+  state.formations.spiritGathering = 12;
+  state.cultivationPaths.formation = 12;
+  state.permanentBonuses.qiRate = 0.35;
+  state.treasures.spiritLamp = 8;
+  state.spiritBeasts.cloudFox = 8;
+  state.inventoryPills.gatherQiPill = 200;
+  state.pills = 200;
+
+  for (let minute = 1; minute <= 7 * 24 * 60; minute += 1) {
+    updateGame(state, 60, 1000 + minute * 60_000);
+    if (minute % 120 === 0 && state.inventoryPills.gatherQiPill > 0) {
+      consumePill(state, 'gatherQiPill', 1000 + minute * 60_000);
+    }
+    while (state.qi >= REALMS[state.realmIndex].requiredQi && state.realmIndex < REALMS.length - 1) {
+      performBreakthrough(state, 1000 + minute * 60_000, () => 0);
+    }
+  }
+
+  assert.equal(state.realmIndex < realmIndexByName('元婴一变'), true);
+});
+
 test('legacy realm saves migrate into the expanded realm track', () => {
   const state = reviveGameState({
     balanceVersion: 2,
@@ -164,7 +194,7 @@ test('legacy saves are rebalanced without wiping progress', () => {
   assert.equal(state.spiritStones, 1234);
   assert.equal(state.completedMissions.herbGathering, 5);
   assert.equal(state.qi <= Math.ceil(REALMS[1].requiredQi * 1.15), true);
-  assert.equal(state.balanceVersion, 4);
+  assert.equal(state.balanceVersion, 5);
 });
 
 test('breakthrough advances realm and consumes qi on a successful attempt', () => {
@@ -195,15 +225,15 @@ test('failed breakthrough creates heart demon pressure', () => {
 
 test('cave upgrades improve passive cultivation', () => {
   const state = createGameState(1000);
-  state.spiritStones = 40;
-  state.herbs = 4;
+  state.spiritStones = 80;
+  state.herbs = 8;
 
   const result = upgradeBuilding(state, 'meditationSeat', 1000);
   updateGame(state, 10, 11_000);
 
   assert.equal(result.ok, true);
   assert.equal(state.buildings.meditationSeat, 2);
-  assert.equal(state.qi, 0.3);
+  assert.equal(state.qi, 0.27);
 });
 
 test('spirit field upgrades grow herbs over time', () => {
@@ -246,9 +276,9 @@ test('alchemy furnace unlocks recipes and shortens crafting time', () => {
 
   assert.equal(started.ok, true);
   assert.equal(state.activeAlchemy.recipeId, 'clearHeartPill');
-  assert.equal(state.activeAlchemy.endsAt, 38_000);
+  assert.equal(state.activeAlchemy.endsAt, 45_000);
 
-  updateGame(state, 36, 38_000);
+  updateGame(state, 43, 45_000);
   assert.equal(state.inventoryPills.clearHeartPill, 1);
 });
 
@@ -372,19 +402,26 @@ test('cultivation paths alter combat alchemy and passive cultivation', () => {
 
 test('upgrade tiers extend growth and are gated by realm stage', () => {
   const state = createGameState(1000);
-  state.spiritStones = 10_000;
-  state.herbs = 10_000;
+  state.spiritStones = 100_000;
+  state.herbs = 100_000;
+  state.arrayFlags = 1_000;
 
-  assert.equal(BUILDINGS.meditationSeat.maxLevel, 12);
+  assert.equal(BUILDINGS.meditationSeat.maxLevel, 20);
+  assert.equal(BUILDINGS.forgingHall.maxLevel, 20);
+  assert.equal(BUILDINGS.scriptureLibrary.maxLevel, 20);
+  assert.equal(CAVE_STAGES[19].name, '青岚洞天');
   assert.equal(getUpgradeTier(1).name, '凡阶');
   assert.equal(getUpgradeTier(4).name, '灵阶');
   assert.equal(getRealmUpgradeLimit(state), 3);
+  assert.equal(getCaveUpgradeLimit(state), 5);
 
+  upgradeBuilding(state, 'meditationSeat', 1000);
+  upgradeBuilding(state, 'meditationSeat', 1000);
   upgradeBuilding(state, 'meditationSeat', 1000);
   upgradeBuilding(state, 'meditationSeat', 1000);
   const locked = upgradeBuilding(state, 'meditationSeat', 1000);
 
-  assert.equal(state.buildings.meditationSeat, 3);
+  assert.equal(state.buildings.meditationSeat, 5);
   assert.equal(locked.ok, false);
   assert.equal(locked.reason, 'realmLocked');
 
@@ -392,14 +429,39 @@ test('upgrade tiers extend growth and are gated by realm stage', () => {
   const nextStage = upgradeBuilding(state, 'meditationSeat', 1000);
 
   assert.equal(nextStage.ok, true);
-  assert.equal(state.buildings.meditationSeat, 4);
+  assert.equal(state.buildings.meditationSeat, 6);
   assert.equal(getRealmUpgradeLimit(state), 6);
+
+  state.realmIndex = realmIndexByName('金丹一转');
+  state.buildings.meditationSeat = 15;
+  assert.equal(upgradeBuilding(state, 'meditationSeat', 1000).reason, 'realmLocked');
+
+  state.realmIndex = realmIndexByName('元婴一变');
+  assert.equal(upgradeBuilding(state, 'meditationSeat', 1000).ok, true);
 });
 
 test('late upgrade costs scale by system resource role', () => {
-  assert.equal(BUILDINGS.meditationSeat.cost(6).spiritStones > BUILDINGS.meditationSeat.cost(3).spiritStones * 2, true);
+  assert.equal(BUILDINGS.meditationSeat.cost(16).spiritStones > BUILDINGS.meditationSeat.cost(10).spiritStones * 2, true);
+  assert.deepEqual(Object.keys(BUILDINGS.forgingHall.cost(11)).sort(), ['artifacts', 'forgingEssence', 'spiritStones']);
+  assert.deepEqual(Object.keys(BUILDINGS.scriptureLibrary.cost(16)).sort(), ['arrayFlags', 'insight', 'spiritStones']);
   assert.deepEqual(Object.keys(GEAR.weapon.cost(6)).sort(), ['beastCores', 'spiritStones']);
   assert.deepEqual(Object.keys(FORMATIONS.spiritGathering.cost(6)).sort(), ['arrayFlags', 'spiritStones']);
+});
+
+test('cave status exposes stage names and building details', () => {
+  const state = createGameState(1000);
+  Object.keys(BUILDINGS).forEach((id) => {
+    state.buildings[id] = 20;
+  });
+
+  const stage = getCaveStage(state);
+  const cave = getCaveStatus(state);
+
+  assert.equal(stage.level, 20);
+  assert.equal(stage.name, '青岚洞天');
+  assert.equal(cave.buildings.length, 6);
+  assert.equal(cave.buildings.some((building) => building.id === 'forgingHall' && building.nextEffects.length === 0), true);
+  assert.equal(cave.buildings.some((building) => building.id === 'scriptureLibrary' && building.effects.length > 0), true);
 });
 
 test('daily tasks require progress before claiming', () => {
@@ -515,7 +577,11 @@ test('mission maps unlock by realm stage', () => {
 test('mission mastery grants deterministic rare rewards', () => {
   const state = createGameState(1000);
   state.realmIndex = realmIndexByName('炼气五层');
-  state.gear.weapon = 3;
+  state.gear.weapon = 6;
+  state.gear.robe = 4;
+  state.cultivationPaths.sword = 3;
+  state.formations.swordArray = 3;
+  state.permanentBonuses.power = 160;
 
   startMission(state, 'herbValley', 1000);
   updateGame(state, 70, 71_000);
@@ -1059,7 +1125,7 @@ test('mainline chapter rewards provide permanent growth bonuses', () => {
   claimChapterReward(state, 'qinglanStart', 1000);
 
   assert.equal(state.permanentBonuses.qiRate, 0.03);
-  assert.equal(calculateQiRate(state, 2000), 2.97);
+  assert.equal(calculateQiRate(state, 2000), 2.58);
 });
 
 test('daily tasks unlock after three novice goals are complete', () => {
@@ -1074,7 +1140,7 @@ test('daily tasks unlock after three novice goals are complete', () => {
 
   assert.equal(tasks.every((task) => task.unlocked), true);
   assert.equal(claimed.ok, true);
-  assert.equal(state.spiritStones, 53);
+  assert.equal(state.spiritStones, 52);
   assert.equal(state.dailyClaims['1970-01-01'].dailyCultivation, true);
 });
 
