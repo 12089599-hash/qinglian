@@ -497,6 +497,33 @@ test('matching gear affixes activate set resonance bonuses', () => {
   assert.equal(getMissionStatus(state, 'mistyValley').recommendedPower, 428);
 });
 
+test('gear affix reroll reports attribute and set impact', () => {
+  const state = createGameState(1000);
+  state.realmIndex = realmIndexByName('炼气八层');
+  state.spiritStones = 260;
+  state.artifacts = 3;
+  state.forgingEssence = 4;
+  state.gear.weapon = 1;
+  state.gear.amulet = 1;
+  state.gear.robe = 1;
+  state.gearQuality.weapon = 1;
+  state.gearQuality.amulet = 1;
+  state.gearQuality.robe = 1;
+  state.gearAffixes.weapon = 'swordIntent';
+  state.gearAffixes.amulet = 'spiritVein';
+  state.gearAffixes.robe = 'cloudStep';
+
+  const rerolled = rerollGearAffix(state, 'weapon', 2000, () => 0);
+
+  assert.equal(rerolled.ok, true);
+  assert.equal(rerolled.affix, 'breakerEdge');
+  assert.equal(rerolled.impact.powerDelta, -69);
+  assert.equal(rerolled.impact.setChanges[0].name, '青莲流影');
+  assert.equal(rerolled.impact.setChanges[0].beforeMatched, 3);
+  assert.equal(rerolled.impact.setChanges[0].afterMatched, 2);
+  assert.equal(rerolled.impact.setChanges[0].status, 'lost');
+});
+
 test('gear affix reroll consumes materials and changes the slot affix', () => {
   const state = createGameState(1000);
   state.spiritStones = 260;
@@ -979,6 +1006,12 @@ test('next guidance points players toward the clearest progression step', () => 
   assert.equal(getNextGuidance(state).title, '先巡守洞府');
   assert.equal(getNextGuidance(state).tab, 'missions');
 
+  state.completedMissions.cavePatrol = 1;
+  assert.equal(getNextGuidance(state).title, '领取巡守一次洞府');
+  assert.equal(getNextGuidance(state).action, 'claimGoal');
+  assert.equal(getNextGuidance(state).targetId, 'firstPatrol');
+
+  claimGoalReward(state, 'firstPatrol', 1000);
   state.qi = REALMS[0].requiredQi;
   assert.equal(getNextGuidance(state).title, '可以破境');
   assert.equal(getNextGuidance(state).action, 'breakthrough');
@@ -989,8 +1022,29 @@ test('next guidance points players toward the clearest progression step', () => 
   state.completedMissions.cavePatrol = 1;
   state.completedMissions.marketTrade = 2;
   state.gear.weapon = 2;
+  state.claimedGoals.realmTwo = true;
 
   assert.equal(getNextGuidance(state).title, '挑战青岚山魈');
+});
+
+test('next guidance routes early mainline objectives to their exact panels', () => {
+  const state = createGameState(1000);
+  state.completedMissions.cavePatrol = 1;
+  state.realmIndex = 1;
+  state.claimedGoals.firstPatrol = true;
+  state.claimedGoals.realmTwo = true;
+
+  const fieldGuidance = getNextGuidance(state);
+  assert.equal(fieldGuidance.title, '建成一阶灵田');
+  assert.equal(fieldGuidance.tab, 'cave');
+  assert.equal(fieldGuidance.targetId, 'spiritField');
+
+  state.buildings.spiritField = 1;
+  state.claimedGoals.spiritField = true;
+  const pillGuidance = getNextGuidance(state);
+  assert.equal(pillGuidance.title, '炼成一枚聚气丹');
+  assert.equal(pillGuidance.tab, 'alchemy');
+  assert.equal(pillGuidance.targetId, 'gatherQiPill');
 });
 
 test('resource guidance points forging shortages to relic routes and forge commissions', () => {

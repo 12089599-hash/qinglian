@@ -1233,7 +1233,7 @@
     if (!rerollButton) return;
     const result = rerollGearAffix(state, rerollButton.dataset.rerollGear);
     if (result.ok) {
-      showToast('词条洗练', `${gear[rerollButton.dataset.rerollGear].name}获得「${gearAffixes[result.affix].name}」。`);
+      showToast('词条洗练', `${gear[rerollButton.dataset.rerollGear].name}：${gearAffixes[result.previousAffix].name} → ${gearAffixes[result.affix].name}。${formatAffixRerollImpact(result.impact)}`);
     } else if (result.reason === 'notEnoughResources') {
       showToast('材料不足', `洗练需要${formatReward(result.cost)}。`, 'warning');
     }
@@ -1503,6 +1503,11 @@
   });
 
   refs.goals?.addEventListener('click', (event) => {
+    const gotoButton = event.target.closest('[data-goal-goto]');
+    if (gotoButton) {
+      openGuidanceTarget(gotoButton.dataset.goalGoto, gotoButton.dataset.goalTarget);
+      return;
+    }
     const goalButton = event.target.closest('[data-claim-goal]');
     if (goalButton) {
       const result = claimGoalReward(state, goalButton.dataset.claimGoal);
@@ -1612,14 +1617,7 @@
       document.querySelector('[data-breakthrough]')?.click();
       return;
     }
-    const tab = refs.nextGuidance.dataset.gotoTab;
-    if (!panelTabs.includes(tab)) {
-      return;
-    }
-    activeTab = tab;
-    localStorage.setItem('idle-xianxia-active-tab', activeTab);
-    localStorage.setItem(`idle-xianxia-${getTabGroup(activeTab)}-tab`, activeTab);
-    renderTabs();
+    openGuidanceTarget(refs.nextGuidance.dataset.gotoTab, refs.nextGuidance.dataset.guidanceTarget);
   });
 
   document.querySelector('[data-reset]').addEventListener('click', () => {
@@ -2159,10 +2157,12 @@
       return { ok: false, reason: 'notEnoughResources', cost };
     }
 
+    const beforeImpact = getGearAffixImpactSnapshot(state, now);
     payResources(state, cost);
     state.gearAffixes[gearId] = rollAffixForGear(gearId, random, previousAffix);
+    const impact = compareGearAffixImpact(beforeImpact, getGearAffixImpactSnapshot(state, now));
     addLog(state, now, `${item.name}洗练出词条「${gearAffixes[state.gearAffixes[gearId]].name}」。`);
-    return { ok: true, previousAffix, affix: state.gearAffixes[gearId], cost };
+    return { ok: true, previousAffix, affix: state.gearAffixes[gearId], cost, impact };
   }
 
   function upgradeFormation(state, formationId, now = Date.now()) {
@@ -2667,6 +2667,7 @@
       refs.nextGuidance.innerHTML = `<strong>${guidance.title}</strong><span>${guidance.detail}</span>`;
       refs.nextGuidance.dataset.gotoTab = guidance.tab || 'goals';
       refs.nextGuidance.dataset.guidanceAction = guidance.action || '';
+      refs.nextGuidance.dataset.guidanceTarget = guidance.targetId || '';
     }
 
     if (activeDepth) {
@@ -3384,6 +3385,8 @@
         affixes: set.affixes.map((affixId) => ({
           id: affixId,
           name: gearAffixes[affixId]?.name || affixId,
+          slot: gearAffixes[affixId]?.slot || null,
+          slotName: gear[gearAffixes[affixId]?.slot]?.name || '器物',
           active: activeAffixes.has(affixId),
         })),
       };
@@ -3626,28 +3629,28 @@
       const recipe = pillRecipes[state.activeAlchemy.recipeId] || pillRecipes.gatherQiPill;
       return { title: `正在炼制${recipe.name}`, detail: '丹成后服用或继续排下一炉，能明显提高突破准备效率。', tab: 'alchemy' };
     }
+    const chapter = getMainlineChapters(state).find((candidate) => !candidate.locked && !candidate.rewardClaimed);
+    const claimableObjective = chapter?.objectives.find((objective) => objective.completed && !objective.claimed);
+    if (claimableObjective) {
+      return { title: `领取${claimableObjective.title}`, detail: `目标已完成，可领取 ${formatReward(claimableObjective.reward)}。`, tab: 'goals', action: 'claimGoal', targetId: claimableObjective.id };
+    }
     const realm = getCurrentRealm(state);
     if ((state.qi || 0) >= realm.requiredQi && state.realmIndex < realms.length - 1) {
       return { title: '可以破境', detail: `灵气已满，当前破境天机 ${Math.round(calculateBreakthroughChance(state) * 100)}%。`, tab: 'overview', action: 'breakthrough' };
     }
     if ((state.completedMissions.cavePatrol || 0) < 1 && (state.realmIndex || 0) <= 1) {
-      return { title: '先巡守洞府', detail: '去行游完成一次巡守，带回第一笔灵气和灵石。', tab: 'missions' };
-    }
-    if ((state.realmIndex || 0) <= 1) {
-      return { title: '积攒灵气', detail: `距离下一次突破还差 ${Math.ceil(Math.max(0, realm.requiredQi - (state.qi || 0)))} 灵气。`, tab: 'goals' };
+      return { title: '先巡守洞府', detail: '去行游完成一次巡守，带回第一笔灵气和灵石。', tab: 'missions', targetId: 'cavePatrol' };
     }
     const readyBoss = getMapStatuses(state).find((map) => map.boss.status === 'ready' && calculatePower(state) >= map.boss.power);
     if (readyBoss) {
-      return { title: `挑战${readyBoss.boss.name}`, detail: `${readyBoss.name}探索已足，镇压首领可获得永久成长和炼器精魄。`, tab: 'missions' };
-    }
-    const chapter = getMainlineChapters(state).find((candidate) => !candidate.locked && !candidate.rewardClaimed);
-    const claimableObjective = chapter?.objectives.find((objective) => objective.completed && !objective.claimed);
-    if (claimableObjective) {
-      return { title: `领取${claimableObjective.title}`, detail: `目标已完成，可领取 ${formatReward(claimableObjective.reward)}。`, tab: 'goals' };
+      return { title: `挑战${readyBoss.boss.name}`, detail: `${readyBoss.name}探索已足，镇压首领可获得永久成长和炼器精魄。`, tab: 'missions', targetId: readyBoss.id };
     }
     const nextObjective = chapter?.objectives.find((objective) => !objective.completed);
     if (nextObjective) {
-      return { title: nextObjective.title, detail: nextObjective.detail, tab: getGuidanceTabForObjective(nextObjective.id) };
+      return { title: nextObjective.title, detail: nextObjective.detail, tab: getGuidanceTabForObjective(nextObjective.id), targetId: getGuidanceTargetForObjective(nextObjective.id) };
+    }
+    if ((state.realmIndex || 0) <= 1) {
+      return { title: '积攒灵气', detail: `距离下一次突破还差 ${Math.ceil(Math.max(0, realm.requiredQi - (state.qi || 0)))} 灵气。`, tab: 'goals' };
     }
     const sect = getSectStatus(state);
     if (sect.unlocked && sect.idle > 0) {
@@ -3664,13 +3667,37 @@
 
   function getGuidanceTabForObjective(objectiveId) {
     if (/Mission|Trial|Boss|demon|Ruins|Tomb|Valley|Rift|realm|Realm/i.test(objectiveId)) {
-      return objectiveId.toLowerCase().includes('realm') ? 'goals' : 'missions';
+      return objectiveId.toLowerCase().includes('realm') ? 'overview' : 'missions';
     }
     if (/Pill|alchemy/i.test(objectiveId)) return 'alchemy';
     if (/Gear|Armament|Loot|Formation/i.test(objectiveId)) return 'gear';
     if (/sect|Disciple/i.test(objectiveId)) return 'sect';
     if (/Field|building/i.test(objectiveId)) return 'cave';
     return 'goals';
+  }
+
+  function getGuidanceTargetForObjective(objectiveId) {
+    const targets = {
+      firstPatrol: 'cavePatrol',
+      realmTwo: 'breakthrough',
+      spiritField: 'spiritField',
+      firstPill: 'gatherQiPill',
+      foundationRealm: 'breakthrough',
+      firstPath: 'sword',
+      firstArmament: 'weapon',
+      swordTombTrial: 'ancientSwordTomb',
+      goldenCoreRealm: 'breakthrough',
+      refinedGear: 'weapon',
+      pathThree: 'sword',
+      demonRiftTrial: 'demonRift',
+      goldenCoreCompletion: 'breakthrough',
+      demonBoss: 'demonRift',
+      empoweredLoot: 'loot',
+      sectReputation: 'sect',
+      nascentSoulRealm: 'breakthrough',
+      ancientRuinsBoss: 'ancientRuins',
+    };
+    return targets[objectiveId] || objectiveId;
   }
 
   function isDailyUnlocked(state) {
@@ -4829,6 +4856,9 @@
             <article class="${set.active ? 'active' : ''}">
               <span>${set.name} <small>${set.matched} / ${set.total}</small></span>
               <em>${formatEffects(set.effects)}</em>
+              <ul>
+                ${set.affixes.map((affix) => `<li class="${affix.active ? 'active' : ''}">${affix.name}<small>${affix.slotName} · ${affix.active ? '已成' : '待洗'}</small></li>`).join('')}
+              </ul>
               <small>${set.detail}</small>
             </article>
           `).join('')}
@@ -4986,18 +5016,31 @@
     renderMainlineHeader(activeChapter);
     renderMainlineTrack(chapters, activeChapter.id);
     refs.goals.innerHTML = activeChapter.objectives
-      .map((goal) => `
-        <li class="${goal.completed ? 'completed' : ''} ${goal.claimed ? 'claimed' : ''}">
-          <span>${goal.claimed ? '领' : goal.completed ? '✓' : ''}</span>
-          <div>
-            <strong>${goal.title}</strong>
-            <small>${goal.detail} · 奖励 ${formatReward(goal.reward)}</small>
-          </div>
-          ${goal.completed ? `<button data-claim-goal="${goal.id}" ${goal.claimed ? 'disabled' : ''}>${goal.claimed ? '已领' : '领取'}</button>` : '<em>进行中</em>'}
-        </li>
-      `)
+      .map((goal) => {
+        const action = getGoalActionTarget(goal.id);
+        const control = goal.completed
+          ? `<button data-claim-goal="${goal.id}" ${goal.claimed ? 'disabled' : ''}>${goal.claimed ? '已领' : '领取'}</button>`
+          : `<button data-goal-goto="${action.tab}" data-goal-target="${action.targetId}">前往</button>`;
+        return `
+          <li class="${goal.completed ? 'completed' : ''} ${goal.claimed ? 'claimed' : ''}">
+            <span>${goal.claimed ? '领' : goal.completed ? '✓' : ''}</span>
+            <div>
+              <strong>${goal.title}</strong>
+              <small>${goal.detail} · 奖励 ${formatReward(goal.reward)}</small>
+            </div>
+            ${control}
+          </li>
+        `;
+      })
       .join('');
     renderCache.goals = signature;
+  }
+
+  function getGoalActionTarget(goalId) {
+    return {
+      tab: getGuidanceTabForObjective(goalId),
+      targetId: getGuidanceTargetForObjective(goalId),
+    };
   }
 
   function renderMainlineHeader(chapter) {
@@ -5949,6 +5992,50 @@
     }, 0);
   }
 
+  function getGearAffixImpactSnapshot(state, now) {
+    return {
+      power: calculatePower(state),
+      qiRate: calculateQiRate(state, now),
+      breakthroughChance: calculateBreakthroughChance(state, now),
+      sets: getGearSetStatus(state),
+    };
+  }
+
+  function compareGearAffixImpact(before, after) {
+    const setChanges = before.sets
+      .map((beforeSet) => {
+        const afterSet = after.sets.find((set) => set.id === beforeSet.id);
+        if (!afterSet || (beforeSet.matched === afterSet.matched && beforeSet.active === afterSet.active)) return null;
+        let status = afterSet.matched > beforeSet.matched ? 'progress' : 'weakened';
+        if (!beforeSet.active && afterSet.active) status = 'gained';
+        if (beforeSet.active && !afterSet.active) status = 'lost';
+        return {
+          id: beforeSet.id,
+          name: beforeSet.name,
+          beforeMatched: beforeSet.matched,
+          afterMatched: afterSet.matched,
+          total: beforeSet.total,
+          beforeActive: beforeSet.active,
+          afterActive: afterSet.active,
+          status,
+        };
+      })
+      .filter(Boolean);
+
+    return {
+      previousPower: before.power,
+      currentPower: after.power,
+      powerDelta: round(after.power - before.power),
+      previousQiRate: before.qiRate,
+      currentQiRate: after.qiRate,
+      qiRateDelta: round(after.qiRate - before.qiRate),
+      previousBreakthroughChance: before.breakthroughChance,
+      currentBreakthroughChance: after.breakthroughChance,
+      breakthroughChanceDelta: round(after.breakthroughChance - before.breakthroughChance),
+      setChanges,
+    };
+  }
+
   function getEquippedLootBonus(state, key) {
     return Object.values(state.equippedLoot || {}).reduce((total, uid) => {
       const item = state.lootEquipment?.find((candidate) => candidate.uid === uid);
@@ -5993,6 +6080,44 @@
       return `${effect.label} ${sign}${Math.round(effect.value * 100)}%`;
     }
     return `${effect.label} ${sign}${effect.value}`;
+  }
+
+  function formatAffixRerollImpact(impact) {
+    if (!impact) {
+      return '';
+    }
+    const parts = [];
+    if (impact.powerDelta) {
+      parts.push(`道威 ${formatSignedNumber(impact.powerDelta)}`);
+    }
+    if (impact.qiRateDelta) {
+      parts.push(`灵息 ${formatSignedNumber(impact.qiRateDelta)}/分`);
+    }
+    if (impact.breakthroughChanceDelta) {
+      parts.push(`破境天机 ${formatSignedPercent(impact.breakthroughChanceDelta)}`);
+    }
+    const setText = impact.setChanges?.map((change) => {
+      const statusText = change.status === 'lost'
+        ? '失效'
+        : change.status === 'gained'
+          ? '成形'
+          : change.status === 'progress'
+            ? '更近'
+            : '退转';
+      return `${change.name}${change.beforeMatched}/${change.total}→${change.afterMatched}/${change.total}${statusText}`;
+    }).join('，');
+    if (setText) {
+      parts.push(`套装影响：${setText}`);
+    }
+    return parts.length ? parts.join('，') : '器象未见明显波动。';
+  }
+
+  function formatSignedNumber(value) {
+    return `${value > 0 ? '+' : ''}${value}`;
+  }
+
+  function formatSignedPercent(value) {
+    return `${value > 0 ? '+' : ''}${Math.round(value * 100)}%`;
   }
 
   function getTreasureBonus(state, key) {
@@ -6552,6 +6677,33 @@
       panel.classList.toggle('active', panel.dataset.panel === activeTab);
     });
     renderGearSections();
+  }
+
+  function openGuidanceTarget(tab, targetId = '') {
+    if (!panelTabs.includes(tab)) {
+      return;
+    }
+    activeTab = tab;
+    focusGuidanceTarget(tab, targetId);
+    localStorage.setItem('idle-xianxia-active-tab', activeTab);
+    localStorage.setItem(`idle-xianxia-${getTabGroup(activeTab)}-tab`, activeTab);
+    render(true);
+    window.scrollTo?.({ top: 0, behavior: 'smooth' });
+  }
+
+  function focusGuidanceTarget(tab, targetId = '') {
+    if (tab === 'cave' && buildings[targetId]) {
+      activeBuildingId = targetId;
+      localStorage.setItem('idle-xianxia-cave-building', activeBuildingId);
+    }
+    if (tab === 'missions' && missions[targetId]?.mapId) {
+      activeMissionMapId = missions[targetId].mapId;
+      localStorage.setItem('idle-xianxia-mission-map', activeMissionMapId);
+    }
+    if (tab === 'gear' && (targetId === 'loot' || targetId === 'wear')) {
+      activeGearSection = targetId === 'loot' ? 'loot' : 'wear';
+      localStorage.setItem('idle-xianxia-gear-section', activeGearSection);
+    }
   }
 
   function syncMobileOverviewDrawers() {

@@ -2279,6 +2279,8 @@ export function getGearSetStatus(state) {
       affixes: set.affixes.map((affixId) => ({
         id: affixId,
         name: GEAR_AFFIXES[affixId]?.name ?? affixId,
+        slot: GEAR_AFFIXES[affixId]?.slot ?? null,
+        slotName: GEAR[GEAR_AFFIXES[affixId]?.slot]?.name ?? '器物',
         active: activeAffixes.has(affixId),
       })),
     };
@@ -2595,6 +2597,18 @@ export function getNextGuidance(state) {
     };
   }
 
+  const chapter = getMainlineChapters(state).find((candidate) => !candidate.locked && !candidate.rewardClaimed);
+  const claimableObjective = chapter?.objectives.find((objective) => objective.completed && !objective.claimed);
+  if (claimableObjective) {
+    return {
+      title: `领取${claimableObjective.title}`,
+      detail: `目标已完成，可领取 ${formatReward(claimableObjective.reward)}。`,
+      tab: 'goals',
+      action: 'claimGoal',
+      targetId: claimableObjective.id,
+    };
+  }
+
   const realm = getCurrentRealm(state);
   if ((state.qi ?? 0) >= realm.requiredQi && state.realmIndex < REALMS.length - 1) {
     return {
@@ -2609,13 +2623,7 @@ export function getNextGuidance(state) {
       title: '先巡守洞府',
       detail: '去行游完成一次巡守，带回第一笔灵气和灵石。',
       tab: 'missions',
-    };
-  }
-  if ((state.realmIndex ?? 0) <= 1) {
-    return {
-      title: '积攒灵气',
-      detail: `距离下一次突破还差 ${Math.ceil(Math.max(0, realm.requiredQi - (state.qi ?? 0)))} 灵气。`,
-      tab: 'goals',
+      targetId: 'cavePatrol',
     };
   }
 
@@ -2625,24 +2633,25 @@ export function getNextGuidance(state) {
       title: `挑战${readyBoss.boss.name}`,
       detail: `${readyBoss.name}探索已足，镇压首领可获得永久成长和炼器精魄。`,
       tab: 'missions',
+      targetId: readyBoss.id,
     };
   }
 
-  const chapter = getMainlineChapters(state).find((candidate) => !candidate.locked && !candidate.rewardClaimed);
-  const claimableObjective = chapter?.objectives.find((objective) => objective.completed && !objective.claimed);
-  if (claimableObjective) {
-    return {
-      title: `领取${claimableObjective.title}`,
-      detail: `目标已完成，可领取 ${formatReward(claimableObjective.reward)}。`,
-      tab: 'goals',
-    };
-  }
   const nextObjective = chapter?.objectives.find((objective) => !objective.completed);
   if (nextObjective) {
     return {
       title: nextObjective.title,
       detail: nextObjective.detail,
       tab: getGuidanceTabForObjective(nextObjective.id),
+      targetId: getGuidanceTargetForObjective(nextObjective.id),
+    };
+  }
+
+  if ((state.realmIndex ?? 0) <= 1) {
+    return {
+      title: '积攒灵气',
+      detail: `距离下一次突破还差 ${Math.ceil(Math.max(0, realm.requiredQi - (state.qi ?? 0)))} 灵气。`,
+      tab: 'goals',
     };
   }
 
@@ -3378,10 +3387,12 @@ export function rerollGearAffix(state, gearId, now = Date.now(), random = Math.r
     return { ok: false, reason: 'notEnoughResources', cost };
   }
 
+  const beforeImpact = getGearAffixImpactSnapshot(state, now);
   payResources(state, cost);
   state.gearAffixes[gearId] = rollAffixForGear(gearId, random, previousAffix);
+  const impact = compareGearAffixImpact(beforeImpact, getGearAffixImpactSnapshot(state, now));
   addLog(state, now, `${gear.name}洗练出词条「${GEAR_AFFIXES[state.gearAffixes[gearId]].name}」。`);
-  return { ok: true, previousAffix, affix: state.gearAffixes[gearId], cost };
+  return { ok: true, previousAffix, affix: state.gearAffixes[gearId], cost, impact };
 }
 
 export function stabilizeFoundation(state, now = Date.now()) {
@@ -4308,7 +4319,7 @@ function findMainlineObjective(state, objectiveId) {
 
 function getGuidanceTabForObjective(objectiveId) {
   if (/Mission|Trial|Boss|demon|Ruins|Tomb|Valley|Rift|realm|Realm/i.test(objectiveId)) {
-    return objectiveId.toLowerCase().includes('realm') ? 'goals' : 'missions';
+    return objectiveId.toLowerCase().includes('realm') ? 'overview' : 'missions';
   }
   if (/Pill|alchemy/i.test(objectiveId)) {
     return 'alchemy';
@@ -4323,6 +4334,30 @@ function getGuidanceTabForObjective(objectiveId) {
     return 'cave';
   }
   return 'goals';
+}
+
+function getGuidanceTargetForObjective(objectiveId) {
+  const targets = {
+    firstPatrol: 'cavePatrol',
+    realmTwo: 'breakthrough',
+    spiritField: 'spiritField',
+    firstPill: 'gatherQiPill',
+    foundationRealm: 'breakthrough',
+    firstPath: 'sword',
+    firstArmament: 'weapon',
+    swordTombTrial: 'ancientSwordTomb',
+    goldenCoreRealm: 'breakthrough',
+    refinedGear: 'weapon',
+    pathThree: 'sword',
+    demonRiftTrial: 'demonRift',
+    goldenCoreCompletion: 'breakthrough',
+    demonBoss: 'demonRift',
+    empoweredLoot: 'loot',
+    sectReputation: 'sect',
+    nascentSoulRealm: 'breakthrough',
+    ancientRuinsBoss: 'ancientRuins',
+  };
+  return targets[objectiveId] ?? objectiveId;
 }
 
 function restartAutoMission(state, completedMissionId, now) {
@@ -4689,6 +4724,55 @@ function getGearSetBonus(state, key) {
     }
     return total + (GEAR_AFFIX_SETS[set.id]?.bonuses?.[key] ?? 0);
   }, 0);
+}
+
+function getGearAffixImpactSnapshot(state, now) {
+  return {
+    power: calculatePower(state),
+    qiRate: calculateQiRate(state, now),
+    breakthroughChance: calculateBreakthroughChance(state, now),
+    sets: getGearSetStatus(state),
+  };
+}
+
+function compareGearAffixImpact(before, after) {
+  const setChanges = before.sets
+    .map((beforeSet) => {
+      const afterSet = after.sets.find((set) => set.id === beforeSet.id);
+      if (!afterSet || (beforeSet.matched === afterSet.matched && beforeSet.active === afterSet.active)) {
+        return null;
+      }
+      let status = afterSet.matched > beforeSet.matched ? 'progress' : 'weakened';
+      if (!beforeSet.active && afterSet.active) {
+        status = 'gained';
+      } else if (beforeSet.active && !afterSet.active) {
+        status = 'lost';
+      }
+      return {
+        id: beforeSet.id,
+        name: beforeSet.name,
+        beforeMatched: beforeSet.matched,
+        afterMatched: afterSet.matched,
+        total: beforeSet.total,
+        beforeActive: beforeSet.active,
+        afterActive: afterSet.active,
+        status,
+      };
+    })
+    .filter(Boolean);
+
+  return {
+    previousPower: before.power,
+    currentPower: after.power,
+    powerDelta: round(after.power - before.power),
+    previousQiRate: before.qiRate,
+    currentQiRate: after.qiRate,
+    qiRateDelta: round(after.qiRate - before.qiRate),
+    previousBreakthroughChance: before.breakthroughChance,
+    currentBreakthroughChance: after.breakthroughChance,
+    breakthroughChanceDelta: round(after.breakthroughChance - before.breakthroughChance),
+    setChanges,
+  };
 }
 
 function getEquippedLootBonus(state, key) {

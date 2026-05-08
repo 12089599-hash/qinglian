@@ -1206,6 +1206,35 @@ small {
   font-weight: 900;
 }
 
+.gear-set-panel ul {
+  display: grid;
+  gap: 4px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.gear-set-panel li {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  border: 1px solid rgba(245, 238, 220, 0.08);
+  border-radius: 6px;
+  padding: 4px 6px;
+  color: var(--muted);
+  font-size: 0.74rem;
+}
+
+.gear-set-panel li.active {
+  border-color: rgba(125, 211, 183, 0.28);
+  color: var(--paper);
+}
+
+.gear-set-panel li small {
+  margin-top: 0;
+  white-space: nowrap;
+}
+
 .gear-set-panel small {
   margin-top: 4px;
   color: var(--muted);
@@ -2150,6 +2179,10 @@ small {
 
   body {
     padding-bottom: calc(98px + env(safe-area-inset-bottom));
+  }
+
+  .dashboard {
+    padding-bottom: calc(128px + env(safe-area-inset-bottom));
   }
 
   .toast-stack {
