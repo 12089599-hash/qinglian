@@ -3583,11 +3583,27 @@
         <button data-claim-daily="${task.id}" ${!task.unlocked || !task.completed || task.claimed ? 'disabled' : ''}>
           <strong>${task.title}</strong>
           <span>${task.detail} · ${formatDailyProgress(task)}</span>
-          <small>${task.claimed ? '已领取' : task.completed ? `可领取 ${formatReward(task.reward)}` : `奖励 ${formatReward(task.reward)}`}</small>
+          <small>${formatDailyClaimHint(task)}</small>
         </button>
       `)
       .join('');
     renderCache.daily = signature;
+  }
+
+  function formatDailyClaimHint(task) {
+    if (!isDailyUnlocked(state)) {
+      return '完成 3 个新手目标后解锁';
+    }
+    if (!task.unlocked) {
+      return `${realms[task.unlockRealmIndex]?.name || '更高境界'}后解锁`;
+    }
+    if (task.claimed) {
+      return '已领取';
+    }
+    if (task.completed) {
+      return `可领取 ${formatReward(task.reward)}`;
+    }
+    return `奖励 ${formatReward(task.reward)}`;
   }
 
   function renderMarket(force = false) {

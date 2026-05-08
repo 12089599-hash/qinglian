@@ -136,6 +136,7 @@ assert.doesNotMatch(source, /data-resolve-opportunity="\$\{choice\.id\}" \$\{can
 assert.match(source, /function getOpportunityResourceSignature/);
 assert.match(source, /dailyDepth/);
 assert.match(source, /depthTrials/);
+assert.match(source, /function formatDailyClaimHint/);
 assert.match(source, /function getSectRecommendation/);
 assert.match(source, /委托建议/);
 assert.doesNotMatch(source, /active \? `\$\{active\.id\}:\$\{state\.spiritStones\}:\$\{state\.artifacts\}:\$\{state\.arrayFlags\}:\$\{state\.qi\}` : 'none'/);
