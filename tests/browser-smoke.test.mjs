@@ -19,6 +19,30 @@ assert.match(source, /openLootDetails\s*=\s*new Set/);
 assert.match(source, /data-loot-detail=/);
 assert.match(source, /openLootDetails\.has\(item\.uid\)/);
 assert.match(source, /addEventListener\('toggle'/);
+assert.match(html, /data-tab-group="practice"/);
+assert.match(html, /data-tab-group="travel"/);
+assert.match(html, /data-tab-group="vault"/);
+assert.match(html, /data-tab-group="mountain"/);
+assert.match(html, /data-sub-tabs/);
+assert.match(html, />修行</);
+assert.match(html, />行游</);
+assert.match(html, />库藏</);
+assert.match(html, />山门</);
+assert.match(source, /const tabGroups/);
+assert.match(source, /function renderSubTabs/);
+assert.match(html, /class="vital-grid"/);
+assert.match(html, /resource-drawer/);
+assert.match(html, /材料丹药/);
+assert.match(html, /状态根基/);
+assert.match(html, /data-gear-subtabs/);
+assert.match(html, /data-gear-section-panel="wear"/);
+assert.match(html, /data-gear-section-panel="loot"/);
+assert.match(html, /法宝灵兽/);
+assert.match(source, /activeGearSection/);
+assert.match(source, /function renderGearSections/);
+assert.match(styles, /\.sub-tabs/);
+assert.match(styles, /\.vital-grid/);
+assert.match(styles, /\.gear-subtabs/);
 
 function element() {
   return {

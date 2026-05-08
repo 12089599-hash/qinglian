@@ -816,6 +816,8 @@
     marketList: document.querySelector('[data-market-list]'),
     opportunity: document.querySelector('[data-opportunity]'),
     missionList: document.querySelector('[data-mission-list]'),
+    subTabs: document.querySelector('[data-sub-tabs]'),
+    gearSubTabs: document.querySelector('[data-gear-subtabs]'),
     offlineDialog: document.querySelector('[data-offline-dialog]'),
     offlineSummary: document.querySelector('[data-offline-summary]'),
     toastStack: document.querySelector('[data-toast-stack]'),
@@ -827,9 +829,32 @@
   const renderCache = {};
   const openLootDetails = new Set();
   const panelTabs = ['goals', 'daily', 'market', 'alchemy', 'gear', 'cultivation', 'sect', 'cave', 'missions', 'log'];
+  const tabGroups = {
+    practice: { label: '修行', tabs: ['goals', 'daily', 'cultivation'] },
+    travel: { label: '行游', tabs: ['missions'] },
+    vault: { label: '库藏', tabs: ['market', 'alchemy', 'gear'] },
+    mountain: { label: '山门', tabs: ['sect', 'cave', 'log'] },
+  };
+  const tabLabels = {
+    goals: '主线',
+    daily: '日常',
+    market: '坊市',
+    alchemy: '丹房',
+    gear: '装备',
+    cultivation: '功法',
+    sect: '宗门',
+    cave: '洞府',
+    missions: '历练',
+    log: '日志',
+  };
+  const gearSections = ['wear', 'loot', 'treasures'];
   let activeTab = localStorage.getItem('idle-xianxia-active-tab') || 'goals';
   if (!panelTabs.includes(activeTab)) {
     activeTab = 'goals';
+  }
+  let activeGearSection = localStorage.getItem('idle-xianxia-gear-section') || 'wear';
+  if (!gearSections.includes(activeGearSection)) {
+    activeGearSection = 'wear';
   }
   let pendingOfflineSummary = null;
   let state = loadState();
@@ -1117,12 +1142,38 @@
     render(true);
   });
 
-  document.querySelectorAll('[data-tab]').forEach((button) => {
+  document.querySelectorAll('[data-tab-group]').forEach((button) => {
     button.addEventListener('click', () => {
-      activeTab = button.dataset.tab;
+      const group = tabGroups[button.dataset.tabGroup];
+      if (!group) {
+        return;
+      }
+      const remembered = localStorage.getItem(`idle-xianxia-${button.dataset.tabGroup}-tab`);
+      activeTab = group.tabs.includes(remembered) ? remembered : group.tabs[0];
       localStorage.setItem('idle-xianxia-active-tab', activeTab);
       renderTabs();
     });
+  });
+
+  refs.subTabs?.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-tab]');
+    if (!button || !panelTabs.includes(button.dataset.tab)) {
+      return;
+    }
+    activeTab = button.dataset.tab;
+    localStorage.setItem('idle-xianxia-active-tab', activeTab);
+    localStorage.setItem(`idle-xianxia-${getTabGroup(activeTab)}-tab`, activeTab);
+    renderTabs();
+  });
+
+  refs.gearSubTabs?.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-gear-section]');
+    if (!button || !gearSections.includes(button.dataset.gearSection)) {
+      return;
+    }
+    activeGearSection = button.dataset.gearSection;
+    localStorage.setItem('idle-xianxia-gear-section', activeGearSection);
+    renderGearSections();
   });
 
   refs.nextGuidance?.addEventListener('click', () => {
@@ -1132,6 +1183,7 @@
     }
     activeTab = tab;
     localStorage.setItem('idle-xianxia-active-tab', activeTab);
+    localStorage.setItem(`idle-xianxia-${getTabGroup(activeTab)}-tab`, activeTab);
     renderTabs();
   });
 
@@ -4110,11 +4162,42 @@
   }
 
   function renderTabs() {
-    document.querySelectorAll('[data-tab]').forEach((button) => {
-      button.classList.toggle('active', button.dataset.tab === activeTab);
+    const activeGroup = getTabGroup(activeTab);
+    document.querySelectorAll('[data-tab-group]').forEach((button) => {
+      button.classList.toggle('active', button.dataset.tabGroup === activeGroup);
     });
+    renderSubTabs(activeGroup);
     document.querySelectorAll('[data-panel]').forEach((panel) => {
       panel.classList.toggle('active', panel.dataset.panel === activeTab);
+    });
+    renderGearSections();
+  }
+
+  function getTabGroup(tabId) {
+    return Object.entries(tabGroups).find(([, group]) => group.tabs.includes(tabId))?.[0] || 'practice';
+  }
+
+  function renderSubTabs(groupId = getTabGroup(activeTab)) {
+    if (!refs.subTabs) {
+      return;
+    }
+    const signature = `${groupId}:${activeTab}`;
+    if (renderCache.subTabs === signature) {
+      return;
+    }
+    const group = tabGroups[groupId] || tabGroups.practice;
+    refs.subTabs.innerHTML = group.tabs
+      .map((tabId) => `<button data-tab="${tabId}" class="${tabId === activeTab ? 'active' : ''}">${tabLabels[tabId]}</button>`)
+      .join('');
+    renderCache.subTabs = signature;
+  }
+
+  function renderGearSections() {
+    document.querySelectorAll('[data-gear-section]').forEach((button) => {
+      button.classList.toggle('active', button.dataset.gearSection === activeGearSection);
+    });
+    document.querySelectorAll('[data-gear-section-panel]').forEach((panel) => {
+      panel.classList.toggle('active', panel.dataset.gearSectionPanel === activeGearSection);
     });
   }
 

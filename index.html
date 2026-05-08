@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>青岚洞府</title>
-    <link rel="stylesheet" href="styles.css?v=202605080951" />
+    <link rel="stylesheet" href="styles.css?v=202605081013" />
   </head>
   <body>
     <main class="shell">
@@ -27,18 +27,13 @@
         </div>
       </section>
 
-      <nav class="section-tabs" aria-label="功能切换">
-        <button data-tab="goals" class="active">目标</button>
-        <button data-tab="daily">日常</button>
-        <button data-tab="market">坊市</button>
-        <button data-tab="alchemy">丹房</button>
-        <button data-tab="gear">装备</button>
-        <button data-tab="cultivation">功法</button>
-        <button data-tab="sect">宗门</button>
-        <button data-tab="cave">洞府</button>
-        <button data-tab="missions">历练</button>
-        <button data-tab="log">日志</button>
+      <nav class="section-tabs" aria-label="主功能切换">
+        <button data-tab-group="practice" class="active">修行</button>
+        <button data-tab-group="travel">行游</button>
+        <button data-tab-group="vault">库藏</button>
+        <button data-tab-group="mountain">山门</button>
       </nav>
+      <nav data-sub-tabs class="sub-tabs" aria-label="子功能切换"></nav>
 
       <section class="dashboard" aria-label="修行面板">
         <article class="panel stats-panel">
@@ -46,84 +41,94 @@
             <h2>修行</h2>
             <button data-breakthrough class="primary-button">突破</button>
           </header>
-          <dl class="stats-grid">
-            <div>
+          <dl class="vital-grid">
+            <div class="vital-card vital-card-wide">
               <dt>灵气</dt>
               <dd data-qi>0 / 100</dd>
             </div>
-            <div>
+            <div class="vital-card">
               <dt>灵息</dt>
               <dd data-qi-rate>1.8 / 秒</dd>
             </div>
-            <div>
+            <div class="vital-card">
               <dt>灵石</dt>
               <dd data-stones>0</dd>
             </div>
-            <div>
-              <dt>灵草</dt>
-              <dd data-herbs>0</dd>
-            </div>
-            <div>
-              <dt>丹药</dt>
-              <dd data-pills>0</dd>
-            </div>
-            <div>
-              <dt>清心丹</dt>
-              <dd data-clear-heart-pills>0</dd>
-            </div>
-            <div>
-              <dt>护脉丹</dt>
-              <dd data-meridian-pills>0</dd>
-            </div>
-            <div>
-              <dt>妖核</dt>
-              <dd data-beast-cores>0</dd>
-            </div>
-            <div>
-              <dt>法器</dt>
-              <dd data-artifacts>0</dd>
-            </div>
-            <div>
-              <dt>阵旗</dt>
-              <dd data-array-flags>0</dd>
-            </div>
-            <div>
-              <dt>精魄</dt>
-              <dd data-forging-essence>0</dd>
-            </div>
-            <div>
-              <dt>心魔</dt>
-              <dd data-heart-demon>0</dd>
-            </div>
-            <div>
+            <div class="vital-card">
               <dt>道行</dt>
               <dd data-power>55</dd>
             </div>
-            <div>
-              <dt>破境天机</dt>
-              <dd data-breakthrough-chance>75%</dd>
-            </div>
-            <div>
-              <dt>主修</dt>
-              <dd data-dominant-path>未定</dd>
-            </div>
-            <div>
-              <dt>根基</dt>
-              <dd data-foundation>0 / 3</dd>
-            </div>
-            <div>
-              <dt>升阶上限</dt>
-              <dd data-upgrade-limit>凡阶 3</dd>
-            </div>
-            <div>
+            <div class="vital-card vital-card-wide">
               <dt>当前行动</dt>
               <dd><span data-mission>闭关修炼</span> <small data-mission-time>待命</small></dd>
             </div>
-            <div>
-              <dt>丹药加速</dt>
-              <dd data-pill-boost>未服丹</dd>
-            </div>
           </dl>
+          <details class="resource-drawer" open>
+            <summary>材料丹药</summary>
+            <dl class="stats-grid resource-grid">
+              <div>
+                <dt>灵草</dt>
+                <dd data-herbs>0</dd>
+              </div>
+              <div>
+                <dt>丹药</dt>
+                <dd data-pills>0</dd>
+              </div>
+              <div>
+                <dt>清心丹</dt>
+                <dd data-clear-heart-pills>0</dd>
+              </div>
+              <div>
+                <dt>护脉丹</dt>
+                <dd data-meridian-pills>0</dd>
+              </div>
+              <div>
+                <dt>妖核</dt>
+                <dd data-beast-cores>0</dd>
+              </div>
+              <div>
+                <dt>法器</dt>
+                <dd data-artifacts>0</dd>
+              </div>
+              <div>
+                <dt>阵旗</dt>
+                <dd data-array-flags>0</dd>
+              </div>
+              <div>
+                <dt>精魄</dt>
+                <dd data-forging-essence>0</dd>
+              </div>
+            </dl>
+          </details>
+          <details class="resource-drawer state-drawer" open>
+            <summary>状态根基</summary>
+            <dl class="stats-grid resource-grid">
+              <div>
+                <dt>心魔</dt>
+                <dd data-heart-demon>0</dd>
+              </div>
+              <div>
+                <dt>破境天机</dt>
+                <dd data-breakthrough-chance>75%</dd>
+              </div>
+              <div>
+                <dt>主修</dt>
+                <dd data-dominant-path>未定</dd>
+              </div>
+              <div>
+                <dt>根基</dt>
+                <dd data-foundation>0 / 3</dd>
+              </div>
+              <div>
+                <dt>升阶上限</dt>
+                <dd data-upgrade-limit>凡阶 3</dd>
+              </div>
+              <div>
+                <dt>丹药加速</dt>
+                <dd data-pill-boost>未服丹</dd>
+              </div>
+            </dl>
+          </details>
           <section class="attribute-card" aria-label="人物属性">
             <header>
               <h3>人物属性</h3>
@@ -175,24 +180,25 @@
           <header>
             <h2>装备</h2>
           </header>
-          <div class="system-split">
-            <section>
+          <nav data-gear-subtabs class="gear-subtabs" aria-label="装备分组">
+            <button data-gear-section="wear" class="active">穿戴</button>
+            <button data-gear-section="loot">战利品</button>
+            <button data-gear-section="treasures">法宝灵兽</button>
+          </nav>
+          <div class="gear-section-stack">
+            <section data-gear-section-panel="wear" class="active">
               <h3>装备栏</h3>
               <div data-gear-list class="system-list"></div>
-            </section>
-            <section>
-              <h3>战利品</h3>
-              <div data-loot-list class="system-list"></div>
-            </section>
-            <section>
               <h3>阵法栏</h3>
               <div data-formation-list class="system-list"></div>
             </section>
-            <section>
+            <section data-gear-section-panel="loot">
+              <h3>战利品</h3>
+              <div data-loot-list class="system-list"></div>
+            </section>
+            <section data-gear-section-panel="treasures">
               <h3>法宝</h3>
               <div data-treasure-list class="system-list"></div>
-            </section>
-            <section>
               <h3>灵兽</h3>
               <div data-beast-list class="system-list"></div>
             </section>
@@ -272,6 +278,6 @@
 
     <div data-toast-stack class="toast-stack" aria-live="polite"></div>
 
-    <script src="browserGame.js?v=202605080951"></script>
+    <script src="browserGame.js?v=202605081013"></script>
   </body>
 </html>

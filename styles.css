@@ -186,6 +186,33 @@ h2 {
   background: var(--gold);
 }
 
+.sub-tabs {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  margin-top: 8px;
+  padding-bottom: 2px;
+  scrollbar-width: none;
+}
+
+.sub-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.sub-tabs button {
+  flex: 0 0 auto;
+  min-height: 34px;
+  padding: 0 12px;
+  color: #d9e7d3;
+  background: rgba(245, 238, 220, 0.045);
+}
+
+.sub-tabs button.active {
+  border-color: rgba(125, 211, 183, 0.72);
+  color: #dff8ee;
+  background: rgba(125, 211, 183, 0.16);
+}
+
 [data-panel] {
   display: none;
 }
@@ -227,12 +254,60 @@ h2 {
   gap: 12px;
 }
 
+.vital-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.vital-card,
 .stats-grid div {
   min-height: 76px;
   border: 1px solid rgba(245, 238, 220, 0.1);
   border-radius: 8px;
   padding: 12px;
   background: rgba(255, 255, 255, 0.04);
+}
+
+.vital-card {
+  background:
+    linear-gradient(135deg, rgba(125, 211, 183, 0.08), rgba(232, 198, 106, 0.04)),
+    rgba(255, 255, 255, 0.045);
+}
+
+.vital-card-wide {
+  grid-column: span 2;
+}
+
+.resource-drawer {
+  margin-top: 10px;
+  border: 1px solid rgba(245, 238, 220, 0.1);
+  border-radius: 8px;
+  padding: 10px;
+  background: rgba(0, 0, 0, 0.14);
+}
+
+.resource-drawer summary {
+  list-style: none;
+  cursor: pointer;
+  color: var(--gold);
+  font-size: 0.86rem;
+  font-weight: 900;
+}
+
+.resource-drawer summary::-webkit-details-marker {
+  display: none;
+}
+
+.resource-grid {
+  grid-template-columns: repeat(auto-fit, minmax(112px, 1fr));
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.resource-grid div {
+  min-height: 62px;
+  padding: 10px;
 }
 
 dt {
@@ -498,6 +573,39 @@ small {
 
 .system-split h3 {
   margin: 0 0 10px;
+  color: var(--gold);
+  font-size: 0.9rem;
+}
+
+.gear-subtabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.gear-subtabs button {
+  min-height: 34px;
+  padding: 0 12px;
+}
+
+.gear-subtabs button.active {
+  border-color: rgba(232, 198, 106, 0.78);
+  color: #17130b;
+  background: var(--gold);
+}
+
+.gear-section-stack [data-gear-section-panel] {
+  display: none;
+}
+
+.gear-section-stack [data-gear-section-panel].active {
+  display: grid;
+  gap: 12px;
+}
+
+.gear-section-stack h3 {
+  margin: 0;
   color: var(--gold);
   font-size: 0.9rem;
 }
@@ -1109,12 +1217,22 @@ small {
     scrollbar-width: none;
   }
 
+  .sub-tabs {
+    position: sticky;
+    top: 0;
+    z-index: 9;
+    margin-right: -9px;
+    margin-left: -9px;
+    padding: 8px 9px;
+    background: rgba(14, 19, 23, 0.96);
+  }
+
   .section-tabs::-webkit-scrollbar {
     display: none;
   }
 
   .section-tabs button {
-    flex: 0 0 72px;
+    flex: 1 0 82px;
     min-height: 46px;
     padding: 0 8px;
     font-size: 0.88rem;
@@ -1171,6 +1289,18 @@ small {
 
   .stats-grid {
     grid-template-columns: 1fr;
+  }
+
+  .vital-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .vital-card-wide {
+    grid-column: span 2;
+  }
+
+  .resource-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .panel {
