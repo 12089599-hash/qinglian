@@ -1479,6 +1479,24 @@ small {
   line-height: 1.35;
 }
 
+.mission-report-history {
+  display: grid;
+  gap: 6px;
+  border-top: 1px solid rgba(245, 238, 220, 0.1);
+  padding-top: 10px;
+}
+
+.mission-report-history > span {
+  color: var(--gold);
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.mission-report-history small {
+  color: #aeb7ad;
+  line-height: 1.35;
+}
+
 .mini-button {
   min-height: 70px;
   padding: 0 8px;

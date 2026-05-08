@@ -1658,6 +1658,7 @@
       resolvedOpportunities: {},
       lastMissionEvent: null,
       lastMissionReport: null,
+      missionReportHistory: [],
       cultivationPaths: {
         sword: 0,
         alchemy: 0,
@@ -1766,6 +1767,7 @@
     state.resolvedOpportunities = normalizeResolvedOpportunities(state.resolvedOpportunities);
     state.lastMissionEvent = normalizeMissionEvent(state.lastMissionEvent);
     state.lastMissionReport = normalizeMissionReport(state.lastMissionReport);
+    state.missionReportHistory = normalizeMissionReportHistory(state.missionReportHistory, state.lastMissionReport);
     state.cultivationPaths = normalizeLevels(state.cultivationPaths, cultivationPaths);
     state.formations = normalizeLevels(state.formations, formations);
     state.buildings = normalizeBuildings(state.buildings);
@@ -2273,7 +2275,7 @@
     if (danger && calculatePower(state) < danger) {
       applyResources(state, mission.failurePenalty);
       state.injuryUntil = now + 90 * 1000;
-      state.lastMissionReport = createMissionReport(state, mission, {
+      recordMissionReport(state, createMissionReport(state, mission, {
         outcome: 'failure',
         reward: mission.failurePenalty || {},
         approach,
@@ -2283,7 +2285,7 @@
         eventResult: null,
         rareReward: null,
         now,
-      });
+      }));
       addLog(state, now, `挑战「${mission.name}」失利，负伤退回洞府。`);
       showToast('历练失利', `${mission.name} 道行不足，负伤并滋生心魔。`, 'warning');
       if (stopAutoMissionAfterFailure(state, mission.id, now)) {
@@ -2316,7 +2318,7 @@
     }
     maybeCreateOpportunity(state, mission, now);
     addDailyProgress(state, 'missions', 1, now);
-    state.lastMissionReport = createMissionReport(state, mission, {
+    recordMissionReport(state, createMissionReport(state, mission, {
       outcome: 'success',
       reward: missionReward,
       approach,
@@ -2326,7 +2328,7 @@
       eventResult,
       rareReward,
       now,
-    });
+    }));
     addLog(state, now, `完成「${mission.name}」，收获${formatReward(missionReward)}。`);
     showToast('历练完成', `${mission.name} 收获${formatReward(missionReward)}。`);
     triggerBattleFeedback('pulse');
@@ -2348,12 +2350,12 @@
       };
       applyResources(state, penalty);
       state.injuryUntil = now + 120 * 1000;
-      state.lastMissionReport = createDepthReport(state, map, layer, {
+      recordMissionReport(state, createDepthReport(state, map, layer, {
         outcome: 'failure',
         reward: penalty,
         reputationGained: 0,
         now,
-      });
+      }));
       addLog(state, now, `${map.name}秘境第 ${layer} 层折返，劫象反噬。`);
       showToast('秘境折返', `${map.name}第 ${layer} 层劫象过重。`, 'warning');
       triggerBattleFeedback('shake');
@@ -2367,12 +2369,12 @@
     state.mapDepths[map.id] = Math.max(state.mapDepths[map.id] || 0, layer);
     addMapReputation(state, map.id, reputationGained);
     addDailyProgress(state, 'missions', 1, now);
-    state.lastMissionReport = createDepthReport(state, map, layer, {
+    recordMissionReport(state, createDepthReport(state, map, layer, {
       outcome: 'success',
       reward,
       reputationGained,
       now,
-    });
+    }));
     addLog(state, now, `打通${map.name}秘境第 ${layer} 层，获得${formatReward(reward)}。`);
     showToast('秘境突破', `${map.name}第 ${layer} 层收获${formatReward(reward)}。`);
     triggerBattleFeedback('pulse');
@@ -2399,6 +2401,12 @@
         : `${map.name}秘境第 ${layer} 层折返，劫象反噬${rewardText ? `：${rewardText}` : '。'}`,
       time: now,
     };
+  }
+
+  function recordMissionReport(state, report) {
+    state.lastMissionReport = report;
+    state.missionReportHistory = [report, ...(state.missionReportHistory || []).filter((item) => item?.id !== report.id)].slice(0, 5);
+    return report;
   }
 
   function createMissionReport(state, mission, { outcome, reward, approach = getSelectedMissionApproach(state, mission), approachReward = {}, specialDrop = null, reputationGained = 0, eventResult = null, rareReward = null, now = Date.now() }) {
@@ -3569,6 +3577,7 @@
       renderCache.missionReport = signature;
       return;
     }
+    const history = (state.missionReportHistory || []).filter((item) => item.id !== report.id).slice(0, 4);
     refs.missionReport.hidden = false;
     refs.missionReport.classList.toggle('failure', report.outcome === 'failure');
     refs.missionReport.innerHTML = `
@@ -3589,6 +3598,12 @@
         ${report.rareRewardText ? `<div><span>稀有</span><strong>${report.rareRewardText}</strong></div>` : ''}
         ${report.event ? `<div><span>奇遇</span><strong>${report.event.name}${report.event.equipmentName ? ` · ${report.event.equipmentName}` : ''}</strong></div>` : ''}
       </div>
+      ${history.length ? `
+        <div class="mission-report-history">
+          <span>近几次行游</span>
+          ${history.map((item) => `<small>${item.outcome === 'success' ? '成' : '折'} · ${item.missionName} · ${item.rewardText || item.summary}</small>`).join('')}
+        </div>
+      ` : ''}
     `;
     renderCache.missionReport = signature;
     if (isMobileLayout() && activeTab === 'missions' && scrolledMissionReportId !== report.id) {
@@ -5071,6 +5086,19 @@
       summary: typeof report.summary === 'string' && report.summary ? report.summary : `${mission.name}结算已记录。`,
       time: Number(report.time) || Date.now(),
     };
+  }
+
+  function normalizeMissionReportHistory(history, lastReport = null) {
+    const reports = Array.isArray(history) ? history.map((report) => normalizeMissionReport(report)).filter(Boolean) : [];
+    const merged = lastReport ? [lastReport, ...reports] : reports;
+    const seen = new Set();
+    return merged.filter((report) => {
+      if (seen.has(report.id)) {
+        return false;
+      }
+      seen.add(report.id);
+      return true;
+    }).slice(0, 5);
   }
 
   function migrateLegacyRealmIndex(realmIndex) {

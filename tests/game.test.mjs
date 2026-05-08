@@ -740,6 +740,21 @@ test('mission completion records a readable settlement report', () => {
   assert.equal(report.event.name, '残剑鸣匣');
   assert.equal(report.event.equipmentName, '青锋剑');
   assert.equal(report.summary.includes('收获'), true);
+  assert.equal(state.missionReportHistory.length, 1);
+  assert.equal(state.missionReportHistory[0].id, report.id);
+});
+
+test('recent mission reports keep the latest settlement history', () => {
+  const state = createGameState(1000);
+
+  startMission(state, 'herbGathering', 1000);
+  updateGame(state, 31, 32_000);
+  startMission(state, 'cavePatrol', 33_000);
+  updateGame(state, 56, 89_000);
+
+  assert.equal(state.lastMissionReport.missionName, '巡守洞府');
+  assert.equal(state.missionReportHistory.length, 2);
+  assert.deepEqual(state.missionReportHistory.map((report) => report.missionName), ['巡守洞府', '采集灵草']);
 });
 
 test('mission approaches alter rewards and settlement reports', () => {
