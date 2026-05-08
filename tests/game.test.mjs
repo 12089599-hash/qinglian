@@ -558,7 +558,7 @@ test('next guidance points players toward the clearest progression step', () => 
   assert.equal(getNextGuidance(state).title, '积攒灵气');
 
   state.qi = REALMS[0].requiredQi;
-  assert.equal(getNextGuidance(state).title, '可以突破');
+  assert.equal(getNextGuidance(state).title, '可以破境');
 
   state.qi = 220;
   state.realmIndex = 2;
@@ -734,7 +734,22 @@ test('character profile and equipment details expose concrete attribute sources'
   assert.equal(profile.attributes.some((attribute) => attribute.id === 'cultivationSpeed' && attribute.sources.length > 0), true);
   assert.equal(weapon.qualityName, '下品');
   assert.equal(weapon.affix.name, '剑意');
-  assert.equal(weapon.effects.some((effect) => effect.label === '战力' && effect.value > 0), true);
+  assert.equal(weapon.effects.some((effect) => effect.label === '道威' && effect.value > 0), true);
+});
+
+test('character profile uses xianxia themed attribute names', () => {
+  const state = createGameState(1000);
+  state.gear.weapon = 1;
+  state.gear.amulet = 1;
+  state.gear.robe = 1;
+
+  const profile = getCharacterProfile(state, 2000);
+  const equipment = getEquipmentDetails(state);
+  const weapon = equipment.gear.find((item) => item.id === 'weapon');
+
+  assert.equal(profile.combatPower.label, '道行总纲');
+  assert.deepEqual(profile.attributes.map((attribute) => attribute.label), ['道威', '灵息', '破境天机', '护体玄光', '山门气运']);
+  assert.equal(weapon.effects.some((effect) => effect.label === '道威'), true);
 });
 
 test('goals describe early cultivation progress', () => {

@@ -180,7 +180,7 @@ export const MISSION_MAPS = {
     id: 'swordTomb',
     name: '古剑冢',
     icon: '剑',
-    description: '残剑埋骨之地，适合剑修淬炼战力。',
+    description: '残剑埋骨之地，适合剑修淬炼道威。',
     unlockRealmIndex: 3,
     explorationTarget: 6,
     reputationPerMission: 9,
@@ -278,7 +278,7 @@ export const OPPORTUNITIES = {
       {
         id: 'temperSword',
         title: '以法器淬锋',
-        detail: '消耗一件法器，换取稳定的战力底蕴和炼器精魄。',
+        detail: '消耗一件法器，换取稳定的道威底蕴和炼器精魄。',
         cost: { artifacts: 1 },
         reward: { powerBonus: 18, forgingEssence: 2 },
         successChance: 1,
@@ -301,7 +301,7 @@ export const OPPORTUNITIES = {
       {
         id: 'leadToCave',
         title: '引泉入府',
-        detail: '布下简易阵纹，永久提升少量吐纳效率。',
+        detail: '布下简易阵纹，永久提升少量灵息效率。',
         cost: { arrayFlags: 1 },
         reward: { qiRateBonus: 0.015 },
         successChance: 1,
@@ -346,7 +346,7 @@ export const TREASURES = {
   lifeBoundSeal: {
     id: 'lifeBoundSeal',
     name: '本命青印',
-    detail: '护持经脉和神识，提升突破把握，并提供少量战力。',
+    detail: '护持经脉和神识，牵引破境天机，并提供少量道威。',
     maxLevel: 8,
     cost: (level) => ({ spiritStones: scaleCost(120, level), artifacts: level, forgingEssence: level * 2 }),
     bonuses: { breakthrough: 0.025, power: 10 },
@@ -354,7 +354,7 @@ export const TREASURES = {
   swordGourd: {
     id: 'swordGourd',
     name: '养剑葫',
-    detail: '温养剑气，强化历练战力并压低秘境风险。',
+    detail: '温养剑气，凝练历练道威并压低秘境凶险。',
     maxLevel: 8,
     cost: (level) => ({ spiritStones: scaleCost(140, level), beastCores: level, forgingEssence: level * 2 }),
     bonuses: { power: 24, dangerReduction: 4 },
@@ -362,7 +362,7 @@ export const TREASURES = {
   spiritLamp: {
     id: 'spiritLamp',
     name: '聚灵灯',
-    detail: '牵引洞府灵机，提升长期吐纳效率。',
+    detail: '牵引洞府灵机，提升长期灵息效率。',
     maxLevel: 8,
     cost: (level) => ({ spiritStones: scaleCost(110, level), arrayFlags: level, herbs: scaleCost(10, level) }),
     bonuses: { qiRate: 0.025 },
@@ -373,7 +373,7 @@ export const SPIRIT_BEASTS = {
   cloudFox: {
     id: 'cloudFox',
     name: '云纹灵狐',
-    detail: '亲近灵气，辅助吐纳和灵田照料。',
+    detail: '亲近灵气，辅助周天灵息和灵田照料。',
     maxLevel: 8,
     cost: (level) => ({ spiritStones: scaleCost(90, level), herbs: scaleCost(18, level), beastCores: level }),
     bonuses: { qiRate: 0.04, herbRate: 0.015 },
@@ -381,7 +381,7 @@ export const SPIRIT_BEASTS = {
   thunderTiger: {
     id: 'thunderTiger',
     name: '雷纹幼虎',
-    detail: '守山善战，提升战力并降低外出历练风险。',
+    detail: '守山善战，凝练道威并降低外出历练风险。',
     maxLevel: 8,
     cost: (level) => ({ spiritStones: scaleCost(130, level), beastCores: level * 2 }),
     bonuses: { power: 22, dangerReduction: 5 },
@@ -1151,7 +1151,7 @@ export function challengeMapBoss(state, mapId, now = Date.now()) {
   if (calculatePower(state) < map.boss.power) {
     applyResources(state, map.boss.failurePenalty ?? {});
     state.injuryUntil = now + 120 * 1000;
-    addLog(state, now, `挑战${map.boss.name}失利，需继续提升战力。`);
+    addLog(state, now, `挑战${map.boss.name}失利，需继续提升道行。`);
     return { ok: false, reason: 'powerLow', requiredPower: map.boss.power };
   }
 
@@ -1217,43 +1217,43 @@ export function calculatePower(state) {
 export function getCharacterProfile(state, now = Date.now()) {
   const realm = getCurrentRealm(state);
   const attackSources = compactSources([
-    { label: '境界根基', value: (state.realmIndex + 1) * 55 },
-    { label: '剑修功法', value: (state.cultivationPaths?.sword ?? 0) * CULTIVATION_PATHS.sword.powerPerLevel },
+    { label: '境界威压', value: (state.realmIndex + 1) * 55 },
+    { label: '剑诀火候', value: (state.cultivationPaths?.sword ?? 0) * CULTIVATION_PATHS.sword.powerPerLevel },
     { label: '洞府剑阵', value: (state.buildings?.swordArray ?? 0) * BUILDINGS.swordArray.powerPerLevel },
-    { label: '武器等级', value: (state.gear?.weapon ?? 0) * GEAR.weapon.powerPerLevel },
-    { label: '装备品质', value: Object.values(state.gearQuality ?? {}).reduce((total, qualityIndex) => total + (GEAR_QUALITIES[qualityIndex]?.powerBonus ?? 0), 0) },
-    { label: '装备词条', value: getGearAffixBonus(state, 'powerBonus') },
-    { label: '剑阵阵法', value: (state.formations?.swordArray ?? 0) * FORMATIONS.swordArray.powerPerLevel },
-    { label: '战利品', value: getEquippedLootBonus(state, 'power') },
-    { label: '地图熟练', value: getMapMasteryBonus(state, 'power') },
-    { label: '法宝', value: getTreasureBonus(state, 'power') },
-    { label: '灵兽', value: getSpiritBeastBonus(state, 'power') },
-    { label: '永久底蕴', value: state.permanentBonuses?.power ?? 0 },
-    { label: '宗门声望', value: Math.floor((state.sectReputation ?? 0) / 20) * 4 },
+    { label: '兵刃品阶', value: (state.gear?.weapon ?? 0) * GEAR.weapon.powerPerLevel },
+    { label: '炼器品相', value: Object.values(state.gearQuality ?? {}).reduce((total, qualityIndex) => total + (GEAR_QUALITIES[qualityIndex]?.powerBonus ?? 0), 0) },
+    { label: '灵纹词条', value: getGearAffixBonus(state, 'powerBonus') },
+    { label: '剑阵杀意', value: (state.formations?.swordArray ?? 0) * FORMATIONS.swordArray.powerPerLevel },
+    { label: '奇珍加持', value: getEquippedLootBonus(state, 'power') },
+    { label: '地脉熟稔', value: getMapMasteryBonus(state, 'power') },
+    { label: '法宝灵蕴', value: getTreasureBonus(state, 'power') },
+    { label: '灵兽护持', value: getSpiritBeastBonus(state, 'power') },
+    { label: '洞天底蕴', value: state.permanentBonuses?.power ?? 0 },
+    { label: '山门威望', value: Math.floor((state.sectReputation ?? 0) / 20) * 4 },
   ]);
   const cultivationSources = compactSources([
-    { label: '境界吐纳', value: realm.qiRate, mode: 'base' },
-    { label: '蒲团', value: ((state.buildings?.meditationSeat ?? 1) - 1) * BUILDINGS.meditationSeat.qiBonusPerLevel, mode: 'percent' },
-    { label: '聚灵阵', value: (state.formations?.spiritGathering ?? 0) * FORMATIONS.spiritGathering.qiBonusPerLevel, mode: 'percent' },
-    { label: '护符词条', value: getGearAffixBonus(state, 'qiBonus'), mode: 'percent' },
-    { label: '阵修功法', value: (state.cultivationPaths?.formation ?? 0) * CULTIVATION_PATHS.formation.qiBonusPerLevel, mode: 'percent' },
-    { label: '战利品', value: getEquippedLootBonus(state, 'qiRate'), mode: 'percent' },
-    { label: '地图熟练', value: getMapMasteryBonus(state, 'qiRate'), mode: 'percent' },
-    { label: '法宝', value: getTreasureBonus(state, 'qiRate'), mode: 'percent' },
-    { label: '灵兽', value: getSpiritBeastBonus(state, 'qiRate'), mode: 'percent' },
-    { label: '永久底蕴', value: state.permanentBonuses?.qiRate ?? 0, mode: 'percent' },
-    { label: '丹药加速', value: state.pillBoostUntil && state.pillBoostUntil > now ? 0.4 : 0, mode: 'percent' },
+    { label: '境界周天', value: realm.qiRate, mode: 'base' },
+    { label: '静室蒲团', value: ((state.buildings?.meditationSeat ?? 1) - 1) * BUILDINGS.meditationSeat.qiBonusPerLevel, mode: 'percent' },
+    { label: '聚灵阵纹', value: (state.formations?.spiritGathering ?? 0) * FORMATIONS.spiritGathering.qiBonusPerLevel, mode: 'percent' },
+    { label: '护符灵纹', value: getGearAffixBonus(state, 'qiBonus'), mode: 'percent' },
+    { label: '阵道感悟', value: (state.cultivationPaths?.formation ?? 0) * CULTIVATION_PATHS.formation.qiBonusPerLevel, mode: 'percent' },
+    { label: '奇珍加持', value: getEquippedLootBonus(state, 'qiRate'), mode: 'percent' },
+    { label: '地脉熟稔', value: getMapMasteryBonus(state, 'qiRate'), mode: 'percent' },
+    { label: '法宝灵蕴', value: getTreasureBonus(state, 'qiRate'), mode: 'percent' },
+    { label: '灵兽护持', value: getSpiritBeastBonus(state, 'qiRate'), mode: 'percent' },
+    { label: '洞天底蕴', value: state.permanentBonuses?.qiRate ?? 0, mode: 'percent' },
+    { label: '丹力催行', value: state.pillBoostUntil && state.pillBoostUntil > now ? 0.4 : 0, mode: 'percent' },
   ]);
   const breakthroughSources = compactSources([
-    { label: '基础把握', value: 0.75, mode: 'percent' },
-    { label: '护符等级', value: Math.min(0.12, (state.gear?.amulet ?? 0) * GEAR.amulet.breakthroughPerLevel), mode: 'percent' },
-    { label: '装备词条', value: Math.min(0.08, getGearAffixBonus(state, 'breakthrough')), mode: 'percent' },
-    { label: '护山阵', value: Math.min(0.12, (state.formations?.mountainGuard ?? 0) * FORMATIONS.mountainGuard.stabilityPerLevel), mode: 'percent' },
-    { label: '战利品', value: Math.min(0.1, getEquippedLootBonus(state, 'breakthrough')), mode: 'percent' },
-    { label: '法宝', value: Math.min(0.12, getTreasureBonus(state, 'breakthrough')), mode: 'percent' },
-    { label: '灵感', value: Math.min(0.15, (state.insight ?? 0) * 0.03), mode: 'percent' },
-    { label: '根基稳固', value: Math.min(0.15, (state.foundationStability ?? 0) * 0.05), mode: 'percent' },
-    { label: '心魔扣减', value: -Math.min(0.35, (state.heartDemon ?? 0) * 0.15), mode: 'percent' },
+    { label: '本命道基', value: 0.75, mode: 'percent' },
+    { label: '护符护脉', value: Math.min(0.12, (state.gear?.amulet ?? 0) * GEAR.amulet.breakthroughPerLevel), mode: 'percent' },
+    { label: '灵纹词条', value: Math.min(0.08, getGearAffixBonus(state, 'breakthrough')), mode: 'percent' },
+    { label: '护山阵势', value: Math.min(0.12, (state.formations?.mountainGuard ?? 0) * FORMATIONS.mountainGuard.stabilityPerLevel), mode: 'percent' },
+    { label: '奇珍加持', value: Math.min(0.1, getEquippedLootBonus(state, 'breakthrough')), mode: 'percent' },
+    { label: '法宝灵蕴', value: Math.min(0.12, getTreasureBonus(state, 'breakthrough')), mode: 'percent' },
+    { label: '悟道灵光', value: Math.min(0.15, (state.insight ?? 0) * 0.03), mode: 'percent' },
+    { label: '根基沉淀', value: Math.min(0.15, (state.foundationStability ?? 0) * 0.05), mode: 'percent' },
+    { label: '心魔侵扰', value: -Math.min(0.35, (state.heartDemon ?? 0) * 0.15), mode: 'percent' },
   ], true);
   const explorationSafety = (state.gear?.robe ?? 0) * GEAR.robe.dangerReductionPerLevel
     + getGearAffixBonus(state, 'dangerReduction')
@@ -1266,23 +1266,23 @@ export function getCharacterProfile(state, now = Date.now()) {
   return {
     realmName: realm.name,
     combatPower: {
-      label: '综合战力',
+      label: '道行总纲',
       value: calculatePower(state),
       sources: attackSources,
     },
     attributes: [
-      { id: 'attack', label: '攻伐', value: attackSources.reduce((total, source) => total + source.value, 0), sources: attackSources },
-      { id: 'cultivationSpeed', label: '吐纳', value: calculateQiRate(state, now), unit: '/秒', sources: cultivationSources },
-      { id: 'breakthrough', label: '突破把握', value: calculateBreakthroughChance(state, now), unit: '%', sources: breakthroughSources },
-      { id: 'explorationSafety', label: '秘境抗性', value: explorationSafety, sources: compactSources([
-        { label: '法袍', value: (state.gear?.robe ?? 0) * GEAR.robe.dangerReductionPerLevel },
-        { label: '装备词条', value: getGearAffixBonus(state, 'dangerReduction') },
-        { label: '战利品', value: getEquippedLootBonus(state, 'dangerReduction') },
-        { label: '地图熟练', value: getMapMasteryBonus(state, 'dangerReduction') },
-        { label: '法宝', value: getTreasureBonus(state, 'dangerReduction') },
-        { label: '灵兽', value: getSpiritBeastBonus(state, 'dangerReduction') },
+      { id: 'attack', label: '道威', value: attackSources.reduce((total, source) => total + source.value, 0), sources: attackSources },
+      { id: 'cultivationSpeed', label: '灵息', value: calculateQiRate(state, now), unit: '/秒', sources: cultivationSources },
+      { id: 'breakthrough', label: '破境天机', value: calculateBreakthroughChance(state, now), unit: '%', sources: breakthroughSources },
+      { id: 'explorationSafety', label: '护体玄光', value: explorationSafety, sources: compactSources([
+        { label: '法袍护身', value: (state.gear?.robe ?? 0) * GEAR.robe.dangerReductionPerLevel },
+        { label: '灵纹词条', value: getGearAffixBonus(state, 'dangerReduction') },
+        { label: '奇珍加持', value: getEquippedLootBonus(state, 'dangerReduction') },
+        { label: '地脉熟稔', value: getMapMasteryBonus(state, 'dangerReduction') },
+        { label: '法宝灵蕴', value: getTreasureBonus(state, 'dangerReduction') },
+        { label: '灵兽护持', value: getSpiritBeastBonus(state, 'dangerReduction') },
       ]) },
-      { id: 'sectInfluence', label: '宗门影响', value: Math.floor(state.sectReputation ?? 0), sources: [{ label: getSectLevel(state).name, value: Math.floor(state.sectReputation ?? 0) }] },
+      { id: 'sectInfluence', label: '山门气运', value: Math.floor(state.sectReputation ?? 0), sources: [{ label: getSectLevel(state).name, value: Math.floor(state.sectReputation ?? 0) }] },
     ],
   };
 }
@@ -1474,8 +1474,8 @@ export function getNextGuidance(state) {
   const realm = getCurrentRealm(state);
   if ((state.qi ?? 0) >= realm.requiredQi && state.realmIndex < REALMS.length - 1) {
     return {
-      title: '可以突破',
-      detail: `灵气已满，当前突破把握 ${Math.round(calculateBreakthroughChance(state) * 100)}%。`,
+      title: '可以破境',
+      detail: `灵气已满，当前破境天机 ${Math.round(calculateBreakthroughChance(state) * 100)}%。`,
       tab: 'goals',
     };
   }
@@ -2111,13 +2111,13 @@ export function consumePill(state, recipeId = 'gatherQiPill', now = Date.now()) 
     state.qi = round(state.qi + (65 + state.realmIndex * 30) * alchemyBonus);
     state.pillBoostUntil = Math.max(state.pillBoostUntil ?? 0, now) + 120 * 1000;
     state.pills = state.inventoryPills.gatherQiPill;
-    addLog(state, now, '服下一枚聚气丹，吐纳速度暂时提升。');
+    addLog(state, now, '服下一枚聚气丹，灵息周天暂时加快。');
   } else if (recipeId === 'clearHeartPill') {
     state.heartDemon = Math.max(0, (state.heartDemon ?? 0) - 1);
     addLog(state, now, '服下一枚清心丹，心魔压力减轻。');
   } else if (recipeId === 'meridianPill') {
     state.breakthroughBoostUntil = Math.max(state.breakthroughBoostUntil ?? 0, now) + 180 * 1000;
-    addLog(state, now, '服下一枚护脉丹，突破把握暂时提高。');
+    addLog(state, now, '服下一枚护脉丹，破境天机暂时明朗。');
   }
   return { ok: true };
 }
@@ -2621,17 +2621,17 @@ function getGearEffects(gearId, level, qualityIndex, affix) {
   const item = GEAR[gearId];
   const effects = [];
   if (item.powerPerLevel) {
-    effects.push({ id: 'power', label: '战力', value: level * item.powerPerLevel, mode: 'flat' });
+    effects.push({ id: 'power', label: '道威', value: level * item.powerPerLevel, mode: 'flat' });
   }
   if (item.breakthroughPerLevel) {
-    effects.push({ id: 'breakthrough', label: '突破把握', value: round(level * item.breakthroughPerLevel), mode: 'percent' });
+    effects.push({ id: 'breakthrough', label: '破境天机', value: round(level * item.breakthroughPerLevel), mode: 'percent' });
   }
   if (item.dangerReductionPerLevel) {
     effects.push({ id: 'dangerReduction', label: '秘境风险', value: level * item.dangerReductionPerLevel, mode: 'reduction' });
   }
   const qualityPower = GEAR_QUALITIES[qualityIndex]?.powerBonus ?? 0;
   if (qualityPower) {
-    effects.push({ id: 'qualityPower', label: '品质战力', value: qualityPower, mode: 'flat' });
+    effects.push({ id: 'qualityPower', label: '炼器道威', value: qualityPower, mode: 'flat' });
   }
   if (affix) {
     effects.push(...effectsFromBonusObject(affix, '词条'));
@@ -2641,12 +2641,12 @@ function getGearEffects(gearId, level, qualityIndex, affix) {
 
 function effectsFromBonusObject(bonuses, prefix = '') {
   const labels = {
-    power: '战力',
-    powerBonus: '战力',
-    qiRate: '吐纳',
-    qiBonus: '吐纳',
-    breakthrough: '突破把握',
-    dangerReduction: '秘境风险',
+    power: '道威',
+    powerBonus: '道威',
+    qiRate: '灵息',
+    qiBonus: '灵息',
+    breakthrough: '破境天机',
+    dangerReduction: '秘境凶险',
     herbRate: '灵草生长',
   };
   return Object.entries(bonuses)
@@ -2987,10 +2987,10 @@ function formatReward(reward) {
 
 function formatRewardEntry(key, amount) {
   if (key === 'qiRateBonus') {
-    return `吐纳永久 +${Math.round(amount * 100)}%`;
+    return `灵息永久 +${Math.round(amount * 100)}%`;
   }
   if (key === 'powerBonus') {
-    return `战力永久 +${amount}`;
+    return `道威永久 +${amount}`;
   }
 
   const names = {
