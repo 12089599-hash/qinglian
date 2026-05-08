@@ -84,7 +84,7 @@
       map: '青岚山',
       unlockRealmIndex: 0,
       duration: 55,
-      reward: { spiritStones: 14, qi: 18 },
+      reward: { spiritStones: 10, qi: 6 },
       events: ['spiritSpring', 'cloudRobeCache'],
     },
     marketTrade: {
@@ -94,7 +94,7 @@
       map: '青岚山',
       unlockRealmIndex: 0,
       duration: 90,
-      reward: { spiritStones: 48 },
+      reward: { spiritStones: 36 },
       events: ['wanderingTrader', 'hiddenHerbPatch'],
     },
     mistyValley: {
@@ -133,7 +133,7 @@
       unlockRealmIndex: 9,
       duration: 140,
       danger: 330,
-      reward: { artifacts: 2, spiritStones: 50, beastCores: 1 },
+      reward: { artifacts: 2, spiritStones: 50, beastCores: 1, forgingEssence: 1 },
       rareEvery: 3,
       rareReward: { beastCores: 2, arrayFlags: 1 },
       failurePenalty: { qi: -60, heartDemon: 1 },
@@ -147,7 +147,7 @@
       unlockRealmIndex: 14,
       duration: 180,
       danger: 520,
-      reward: { beastCores: 3, spiritStones: 90, qi: 120, heartDemon: 1 },
+      reward: { beastCores: 3, spiritStones: 90, qi: 120 },
       rareEvery: 4,
       rareReward: { meridianPill: 1, arrayFlags: 1 },
       failurePenalty: { qi: -90, heartDemon: 2 },
@@ -298,6 +298,7 @@
     herbGarden: { id: 'herbGarden', name: '采药委托', detail: '弟子巡山采药，稳定补充灵草。', rates: { herbs: 0.05, reputation: 0.01 } },
     mine: { id: 'mine', name: '采矿委托', detail: '弟子整理灵脉碎矿，缓慢产出灵石。', rates: { spiritStones: 0.08, reputation: 0.008 } },
     patrol: { id: 'patrol', name: '护山委托', detail: '弟子巡守山门，偶得妖核并提升宗门名望。', rates: { beastCores: 0.01, reputation: 0.01 } },
+    forge: { id: 'forge', name: '炼器委托', detail: '弟子整理残器与炉火，缓慢沉淀法器和炼器精魄。', rates: { artifacts: 0.006, forgingEssence: 0.004, reputation: 0.008 } },
   };
 
   const sectLevels = [
@@ -374,7 +375,7 @@
       id: 'spiritSpring',
       name: '灵泉暗涌',
       detail: '灵泉涌动，顺势吐纳一轮。',
-      reward: { qi: 18 },
+      reward: { qi: 8 },
     },
     wanderingTrader: {
       id: 'wanderingTrader',
@@ -1676,12 +1677,14 @@
         herbGarden: 0,
         mine: 0,
         patrol: 0,
+        forge: 0,
       },
       sectCarry: {
         spiritStones: 0,
         herbs: 0,
         beastCores: 0,
         artifacts: 0,
+        forgingEssence: 0,
         reputation: 0,
       },
       buildings: {
@@ -5318,6 +5321,7 @@
       herbs: Math.max(0, Number(carry?.herbs) || 0),
       beastCores: Math.max(0, Number(carry?.beastCores) || 0),
       artifacts: Math.max(0, Number(carry?.artifacts) || 0),
+      forgingEssence: Math.max(0, Number(carry?.forgingEssence) || 0),
       reputation: Math.max(0, Number(carry?.reputation) || 0),
     };
   }
@@ -5699,7 +5703,7 @@
       });
       trainAssignedDisciples(state, commissionId, seconds);
     });
-    ['spiritStones', 'herbs', 'beastCores', 'artifacts'].forEach((resource) => {
+    ['spiritStones', 'herbs', 'beastCores', 'artifacts', 'forgingEssence'].forEach((resource) => {
       const gained = Math.floor(state.sectCarry[resource] || 0);
       if (gained > 0) {
         state[resource] = (state[resource] || 0) + gained;

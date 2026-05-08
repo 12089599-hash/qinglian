@@ -15,6 +15,7 @@ import {
   MISSION_EVENTS,
   OPPORTUNITIES,
   REALMS,
+  SECT_COMMISSIONS,
   SECT_LEVELS,
   SPIRIT_BEASTS,
   TREASURES,
@@ -690,7 +691,7 @@ test('mission events grant deterministic extra rewards', () => {
   assert.equal(MISSION_EVENTS.hiddenHerbPatch.name, '隐蔽药圃');
   assert.equal(state.completedMissions.herbGathering, 2);
   assert.equal(state.herbs, 13);
-  assert.equal(state.qi, 19.5);
+  assert.equal(state.qi, 9.5);
   assert.equal(state.lastMissionEvent.id, 'spiritSpring');
 });
 
@@ -914,7 +915,7 @@ test('loot dismantling creates strengthening material and empowerment improves b
 
   assert.equal(dismantled.ok, true);
   assert.equal(state.lootEquipment.length, 1);
-  assert.equal(state.forgingEssence, 2);
+  assert.equal(state.forgingEssence, 5);
   assert.equal(state.artifacts, 9);
 
   state.spiritStones = 200;
@@ -1165,6 +1166,22 @@ test('sect reputation unlocks levels and named disciples gain commission experie
   assert.equal(grownSect.capacity > earlySect.capacity, true);
 });
 
+test('sect forging commission stabilizes late strengthening materials', () => {
+  const state = createGameState(1000);
+  state.realmIndex = realmIndexByName('筑基一层');
+  state.spiritStones = 1_000;
+  state.herbs = 300;
+
+  recruitDisciple(state, 1000);
+  const assigned = assignSectDisciple(state, 'forge', 1, 2000);
+  updateGame(state, 1000, 1_002_000);
+
+  assert.equal(SECT_COMMISSIONS.forge.name, '炼器委托');
+  assert.equal(assigned.ok, true);
+  assert.equal(state.forgingEssence > 0, true);
+  assert.equal(state.artifacts > 0, true);
+});
+
 test('mission opportunities offer choices and resolve rewards or costs', () => {
   const state = createGameState(1000);
   state.realmIndex = realmIndexByName('筑基一层');
@@ -1188,7 +1205,7 @@ test('mission opportunities offer choices and resolve rewards or costs', () => {
   assert.equal(resolved.ok, true);
   assert.equal(state.activeOpportunity, null);
   assert.equal(state.permanentBonuses.power - powerBonusBefore, 18);
-  assert.equal(state.forgingEssence, 2);
+  assert.equal(state.forgingEssence, 3);
 });
 
 test('mission opportunity choices return material requirements when unaffordable', () => {
