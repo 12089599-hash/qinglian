@@ -525,9 +525,9 @@ test('cave status exposes stage names and building details', () => {
 
 test('daily tasks require progress before claiming', () => {
   const state = createGameState(1000);
-  state.realmIndex = 2;
+  state.realmIndex = 1;
   state.buildings.spiritField = 1;
-  state.completedMissions.mistyValley = 1;
+  state.completedMissions.cavePatrol = 1;
   state.spiritStones = 200;
 
   const early = claimDailyTask(state, 'dailyCultivation', '1970-01-01', 1000);
@@ -786,6 +786,41 @@ test('map special drop pools reward route specific exploration', () => {
   assert.equal(state.forgingEssence >= 2, true);
 });
 
+test('map special drops count completions per route instead of per map', () => {
+  const state = createGameState(1000);
+
+  startMission(state, 'herbGathering', 1000);
+  updateGame(state, 31, 32_000);
+  setMissionApproach(state, 'qinglanMountain', 'herbSeeking', 33_000);
+  startMission(state, 'herbGathering', 34_000);
+  updateGame(state, 33, 67_000);
+
+  assert.equal(state.completedMissions.herbGathering, 2);
+  assert.equal(state.mapApproachCompletions.qinglanMountain.herbSeeking, 1);
+  assert.equal(state.mapSpecialDrops.qinglanMountain?.herbSeeking ?? 0, 0);
+  assert.equal(state.lastMissionReport.specialDrop, null);
+
+  startMission(state, 'herbGathering', 68_000);
+  updateGame(state, 33, 101_000);
+
+  assert.equal(state.mapApproachCompletions.qinglanMountain.herbSeeking, 2);
+  assert.equal(state.mapSpecialDrops.qinglanMountain.herbSeeking, 1);
+  assert.equal(state.lastMissionReport.specialDrop.name, '山阴灵苗');
+});
+
+test('auto mission stops after a failed combat mission', () => {
+  const state = createGameState(1000);
+  state.realmIndex = realmIndexByName('筑基一层');
+  toggleAutoMission(state, 'ancientSwordTomb', 1000);
+  startMission(state, 'ancientSwordTomb', 2000);
+  updateGame(state, 141, 143_000);
+
+  assert.equal(state.lastMissionReport.outcome, 'failure');
+  assert.equal(state.autoMissionId, null);
+  assert.equal(state.activeMission, null);
+  assert.match(state.log[0].text, /自动历练已停/);
+});
+
 test('map bosses unlock from exploration and grant one-time permanent rewards', () => {
   const state = createGameState(1000);
   state.completedMissions.herbGathering = 2;
@@ -818,10 +853,12 @@ test('map bosses unlock from exploration and grant one-time permanent rewards', 
 test('next guidance points players toward the clearest progression step', () => {
   const state = createGameState(1000);
 
-  assert.equal(getNextGuidance(state).title, '积攒灵气');
+  assert.equal(getNextGuidance(state).title, '先巡守洞府');
+  assert.equal(getNextGuidance(state).tab, 'missions');
 
   state.qi = REALMS[0].requiredQi;
   assert.equal(getNextGuidance(state).title, '可以破境');
+  assert.equal(getNextGuidance(state).action, 'breakthrough');
 
   state.qi = 220;
   state.realmIndex = 2;
@@ -1164,26 +1201,26 @@ test('character profile uses xianxia themed attribute names', () => {
 
 test('goals describe early cultivation progress', () => {
   const state = createGameState(1000);
-  state.realmIndex = 2;
+  state.realmIndex = 1;
   state.buildings.spiritField = 1;
-  state.completedMissions.mistyValley = 1;
+  state.completedMissions.cavePatrol = 1;
   state.craftedPills = 1;
 
   const goals = getGoals(state);
 
   assert.deepEqual(goals.map((goal) => goal.completed), [true, true, true, true]);
-  assert.equal(goals[0].title, '突破至炼气三层');
+  assert.deepEqual(goals.slice(0, 3).map((goal) => goal.id), ['firstPatrol', 'realmTwo', 'spiritField']);
 });
 
 test('goal rewards can be claimed once', () => {
   const state = createGameState(1000);
-  state.realmIndex = 2;
+  state.realmIndex = 1;
 
-  const first = claimGoalReward(state, 'realmThree', 1000);
-  const second = claimGoalReward(state, 'realmThree', 1000);
+  const first = claimGoalReward(state, 'realmTwo', 1000);
+  const second = claimGoalReward(state, 'realmTwo', 1000);
 
   assert.equal(first.ok, true);
-  assert.equal(state.spiritStones, 80);
+  assert.equal(state.spiritStones, 70);
   assert.equal(state.pills, 1);
   assert.equal(second.ok, false);
   assert.equal(second.reason, 'alreadyClaimed');
@@ -1191,9 +1228,9 @@ test('goal rewards can be claimed once', () => {
 
 test('mainline chapters require claimed objectives before chapter rewards', () => {
   const state = createGameState(1000);
-  state.realmIndex = 2;
+  state.realmIndex = 1;
   state.buildings.spiritField = 1;
-  state.completedMissions.mistyValley = 1;
+  state.completedMissions.cavePatrol = 1;
   state.craftedPills = 1;
 
   const chapters = getMainlineChapters(state);
@@ -1217,9 +1254,9 @@ test('mainline chapters require claimed objectives before chapter rewards', () =
 
 test('mainline chapter rewards provide permanent growth bonuses', () => {
   const state = createGameState(1000);
-  state.realmIndex = 2;
+  state.realmIndex = 1;
   state.buildings.spiritField = 1;
-  state.completedMissions.mistyValley = 1;
+  state.completedMissions.cavePatrol = 1;
   state.craftedPills = 1;
 
   for (const goal of getMainlineChapters(state)[0].objectives) {
@@ -1228,14 +1265,14 @@ test('mainline chapter rewards provide permanent growth bonuses', () => {
   claimChapterReward(state, 'qinglanStart', 1000);
 
   assert.equal(state.permanentBonuses.qiRate, 0.03);
-  assert.equal(calculateQiRate(state, 2000), 2.58);
+  assert.equal(calculateQiRate(state, 2000), 2.06);
 });
 
 test('daily tasks unlock after three novice goals are complete', () => {
   const state = createGameState(1000);
-  state.realmIndex = 2;
+  state.realmIndex = 1;
   state.buildings.spiritField = 1;
-  state.completedMissions.mistyValley = 1;
+  state.completedMissions.cavePatrol = 1;
   updateGame(state, 300, 301_000);
 
   const tasks = getDailyTasks(state, '2026-05-07');
@@ -1243,7 +1280,7 @@ test('daily tasks unlock after three novice goals are complete', () => {
 
   assert.equal(tasks.every((task) => task.unlocked), true);
   assert.equal(claimed.ok, true);
-  assert.equal(state.spiritStones, 52);
+  assert.equal(state.spiritStones, 48);
   assert.equal(state.dailyClaims['1970-01-01'].dailyCultivation, true);
 });
 

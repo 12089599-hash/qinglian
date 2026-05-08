@@ -511,6 +511,29 @@ dd {
   line-height: 1.35;
 }
 
+.nested-detail {
+  border: 1px solid rgba(245, 238, 220, 0.09);
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.nested-detail summary {
+  cursor: pointer;
+  color: var(--gold);
+  font-size: 0.8rem;
+  font-weight: 900;
+  list-style: none;
+}
+
+.nested-detail summary::-webkit-details-marker {
+  display: none;
+}
+
+.nested-detail small {
+  margin-top: 6px;
+}
+
 small {
   color: var(--jade);
   font-size: 0.78rem;
@@ -1827,6 +1850,42 @@ small {
 }
 
 @media (max-width: 760px) {
+  body:not([data-active-tab="overview"]) .hero {
+    min-height: 132px;
+  }
+
+  body:not([data-active-tab="overview"]) .hero canvas {
+    height: 132px;
+    min-height: 132px;
+    opacity: 0.62;
+  }
+
+  body:not([data-active-tab="overview"]) .hero-panel {
+    right: 14px;
+    bottom: 12px;
+    left: 14px;
+    width: auto;
+  }
+
+  body:not([data-active-tab="overview"]) .hero-panel .eyebrow,
+  body:not([data-active-tab="overview"]) .hero-panel h1,
+  body:not([data-active-tab="overview"]) .next-guidance {
+    display: none;
+  }
+
+  body:not([data-active-tab="overview"]) .realm-line {
+    margin-top: 0;
+  }
+
+  body:not([data-active-tab="overview"]) .progress-track {
+    height: 7px;
+    margin-top: 8px;
+  }
+
+  body:not([data-active-tab="overview"]) .mobile-cultivation-hud {
+    margin-top: 8px;
+  }
+
   body:not([data-active-tab="overview"]) .stats-panel {
     display: none;
   }
@@ -1843,30 +1902,30 @@ small {
   }
 
   body[data-active-tab="overview"] .stats-panel > .dao-heart-card {
-    order: 2;
+    order: 6;
     margin-top: 0;
   }
 
   body[data-active-tab="overview"] .stats-panel > .tribulation-card {
-    order: 3;
+    order: 7;
     margin-top: 0;
   }
 
   body[data-active-tab="overview"] .stats-panel > header {
-    order: 4;
+    order: 2;
     margin-bottom: 0;
   }
 
   body[data-active-tab="overview"] .stats-panel > .vital-grid {
-    order: 5;
+    order: 3;
   }
 
   body[data-active-tab="overview"] .stats-panel > .state-drawer {
-    order: 6;
+    order: 4;
   }
 
   body[data-active-tab="overview"] .stats-panel > .resource-drawer:not(.state-drawer) {
-    order: 7;
+    order: 5;
   }
 
   body[data-active-tab="overview"] .stats-panel > .action-row {
@@ -1953,7 +2012,13 @@ small {
   }
 
   body {
-    padding-bottom: calc(76px + env(safe-area-inset-bottom));
+    padding-bottom: calc(98px + env(safe-area-inset-bottom));
+  }
+
+  .toast-stack {
+    right: 10px;
+    bottom: calc(82px + env(safe-area-inset-bottom));
+    width: min(340px, calc(100vw - 20px));
   }
 
   .chapter-banner {
@@ -1993,7 +2058,7 @@ small {
   }
 
   .map-select-button {
-    flex: 0 0 172px;
+    flex: 0 0 154px;
     scroll-snap-align: start;
   }
 
@@ -2007,9 +2072,17 @@ small {
   }
 
   .approach-selector button {
-    flex: 0 0 136px;
-    min-height: 92px;
+    flex: 0 0 124px;
+    min-height: 72px;
     scroll-snap-align: start;
+  }
+
+  .approach-selector span {
+    display: none;
+  }
+
+  .mission-report {
+    scroll-margin-top: 58px;
   }
 
   .map-heading,

@@ -84,7 +84,7 @@ export const MISSIONS = {
     map: '青岚山',
     unlockRealmIndex: 0,
     duration: 55,
-    reward: { spiritStones: 18, qi: 35 },
+    reward: { spiritStones: 14, qi: 18 },
     events: ['spiritSpring', 'cloudRobeCache'],
   },
   marketTrade: {
@@ -303,6 +303,7 @@ export const MISSION_APPROACHES = {
     name: '寻药',
     detail: '放慢脚步辨认草木灵机，偏向灵草和清心收获。',
     rewardBonus: { herbs: 0.45 },
+    flatReward: { herbs: 3 },
     durationMultiplier: 1.05,
     dangerMultiplier: 0.96,
     dropEvery: 2,
@@ -312,6 +313,7 @@ export const MISSION_APPROACHES = {
     name: '猎妖',
     detail: '主动追索妖踪，妖核更多，但劫象会更重。',
     rewardBonus: { beastCores: 0.55, spiritStones: 0.12 },
+    flatReward: { beastCores: 1 },
     durationMultiplier: 1,
     dangerMultiplier: 1.12,
     dropEvery: 2,
@@ -321,6 +323,7 @@ export const MISSION_APPROACHES = {
     name: '探遗',
     detail: '搜寻残器旧阵，偏向法器、阵旗和炼器精魄。',
     rewardBonus: { artifacts: 0.5, arrayFlags: 0.35, forgingEssence: 0.3 },
+    flatReward: { forgingEssence: 1 },
     durationMultiplier: 1.1,
     dangerMultiplier: 1.05,
     dropEvery: 2,
@@ -330,6 +333,7 @@ export const MISSION_APPROACHES = {
     name: '问道',
     detail: '静观地脉与残念，偏向灵气、悟道和破境准备。',
     rewardBonus: { qi: 0.35, insight: 0.35 },
+    flatReward: { insight: 1 },
     durationMultiplier: 1.12,
     dangerMultiplier: 1.02,
     dropEvery: 2,
@@ -1011,11 +1015,18 @@ export const MAINLINE_CHAPTERS = [
     reward: { spiritStones: 120, qiRateBonus: 0.03 },
     objectives: [
       {
-        id: 'realmThree',
-        title: '突破至炼气三层',
-        detail: '提高吐纳效率，开启更稳定的秘境收益',
-        completed: (state) => state.realmIndex >= 2,
-        reward: { spiritStones: 80, pills: 1 },
+        id: 'firstPatrol',
+        title: '巡守一次洞府',
+        detail: '熟悉行游节奏，带回第一批灵气和灵石',
+        completed: (state) => (state.completedMissions?.cavePatrol ?? 0) >= 1,
+        reward: { spiritStones: 40, qi: 35 },
+      },
+      {
+        id: 'realmTwo',
+        title: '首次破境',
+        detail: '突破至炼气二层，感受灵息与道行提升',
+        completed: (state) => state.realmIndex >= 1,
+        reward: { spiritStones: 70, pills: 1 },
       },
       {
         id: 'spiritField',
@@ -1023,13 +1034,6 @@ export const MAINLINE_CHAPTERS = [
         detail: '让洞府开始自动生长灵草',
         completed: (state) => (state.buildings?.spiritField ?? 0) >= 1,
         reward: { herbs: 10, spiritStones: 30 },
-      },
-      {
-        id: 'mistyValley',
-        title: '完成一次雾隐秘境',
-        detail: '获得妖核或法器，准备强化剑阵',
-        completed: (state) => (state.completedMissions?.mistyValley ?? 0) >= 1,
-        reward: { beastCores: 1, spiritStones: 60 },
       },
       {
         id: 'firstPill',
@@ -1215,6 +1219,7 @@ export function createGameState(now = Date.now()) {
     mapReputation: {},
     mapDepths: {},
     missionApproaches: {},
+    mapApproachCompletions: {},
     mapSpecialDrops: {},
     defeatedBosses: {},
     claimedGoals: {},
@@ -1352,6 +1357,7 @@ export function reviveGameState(saved, now = Date.now()) {
   state.mapReputation = normalizeMapValues(state.mapReputation);
   state.mapDepths = normalizeMapDepths(state.mapDepths);
   state.missionApproaches = normalizeMissionApproaches(state.missionApproaches);
+  state.mapApproachCompletions = normalizeMapApproachCompletions(state.mapApproachCompletions);
   state.mapSpecialDrops = normalizeMapSpecialDrops(state.mapSpecialDrops);
   state.defeatedBosses = normalizeDefeatedBosses(state.defeatedBosses);
   state.claimedGoals = normalizeClaimedGoals(state.claimedGoals);
@@ -2368,7 +2374,15 @@ export function getNextGuidance(state) {
     return {
       title: '可以破境',
       detail: `灵气已满，当前破境天机 ${Math.round(calculateBreakthroughChance(state) * 100)}%。`,
-      tab: 'goals',
+      tab: 'overview',
+      action: 'breakthrough',
+    };
+  }
+  if ((state.completedMissions?.cavePatrol ?? 0) < 1 && (state.realmIndex ?? 0) <= 1) {
+    return {
+      title: '先巡守洞府',
+      detail: '去行游完成一次巡守，带回第一笔灵气和灵石。',
+      tab: 'missions',
     };
   }
   if ((state.realmIndex ?? 0) <= 1) {
@@ -3177,13 +3191,14 @@ function completeMissionIfReady(state, now) {
       now,
     });
     addLog(state, now, `挑战「${mission.name}」失利，负伤退回洞府。`);
-    restartAutoMission(state, mission.id, now);
+    stopAutoMissionAfterFailure(state, mission.id, now);
     return;
   }
 
   applyResources(state, missionReward);
   state.completedMissions[mission.id] = (state.completedMissions[mission.id] ?? 0) + 1;
   const mapId = getMissionMapId(mission);
+  const approachCompletedCount = recordMapApproachCompletion(state, mapId, approach.id);
   const reputationGained = MISSION_MAPS[mapId]?.reputationPerMission ?? 0;
   addMapReputation(state, mapId, reputationGained);
   const event = resolveMissionEvent(mission, state.completedMissions[mission.id]);
@@ -3197,7 +3212,7 @@ function completeMissionIfReady(state, now) {
     rareReward = mission.rareReward;
     addLog(state, now, `深入「${mission.map ?? mission.name}」有所感悟，额外获得${formatReward(mission.rareReward)}。`);
   }
-  const specialDrop = resolveMapSpecialDrop(state, mission, approach.id, state.completedMissions[mission.id], now);
+  const specialDrop = resolveMapSpecialDrop(state, mission, approach.id, approachCompletedCount, now);
   maybeCreateOpportunity(state, mission, now);
   addDailyProgress(state, 'missions', 1, now);
   state.lastMissionReport = createMissionReport(state, mission, {
@@ -3320,11 +3335,11 @@ function getMissionDuration(mission, approachId = 'balanced') {
 
 function getMissionApproachReward(mission, approachId = 'balanced') {
   const approach = MISSION_APPROACHES[approachId] ?? MISSION_APPROACHES.balanced;
-  return filterCost(Object.fromEntries(
+  return mergeRewards(approach.flatReward ?? {}, Object.fromEntries(
     Object.entries(approach.rewardBonus ?? {}).map(([resource, multiplier]) => {
       const base = mission.reward?.[resource] ?? 0;
       if (resource === 'insight') {
-        return [resource, base > 0 ? Math.max(1, Math.ceil(base * multiplier)) : approachId === 'daoInquiry' ? 1 : 0];
+        return [resource, base > 0 ? Math.max(1, Math.ceil(base * multiplier)) : 0];
       }
       return [resource, base > 0 ? Math.max(1, Math.ceil(base * multiplier)) : 0];
     }),
@@ -3358,6 +3373,13 @@ function resolveMapSpecialDrop(state, mission, approachId, completedCount, now) 
   const drop = { name: template.name, reward: template.reward ?? {}, approachId };
   addLog(state, now, `${MISSION_MAPS[mapId]?.name ?? mission.name}路线收获「${template.name}」：${formatReward(template.reward ?? {})}。`);
   return drop;
+}
+
+function recordMapApproachCompletion(state, mapId, approachId) {
+  state.mapApproachCompletions ??= {};
+  state.mapApproachCompletions[mapId] ??= {};
+  state.mapApproachCompletions[mapId][approachId] = (state.mapApproachCompletions[mapId][approachId] ?? 0) + 1;
+  return state.mapApproachCompletions[mapId][approachId];
 }
 
 function createMissionReport(state, mission, { outcome, reward, approach = getSelectedMissionApproach(state, mission), approachReward = {}, specialDrop = null, reputationGained = 0, eventResult = null, rareReward = null, now = Date.now() }) {
@@ -3596,6 +3618,27 @@ function normalizeMissionApproaches(values) {
   return Object.fromEntries(
     Object.entries(values).filter(([mapId, approachId]) => MISSION_MAPS[mapId] && MISSION_APPROACHES[approachId]),
   );
+}
+
+function normalizeMapApproachCompletions(values) {
+  if (!values || typeof values !== 'object') {
+    return {};
+  }
+  const normalized = {};
+  Object.entries(values).forEach(([mapId, approaches]) => {
+    if (!MISSION_MAPS[mapId] || !approaches || typeof approaches !== 'object') {
+      return;
+    }
+    const valid = Object.fromEntries(
+      Object.entries(approaches)
+        .filter(([approachId]) => MISSION_APPROACHES[approachId])
+        .map(([approachId, count]) => [approachId, Math.max(0, Math.floor(Number(count) || 0))]),
+    );
+    if (Object.keys(valid).length) {
+      normalized[mapId] = valid;
+    }
+  });
+  return normalized;
 }
 
 function normalizeMapSpecialDrops(values) {
@@ -3904,6 +3947,16 @@ function restartAutoMission(state, completedMissionId, now) {
     endsAt: now + getMissionDuration(mission, approach.id) * 1000,
   };
   addLog(state, now, `自动继续「${mission.name}」，路线「${approach.name}」。`);
+}
+
+function stopAutoMissionAfterFailure(state, failedMissionId, now) {
+  if (state.autoMissionId !== failedMissionId) {
+    return false;
+  }
+  const mission = MISSIONS[failedMissionId];
+  state.autoMissionId = null;
+  addLog(state, now, `自动历练已停：${mission.name}劫象过重，需提升道行后再行游。`);
+  return true;
 }
 
 function snapshotResources(state) {

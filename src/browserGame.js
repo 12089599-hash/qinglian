@@ -84,7 +84,7 @@
       map: '青岚山',
       unlockRealmIndex: 0,
       duration: 55,
-      reward: { spiritStones: 18, qi: 35 },
+      reward: { spiritStones: 14, qi: 18 },
       events: ['spiritSpring', 'cloudRobeCache'],
     },
     marketTrade: {
@@ -249,10 +249,10 @@
 
   const missionApproaches = {
     balanced: { id: 'balanced', name: '循迹', detail: '按原路线稳步行游，收益和劫象保持均衡。', rewardBonus: {}, durationMultiplier: 1, dangerMultiplier: 1, dropEvery: 0 },
-    herbSeeking: { id: 'herbSeeking', name: '寻药', detail: '放慢脚步辨认草木灵机，偏向灵草和清心收获。', rewardBonus: { herbs: 0.45 }, durationMultiplier: 1.05, dangerMultiplier: 0.96, dropEvery: 2 },
-    monsterHunt: { id: 'monsterHunt', name: '猎妖', detail: '主动追索妖踪，妖核更多，但劫象会更重。', rewardBonus: { beastCores: 0.55, spiritStones: 0.12 }, durationMultiplier: 1, dangerMultiplier: 1.12, dropEvery: 2 },
-    relicSearch: { id: 'relicSearch', name: '探遗', detail: '搜寻残器旧阵，偏向法器、阵旗和炼器精魄。', rewardBonus: { artifacts: 0.5, arrayFlags: 0.35, forgingEssence: 0.3 }, durationMultiplier: 1.1, dangerMultiplier: 1.05, dropEvery: 2 },
-    daoInquiry: { id: 'daoInquiry', name: '问道', detail: '静观地脉与残念，偏向灵气、悟道和破境准备。', rewardBonus: { qi: 0.35, insight: 0.35 }, durationMultiplier: 1.12, dangerMultiplier: 1.02, dropEvery: 2 },
+    herbSeeking: { id: 'herbSeeking', name: '寻药', detail: '放慢脚步辨认草木灵机，偏向灵草和清心收获。', rewardBonus: { herbs: 0.45 }, flatReward: { herbs: 3 }, durationMultiplier: 1.05, dangerMultiplier: 0.96, dropEvery: 2 },
+    monsterHunt: { id: 'monsterHunt', name: '猎妖', detail: '主动追索妖踪，妖核更多，但劫象会更重。', rewardBonus: { beastCores: 0.55, spiritStones: 0.12 }, flatReward: { beastCores: 1 }, durationMultiplier: 1, dangerMultiplier: 1.12, dropEvery: 2 },
+    relicSearch: { id: 'relicSearch', name: '探遗', detail: '搜寻残器旧阵，偏向法器、阵旗和炼器精魄。', rewardBonus: { artifacts: 0.5, arrayFlags: 0.35, forgingEssence: 0.3 }, flatReward: { forgingEssence: 1 }, durationMultiplier: 1.1, dangerMultiplier: 1.05, dropEvery: 2 },
+    daoInquiry: { id: 'daoInquiry', name: '问道', detail: '静观地脉与残念，偏向灵气、悟道和破境准备。', rewardBonus: { qi: 0.35, insight: 0.35 }, flatReward: { insight: 1 }, durationMultiplier: 1.12, dangerMultiplier: 1.02, dropEvery: 2 },
   };
 
   const mapSpecialDrops = {
@@ -806,11 +806,18 @@
       reward: { spiritStones: 120, qiRateBonus: 0.03 },
       objectives: [
         {
-          id: 'realmThree',
-          title: '突破至炼气三层',
-          detail: '提高吐纳效率，开启更稳定的秘境收益',
-          completed: (state) => state.realmIndex >= 2,
-          reward: { spiritStones: 80, pills: 1 },
+          id: 'firstPatrol',
+          title: '巡守一次洞府',
+          detail: '熟悉行游节奏，带回第一批灵气和灵石',
+          completed: (state) => (state.completedMissions.cavePatrol || 0) >= 1,
+          reward: { spiritStones: 40, qi: 35 },
+        },
+        {
+          id: 'realmTwo',
+          title: '首次破境',
+          detail: '突破至炼气二层，感受灵息与道行提升',
+          completed: (state) => state.realmIndex >= 1,
+          reward: { spiritStones: 70, pills: 1 },
         },
         {
           id: 'spiritField',
@@ -818,13 +825,6 @@
           detail: '让洞府开始自动生长灵草',
           completed: (state) => (state.buildings.spiritField || 0) >= 1,
           reward: { herbs: 10, spiritStones: 30 },
-        },
-        {
-          id: 'mistyValley',
-          title: '完成一次雾隐秘境',
-          detail: '获得妖核或法器，准备强化剑阵',
-          completed: (state) => (state.completedMissions.mistyValley || 0) >= 1,
-          reward: { beastCores: 1, spiritStones: 60 },
         },
         {
           id: 'firstPill',
@@ -1090,15 +1090,31 @@
   if (!buildings[activeBuildingId]) {
     activeBuildingId = 'meditationSeat';
   }
+  let scrolledMissionReportId = null;
   let pendingOfflineSummary = null;
   let state = loadState();
   let lastFrameAt = performance.now();
   let animationTime = 0;
 
   document.querySelector('[data-breakthrough]').addEventListener('click', () => {
-    performBreakthrough(state);
+    const beforeRealm = getCurrentRealm(state);
+    const beforePower = calculatePower(state);
+    const result = performBreakthrough(state);
+    if (result.ok) {
+      const afterRealm = getCurrentRealm(state);
+      const powerGain = Math.max(0, calculatePower(state) - beforePower);
+      showToast('破境成功', `${beforeRealm.name} → ${afterRealm.name}${powerGain ? `，道行 +${powerGain}` : ''}。`);
+      triggerBattleFeedback('victory');
+    } else if (result.reason === 'notEnoughQi') {
+      showToast('灵气未满', `还差 ${Math.ceil(Math.max(0, beforeRealm.requiredQi - state.qi))} 灵气，可先行游或等待吐纳。`, 'warning');
+    } else if (result.reason === 'failed') {
+      showToast('破境受挫', '心魔骤起，灵气折损；稳固根基或服用护脉丹后再试。', 'warning');
+      triggerBattleFeedback('danger');
+    } else if (result.reason === 'maxRealm') {
+      showToast('已至尽头', '此界修行已至当前上限。');
+    }
     saveState();
-    render();
+    render(true);
   });
 
   document.querySelector('[data-craft-pill]').addEventListener('click', () => {
@@ -1539,6 +1555,10 @@
   });
 
   refs.nextGuidance?.addEventListener('click', () => {
+    if (refs.nextGuidance.dataset.guidanceAction === 'breakthrough') {
+      document.querySelector('[data-breakthrough]')?.click();
+      return;
+    }
     const tab = refs.nextGuidance.dataset.gotoTab;
     if (!panelTabs.includes(tab)) {
       return;
@@ -1591,6 +1611,7 @@
       mapReputation: {},
       mapDepths: {},
       missionApproaches: {},
+      mapApproachCompletions: {},
       mapSpecialDrops: {},
       defeatedBosses: {},
       claimedGoals: {},
@@ -1706,6 +1727,7 @@
     state.mapReputation = normalizeMapValues(state.mapReputation);
     state.mapDepths = normalizeMapDepths(state.mapDepths);
     state.missionApproaches = normalizeMissionApproaches(state.missionApproaches);
+    state.mapApproachCompletions = normalizeMapApproachCompletions(state.mapApproachCompletions);
     state.mapSpecialDrops = normalizeMapSpecialDrops(state.mapSpecialDrops);
     state.defeatedBosses = normalizeDefeatedBosses(state.defeatedBosses);
     state.claimedGoals = normalizeClaimedGoals(state.claimedGoals);
@@ -1803,11 +1825,11 @@
     const realm = getCurrentRealm(state);
     if (state.realmIndex >= realms.length - 1) {
       addLog(state, now, '此界修行已至尽头，静待新的机缘。');
-      return;
+      return { ok: false, reason: 'maxRealm' };
     }
     if (state.qi < realm.requiredQi) {
       addLog(state, now, '灵气尚未圆满，突破会伤及根基。');
-      return;
+      return { ok: false, reason: 'notEnoughQi' };
     }
     const chance = calculateBreakthroughChance(state, now);
     const preparation = getBreakthroughPreparation(state, now);
@@ -1822,7 +1844,7 @@
       state.tribulationRecords.unshift({ time: now, realmIndex: state.realmIndex, result: 'failed', readyScore: preparation.readyScore });
       state.tribulationRecords = state.tribulationRecords.slice(0, 8);
       addLog(state, now, '突破时心魔骤起，灵气逆行，修为折损。');
-      return;
+      return { ok: false, reason: 'failed', chance, preparation };
     }
     const carriedQi = calculateBreakthroughCarryQi(state, realm);
     state.realmIndex += 1;
@@ -1837,6 +1859,7 @@
     state.tribulationRecords.unshift({ time: now, realmIndex: state.realmIndex, result: 'success', readyScore: preparation.readyScore });
     state.tribulationRecords = state.tribulationRecords.slice(0, 8);
     addLog(state, now, `灵气贯通周天，突破至${getCurrentRealm(state).name}。`);
+    return { ok: true, chance };
   }
 
   function maybeOpenDaoHeartChoice(state, now) {
@@ -2159,11 +2182,11 @@
 
   function getMissionApproachReward(mission, approachId = 'balanced') {
     const approach = missionApproaches[approachId] || missionApproaches.balanced;
-    return filterCost(Object.fromEntries(
+    return mergeRewards(approach.flatReward || {}, Object.fromEntries(
       Object.entries(approach.rewardBonus || {}).map(([resource, multiplier]) => {
         const base = mission.reward?.[resource] || 0;
         if (resource === 'insight') {
-          return [resource, base > 0 ? Math.max(1, Math.ceil(base * multiplier)) : approachId === 'daoInquiry' ? 1 : 0];
+          return [resource, base > 0 ? Math.max(1, Math.ceil(base * multiplier)) : 0];
         }
         return [resource, base > 0 ? Math.max(1, Math.ceil(base * multiplier)) : 0];
       }),
@@ -2197,6 +2220,13 @@
     const drop = { name: template.name, reward: template.reward || {}, approachId };
     addLog(state, now, `${missionMaps[mapId]?.name || mission.name}路线收获「${template.name}」：${formatReward(template.reward || {})}。`);
     return drop;
+  }
+
+  function recordMapApproachCompletion(state, mapId, approachId) {
+    state.mapApproachCompletions ||= {};
+    state.mapApproachCompletions[mapId] ||= {};
+    state.mapApproachCompletions[mapId][approachId] = (state.mapApproachCompletions[mapId][approachId] || 0) + 1;
+    return state.mapApproachCompletions[mapId][approachId];
   }
 
   function getMissionDanger(state, mission, approachId = null) {
@@ -2256,12 +2286,15 @@
       });
       addLog(state, now, `挑战「${mission.name}」失利，负伤退回洞府。`);
       showToast('历练失利', `${mission.name} 道行不足，负伤并滋生心魔。`, 'warning');
-      restartAutoMission(state, mission.id, now);
+      if (stopAutoMissionAfterFailure(state, mission.id, now)) {
+        showToast('自动历练已停', '先提升道行或换低阶地图。', 'warning');
+      }
       return;
     }
     applyResources(state, missionReward);
     state.completedMissions[mission.id] = (state.completedMissions[mission.id] || 0) + 1;
     const mapId = getMissionMapId(mission);
+    const approachCompletedCount = recordMapApproachCompletion(state, mapId, approach.id);
     const reputationGained = missionMaps[mapId]?.reputationPerMission || 0;
     addMapReputation(state, mapId, reputationGained);
     const event = resolveMissionEvent(mission, state.completedMissions[mission.id]);
@@ -2277,7 +2310,7 @@
       addLog(state, now, `深入「${mission.map || mission.name}」有所感悟，额外获得${formatReward(mission.rareReward)}。`);
       showToast('稀有收获', `${mission.name} 额外获得${formatReward(mission.rareReward)}。`);
     }
-    const specialDrop = resolveMapSpecialDrop(state, mission, approach.id, state.completedMissions[mission.id], now);
+    const specialDrop = resolveMapSpecialDrop(state, mission, approach.id, approachCompletedCount, now);
     if (specialDrop) {
       showToast('路线收获', `${specialDrop.name} · ${formatReward(specialDrop.reward)}`);
     }
@@ -2440,6 +2473,7 @@
       const guidance = getNextGuidance(state);
       refs.nextGuidance.innerHTML = `<strong>${guidance.title}</strong><span>${guidance.detail}</span>`;
       refs.nextGuidance.dataset.gotoTab = guidance.tab || 'goals';
+      refs.nextGuidance.dataset.guidanceAction = guidance.action || '';
     }
 
     if (activeDepth) {
@@ -3324,7 +3358,10 @@
     }
     const realm = getCurrentRealm(state);
     if ((state.qi || 0) >= realm.requiredQi && state.realmIndex < realms.length - 1) {
-      return { title: '可以破境', detail: `灵气已满，当前破境天机 ${Math.round(calculateBreakthroughChance(state) * 100)}%。`, tab: 'goals' };
+      return { title: '可以破境', detail: `灵气已满，当前破境天机 ${Math.round(calculateBreakthroughChance(state) * 100)}%。`, tab: 'overview', action: 'breakthrough' };
+    }
+    if ((state.completedMissions.cavePatrol || 0) < 1 && (state.realmIndex || 0) <= 1) {
+      return { title: '先巡守洞府', detail: '去行游完成一次巡守，带回第一笔灵气和灵石。', tab: 'missions' };
     }
     if ((state.realmIndex || 0) <= 1) {
       return { title: '积攒灵气', detail: `距离下一次突破还差 ${Math.ceil(Math.max(0, realm.requiredQi - (state.qi || 0)))} 灵气。`, tab: 'goals' };
@@ -3551,6 +3588,10 @@
       </div>
     `;
     renderCache.missionReport = signature;
+    if (isMobileLayout() && activeTab === 'missions' && scrolledMissionReportId !== report.id) {
+      scrolledMissionReportId = report.id;
+      requestAnimationFrame(() => refs.missionReport.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+    }
   }
 
   function renderMapGroup(map) {
@@ -4112,12 +4153,15 @@
               <small>${item.comparison.summary} · 展开查看器象、对比和下阶变化</small>
             </summary>
             <div class="detail-stack">
-              <small>器象：${item.intent.detail}</small>
               <small>当前：${formatEffects(item.effects) || '尚未激活'}</small>
               <small>下阶：${maxed ? '已至圆满' : formatEffects(item.nextEffects)}</small>
-              <small>阶位：${item.tier.name} · ${item.level || 0} / ${item.maxLevel}</small>
-              <small>${maxed ? '强化已满' : `强化需 ${formatReward(item.empower.cost)}`}</small>
-              ${renderLootComparison(item.comparison)}
+              <details class="nested-detail">
+                <summary>器象、成本与对照</summary>
+                <small>器象：${item.intent.detail}</small>
+                <small>阶位：${item.tier.name} · ${item.level || 0} / ${item.maxLevel}</small>
+                <small>${maxed ? '强化已满' : `强化需 ${formatReward(item.empower.cost)}`}</small>
+                ${renderLootComparison(item.comparison)}
+              </details>
             </div>
             <div class="row-actions">
               <button data-equip-loot="${item.uid}" ${item.equipped ? 'disabled' : ''}>${item.equipped ? '已穿戴' : '穿戴'}</button>
@@ -4384,12 +4428,15 @@
           <small>展开查看器象、词条和下阶变化</small>
         </summary>
         <div class="detail-stack">
-          <small>器象：${item.intent.detail}</small>
           <small>当前：${formatEffects(item.effects) || '尚未激活'}</small>
           <small>下阶：${maxed ? '已至圆满' : formatEffects(item.nextEffects)}</small>
-          <small>${item.affix.id ? `词条：${item.affix.name}（${formatEffects(item.affix.effects)}）` : '词条：无'}</small>
-          <small>${maxed ? '已达上限' : realmLocked ? `${getUpgradeTier(nextLevel).name}需更高境界` : `升级需 ${formatReward(upgradeCost)}`}</small>
-          <small>${qualityMaxed ? '品质已满' : level <= 0 ? '先升级后可淬炼' : `淬炼 ${gearQualities[nextQuality]?.name || ''} · 火候 ${Math.round((item.refinement?.chance ?? gearQualities[item.qualityIndex]?.refineChance ?? 0) * 100)}% · ${formatReward(refineCost)}`}</small>
+          <details class="nested-detail">
+            <summary>器象、词条与成本</summary>
+            <small>器象：${item.intent.detail}</small>
+            <small>${item.affix.id ? `词条：${item.affix.name}（${formatEffects(item.affix.effects)}）` : '词条：无'}</small>
+            <small>${maxed ? '已达上限' : realmLocked ? `${getUpgradeTier(nextLevel).name}需更高境界` : `升级需 ${formatReward(upgradeCost)}`}</small>
+            <small>${qualityMaxed ? '品质已满' : level <= 0 ? '先升级后可淬炼' : `淬炼 ${gearQualities[nextQuality]?.name || ''} · 火候 ${Math.round((item.refinement?.chance ?? gearQualities[item.qualityIndex]?.refineChance ?? 0) * 100)}% · ${formatReward(refineCost)}`}</small>
+          </details>
         </div>
         <div class="row-actions">
           <button data-upgrade-gear="${item.id}" ${maxed || realmLocked ? 'disabled' : ''}>升级</button>
@@ -4756,6 +4803,27 @@
     return Object.fromEntries(
       Object.entries(values).filter(([mapId, approachId]) => missionMaps[mapId] && missionApproaches[approachId]),
     );
+  }
+
+  function normalizeMapApproachCompletions(values) {
+    if (!values || typeof values !== 'object') {
+      return {};
+    }
+    const normalized = {};
+    Object.entries(values).forEach(([mapId, approaches]) => {
+      if (!missionMaps[mapId] || !approaches || typeof approaches !== 'object') {
+        return;
+      }
+      const valid = Object.fromEntries(
+        Object.entries(approaches)
+          .filter(([approachId]) => missionApproaches[approachId])
+          .map(([approachId, count]) => [approachId, Math.max(0, Math.floor(Number(count) || 0))]),
+      );
+      if (Object.keys(valid).length) {
+        normalized[mapId] = valid;
+      }
+    });
+    return normalized;
   }
 
   function normalizeMapSpecialDrops(values) {
@@ -5229,6 +5297,16 @@
       endsAt: now + getMissionDuration(mission, approach.id) * 1000,
     };
     addLog(state, now, `自动继续「${mission.name}」，路线「${approach.name}」。`);
+  }
+
+  function stopAutoMissionAfterFailure(state, failedMissionId, now) {
+    if (state.autoMissionId !== failedMissionId) {
+      return false;
+    }
+    const mission = missions[failedMissionId];
+    state.autoMissionId = null;
+    addLog(state, now, `自动历练已停：${mission.name}劫象过重，需提升道行后再行游。`);
+    return true;
   }
 
   function snapshotResources(state) {
