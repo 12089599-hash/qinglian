@@ -825,6 +825,7 @@
 
   const ctx = refs.canvas.getContext('2d');
   const renderCache = {};
+  const openLootDetails = new Set();
   const panelTabs = ['goals', 'daily', 'market', 'alchemy', 'gear', 'cultivation', 'sect', 'cave', 'missions', 'log'];
   let activeTab = localStorage.getItem('idle-xianxia-active-tab') || 'goals';
   if (!panelTabs.includes(activeTab)) {
@@ -924,12 +925,25 @@
     if (disassembleButton) {
       const result = disassembleLootEquipment(state, disassembleButton.dataset.disassembleLoot);
       if (result.ok) {
+        openLootDetails.delete(result.item.uid);
         showToast('战利品分解', `获得${formatReward(result.reward)}。`);
       }
       saveState();
       render(true);
     }
   });
+
+  refs.lootList?.addEventListener('toggle', (event) => {
+    const detail = event.target.closest?.('[data-loot-detail]');
+    if (!detail) {
+      return;
+    }
+    if (detail.open) {
+      openLootDetails.add(detail.dataset.lootDetail);
+    } else {
+      openLootDetails.delete(detail.dataset.lootDetail);
+    }
+  }, true);
 
   refs.treasureList?.addEventListener('click', (event) => {
     const button = event.target.closest('[data-upgrade-treasure]');
@@ -1123,6 +1137,7 @@
 
   document.querySelector('[data-reset]').addEventListener('click', () => {
     localStorage.removeItem(saveKey);
+    openLootDetails.clear();
     state = createGameState();
     saveState();
     render(true);
@@ -1598,7 +1613,24 @@
   }
 
   function getMissionDanger(state, mission) {
-    return Math.max(0, (mission.danger || 0) - getTieredLevelValue(state.gear.robe || 0, gear.robe.dangerReductionPerLevel) - getGearAffixBonus(state, 'dangerReduction') - getEquippedLootBonus(state, 'dangerReduction') - getMapMasteryBonus(state, 'dangerReduction') - getTreasureBonus(state, 'dangerReduction') - getSpiritBeastBonus(state, 'dangerReduction') - (state.cultivationPaths.sword || 0) * cultivationPaths.sword.dangerReductionPerLevel);
+    const pressure = getMissionPressure(state, mission);
+    return Math.max(0, pressure - getTieredLevelValue(state.gear.robe || 0, gear.robe.dangerReductionPerLevel) - getGearAffixBonus(state, 'dangerReduction') - getEquippedLootBonus(state, 'dangerReduction') - getMapMasteryBonus(state, 'dangerReduction') - getTreasureBonus(state, 'dangerReduction') - getSpiritBeastBonus(state, 'dangerReduction') - (state.cultivationPaths.sword || 0) * cultivationPaths.sword.dangerReductionPerLevel);
+  }
+
+  function getMissionPressure(state, mission) {
+    const baseDanger = mission.danger || 0;
+    if (baseDanger <= 0) {
+      return 0;
+    }
+    const unlockStage = Math.max(0, mission.unlockRealmIndex || 0);
+    if (unlockStage < 3) {
+      return baseDanger;
+    }
+    const stageMultiplier = 1.52 + Math.max(0, unlockStage - 3) * 0.22;
+    const rareEvery = Math.max(2, mission.rareEvery || 4);
+    const completed = state.completedMissions?.[mission.id] || 0;
+    const deepeningMultiplier = Math.min(0.18, Math.floor(completed / rareEvery) * 0.03);
+    return round(baseDanger * (stageMultiplier + deepeningMultiplier));
   }
 
   function completeMissionIfReady(state, now) {
@@ -2797,7 +2829,7 @@
         const intent = getGearIntent(item.slot);
         const nextEffects = maxed ? [] : effectsFromBonusObject(createLootBonuses(item.templateId, (item.level || 0) + 1));
         return `
-          <details class="equipment-detail-card detail-row">
+          <details class="equipment-detail-card detail-row" data-loot-detail="${item.uid}" ${openLootDetails.has(item.uid) ? 'open' : ''}>
             <summary>
               <strong>${item.name} <small>${intent.name} · ${getSlotName(item.slot)} · ${gearQualities[item.quality]?.name || '凡品'} · +${item.level || 0}</small></strong>
               <span>${formatLootBonuses(item.bonuses)}</span>

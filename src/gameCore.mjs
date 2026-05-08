@@ -2348,7 +2348,24 @@ function completeAlchemyIfReady(state, now) {
 }
 
 function getMissionDanger(state, mission) {
-  return Math.max(0, (mission.danger ?? 0) - getTieredLevelValue(state.gear?.robe ?? 0, GEAR.robe.dangerReductionPerLevel) - getGearAffixBonus(state, 'dangerReduction') - getEquippedLootBonus(state, 'dangerReduction') - getMapMasteryBonus(state, 'dangerReduction') - getTreasureBonus(state, 'dangerReduction') - getSpiritBeastBonus(state, 'dangerReduction') - (state.cultivationPaths?.sword ?? 0) * CULTIVATION_PATHS.sword.dangerReductionPerLevel);
+  const pressure = getMissionPressure(state, mission);
+  return Math.max(0, pressure - getTieredLevelValue(state.gear?.robe ?? 0, GEAR.robe.dangerReductionPerLevel) - getGearAffixBonus(state, 'dangerReduction') - getEquippedLootBonus(state, 'dangerReduction') - getMapMasteryBonus(state, 'dangerReduction') - getTreasureBonus(state, 'dangerReduction') - getSpiritBeastBonus(state, 'dangerReduction') - (state.cultivationPaths?.sword ?? 0) * CULTIVATION_PATHS.sword.dangerReductionPerLevel);
+}
+
+function getMissionPressure(state, mission) {
+  const baseDanger = mission.danger ?? 0;
+  if (baseDanger <= 0) {
+    return 0;
+  }
+  const unlockStage = Math.max(0, mission.unlockRealmIndex ?? 0);
+  if (unlockStage < 3) {
+    return baseDanger;
+  }
+  const stageMultiplier = 1.52 + Math.max(0, unlockStage - 3) * 0.22;
+  const rareEvery = Math.max(2, mission.rareEvery ?? 4);
+  const completed = state.completedMissions?.[mission.id] ?? 0;
+  const deepeningMultiplier = Math.min(0.18, Math.floor(completed / rareEvery) * 0.03);
+  return round(baseDanger * (stageMultiplier + deepeningMultiplier));
 }
 
 function addLog(state, time, text) {

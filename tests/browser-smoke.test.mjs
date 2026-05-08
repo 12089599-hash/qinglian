@@ -15,6 +15,10 @@ assert.match(source, /<details class="equipment-detail-card detail-row">/);
 assert.match(styles, /\.equipment-detail-card\s*\{/);
 assert.match(html, /styles\.css\?v=/);
 assert.match(html, /browserGame\.js\?v=/);
+assert.match(source, /openLootDetails\s*=\s*new Set/);
+assert.match(source, /data-loot-detail=/);
+assert.match(source, /openLootDetails\.has\(item\.uid\)/);
+assert.match(source, /addEventListener\('toggle'/);
 
 function element() {
   return {

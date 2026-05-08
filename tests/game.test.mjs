@@ -426,6 +426,13 @@ test('new exploration routes grant distinct rewards', () => {
   updateGame(state, 140, 212_000);
   assert.equal(state.artifacts, 3);
 
+  state.gear.weapon = 8;
+  state.gear.robe = 6;
+  state.cultivationPaths.sword = 5;
+  state.formations.swordArray = 4;
+  state.permanentBonuses.power = 80;
+  state.completedMissions.mistyValley = 5;
+
   startMission(state, 'demonRift', 213_000);
   updateGame(state, 180, 393_000);
   assert.equal(state.beastCores, 5);
@@ -506,7 +513,9 @@ test('mission events grant deterministic extra rewards', () => {
 test('mission events can drop named equipment and equip it', () => {
   const state = createGameState(1000);
   state.realmIndex = 3;
-  state.gear.weapon = 3;
+  state.gear.weapon = 6;
+  state.gear.robe = 4;
+  state.cultivationPaths.sword = 3;
 
   startMission(state, 'ancientSwordTomb', 1000);
   updateGame(state, 140, 141_000);
@@ -574,7 +583,9 @@ test('next guidance points players toward the clearest progression step', () => 
 test('loot dismantling creates strengthening material and empowerment improves bonuses', () => {
   const state = createGameState(1000);
   state.realmIndex = 3;
-  state.gear.weapon = 3;
+  state.gear.weapon = 6;
+  state.gear.robe = 4;
+  state.cultivationPaths.sword = 3;
 
   startMission(state, 'ancientSwordTomb', 1000);
   updateGame(state, 140, 141_000);
@@ -626,7 +637,9 @@ test('equipment details expose cultivation intent and tiered growth preview', ()
 test('loot empowerment uses tiered materials and stronger cross-tier bonuses', () => {
   const state = createGameState(1000);
   state.realmIndex = 3;
-  state.gear.weapon = 3;
+  state.gear.weapon = 6;
+  state.gear.robe = 4;
+  state.cultivationPaths.sword = 3;
 
   startMission(state, 'ancientSwordTomb', 1000);
   updateGame(state, 140, 141_000);
@@ -683,6 +696,26 @@ test('mission and boss previews use omen language instead of raw risk wording', 
   assert.equal(bossStatus.boss.omen.label, '卦象');
   assert.equal(['小吉', '平', '有险', '大凶'].includes(bossStatus.boss.omen.name), true);
   assert.equal(bossStatus.boss.omen.counsel.startsWith('宜备：'), true);
+});
+
+test('midgame mission pressure requires preparation beyond realm unlock', () => {
+  const state = createGameState(1000);
+  state.realmIndex = 3;
+
+  const unlocked = getMissionStatus(state, 'ancientSwordTomb');
+  assert.equal(unlocked.unlocked, true);
+  assert.equal(unlocked.recommendedPower >= 500, true);
+  assert.equal(unlocked.omen.name, '大凶');
+
+  state.gear.weapon = 6;
+  state.gear.robe = 4;
+  state.cultivationPaths.sword = 3;
+  state.completedMissions.herbValley = 6;
+  state.completedMissions.mistyValley = 5;
+
+  const prepared = getMissionStatus(state, 'ancientSwordTomb');
+  assert.equal(['有险', '平', '小吉'].includes(prepared.omen.name), true);
+  assert.equal(prepared.recommendedPower < unlocked.recommendedPower, true);
 });
 
 test('sect disciples turn assignments into long-term idle rewards', () => {
