@@ -9,7 +9,7 @@
   const legacyRealmIndexMap = [0, 1, 2, 9, 13, 18, 26, 27];
   const realms = createRealmTrack();
 
-  const currentBalanceVersion = 5;
+  const currentBalanceVersion = 6;
   const mapDepthMaxLayer = 30;
 
   function createRealmTrack() {
@@ -301,6 +301,14 @@
     cloudFox: { id: 'cloudFox', name: '云纹灵狐', detail: '亲近灵气，辅助周天灵息和灵田照料。', maxLevel: 8, cost: (level) => ({ spiritStones: scaleCost(90, level), herbs: scaleCost(18, level), beastCores: level }), bonuses: { qiRate: 0.04, herbRate: 0.015 } },
     thunderTiger: { id: 'thunderTiger', name: '雷纹幼虎', detail: '守山善战，凝练道威并护持外出行游。', maxLevel: 8, cost: (level) => ({ spiritStones: scaleCost(130, level), beastCores: level * 2 }), bonuses: { power: 22, dangerReduction: 5 } },
   };
+
+  const daoHearts = {
+    greenLotusSwordBone: { id: 'greenLotusSwordBone', name: '青莲剑骨', detail: '一念如锋，行游遇煞时更容易压住局面。', maxLevel: 3, bonuses: { power: 48, dangerReduction: 6 } },
+    xuanFurnaceDanMind: { id: 'xuanFurnaceDanMind', name: '玄炉丹心', detail: '丹火入神，周天更绵长，炉火更听使唤。', maxLevel: 3, bonuses: { qiRate: 0.035, alchemySpeed: 0.03 } },
+    ninePalaceArraySoul: { id: 'ninePalaceArraySoul', name: '九宫阵魂', detail: '心神合阵，叩关前能多留一线回旋。', maxLevel: 3, bonuses: { breakthrough: 0.025, dangerReduction: 4 } },
+  };
+  const daoHeartChoices = Object.keys(daoHearts);
+  const daoHeartRealmIndices = [9, 18, 27];
 
   const missionOpportunities = {
     cavePatrol: 'spiritSpringChoice',
@@ -956,6 +964,8 @@
     pillBoost: document.querySelector('[data-pill-boost]'),
     profileRealm: document.querySelector('[data-profile-realm]'),
     attributeList: document.querySelector('[data-attribute-list]'),
+    daoHeartList: document.querySelector('[data-dao-heart-list]'),
+    breakthroughPrep: document.querySelector('[data-breakthrough-prep]'),
     goals: document.querySelector('[data-goals]'),
     goalCount: document.querySelector('[data-goal-count]'),
     mainlineHeader: document.querySelector('[data-mainline-header]'),
@@ -1082,6 +1092,19 @@
       saveState();
       render(true);
     }
+  });
+
+  refs.daoHeartList?.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-choose-dao-heart]');
+    if (!button) {
+      return;
+    }
+    const result = chooseDaoHeart(state, button.dataset.chooseDaoHeart);
+    if (result.ok) {
+      showToast('命格凝定', `已凝成「${result.heart.name}」。`);
+    }
+    saveState();
+    render(true);
   });
 
   refs.gearList?.addEventListener('click', (event) => {
@@ -1546,6 +1569,10 @@
       lockedLoot: {},
       treasures: Object.fromEntries(Object.keys(treasures).map((id) => [id, 0])),
       spiritBeasts: Object.fromEntries(Object.keys(spiritBeasts).map((id) => [id, 0])),
+      daoHearts: Object.fromEntries(Object.keys(daoHearts).map((id) => [id, 0])),
+      claimedDaoHeartRealms: {},
+      pendingDaoHeartChoice: null,
+      tribulationRecords: [],
       activeOpportunity: null,
       resolvedOpportunities: {},
       lastMissionEvent: null,
@@ -1644,6 +1671,13 @@
     state.lockedLoot = normalizeLockedLoot(state.lockedLoot, state.lootEquipment);
     state.treasures = normalizeLevels(state.treasures, treasures);
     state.spiritBeasts = normalizeLevels(state.spiritBeasts, spiritBeasts);
+    state.daoHearts = normalizeLevels(state.daoHearts, daoHearts);
+    state.claimedDaoHeartRealms = normalizeDaoHeartClaims(state.claimedDaoHeartRealms);
+    state.pendingDaoHeartChoice = normalizePendingDaoHeartChoice(state.pendingDaoHeartChoice, state);
+    if (!state.pendingDaoHeartChoice) {
+      maybeOpenDaoHeartChoice(state, now);
+    }
+    state.tribulationRecords = normalizeTribulationRecords(state.tribulationRecords);
     state.activeOpportunity = normalizeOpportunity(state.activeOpportunity);
     state.resolvedOpportunities = normalizeResolvedOpportunities(state.resolvedOpportunities);
     state.lastMissionEvent = normalizeMissionEvent(state.lastMissionEvent);
@@ -1714,13 +1748,17 @@
       return;
     }
     const chance = calculateBreakthroughChance(state, now);
+    const preparation = getBreakthroughPreparation(state, now);
     if (Math.random() > chance) {
-      state.qi = round(state.qi * 0.5);
+      state.qi = round(state.qi * preparation.qiRetention);
       if ((state.foundationStability || 0) > 0) {
         state.foundationStability = Math.max(0, state.foundationStability - 1);
-      } else {
+      } else if (!preparation.demonGuard) {
         state.heartDemon += 1;
       }
+      state.tribulationRecords ||= [];
+      state.tribulationRecords.unshift({ time: now, realmIndex: state.realmIndex, result: 'failed', readyScore: preparation.readyScore });
+      state.tribulationRecords = state.tribulationRecords.slice(0, 8);
       addLog(state, now, '突破时心魔骤起，灵气逆行，修为折损。');
       return;
     }
@@ -1732,7 +1770,24 @@
     state.foundationStability = 0;
     state.breakthroughBoostUntil = 0;
     state.breakthroughCount += 1;
+    maybeOpenDaoHeartChoice(state, now);
+    state.tribulationRecords ||= [];
+    state.tribulationRecords.unshift({ time: now, realmIndex: state.realmIndex, result: 'success', readyScore: preparation.readyScore });
+    state.tribulationRecords = state.tribulationRecords.slice(0, 8);
     addLog(state, now, `灵气贯通周天，突破至${getCurrentRealm(state).name}。`);
+  }
+
+  function maybeOpenDaoHeartChoice(state, now) {
+    state.claimedDaoHeartRealms ||= {};
+    const realmIndex = daoHeartRealmIndices.find((index) => (state.realmIndex || 0) >= index && !state.claimedDaoHeartRealms[String(index)]);
+    if (realmIndex == null) {
+      return;
+    }
+    state.pendingDaoHeartChoice = {
+      realmIndex,
+      choices: daoHeartChoices,
+      createdAt: now,
+    };
   }
 
   function startMapDepthTrial(state, mapId, now = Date.now()) {
@@ -2000,7 +2055,7 @@
 
   function getMissionDanger(state, mission) {
     const pressure = getMissionPressure(state, mission);
-    return Math.max(0, pressure - getTieredLevelValue(state.gear.robe || 0, gear.robe.dangerReductionPerLevel) - getGearAffixBonus(state, 'dangerReduction') - getEquippedLootBonus(state, 'dangerReduction') - getMapMasteryBonus(state, 'dangerReduction') - getTreasureBonus(state, 'dangerReduction') - getSpiritBeastBonus(state, 'dangerReduction') - (state.buildings.swordArray || 0) * buildings.swordArray.dangerReductionPerLevel - (state.cultivationPaths.sword || 0) * cultivationPaths.sword.dangerReductionPerLevel);
+    return Math.max(0, pressure - getTieredLevelValue(state.gear.robe || 0, gear.robe.dangerReductionPerLevel) - getGearAffixBonus(state, 'dangerReduction') - getEquippedLootBonus(state, 'dangerReduction') - getMapMasteryBonus(state, 'dangerReduction') - getTreasureBonus(state, 'dangerReduction') - getSpiritBeastBonus(state, 'dangerReduction') - getDaoHeartBonus(state, 'dangerReduction') - (state.buildings.swordArray || 0) * buildings.swordArray.dangerReductionPerLevel - (state.cultivationPaths.sword || 0) * cultivationPaths.sword.dangerReductionPerLevel);
   }
 
   function getMissionPressure(state, mission) {
@@ -2265,6 +2320,8 @@
     renderMarket(forceLists);
     renderAlchemy(forceLists);
     renderAttributes(forceLists);
+    renderDaoHeart(forceLists);
+    renderBreakthroughPreparation(forceLists);
     renderGear(forceLists);
     renderLoot(forceLists);
     renderFormations(forceLists);
@@ -2481,6 +2538,89 @@
     };
   }
 
+  function getDaoHeartChoices(state) {
+    const pending = state.pendingDaoHeartChoice;
+    if (!pending || !Array.isArray(pending.choices)) {
+      return [];
+    }
+    return pending.choices
+      .map((id) => {
+        const heart = daoHearts[id];
+        if (!heart) {
+          return null;
+        }
+        const level = clampInteger(state.daoHearts?.[id] || 0, 0, heart.maxLevel);
+        const nextLevel = Math.min(heart.maxLevel, level + 1);
+        return {
+          id,
+          name: heart.name,
+          detail: heart.detail,
+          level,
+          nextLevel,
+          maxLevel: heart.maxLevel,
+          effects: effectsFromBonusObject(scaleBonusObject(heart.bonuses, nextLevel)),
+        };
+      })
+      .filter(Boolean);
+  }
+
+  function chooseDaoHeart(state, heartId, now = Date.now()) {
+    const pending = state.pendingDaoHeartChoice;
+    if (!pending || !pending.choices?.includes(heartId) || !daoHearts[heartId]) {
+      return { ok: false, reason: 'notAvailable' };
+    }
+    const heart = daoHearts[heartId];
+    const level = clampInteger(state.daoHearts?.[heartId] || 0, 0, heart.maxLevel);
+    if (level >= heart.maxLevel) {
+      return { ok: false, reason: 'maxLevel' };
+    }
+    state.daoHearts ||= Object.fromEntries(Object.keys(daoHearts).map((id) => [id, 0]));
+    state.claimedDaoHeartRealms ||= {};
+    state.daoHearts[heartId] = level + 1;
+    state.claimedDaoHeartRealms[String(pending.realmIndex)] = heartId;
+    state.pendingDaoHeartChoice = null;
+    addLog(state, now, `命格归位，凝成「${heart.name}」。`);
+    maybeOpenDaoHeartChoice(state, now);
+    return { ok: true, heart: { ...heart, level: level + 1 } };
+  }
+
+  function getBreakthroughPreparation(state, now = Date.now()) {
+    const realm = getCurrentRealm(state);
+    const qiReady = (state.qi || 0) >= realm.requiredQi;
+    const foundation = clampInteger(state.foundationStability || 0, 0, 3);
+    const meridianReady = Boolean(state.breakthroughBoostUntil && state.breakthroughBoostUntil > now);
+    const amuletLevel = clampInteger(state.gear?.amulet || 0, 0, gear.amulet.maxLevel);
+    const guardLevel = clampInteger(state.formations?.mountainGuard || 0, 0, formations.mountainGuard.maxLevel);
+    const scriptureLevel = clampInteger(state.buildings?.scriptureLibrary || 0, 0, buildings.scriptureLibrary.maxLevel);
+    const daoLevel = Object.values(state.daoHearts || {}).reduce((total, level) => total + (Number(level) || 0), 0);
+    const demon = Math.max(0, Number(state.heartDemon) || 0);
+    const items = [
+      { id: 'qi', name: '灵机盈满', detail: `${Math.floor(state.qi || 0)} / ${realm.requiredQi}`, ready: qiReady, weight: 2 },
+      { id: 'foundation', name: '根基沉稳', detail: `${foundation} / 3`, ready: foundation >= 2, weight: 2, backlash: foundation * 0.04 },
+      { id: 'heartDemon', name: '魔息澄明', detail: demon > 0 ? `魔息 ${demon}` : '魔息未扰', ready: demon === 0, weight: 1 },
+      { id: 'meridian', name: '护脉丹息', detail: meridianReady ? '丹息护持' : '丹息未续', ready: meridianReady, weight: 1, backlash: meridianReady ? 0.08 : 0 },
+      { id: 'amulet', name: '符脉护持', detail: `${amuletLevel} / ${gear.amulet.maxLevel}`, ready: amuletLevel > 0, weight: 1, backlash: Math.min(0.08, amuletLevel * 0.018) },
+      { id: 'guard', name: '山门护阵', detail: `${guardLevel} / ${formations.mountainGuard.maxLevel}`, ready: guardLevel > 0, weight: 1, backlash: Math.min(0.08, guardLevel * 0.018) },
+      { id: 'scripture', name: '经卷回照', detail: `${scriptureLevel} / ${buildings.scriptureLibrary.maxLevel}`, ready: scriptureLevel > 0, weight: 1, backlash: Math.min(0.06, scriptureLevel * 0.012) },
+      { id: 'daoHeart', name: '道心共鸣', detail: daoLevel > 0 ? `命格 ${daoLevel}` : '尚未凝命', ready: daoLevel > 0, weight: 1, backlash: Math.min(0.06, daoLevel * 0.02) },
+    ];
+    const maxScore = items.reduce((total, item) => total + item.weight, 0);
+    const readyScore = round(items.reduce((total, item) => total + (item.ready ? item.weight : 0), 0) / maxScore);
+    const backlashBuffer = Math.min(0.32, items.reduce((total, item) => total + (item.backlash || 0), 0));
+    const qiRetention = round(0.5 + backlashBuffer);
+    const demonGuard = foundation > 0 || meridianReady || guardLevel >= 2 || daoLevel > 0;
+    const counsel = !qiReady ? '灵机未满，暂不宜叩关。' : readyScore >= 0.72 ? '诸缘较稳，可择机叩关。' : '气机可用，仍宜补足护持。';
+    return {
+      title: '天劫准备',
+      readyScore,
+      qiRetention,
+      demonGuard,
+      backlashBuffer,
+      counsel,
+      items: items.map(({ backlash, weight, ...item }) => item),
+    };
+  }
+
   function getCaveSummary(state) {
     const meditation = Math.max(0, (state.buildings?.meditationSeat || 1) - 1) * buildings.meditationSeat.qiBonusPerLevel;
     const field = (state.buildings?.spiritField || 0) * buildings.spiritField.herbRatePerLevel;
@@ -2671,7 +2811,7 @@
   }
 
   function getDepthDanger(state, map, layer) {
-    return Math.max(0, getDepthPressure(map, layer) - getTieredLevelValue(state.gear?.robe || 0, gear.robe.dangerReductionPerLevel) - getGearAffixBonus(state, 'dangerReduction') - getEquippedLootBonus(state, 'dangerReduction') - getMapMasteryBonus(state, 'dangerReduction') - getTreasureBonus(state, 'dangerReduction') - getSpiritBeastBonus(state, 'dangerReduction') - (state.buildings.swordArray || 0) * buildings.swordArray.dangerReductionPerLevel - (state.cultivationPaths?.sword || 0) * cultivationPaths.sword.dangerReductionPerLevel);
+    return Math.max(0, getDepthPressure(map, layer) - getTieredLevelValue(state.gear?.robe || 0, gear.robe.dangerReductionPerLevel) - getGearAffixBonus(state, 'dangerReduction') - getEquippedLootBonus(state, 'dangerReduction') - getMapMasteryBonus(state, 'dangerReduction') - getTreasureBonus(state, 'dangerReduction') - getSpiritBeastBonus(state, 'dangerReduction') - getDaoHeartBonus(state, 'dangerReduction') - (state.buildings.swordArray || 0) * buildings.swordArray.dangerReductionPerLevel - (state.cultivationPaths?.sword || 0) * cultivationPaths.sword.dangerReductionPerLevel);
   }
 
   function getDepthDuration(map, layer) {
@@ -2806,6 +2946,7 @@
       { label: '地脉熟稔', value: getMapMasteryBonus(state, 'power') },
       { label: '法宝灵蕴', value: getTreasureBonus(state, 'power') },
       { label: '灵兽护持', value: getSpiritBeastBonus(state, 'power') },
+      { label: '命格道心', value: getDaoHeartBonus(state, 'power') },
       { label: '洞天底蕴', value: state.permanentBonuses.power || 0 },
       { label: '山门威望', value: Math.floor((state.sectReputation || 0) / 20) * 4 },
     ]);
@@ -2819,6 +2960,7 @@
       { label: '地脉熟稔', value: getMapMasteryBonus(state, 'qiRate'), mode: 'percent' },
       { label: '法宝灵蕴', value: getTreasureBonus(state, 'qiRate'), mode: 'percent' },
       { label: '灵兽护持', value: getSpiritBeastBonus(state, 'qiRate'), mode: 'percent' },
+      { label: '命格道心', value: getDaoHeartBonus(state, 'qiRate'), mode: 'percent' },
       { label: '洞天底蕴', value: state.permanentBonuses.qiRate || 0, mode: 'percent' },
       { label: '丹力催行', value: state.pillBoostUntil && state.pillBoostUntil > now ? 0.4 : 0, mode: 'percent' },
     ]);
@@ -2829,6 +2971,7 @@
       { label: '护山阵势', value: Math.min(0.12, (state.formations.mountainGuard || 0) * formations.mountainGuard.stabilityPerLevel), mode: 'percent' },
       { label: '奇珍加持', value: Math.min(0.1, getEquippedLootBonus(state, 'breakthrough')), mode: 'percent' },
       { label: '法宝灵蕴', value: Math.min(0.12, getTreasureBonus(state, 'breakthrough')), mode: 'percent' },
+      { label: '命格道心', value: Math.min(0.1, getDaoHeartBonus(state, 'breakthrough')), mode: 'percent' },
       { label: '悟道灵光', value: Math.min(0.15, (state.insight || 0) * 0.03), mode: 'percent' },
       { label: '根基沉淀', value: Math.min(0.15, (state.foundationStability || 0) * 0.05), mode: 'percent' },
       { label: '心魔侵扰', value: -Math.min(0.35, (state.heartDemon || 0) * 0.15), mode: 'percent' },
@@ -2839,6 +2982,7 @@
       + getMapMasteryBonus(state, 'dangerReduction')
       + getTreasureBonus(state, 'dangerReduction')
       + getSpiritBeastBonus(state, 'dangerReduction')
+      + getDaoHeartBonus(state, 'dangerReduction')
       + (state.cultivationPaths.sword || 0) * cultivationPaths.sword.dangerReductionPerLevel;
     return {
       realmName: realm.name,
@@ -2854,6 +2998,7 @@
           { label: '地脉熟稔', value: getMapMasteryBonus(state, 'dangerReduction') },
           { label: '法宝灵蕴', value: getTreasureBonus(state, 'dangerReduction') },
           { label: '灵兽护持', value: getSpiritBeastBonus(state, 'dangerReduction') },
+          { label: '命格道心', value: getDaoHeartBonus(state, 'dangerReduction') },
         ]) },
         { id: 'sectInfluence', label: '山门气运', value: Math.floor(state.sectReputation || 0), sources: [{ label: getSectLevel(state).name, value: Math.floor(state.sectReputation || 0) }] },
       ],
@@ -3665,6 +3810,77 @@
     renderCache.attributes = signature;
   }
 
+  function renderDaoHeart(force = false) {
+    if (!refs.daoHeartList) {
+      return;
+    }
+    const choices = getDaoHeartChoices(state);
+    const claimed = Object.values(state.claimedDaoHeartRealms || {}).filter(Boolean);
+    const signature = `${JSON.stringify(state.daoHearts || {})}|${state.pendingDaoHeartChoice?.realmIndex || ''}|${claimed.join('|')}`;
+    if (!force && renderCache.daoHeart === signature) {
+      return;
+    }
+    const owned = Object.values(daoHearts)
+      .filter((heart) => (state.daoHearts?.[heart.id] || 0) > 0)
+      .map((heart) => {
+        const level = state.daoHearts[heart.id] || 0;
+        return `<li><strong>${heart.name} ${level} / ${heart.maxLevel}</strong><span>${formatEffects(effectsFromBonusObject(scaleBonusObject(heart.bonuses, level)))}</span></li>`;
+      })
+      .join('');
+    refs.daoHeartList.innerHTML = `
+      <header>
+        <h3>${choices.length ? '命格择定' : '命格道心'}</h3>
+        <span>${claimed.length ? `${claimed.length} 道` : '未凝命格'}</span>
+      </header>
+      ${choices.length ? `
+        <p>破境后道心浮现，择其一凝入命格。</p>
+        <div class="dao-choice-grid">
+          ${choices.map((choice) => `
+            <button data-choose-dao-heart="${choice.id}" type="button">
+              <strong>${choice.name}</strong>
+              <span>${choice.detail}</span>
+              <small>${formatEffects(choice.effects)}</small>
+            </button>
+          `).join('')}
+        </div>
+      ` : `
+        <ul class="dao-heart-list">
+          ${owned || '<li><strong>道心未显</strong><span>筑基、金丹、元婴大关后会出现命格选择。</span></li>'}
+        </ul>
+      `}
+    `;
+    renderCache.daoHeart = signature;
+  }
+
+  function renderBreakthroughPreparation(force = false) {
+    if (!refs.breakthroughPrep) {
+      return;
+    }
+    const preparation = getBreakthroughPreparation(state, Date.now());
+    const signature = JSON.stringify(preparation);
+    if (!force && renderCache.breakthroughPrep === signature) {
+      return;
+    }
+    refs.breakthroughPrep.innerHTML = `
+      <header>
+        <h3>${preparation.title}</h3>
+        <span>${Math.round(preparation.readyScore * 100)}%</span>
+      </header>
+      <div class="tribulation-meter"><i style="width:${Math.round(preparation.readyScore * 100)}%"></i></div>
+      <p>${preparation.counsel}</p>
+      <div class="tribulation-grid">
+        ${preparation.items.map((item) => `
+          <span class="${item.ready ? 'ready' : ''}">
+            <strong>${item.name}</strong>
+            <small>${item.detail}</small>
+          </span>
+        `).join('')}
+      </div>
+      <small>失手保留 ${Math.round(preparation.qiRetention * 100)}% 灵气${preparation.demonGuard ? ' · 魔息可缓' : ''}</small>
+    `;
+    renderCache.breakthroughPrep = signature;
+  }
+
   function renderLoot(force = false) {
     if (!refs.lootList) {
       return;
@@ -4247,9 +4463,10 @@
     const masteryBonus = 1 + getMapMasteryBonus(state, 'qiRate');
     const treasureBonus = 1 + getTreasureBonus(state, 'qiRate');
     const beastBonus = 1 + getSpiritBeastBonus(state, 'qiRate');
+    const daoHeartBonus = 1 + getDaoHeartBonus(state, 'qiRate');
     const pillBoost = state.pillBoostUntil && state.pillBoostUntil > now ? 1.4 : 1;
     const injuryPenalty = state.injuryUntil && state.injuryUntil > now ? 0.75 : 1;
-    return round(realm.qiRate * buildingBonus * formationBonus * affixBonus * pathBonus * permanentBonus * lootBonus * masteryBonus * treasureBonus * beastBonus * pillBoost * injuryPenalty);
+    return round(realm.qiRate * buildingBonus * formationBonus * affixBonus * pathBonus * permanentBonus * lootBonus * masteryBonus * treasureBonus * beastBonus * daoHeartBonus * pillBoost * injuryPenalty);
   }
 
   function calculateBreakthroughChance(state, now = Date.now()) {
@@ -4263,11 +4480,12 @@
     const formationBonus = Math.min(0.12, (state.formations.mountainGuard || 0) * formations.mountainGuard.stabilityPerLevel);
     const treasureBonus = Math.min(0.12, getTreasureBonus(state, 'breakthrough'));
     const beastBonus = Math.min(0.08, getSpiritBeastBonus(state, 'breakthrough'));
+    const daoHeartBonus = Math.min(0.1, getDaoHeartBonus(state, 'breakthrough'));
     const scriptureBonus = Math.min(0.12, (state.buildings.scriptureLibrary || 0) * buildings.scriptureLibrary.breakthroughPerLevel);
     const pillBonus = state.breakthroughBoostUntil && state.breakthroughBoostUntil > now ? 0.12 : 0;
     const foundationBonus = Math.min(0.15, (state.foundationStability || 0) * 0.05);
     const heartDemonPenalty = Math.min(0.35, state.heartDemon * 0.15);
-    return round(Math.max(0.25, Math.min(0.95, 0.75 + preparation + insightBonus + gearBonus + affixBonus + lootBonus + formationBonus + treasureBonus + beastBonus + scriptureBonus + pillBonus + foundationBonus - heartDemonPenalty)));
+    return round(Math.max(0.25, Math.min(0.95, 0.75 + preparation + insightBonus + gearBonus + affixBonus + lootBonus + formationBonus + treasureBonus + beastBonus + daoHeartBonus + scriptureBonus + pillBonus + foundationBonus - heartDemonPenalty)));
   }
 
   function calculatePower(state) {
@@ -4283,10 +4501,11 @@
     const masteryPower = getMapMasteryBonus(state, 'power');
     const treasurePower = getTreasureBonus(state, 'power');
     const beastPower = getSpiritBeastBonus(state, 'power');
+    const daoHeartPower = getDaoHeartBonus(state, 'power');
     const sectPower = Math.floor((state.sectReputation || 0) / 20) * 4;
     const qiPower = Math.min(90, Math.floor((state.qi || 0) * 0.5));
     const demonPenalty = (state.heartDemon || 0) * 8;
-    return Math.max(10, Math.floor(realmPower + pathPower + swordPower + gearPower + gearQualityPower + affixPower + formationPower + permanentPower + lootPower + masteryPower + treasurePower + beastPower + sectPower + qiPower - demonPenalty));
+    return Math.max(10, Math.floor(realmPower + pathPower + swordPower + gearPower + gearQualityPower + affixPower + formationPower + permanentPower + lootPower + masteryPower + treasurePower + beastPower + daoHeartPower + sectPower + qiPower - demonPenalty));
   }
 
   function getRealmPower(state) {
@@ -4573,6 +4792,45 @@
     return normalized;
   }
 
+  function normalizeDaoHeartClaims(claims) {
+    if (!claims || typeof claims !== 'object') {
+      return {};
+    }
+    return Object.fromEntries(
+      Object.entries(claims).filter(([realmIndex, heartId]) => daoHeartRealmIndices.includes(Number(realmIndex)) && daoHearts[heartId]),
+    );
+  }
+
+  function normalizePendingDaoHeartChoice(choice, state) {
+    if (!choice || typeof choice !== 'object') {
+      return null;
+    }
+    const realmIndex = clampInteger(choice.realmIndex ?? -1, -1, realms.length - 1);
+    if (!daoHeartRealmIndices.includes(realmIndex) || state.claimedDaoHeartRealms?.[String(realmIndex)]) {
+      return null;
+    }
+    const choices = Array.isArray(choice.choices) ? choice.choices.filter((id) => daoHearts[id]) : daoHeartChoices;
+    return {
+      realmIndex,
+      choices: choices.length ? [...new Set(choices)] : daoHeartChoices,
+      createdAt: Number(choice.createdAt) || Date.now(),
+    };
+  }
+
+  function normalizeTribulationRecords(records) {
+    if (!Array.isArray(records)) {
+      return [];
+    }
+    return records
+      .map((record) => ({
+        time: Number(record?.time) || Date.now(),
+        realmIndex: clampInteger(record?.realmIndex ?? 0, 0, realms.length - 1),
+        result: record?.result === 'success' ? 'success' : 'failed',
+        readyScore: Math.max(0, Math.min(1, Number(record?.readyScore) || 0)),
+      }))
+      .slice(0, 8);
+  }
+
   function normalizeGearQuality(savedQuality) {
     const normalized = {};
     Object.keys(gear).forEach((id) => {
@@ -4689,7 +4947,7 @@
   function getAlchemyDuration(state, recipe) {
     const furnaceLevel = state.buildings.alchemyFurnace || 0;
     const pathLevel = state.cultivationPaths.alchemy || 0;
-    const speedMultiplier = Math.max(0.35, 1 - furnaceLevel * buildings.alchemyFurnace.speedBonusPerLevel - pathLevel * cultivationPaths.alchemy.alchemySpeedPerLevel);
+    const speedMultiplier = Math.max(0.35, 1 - furnaceLevel * buildings.alchemyFurnace.speedBonusPerLevel - pathLevel * cultivationPaths.alchemy.alchemySpeedPerLevel - getDaoHeartBonus(state, 'alchemySpeed'));
     return Math.max(10, Math.round(recipe.duration * speedMultiplier));
   }
 
@@ -4841,6 +5099,10 @@
     return Object.entries(state.spiritBeasts || {}).reduce((total, [beastId, level]) => total + (spiritBeasts[beastId]?.bonuses?.[key] || 0) * (level || 0), 0);
   }
 
+  function getDaoHeartBonus(state, key) {
+    return Object.entries(state.daoHearts || {}).reduce((total, [heartId, level]) => total + (daoHearts[heartId]?.bonuses?.[key] || 0) * (level || 0), 0);
+  }
+
   function getGearEffects(gearId, level, qualityIndex, affix) {
     const item = gear[gearId];
     const effects = [];
@@ -4862,6 +5124,7 @@
       breakthrough: '破境天机',
       dangerReduction: '劫象消解',
       herbRate: '灵草生长',
+      alchemySpeed: '丹火缩时',
     };
     return Object.entries(bonuses)
       .filter(([key, value]) => typeof value === 'number' && labels[key] && value !== 0)
@@ -4869,7 +5132,7 @@
         id: key,
         label: `${prefix}${labels[key]}`,
         value,
-        mode: key === 'qiRate' || key === 'qiBonus' || key === 'breakthrough' || key === 'herbRate' ? 'percent' : key === 'dangerReduction' ? 'reduction' : 'flat',
+        mode: key === 'qiRate' || key === 'qiBonus' || key === 'breakthrough' || key === 'herbRate' || key === 'alchemySpeed' ? 'percent' : key === 'dangerReduction' ? 'reduction' : 'flat',
       }));
   }
 

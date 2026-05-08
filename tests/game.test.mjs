@@ -3,6 +3,7 @@ import {
   BUILDINGS,
   CAVE_STAGES,
   CULTIVATION_PATHS,
+  DAO_HEARTS,
   FORMATIONS,
   GEAR,
   GEAR_QUALITIES,
@@ -39,6 +40,8 @@ import {
   getCaveStatus,
   getCaveUpgradeLimit,
   getCharacterProfile,
+  getBreakthroughPreparation,
+  getDaoHeartChoices,
   getEquipmentDetails,
   getLootEmpowerCost,
   getMapDepthStatus,
@@ -50,6 +53,7 @@ import {
   getRealmUpgradeLimit,
   getRealmProgress,
   getUpgradeTier,
+  chooseDaoHeart,
   performBreakthrough,
   craftPill,
   consumePill,
@@ -194,7 +198,7 @@ test('legacy saves are rebalanced without wiping progress', () => {
   assert.equal(state.spiritStones, 1234);
   assert.equal(state.completedMissions.herbGathering, 5);
   assert.equal(state.qi <= Math.ceil(REALMS[1].requiredQi * 1.15), true);
-  assert.equal(state.balanceVersion, 5);
+  assert.equal(state.balanceVersion, 6);
 });
 
 test('breakthrough advances realm and consumes qi on a successful attempt', () => {
@@ -221,6 +225,58 @@ test('failed breakthrough creates heart demon pressure', () => {
   assert.equal(state.heartDemon, 1);
   assert.equal(state.qi, 12.5);
   assert.equal(calculateBreakthroughChance(state), 0.6);
+});
+
+test('major breakthrough opens dao heart fate choices and selected fate changes growth', () => {
+  const state = createGameState(1000);
+  state.realmIndex = realmIndexByName('炼气九层');
+  state.qi = REALMS[state.realmIndex].requiredQi;
+
+  const result = performBreakthrough(state, 2000, () => 0);
+  const choices = getDaoHeartChoices(state);
+  const beforePower = calculatePower(state);
+
+  assert.equal(result.ok, true);
+  assert.equal(state.realmIndex, realmIndexByName('筑基一层'));
+  assert.equal(choices.length, 3);
+  assert.equal(choices.some((choice) => choice.id === 'greenLotusSwordBone'), true);
+  assert.equal(DAO_HEARTS.greenLotusSwordBone.name, '青莲剑骨');
+
+  const picked = chooseDaoHeart(state, 'greenLotusSwordBone', 3000);
+
+  assert.equal(picked.ok, true);
+  assert.equal(state.daoHearts.greenLotusSwordBone, 1);
+  assert.equal(getDaoHeartChoices(state).length, 0);
+  assert.equal(calculatePower(state) > beforePower, true);
+});
+
+test('tribulation preparation previews readiness and softens failed breakthrough backlash', () => {
+  const weak = createGameState(1000);
+  weak.qi = REALMS[0].requiredQi;
+  const weakPrep = getBreakthroughPreparation(weak, 1000);
+
+  const prepared = createGameState(1000);
+  prepared.qi = REALMS[0].requiredQi;
+  prepared.spiritStones = 120;
+  prepared.herbs = 40;
+  prepared.inventoryPills.meridianPill = 1;
+  prepared.gear.amulet = 3;
+  prepared.formations.mountainGuard = 2;
+  prepared.buildings.scriptureLibrary = 2;
+  stabilizeFoundation(prepared, 1000);
+  stabilizeFoundation(prepared, 2000);
+  stabilizeFoundation(prepared, 3000);
+  consumePill(prepared, 'meridianPill', 4000);
+
+  const preparedPrep = getBreakthroughPreparation(prepared, 5000);
+  const failed = performBreakthrough(prepared, 5000, () => 0.99);
+
+  assert.equal(preparedPrep.readyScore > weakPrep.readyScore, true);
+  assert.equal(preparedPrep.items.some((item) => item.id === 'meridian' && item.ready), true);
+  assert.equal(failed.ok, false);
+  assert.equal(failed.preparation.readyScore, preparedPrep.readyScore);
+  assert.equal(prepared.qi > REALMS[0].requiredQi * 0.5, true);
+  assert.equal(prepared.heartDemon, 0);
 });
 
 test('cave upgrades improve passive cultivation', () => {

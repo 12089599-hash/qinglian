@@ -335,20 +335,122 @@ dd {
     rgba(255, 255, 255, 0.03);
 }
 
+.dao-heart-card,
+.tribulation-card {
+  margin-top: 12px;
+  border: 1px solid rgba(232, 198, 106, 0.22);
+  border-radius: 8px;
+  padding: 12px;
+  background:
+    linear-gradient(135deg, rgba(232, 198, 106, 0.07), rgba(125, 211, 183, 0.05)),
+    rgba(255, 255, 255, 0.03);
+}
+
 .attribute-card header {
   margin-bottom: 10px;
 }
 
-.attribute-card h3 {
+.attribute-card h3,
+.dao-heart-card h3,
+.tribulation-card h3 {
   margin: 0;
   color: var(--gold);
   font-size: 0.92rem;
 }
 
-.attribute-card header span {
+.dao-heart-card header,
+.tribulation-card header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.attribute-card header span,
+.dao-heart-card header span,
+.tribulation-card header span {
   color: var(--muted);
   font-size: 0.78rem;
   font-weight: 700;
+}
+
+.dao-heart-card p,
+.tribulation-card p {
+  margin: 0 0 10px;
+  color: #cbd5c2;
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.dao-choice-grid,
+.tribulation-grid,
+.dao-heart-list {
+  display: grid;
+  gap: 8px;
+}
+
+.dao-heart-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dao-choice-grid button,
+.dao-heart-list li,
+.tribulation-grid span {
+  display: grid;
+  gap: 5px;
+  border: 1px solid rgba(245, 238, 220, 0.1);
+  border-radius: 8px;
+  padding: 10px;
+  text-align: left;
+  background: rgba(0, 0, 0, 0.16);
+}
+
+.dao-choice-grid strong,
+.dao-heart-list strong,
+.tribulation-grid strong {
+  color: #f4e7bd;
+  font-size: 0.9rem;
+}
+
+.dao-choice-grid span,
+.dao-heart-list span,
+.dao-choice-grid small,
+.tribulation-grid small,
+.tribulation-card > small {
+  color: #aeb7ad;
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.dao-choice-grid small {
+  color: var(--jade);
+}
+
+.tribulation-meter {
+  overflow: hidden;
+  height: 7px;
+  margin-bottom: 10px;
+  border-radius: 999px;
+  background: rgba(245, 238, 220, 0.12);
+}
+
+.tribulation-meter i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--jade), var(--gold));
+}
+
+.tribulation-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-bottom: 10px;
+}
+
+.tribulation-grid span.ready {
+  border-color: rgba(125, 211, 183, 0.42);
+  background: rgba(125, 211, 183, 0.08);
 }
 
 .attribute-list {
@@ -1694,25 +1796,35 @@ small {
     margin-top: 0;
   }
 
-  body[data-active-tab="overview"] .stats-panel > header {
+  body[data-active-tab="overview"] .stats-panel > .dao-heart-card {
     order: 2;
+    margin-top: 0;
+  }
+
+  body[data-active-tab="overview"] .stats-panel > .tribulation-card {
+    order: 3;
+    margin-top: 0;
+  }
+
+  body[data-active-tab="overview"] .stats-panel > header {
+    order: 4;
     margin-bottom: 0;
   }
 
   body[data-active-tab="overview"] .stats-panel > .vital-grid {
-    order: 3;
-  }
-
-  body[data-active-tab="overview"] .stats-panel > .state-drawer {
-    order: 4;
-  }
-
-  body[data-active-tab="overview"] .stats-panel > .resource-drawer:not(.state-drawer) {
     order: 5;
   }
 
-  body[data-active-tab="overview"] .stats-panel > .action-row {
+  body[data-active-tab="overview"] .stats-panel > .state-drawer {
     order: 6;
+  }
+
+  body[data-active-tab="overview"] .stats-panel > .resource-drawer:not(.state-drawer) {
+    order: 7;
+  }
+
+  body[data-active-tab="overview"] .stats-panel > .action-row {
+    order: 8;
   }
 
   body[data-active-tab="overview"] .stats-panel > .resource-drawer {
@@ -1820,7 +1932,22 @@ small {
   }
 
   .mission-map-selector {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+  }
+
+  .mission-map-selector::-webkit-scrollbar,
+  .building-grid::-webkit-scrollbar {
+    display: none;
+  }
+
+  .map-select-button {
+    flex: 0 0 172px;
+    scroll-snap-align: start;
   }
 
   .map-heading,
@@ -1830,14 +1957,24 @@ small {
   }
 
   .cave-summary-grid,
-  .building-grid,
   .building-effect-grid,
   .building-detail-card header {
     grid-template-columns: 1fr;
   }
 
+  .building-grid {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+  }
+
   .building-card {
+    flex: 0 0 158px;
     min-height: 94px;
+    scroll-snap-align: start;
   }
 
   .disciple-roster,
