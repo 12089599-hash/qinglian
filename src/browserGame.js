@@ -1511,24 +1511,14 @@
     }
     const goalButton = event.target.closest('[data-claim-goal]');
     if (goalButton) {
-      const result = claimGoalReward(state, goalButton.dataset.claimGoal);
-      if (result.ok) {
-        showToast('目标奖励', `获得${formatReward(result.reward)}。`);
-      }
-      saveState();
-      render(true);
+      claimGoalById(goalButton.dataset.claimGoal);
     }
   });
 
   refs.mainlineHeader?.addEventListener('click', (event) => {
     const button = event.target.closest('[data-claim-chapter]');
     if (!button) return;
-    const result = claimChapterReward(state, button.dataset.claimChapter);
-    if (result.ok) {
-      showToast('主线完成', `获得${formatReward(result.reward)}。`);
-    }
-    saveState();
-    render(true);
+    claimChapterById(button.dataset.claimChapter);
   });
 
   refs.dailyList?.addEventListener('click', (event) => {
@@ -1618,6 +1608,12 @@
       document.querySelector('[data-breakthrough]')?.click();
       return;
     }
+    if (refs.nextGuidance.dataset.guidanceAction === 'claimGoal' && claimGoalById(refs.nextGuidance.dataset.guidanceTarget)) {
+      return;
+    }
+    if (refs.nextGuidance.dataset.guidanceAction === 'claimChapter' && claimChapterById(refs.nextGuidance.dataset.guidanceTarget)) {
+      return;
+    }
     openGuidanceTarget(refs.nextGuidance.dataset.gotoTab, refs.nextGuidance.dataset.guidanceTarget);
   });
 
@@ -1630,6 +1626,26 @@
   });
 
   render();
+
+  function claimGoalById(goalId) {
+    const result = claimGoalReward(state, goalId);
+    if (result.ok) {
+      showToast('目标奖励', `获得${formatReward(result.reward)}。`);
+    }
+    saveState();
+    render(true);
+    return result.ok;
+  }
+
+  function claimChapterById(chapterId) {
+    const result = claimChapterReward(state, chapterId);
+    if (result.ok) {
+      showToast('主线完成', `获得${formatReward(result.reward)}。`);
+    }
+    saveState();
+    render(true);
+    return result.ok;
+  }
   showOfflineSummary();
   requestAnimationFrame(loop);
   setInterval(saveState, 5000);
@@ -4057,7 +4073,7 @@
         ${map.approachOptions.map((approach) => `
           <button data-select-approach="${map.id}:${approach.id}" class="${approach.selected ? 'active' : ''}" ${approach.locked || !map.unlocked ? 'disabled' : ''} type="button">
             <strong>${approach.name}</strong>
-            <span>${approach.detail}</span>
+            <span>${formatApproachSummary(approach)}</span>
             <small>${formatApproachComparison(approach)}</small>
             <small>${approach.specialDrop ? `专属 ${approach.specialDrop.name} · ${approach.dropProgress?.label || '0 / 2'} · ${formatReward(approach.specialDrop.reward)}` : '保持原收益'}</small>
           </button>
@@ -4100,7 +4116,13 @@
         <div>
           <strong>秘境层数 <small>${depth.clearedLayer} / ${depth.maxLayer}</small></strong>
           <span>${depth.maxed ? '此地秘境已尽数打通。' : `${depth.omen.label} ${depth.omen.name} · 第 ${depth.nextLayer} 层`}</span>
-          <small>${depth.maxed ? '可转往更高地图继续推进。' : `${formatDuration(depth.duration)} · 道行 ${calculatePower(state)} / 劫象 ${depth.danger} · 首通 ${formatReward(depth.reward)}`}</small>
+          ${depth.maxed ? '<small class="depth-reward-row">可转往更高地图继续推进。</small>' : `
+            <div class="depth-stat-row">
+              <small>用时 ${formatDuration(depth.duration)}</small>
+              <small>道行 ${calculatePower(state)} / 劫象 ${depth.danger}</small>
+            </div>
+            <small class="depth-reward-row">首通 ${formatReward(depth.reward)}</small>
+          `}
         </div>
         <button data-start-depth="${map.id}" ${depth.maxed || !depth.unlocked || state.activeMission ? 'disabled' : ''}>${depth.maxed ? '已圆满' : '深入'}</button>
       </div>
@@ -4120,8 +4142,12 @@
         <div class="boss-mark">${map.icon}</div>
         <div>
           <strong>${map.boss.name} <small>${map.boss.title}</small></strong>
-          <span>${map.boss.omen.detail} · ${map.boss.omen.counsel}</span>
-          <span>探索 ${map.exploration.cappedCompleted} / ${map.exploration.target} · 道行 ${calculatePower(state)} / ${map.boss.power}</span>
+          <div class="boss-requirements">
+            <small>探索 ${map.exploration.cappedCompleted} / ${map.exploration.target}</small>
+            <small>道行 ${calculatePower(state)} / ${map.boss.power}</small>
+          </div>
+          <span class="boss-counsel">${map.boss.omen.detail}</span>
+          <span class="boss-counsel">${map.boss.omen.counsel}</span>
           <span>馈赠 ${formatReward(map.boss.reward)}</span>
         </div>
         <button data-challenge-boss="${map.id}" ${disabled ? 'disabled' : ''}>${statusText}</button>
@@ -6886,6 +6912,17 @@
     const duration = approach.comparison?.durationDeltaPct || 0;
     const danger = approach.comparison?.dangerDeltaPct || 0;
     return `时长 ${formatSignedPercent(duration)} · 劫象 ${formatSignedPercent(danger)}`;
+  }
+
+  function formatApproachSummary(approach) {
+    const summaries = {
+      balanced: '稳步均衡',
+      herbSeeking: '灵草清心',
+      monsterHunt: '妖核较多',
+      relicSearch: '法器精魄',
+      daoInquiry: '悟道灵气',
+    };
+    return summaries[approach.id] || approach.detail;
   }
 
   function formatSignedPercent(value) {

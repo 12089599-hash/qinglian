@@ -857,6 +857,34 @@ small {
   font-size: 0.84rem;
 }
 
+.boss-requirements,
+.depth-stat-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.boss-requirements small,
+.depth-stat-row small {
+  display: inline-flex;
+  margin-top: 0;
+  border: 1px solid rgba(245, 238, 220, 0.1);
+  border-radius: 999px;
+  padding: 3px 8px;
+  color: #d9e7d3;
+  background: rgba(0, 0, 0, 0.14);
+}
+
+.boss-counsel,
+.depth-reward-row {
+  display: block;
+}
+
+.depth-reward-row {
+  color: var(--jade);
+}
+
 .map-group h3 {
   margin: 0;
   color: var(--gold);
