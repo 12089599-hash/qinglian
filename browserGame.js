@@ -2164,8 +2164,51 @@
       selected: approach.id === selected.id,
       specialDrop: getMapSpecialDropTemplate(mapId, approach.id),
       specialDropCount: state.mapSpecialDrops?.[mapId]?.[approach.id] || 0,
+      dropProgress: getApproachDropProgress(state, mapId, approach.id),
+      comparison: getApproachComparison(state, mapId, approach.id),
       locked: approach.id !== 'balanced' && !specialDrops[approach.id],
     }));
+  }
+
+  function getMissionFailurePreview(state, mission, danger = getMissionDanger(state, mission)) {
+    const penalty = { ...(mission.failurePenalty || {}) };
+    return {
+      penalty,
+      penaltyText: formatReward(penalty),
+      injurySeconds: danger > 0 ? 90 : 0,
+      autoStops: danger > 0,
+      scoutingReputation: getFailureScoutingReputation(state, mission, danger),
+    };
+  }
+
+  function getApproachComparison(state, mapId, approachId) {
+    const selected = getSelectedMapApproach(state, mapId);
+    const approach = missionApproaches[approachId] || missionApproaches.balanced;
+    const selectedDuration = selected.durationMultiplier || 1;
+    const selectedDanger = selected.dangerMultiplier || 1;
+    return {
+      durationDeltaPct: Math.round(((approach.durationMultiplier || 1) / selectedDuration - 1) * 100),
+      dangerDeltaPct: Math.round(((approach.dangerMultiplier || 1) / selectedDanger - 1) * 100),
+    };
+  }
+
+  function getApproachDropProgress(state, mapId, approachId) {
+    const template = getMapSpecialDropTemplate(mapId, approachId);
+    const approach = missionApproaches[approachId] || missionApproaches.balanced;
+    const every = template?.every || approach.dropEvery || 0;
+    if (!template || every <= 0) {
+      return null;
+    }
+    const completed = state.mapApproachCompletions?.[mapId]?.[approachId] || 0;
+    const current = completed % every;
+    const nextIn = current === 0 ? every : every - current;
+    return {
+      completed,
+      current,
+      target: every,
+      nextIn,
+      label: `${current} / ${every}`,
+    };
   }
 
   function getSelectedMissionApproach(state, mission, explicitApproachId = null) {
@@ -2224,6 +2267,18 @@
     return drop;
   }
 
+  function getFailureScoutingReputation(state, mission, danger) {
+    const map = missionMaps[getMissionMapId(mission)];
+    if (!map || !danger) {
+      return 0;
+    }
+    const ratio = calculatePower(state) / danger;
+    if (ratio < 0.72) {
+      return 0;
+    }
+    return Math.max(1, Math.floor((map.reputationPerMission || 4) * 0.4));
+  }
+
   function recordMapApproachCompletion(state, mapId, approachId) {
     state.mapApproachCompletions ||= {};
     state.mapApproachCompletions[mapId] ||= {};
@@ -2273,6 +2328,11 @@
     const missionReward = mergeRewards(mission.reward, approachReward);
     const danger = getMissionDanger(state, mission, approach.id);
     if (danger && calculatePower(state) < danger) {
+      const mapId = getMissionMapId(mission);
+      const reputationGained = getFailureScoutingReputation(state, mission, danger);
+      if (reputationGained > 0) {
+        addMapReputation(state, mapId, reputationGained);
+      }
       applyResources(state, mission.failurePenalty);
       state.injuryUntil = now + 90 * 1000;
       recordMissionReport(state, createMissionReport(state, mission, {
@@ -2281,12 +2341,12 @@
         approach,
         approachReward: {},
         specialDrop: null,
-        reputationGained: 0,
+        reputationGained,
         eventResult: null,
         rareReward: null,
         now,
       }));
-      addLog(state, now, `挑战「${mission.name}」失利，负伤退回洞府。`);
+      addLog(state, now, `挑战「${mission.name}」失利，负伤退回洞府${reputationGained ? `，摸清少许地势` : ''}。`);
       showToast('历练失利', `${mission.name} 道行不足，负伤并滋生心魔。`, 'warning');
       if (stopAutoMissionAfterFailure(state, mission.id, now)) {
         showToast('自动历练已停', '先提升道行或换低阶地图。', 'warning');
@@ -2416,6 +2476,7 @@
     const approachRewardText = formatReward(approachReward);
     const specialDropText = specialDrop ? formatReward(specialDrop.reward || {}) : '';
     const rareRewardText = rareReward ? formatReward(rareReward) : '';
+    const mapProgress = getReportMapProgress(state, mapId);
     const event = eventResult?.event ? {
       id: eventResult.event.id,
       name: eventResult.event.name,
@@ -2425,7 +2486,7 @@
     } : null;
     const summary = outcome === 'success'
       ? `完成「${mission.name}」，收获${rewardText || '少许历练'}${event?.equipmentName ? `，并得${event.equipmentName}` : ''}。`
-      : `「${mission.name}」失利，劫象反噬${rewardText ? `：${rewardText}` : '。'}`;
+      : `「${mission.name}」失利，劫象反噬${rewardText ? `：${rewardText}` : ''}${reputationGained ? `，摸清少许地势，声望 +${reputationGained}。` : '。'}`;
 
     return {
       id: `${mission.id}-${now}`,
@@ -2444,10 +2505,26 @@
       rareReward: rareReward || null,
       rareRewardText,
       reputationGained,
+      mapProgress,
       completedCount: state.completedMissions?.[mission.id] || 0,
       event,
       summary,
       time: now,
+    };
+  }
+
+  function getReportMapProgress(state, mapId) {
+    const exploration = getMapExplorationInfo(state, mapId);
+    const mastery = getMapMastery(state, mapId);
+    const nextReputationGap = mastery.nextReputation == null ? 0 : Math.max(0, mastery.nextReputation - mastery.reputation);
+    return {
+      explorationLabel: exploration.label,
+      remainingToBoss: Math.max(0, exploration.target - exploration.completed),
+      masteryName: mastery.name,
+      nextReputationGap,
+      label: nextReputationGap > 0
+        ? `${exploration.label} · ${mastery.name}，距下阶 ${nextReputationGap}`
+        : `${exploration.label} · ${mastery.name}`,
     };
   }
 
@@ -2930,11 +3007,13 @@
     if (!mission) {
       return { exists: false, unlocked: false };
     }
+    const mapId = getMissionMapId(mission);
     const approach = getSelectedMissionApproach(state, mission);
     const approachReward = getMissionApproachReward(mission, approach.id);
     const completed = state.completedMissions[missionId] || 0;
     const rareEvery = mission.rareEvery || 0;
     const rareStep = rareEvery && completed > 0 && completed % rareEvery === 0 ? rareEvery : completed % rareEvery;
+    const recommendedPower = getMissionDanger(state, mission);
     return {
       exists: true,
       id: mission.id,
@@ -2942,13 +3021,15 @@
       map: mission.map || '青岚山',
       unlocked: state.realmIndex >= (mission.unlockRealmIndex || 0),
       unlockRealmIndex: mission.unlockRealmIndex || 0,
-      recommendedPower: getMissionDanger(state, mission),
+      recommendedPower,
       omen: getMissionOmen(state, mission),
       approach,
-      approaches: getMissionApproachOptions(state, getMissionMapId(mission)),
+      approaches: getMissionApproachOptions(state, mapId),
       approachReward,
       rewardPreview: mergeRewards(mission.reward, approachReward),
-      specialDrop: getMapSpecialDropTemplate(getMissionMapId(mission), approach.id),
+      specialDrop: getMapSpecialDropTemplate(mapId, approach.id),
+      dropProgress: getApproachDropProgress(state, mapId, approach.id),
+      failurePreview: getMissionFailurePreview(state, mission, recommendedPower),
       completed,
       rareProgress: rareEvery ? `${rareStep} / ${rareEvery}` : '',
       rareReward: mission.rareReward || null,
@@ -2958,8 +3039,8 @@
   function getMapStatuses(state) {
     return Object.values(missionMaps).map((map) => {
       const routes = Object.values(missions).filter((mission) => getMissionMapId(mission) === map.id);
-      const completed = routes.reduce((total, mission) => total + (state.completedMissions[mission.id] || 0), 0);
-      const cappedCompleted = Math.min(completed, map.explorationTarget);
+      const exploration = getMapExplorationInfo(state, map.id);
+      const completed = exploration.completed;
       const unlocked = state.realmIndex >= map.unlockRealmIndex;
       const defeated = Boolean(state.defeatedBosses[map.id]);
       const ready = unlocked && completed >= map.explorationTarget && !defeated;
@@ -2967,15 +3048,10 @@
         ...map,
         unlocked,
         routes: routes.map((mission) => mission.id),
-        exploration: {
-          completed,
-          cappedCompleted,
-          target: map.explorationTarget,
-          percent: map.explorationTarget ? Math.min(1, completed / map.explorationTarget) : 1,
-          label: completed > map.explorationTarget ? `探索 ${map.explorationTarget} / ${map.explorationTarget} · 累计 ${completed}` : `探索 ${cappedCompleted} / ${map.explorationTarget}`,
-        },
+        exploration,
         reputation: state.mapReputation[map.id] || 0,
         mastery: getMapMastery(state, map.id),
+        readiness: getMapReadiness(state, map, routes),
         approachOptions: getMissionApproachOptions(state, map.id),
         selectedApproach: getSelectedMapApproach(state, map.id),
         depth: getMapDepthStatus(state, map.id),
@@ -3077,6 +3153,33 @@
       mapMastery: getMapMastery(state, getMissionMapId(mission)).level,
       unlocked: state.realmIndex >= (mission.unlockRealmIndex || 0),
     });
+  }
+
+  function getMapReadiness(state, map, routes = []) {
+    const unlocked = (state.realmIndex || 0) >= (map.unlockRealmIndex || 0);
+    if (!unlocked) {
+      return { label: '地势', name: '未感', ratio: 0, detail: '境界尚浅，山川气机仍未回应。' };
+    }
+
+    const pressures = routes
+      .filter((mission) => (state.realmIndex || 0) >= (mission.unlockRealmIndex || 0))
+      .map((mission) => getMissionDanger(state, mission))
+      .filter((danger) => danger > 0);
+    const pressure = pressures.length ? Math.min(...pressures) : 0;
+    if (pressure <= 0) {
+      return { label: '地势', name: '安稳', ratio: 1, detail: '此地劫象轻浅，可作为日常行游根基。' };
+    }
+
+    const power = calculatePower(state);
+    const ratio = round(power / pressure);
+    const name = ratio >= 1.25 ? '地熟' : ratio >= 0.95 ? '可行' : ratio >= 0.72 ? '未稳' : '凶重';
+    const detail = {
+      '地熟': '地脉已熟，主要劫象在可控范围内。',
+      '可行': '气机可承，仍宜留意路线和护持。',
+      '未稳': '劫象尚重，先补法袍、剑阵或低阶地图声望更稳。',
+      '凶重': '山势压身，贸然深入多半折返。',
+    }[name];
+    return { label: '地势', name, ratio, power, pressure, detail };
   }
 
   function getBossOmen(state, map) {
@@ -3592,6 +3695,7 @@
       <div class="mission-report-grid">
         <div><span>去处</span><strong>${report.mapName}</strong></div>
         <div><span>声望</span><strong>${report.reputationGained ? `+${report.reputationGained}` : '-'}</strong></div>
+        ${report.mapProgress ? `<div><span>地势</span><strong>${report.mapProgress.label}</strong></div>` : ''}
         <div><span>产出</span><strong>${report.rewardText || '-'}</strong></div>
         ${report.approach ? `<div><span>路线</span><strong>${report.approach.name}${report.approachRewardText ? ` · ${report.approachRewardText}` : ''}</strong></div>` : ''}
         ${report.specialDropText ? `<div><span>路线收获</span><strong>${report.specialDrop.name} · ${report.specialDropText}</strong></div>` : ''}
@@ -3630,7 +3734,7 @@
         <div class="map-meta">
           <small>${map.exploration.label}</small>
           <small>声望 ${Math.floor(map.reputation)}</small>
-          <small>${map.unlocked ? `${map.boss.omen.label} ${map.boss.omen.name}` : `${realms[map.unlockRealmIndex]?.name || '更高境界'}解锁`}</small>
+          <small>${map.unlocked ? `${map.readiness.label} ${map.readiness.name}` : `${realms[map.unlockRealmIndex]?.name || '更高境界'}解锁`}</small>
         </div>
         ${renderApproachSelector(map)}
         ${renderDepthCard(map)}
@@ -3652,7 +3756,8 @@
           <button data-select-approach="${map.id}:${approach.id}" class="${approach.selected ? 'active' : ''}" ${approach.locked || !map.unlocked ? 'disabled' : ''} type="button">
             <strong>${approach.name}</strong>
             <span>${approach.detail}</span>
-            <small>${approach.specialDrop ? `专属 ${approach.specialDrop.name} · ${formatReward(approach.specialDrop.reward)}` : '保持原收益'}</small>
+            <small>${formatApproachComparison(approach)}</small>
+            <small>${approach.specialDrop ? `专属 ${approach.specialDrop.name} · ${approach.dropProgress?.label || '0 / 2'} · ${formatReward(approach.specialDrop.reward)}` : '保持原收益'}</small>
           </button>
         `).join('')}
       </div>
@@ -3670,7 +3775,7 @@
   function renderMapSelectButton(map) {
     const active = map.id === activeMissionMapId;
     const progress = Math.round(map.exploration.percent * 100);
-    const statusText = map.unlocked ? `${map.boss.omen.label} ${map.boss.omen.name}` : `${realms[map.unlockRealmIndex]?.name || '更高境界'}解锁`;
+    const statusText = map.unlocked ? `${map.readiness.label} ${map.readiness.name}` : `${realms[map.unlockRealmIndex]?.name || '更高境界'}解锁`;
     return `
       <button class="map-select-button ${active ? 'active' : ''} ${map.unlocked ? '' : 'locked'}" data-select-mission-map="${map.id}" role="tab" aria-selected="${active}">
         <span class="map-select-icon">${map.icon}</span>
@@ -3730,6 +3835,7 @@
     const eventText = mission.events?.length ? `奇遇 ${mission.events.map((id) => missionEvents[id]?.name).filter(Boolean).join(' / ')}` : '无奇遇';
     const approachText = `${status.approach.name}${status.approachReward && formatReward(status.approachReward) ? ` · 路线 ${formatReward(status.approachReward)}` : ''}`;
     const specialText = status.specialDrop ? `专属 ${status.specialDrop.name} · ${formatReward(status.specialDrop.reward)}` : '无专属掉落';
+    const failureText = status.failurePreview?.penaltyText ? `失利 ${status.failurePreview.penaltyText}${status.failurePreview.scoutingReputation ? ` · 摸清地势 +${status.failurePreview.scoutingReputation}` : ''}` : '失利无额外折损';
     return `
       <div class="mission-card ${status.unlocked ? '' : 'locked'}">
         <button data-start-mission="${mission.id}" ${running || !status.unlocked ? 'disabled' : ''}>
@@ -3740,7 +3846,7 @@
         <button data-auto-mission="${mission.id}" class="mini-button ${active ? 'active' : ''}" ${!status.unlocked ? 'disabled' : ''}>${active ? '自动中' : '自动'}</button>
         <details class="mission-card-details">
           <summary>展开详情</summary>
-          <small>${status.unlocked ? `${status.omen.detail} · ${status.omen.counsel}` : '缘机未至'} · ${rareText} · ${specialText} · ${eventText}</small>
+          <small>${status.unlocked ? `${status.omen.detail} · ${status.omen.counsel}` : '缘机未至'} · ${failureText} · ${rareText} · ${specialText} · ${eventText}</small>
         </details>
       </div>
     `;
@@ -5500,6 +5606,25 @@
     return found?.id || 'qinglanMountain';
   }
 
+  function getMapExplorationInfo(state, mapId) {
+    const map = missionMaps[mapId];
+    if (!map) {
+      return { completed: 0, cappedCompleted: 0, target: 0, percent: 1, label: '探索 0 / 0' };
+    }
+    const completed = Object.values(missions)
+      .filter((mission) => getMissionMapId(mission) === mapId)
+      .reduce((total, mission) => total + (state.completedMissions?.[mission.id] || 0), 0);
+    const target = map.explorationTarget;
+    const cappedCompleted = Math.min(completed, target);
+    return {
+      completed,
+      cappedCompleted,
+      target,
+      percent: target ? Math.min(1, completed / target) : 1,
+      label: completed > target ? `探索 ${target} / ${target} · 累计 ${completed}` : `探索 ${cappedCompleted} / ${target}`,
+    };
+  }
+
   function addMapReputation(state, mapId, amount) {
     if (!missionMaps[mapId] || amount <= 0) {
       return;
@@ -6076,6 +6201,20 @@
     const reward = formatReward(choice.reward || {});
     const risk = choice.successChance && choice.successChance < 1 ? ` · 成功率 ${Math.round(choice.successChance * 100)}%` : '';
     return `${cost ? `消耗 ${cost} · ` : ''}获得 ${reward || '机缘'}${risk}`;
+  }
+
+  function formatApproachComparison(approach) {
+    const duration = approach.comparison?.durationDeltaPct || 0;
+    const danger = approach.comparison?.dangerDeltaPct || 0;
+    return `时长 ${formatSignedPercent(duration)} · 劫象 ${formatSignedPercent(danger)}`;
+  }
+
+  function formatSignedPercent(value) {
+    const safeValue = Math.round(Number(value) || 0);
+    if (safeValue === 0) {
+      return '持平';
+    }
+    return `${safeValue > 0 ? '+' : ''}${safeValue}%`;
   }
 
   function formatDuration(seconds) {

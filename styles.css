@@ -1732,6 +1732,7 @@ small {
 
 .offline-dialog {
   width: min(430px, calc(100vw - 28px));
+  max-height: calc(100dvh - 28px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
   border: 1px solid rgba(232, 198, 106, 0.32);
   border-radius: 8px;
   padding: 0;
@@ -1747,6 +1748,8 @@ small {
 .offline-dialog form {
   display: grid;
   gap: 18px;
+  max-height: inherit;
+  overflow: auto;
   padding: 22px;
 }
 
@@ -1869,13 +1872,13 @@ small {
 
 @media (max-width: 760px) {
   body:not([data-active-tab="overview"]) .hero {
-    min-height: 132px;
+    min-height: 104px;
   }
 
   body:not([data-active-tab="overview"]) .hero canvas {
-    height: 132px;
-    min-height: 132px;
-    opacity: 0.62;
+    height: 104px;
+    min-height: 104px;
+    opacity: 0.38;
   }
 
   body:not([data-active-tab="overview"]) .hero-panel {
@@ -2035,7 +2038,8 @@ small {
 
   .toast-stack {
     right: 10px;
-    bottom: calc(82px + env(safe-area-inset-bottom));
+    top: calc(10px + env(safe-area-inset-top));
+    bottom: auto;
     width: min(340px, calc(100vw - 20px));
   }
 
@@ -2091,12 +2095,15 @@ small {
 
   .approach-selector button {
     flex: 0 0 124px;
-    min-height: 72px;
+    min-height: 94px;
     scroll-snap-align: start;
   }
 
   .approach-selector span {
-    display: none;
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
   }
 
   .mission-report {

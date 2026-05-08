@@ -776,7 +776,15 @@ test('mission approaches alter rewards and settlement reports', () => {
   assert.equal(state.missionApproaches.swordTomb, 'relicSearch');
   assert.equal(state.lastMissionReport.approach.name, '探遗');
   assert.equal(state.lastMissionReport.approachRewardText.includes('法器'), true);
+  assert.match(state.lastMissionReport.mapProgress.label, /探索/);
   assert.equal(state.artifacts > 3, true);
+
+  const status = getMissionStatus(state, 'ancientSwordTomb');
+  const monsterHunt = status.approaches.find((approach) => approach.id === 'monsterHunt');
+  const relicSearch = status.approaches.find((approach) => approach.id === 'relicSearch');
+  assert.equal(status.failurePreview.penaltyText.includes('灵气'), true);
+  assert.equal(monsterHunt.comparison.dangerDeltaPct > 0, true);
+  assert.equal(relicSearch.dropProgress.nextIn, 1);
 });
 
 test('map special drop pools reward route specific exploration', () => {
@@ -1063,6 +1071,44 @@ test('midgame mission pressure requires preparation beyond realm unlock', () => 
   const prepared = getMissionStatus(state, 'ancientSwordTomb');
   assert.equal(['有险', '平', '小吉'].includes(prepared.omen.name), true);
   assert.equal(prepared.recommendedPower < unlocked.recommendedPower, true);
+});
+
+test('map readiness separates realm unlock from stable travel', () => {
+  const state = createGameState(1000);
+  state.realmIndex = realmIndexByName('筑基一层');
+  state.gear.weapon = 8;
+  state.gear.robe = 6;
+  state.cultivationPaths.sword = 4;
+  state.formations.swordArray = 4;
+
+  const unstable = getMapStatuses(state).find((map) => map.id === 'swordTomb');
+  assert.equal(unstable.unlocked, true);
+  assert.equal(unstable.readiness.label, '地势');
+  assert.equal(unstable.readiness.name, '未稳');
+  assert.equal(unstable.readiness.detail.includes('劫象'), true);
+
+  state.permanentBonuses.power = 500;
+  const stable = getMapStatuses(state).find((map) => map.id === 'swordTomb');
+  assert.equal(stable.readiness.name, '地熟');
+  assert.equal(stable.readiness.ratio > unstable.readiness.ratio, true);
+});
+
+test('near-threshold mission failures still leave map scouting progress', () => {
+  const state = createGameState(1000);
+  state.realmIndex = realmIndexByName('筑基一层');
+  state.gear.weapon = 8;
+  state.gear.robe = 6;
+  state.cultivationPaths.sword = 4;
+  state.formations.swordArray = 4;
+
+  const started = startMission(state, 'ancientSwordTomb', 1000);
+  updateGame(state, 141, 143_000);
+
+  assert.equal(started.ok, true);
+  assert.equal(state.lastMissionReport.outcome, 'failure');
+  assert.equal(state.lastMissionReport.reputationGained, 3);
+  assert.equal(state.mapReputation.swordTomb, 3);
+  assert.match(state.lastMissionReport.summary, /摸清/);
 });
 
 test('sect disciples turn assignments into long-term idle rewards', () => {
