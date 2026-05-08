@@ -1,15 +1,15 @@
 const REALM_GROUPS = [
-  { prefix: '炼气', suffixes: ['一层', '二层', '三层', '四层', '五层', '六层', '七层', '八层', '九层'], startQi: 160, endQi: 18_000, startRate: 90, endRate: 420, startStone: 2, endStone: 9 },
-  { prefix: '筑基', suffixes: ['一层', '二层', '三层', '四层', '五层', '六层', '七层', '八层', '九层'], startQi: 32_000, endQi: 820_000, startRate: 520, endRate: 1_450, startStone: 11, endStone: 26 },
-  { prefix: '金丹', suffixes: ['一转', '二转', '三转', '四转', '五转', '六转', '七转', '八转', '九转'], startQi: 1_200_000, endQi: 12_000_000, startRate: 1_750, endRate: 4_400, startStone: 32, endStone: 75 },
-  { prefix: '元婴', suffixes: ['一变', '二变', '三变', '四变', '五变', '六变', '七变', '八变', '九变'], startQi: 18_000_000, endQi: 110_000_000, startRate: 5_400, endRate: 12_500, startStone: 90, endStone: 180 },
+  { prefix: '炼气', suffixes: ['一层', '二层', '三层', '四层', '五层', '六层', '七层', '八层', '九层'], startQi: 25, endQi: 4_500, startRate: 1.5, endRate: 7, startStone: 2, endStone: 9 },
+  { prefix: '筑基', suffixes: ['一层', '二层', '三层', '四层', '五层', '六层', '七层', '八层', '九层'], startQi: 8_000, endQi: 85_000, startRate: 8.67, endRate: 24.17, startStone: 11, endStone: 26 },
+  { prefix: '金丹', suffixes: ['一转', '二转', '三转', '四转', '五转', '六转', '七转', '八转', '九转'], startQi: 130_000, endQi: 1_100_000, startRate: 29.17, endRate: 73.33, startStone: 32, endStone: 75 },
+  { prefix: '元婴', suffixes: ['一变', '二变', '三变', '四变', '五变', '六变', '七变', '八变', '九变'], startQi: 1_800_000, endQi: 8_000_000, startRate: 90, endRate: 208.33, startStone: 90, endStone: 180 },
 ];
 
 const LEGACY_REALM_INDEX_MAP = [0, 1, 2, 9, 13, 18, 26, 27];
 
 export const REALMS = createRealmTrack();
 
-export const CURRENT_BALANCE_VERSION = 3;
+export const CURRENT_BALANCE_VERSION = 4;
 
 function createRealmTrack() {
   return REALM_GROUPS.flatMap((group) => group.suffixes.map((suffix, index) => {
@@ -18,7 +18,7 @@ function createRealmTrack() {
     return {
       name: `${group.prefix}${suffix}`,
       requiredQi: Math.round(interpolate(group.startQi, group.endQi, qiProgress)),
-      qiRate: Math.round(interpolate(group.startRate, group.endRate, progress)),
+      qiRate: round(interpolate(group.startRate, group.endRate, progress)),
       stoneRate: round(interpolate(group.startStone, group.endStone, progress)),
     };
   }));
