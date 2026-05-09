@@ -410,7 +410,7 @@ const RESOURCE_GUIDES = {
   spiritStones: {
     label: '灵石',
     priority: 0.9,
-    mapIds: ['qinglanMountain'],
+    mapIds: ['ancientRuins', 'demonRift', 'swordTomb', 'mistyValley', 'herbValley', 'qinglanMountain'],
     missionId: 'marketTrade',
     approachId: 'balanced',
     commissionId: 'mine',
@@ -4676,6 +4676,9 @@ function getResourceRoute(state, resource) {
   const approach = MISSION_APPROACHES[guide.approachId] ?? MISSION_APPROACHES.balanced;
   const unlocked = (state.realmIndex ?? 0) >= (map.unlockRealmIndex ?? 0);
   const unlockRealm = REALMS[map.unlockRealmIndex]?.name ?? '更高境界';
+  const readiness = getResourceMapReadiness(state, map.id);
+  const stable = isResourceRouteStable(readiness);
+  const fallback = stable ? null : getResourceFallbackRoute(state, guide, map.id, approach);
   return {
     mapId: map.id,
     mapName: map.name,
@@ -4683,9 +4686,51 @@ function getResourceRoute(state, resource) {
     missionName: mission?.name ?? map.name,
     approachId: approach.id,
     approachName: approach.name,
+    readinessName: readiness.name,
+    readinessDetail: readiness.detail,
+    stable,
+    fallback,
     unlocked,
     unlockRealmName: unlockRealm,
     detail: unlocked ? `去${map.name}走「${approach.name}」路线` : `${unlockRealm}后可去${map.name}走「${approach.name}」路线`,
+  };
+}
+
+function getResourceMapReadiness(state, mapId) {
+  const map = MISSION_MAPS[mapId] ?? MISSION_MAPS.qinglanMountain;
+  const routes = Object.values(MISSIONS).filter((mission) => getMissionMapId(mission) === map.id);
+  return getMapReadiness(state, map, routes);
+}
+
+function isResourceRouteStable(readiness) {
+  return ['安稳', '地熟', '可行'].includes(readiness?.name);
+}
+
+function getResourceFallbackRoute(state, guide, currentMapId, approach) {
+  const fallbackMapId = guide.mapIds.find((candidate) => {
+    if (candidate === currentMapId) {
+      return false;
+    }
+    const map = MISSION_MAPS[candidate];
+    if (!map || (state.realmIndex ?? 0) < (map.unlockRealmIndex ?? 0)) {
+      return false;
+    }
+    return isResourceRouteStable(getResourceMapReadiness(state, candidate));
+  });
+  if (!fallbackMapId) {
+    return null;
+  }
+  const fallbackMap = MISSION_MAPS[fallbackMapId];
+  const fallbackMission = getResourceMission(fallbackMapId, guide.missionId);
+  const fallbackReadiness = getResourceMapReadiness(state, fallbackMapId);
+  return {
+    mapId: fallbackMap.id,
+    mapName: fallbackMap.name,
+    missionId: fallbackMission?.id ?? null,
+    missionName: fallbackMission?.name ?? fallbackMap.name,
+    approachId: approach.id,
+    approachName: approach.name,
+    readinessName: fallbackReadiness.name,
   };
 }
 

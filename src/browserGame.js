@@ -302,7 +302,7 @@
   };
 
   const resourceGuides = {
-    spiritStones: { label: '灵石', priority: 0.9, mapIds: ['qinglanMountain'], missionId: 'marketTrade', approachId: 'balanced', commissionId: 'mine', detail: '洞府、装备和坊市刷新都会消耗灵石。' },
+    spiritStones: { label: '灵石', priority: 0.9, mapIds: ['ancientRuins', 'demonRift', 'swordTomb', 'mistyValley', 'herbValley', 'qinglanMountain'], missionId: 'marketTrade', approachId: 'balanced', commissionId: 'mine', detail: '洞府、装备和坊市刷新都会消耗灵石。' },
     herbs: { label: '灵草', priority: 1, mapIds: ['herbValley', 'qinglanMountain'], missionId: 'herbValley', approachId: 'herbSeeking', commissionId: 'herbGarden', detail: '炼丹、灵田和丹修成长都需要稳定灵草。' },
     beastCores: { label: '妖核', priority: 1.25, mapIds: ['demonRift', 'mistyValley', 'qinglanMountain'], missionId: 'mistyValley', approachId: 'monsterHunt', commissionId: 'patrol', detail: '武器、法袍、剑阵和护脉丹容易被妖核卡住。' },
     artifacts: { label: '法器', priority: 1.2, mapIds: ['swordTomb', 'mistyValley', 'qinglanMountain'], missionId: 'ancientSwordTomb', approachId: 'relicSearch', commissionId: 'forge', detail: '法器可用于淬炼、分解和炼器阁营建。' },
@@ -3862,7 +3862,7 @@
     const layoutMode = isMobileLayout() ? 'mobile' : 'desktop';
     const signature = guidance.stable
       ? `stable:${layoutMode}`
-      : `${layoutMode}:${guidance.items.map((item) => `${item.resource}:${item.shortfall}:${item.route.mapId}:${item.route.approachId}:${item.commission?.id || ''}:${item.commission?.unlocked ? 1 : 0}`).join('|')}`;
+      : `${layoutMode}:${guidance.items.map((item) => `${item.resource}:${item.shortfall}:${item.route.mapId}:${item.route.approachId}:${item.route.readinessName || ''}:${item.route.fallback?.mapId || ''}:${item.commission?.id || ''}:${item.commission?.unlocked ? 1 : 0}`).join('|')}`;
     if (!force && renderCache.resourceGuidance === signature) {
       return;
     }
@@ -3872,6 +3872,7 @@
           <summary>
             <strong>寻材指引 <small>底蕴均衡</small></strong>
             <span>${guidance.summary}</span>
+            <em class="resource-guidance-toggle" aria-hidden="true"></em>
           </summary>
           <div class="resource-guidance-list">
             <div><b>可做</b><small>推进秘境层数、刷地图声望或整备下一件装备。</small></div>
@@ -3883,7 +3884,7 @@
     }
     const primary = guidance.primary;
     const routeText = primary.route.unlocked
-      ? `${primary.route.mapName} · ${primary.route.approachName}`
+      ? `${primary.route.mapName} · ${primary.route.approachName}${primary.route.stable ? '' : ` · 地势${primary.route.readinessName}`}`
       : `${primary.route.unlockRealmName}后解锁 ${primary.route.mapName}`;
     refs.resourceGuidance.innerHTML = `
       <details class="resource-guidance-card resource-guidance-detail"${detailsOpen}>
@@ -3891,9 +3892,11 @@
           <strong>寻材指引 <small>${primary.label}缺口 ${primary.shortfall}</small></strong>
           <span>${primary.demandText}，${primary.route.detail}。</span>
           <small>${primary.detail}</small>
+          <em class="resource-guidance-toggle" aria-hidden="true"></em>
         </summary>
         <div class="resource-guidance-list">
           <div><b>行游</b><small>${routeText}${primary.route.missionName ? ` · 可刷${primary.route.missionName}` : ''}</small></div>
+          ${primary.route.fallback ? `<div><b>稳妥</b><small>若${primary.route.mapName}未稳，先回${primary.route.fallback.mapName}走「${primary.route.fallback.approachName}」。</small></div>` : ''}
           ${primary.commission ? `<div><b>宗门</b><small>${primary.commission.unlocked ? `派弟子做${primary.commission.name}` : `解锁后可做${primary.commission.name}`}</small></div>` : ''}
           ${primary.market ? `<div><b>坊市</b><small>${primary.market.unlocked ? `留意${primary.market.name}` : `${primary.market.unlockRealmName}后留意${primary.market.name}`}</small></div>` : ''}
           ${guidance.items.slice(1).map((item) => `<div><b>${item.label}</b><small>缺 ${item.shortfall} · ${item.route.mapName}${item.commission?.unlocked ? ` · ${item.commission.name}` : ''}</small></div>`).join('')}
@@ -4137,6 +4140,16 @@
       defeated: '已镇压',
     }[map.boss.status] || '未发现';
     const disabled = map.boss.status !== 'ready' || Boolean(state.activeMission);
+    const currentPower = calculatePower(state);
+    const explorationGap = Math.max(0, map.exploration.target - map.exploration.cappedCompleted);
+    const powerGap = Math.max(0, map.boss.power - currentPower);
+    const bossNextStep = explorationGap
+      ? `先探山势 ${map.exploration.cappedCompleted} / ${map.exploration.target}`
+      : powerGap
+        ? `先温道威 ${currentPower} / ${map.boss.power}`
+        : state.activeMission
+          ? '待当前行游结束'
+          : '可尝试镇压';
     return `
       <div class="boss-card ${map.boss.status}">
         <div class="boss-mark">${map.icon}</div>
@@ -4144,8 +4157,13 @@
           <strong>${map.boss.name} <small>${map.boss.title}</small></strong>
           <div class="boss-requirements">
             <small>探索 ${map.exploration.cappedCompleted} / ${map.exploration.target}</small>
-            <small>道行 ${calculatePower(state)} / ${map.boss.power}</small>
+            <small>道行 ${currentPower} / ${map.boss.power}</small>
           </div>
+          <div class="boss-action-list">
+            <small>${explorationGap ? `山势未明 ${explorationGap}` : '山势已明'}</small>
+            <small>${powerGap ? `气机差 ${powerGap}` : '气机可镇'}</small>
+          </div>
+          <span class="boss-next-step">${bossNextStep}</span>
           <span class="boss-counsel">${map.boss.omen.detail}</span>
           <span class="boss-counsel">${map.boss.omen.counsel}</span>
           <span>馈赠 ${formatReward(map.boss.reward)}</span>
@@ -5993,6 +6011,9 @@
     const approach = missionApproaches[guide.approachId] || missionApproaches.balanced;
     const unlocked = (state.realmIndex || 0) >= (map.unlockRealmIndex || 0);
     const unlockRealm = realms[map.unlockRealmIndex]?.name || '更高境界';
+    const readiness = getResourceMapReadiness(state, map.id);
+    const stable = isResourceRouteStable(readiness);
+    const fallback = stable ? null : getResourceFallbackRoute(state, guide, map.id, approach);
     return {
       mapId: map.id,
       mapName: map.name,
@@ -6000,9 +6021,45 @@
       missionName: mission?.name || map.name,
       approachId: approach.id,
       approachName: approach.name,
+      readinessName: readiness.name,
+      readinessDetail: readiness.detail,
+      stable,
+      fallback,
       unlocked,
       unlockRealmName: unlockRealm,
       detail: unlocked ? `去${map.name}走「${approach.name}」路线` : `${unlockRealm}后可去${map.name}走「${approach.name}」路线`,
+    };
+  }
+
+  function getResourceMapReadiness(state, mapId) {
+    const map = missionMaps[mapId] || missionMaps.qinglanMountain;
+    const routes = Object.values(missions).filter((mission) => getMissionMapId(mission) === map.id);
+    return getMapReadiness(state, map, routes);
+  }
+
+  function isResourceRouteStable(readiness) {
+    return ['安稳', '地熟', '可行'].includes(readiness?.name);
+  }
+
+  function getResourceFallbackRoute(state, guide, currentMapId, approach) {
+    const fallbackMapId = guide.mapIds.find((candidate) => {
+      if (candidate === currentMapId) return false;
+      const map = missionMaps[candidate];
+      if (!map || (state.realmIndex || 0) < (map.unlockRealmIndex || 0)) return false;
+      return isResourceRouteStable(getResourceMapReadiness(state, candidate));
+    });
+    if (!fallbackMapId) return null;
+    const fallbackMap = missionMaps[fallbackMapId];
+    const fallbackMission = getResourceMission(fallbackMapId, guide.missionId);
+    const fallbackReadiness = getResourceMapReadiness(state, fallbackMapId);
+    return {
+      mapId: fallbackMap.id,
+      mapName: fallbackMap.name,
+      missionId: fallbackMission?.id || null,
+      missionName: fallbackMission?.name || fallbackMap.name,
+      approachId: approach.id,
+      approachName: approach.name,
+      readinessName: fallbackReadiness.name,
     };
   }
 
@@ -6786,13 +6843,18 @@
   }
 
   function syncMobileOverviewDrawers() {
-    const layoutSignature = `${activeTab}:${isMobileLayout() ? 'mobile' : 'desktop'}`;
+    const mobile = isMobileLayout();
+    const layoutSignature = `${activeTab}:${mobile ? 'mobile' : 'desktop'}`;
     if (renderCache.mobileOverviewDrawers === layoutSignature) {
       return;
     }
     renderCache.mobileOverviewDrawers = layoutSignature;
+    const attributeCard = document.querySelector('.stats-panel > .attribute-card');
+    if (attributeCard) {
+      attributeCard.open = !mobile;
+    }
     document.querySelectorAll('.stats-panel > .resource-drawer').forEach((drawer) => {
-      drawer.open = !isMobileLayout();
+      drawer.open = !mobile;
     });
   }
 

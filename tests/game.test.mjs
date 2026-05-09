@@ -1116,6 +1116,27 @@ test('resource guidance points beast core shortages to hunter routes and patrol 
   assert.equal(guidance.primary.commission.id, 'patrol');
 });
 
+test('midgame spirit stone guidance stays on progression maps', () => {
+  const state = createGameState(1000);
+  state.realmIndex = realmIndexByName('筑基一层');
+  state.spiritStones = 0;
+  state.herbs = 300;
+  state.beastCores = 60;
+  state.artifacts = 60;
+  state.arrayFlags = 60;
+  state.forgingEssence = 60;
+  state.sectDisciples = 2;
+
+  const guidance = getResourceGuidance(state);
+
+  assert.equal(guidance.primary.resource, 'spiritStones');
+  assert.equal(guidance.primary.route.mapId, 'swordTomb');
+  assert.equal(guidance.primary.route.approachId, 'balanced');
+  assert.equal(guidance.primary.route.stable, false);
+  assert.equal(guidance.primary.route.fallback.mapId, 'herbValley');
+  assert.equal(guidance.primary.commission.id, 'mine');
+});
+
 test('loot dismantling creates strengthening material and empowerment improves bonuses', () => {
   const state = createGameState(1000);
   state.realmIndex = realmIndexByName('筑基一层');

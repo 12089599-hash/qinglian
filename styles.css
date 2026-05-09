@@ -346,8 +346,22 @@ dd {
     rgba(255, 255, 255, 0.03);
 }
 
-.attribute-card header {
+.attribute-card summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  list-style: none;
   margin-bottom: 10px;
+  cursor: pointer;
+}
+
+.attribute-card summary::-webkit-details-marker {
+  display: none;
+}
+
+.attribute-card:not([open]) summary {
+  margin-bottom: 0;
 }
 
 .attribute-card h3,
@@ -366,7 +380,7 @@ dd {
   margin-bottom: 10px;
 }
 
-.attribute-card header span,
+.attribute-card summary span,
 .dao-heart-card header span,
 .tribulation-card header span {
   color: var(--muted);
@@ -608,6 +622,23 @@ small {
   margin-top: 6px;
   color: var(--muted);
   line-height: 1.4;
+}
+
+.resource-guidance-toggle {
+  display: inline-flex;
+  margin-top: 8px;
+  color: var(--gold);
+  font-size: 0.74rem;
+  font-style: normal;
+  font-weight: 900;
+}
+
+.resource-guidance-toggle::after {
+  content: "展开";
+}
+
+.resource-guidance-detail[open] .resource-guidance-toggle::after {
+  content: "收起";
 }
 
 .resource-guidance-detail summary {
@@ -858,6 +889,7 @@ small {
 }
 
 .boss-requirements,
+.boss-action-list,
 .depth-stat-row {
   display: flex;
   flex-wrap: wrap;
@@ -866,6 +898,7 @@ small {
 }
 
 .boss-requirements small,
+.boss-action-list small,
 .depth-stat-row small {
   display: inline-flex;
   margin-top: 0;
@@ -874,6 +907,20 @@ small {
   padding: 3px 8px;
   color: #d9e7d3;
   background: rgba(0, 0, 0, 0.14);
+}
+
+.boss-action-list small {
+  border-color: rgba(125, 211, 183, 0.18);
+  color: var(--gold);
+  background: rgba(125, 211, 183, 0.08);
+}
+
+.boss-next-step {
+  display: block;
+  margin-top: 7px;
+  color: #f4e7bd;
+  font-size: 0.8rem;
+  font-weight: 900;
 }
 
 .boss-counsel,
@@ -2058,6 +2105,15 @@ small {
 }
 
 @media (max-width: 760px) {
+  body[data-active-tab="overview"] .hero {
+    min-height: 286px;
+  }
+
+  body[data-active-tab="overview"] .hero canvas {
+    height: 286px;
+    min-height: 286px;
+  }
+
   body:not([data-active-tab="overview"]) .hero {
     min-height: 104px;
   }
@@ -2110,12 +2166,12 @@ small {
   }
 
   body[data-active-tab="overview"] .stats-panel > .dao-heart-card {
-    order: 6;
+    order: 7;
     margin-top: 0;
   }
 
   body[data-active-tab="overview"] .stats-panel > .tribulation-card {
-    order: 7;
+    order: 8;
     margin-top: 0;
   }
 
@@ -2129,15 +2185,22 @@ small {
   }
 
   body[data-active-tab="overview"] .stats-panel > .state-drawer {
-    order: 4;
-  }
-
-  body[data-active-tab="overview"] .stats-panel > .resource-drawer:not(.state-drawer) {
     order: 5;
   }
 
+  body[data-active-tab="overview"] .stats-panel > .resource-drawer:not(.state-drawer) {
+    order: 6;
+  }
+
   body[data-active-tab="overview"] .stats-panel > .action-row {
-    order: 8;
+    order: 4;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-top: 0;
+  }
+
+  body[data-active-tab="overview"] .stats-panel > .action-row .ghost-button {
+    margin-left: 0;
   }
 
   body[data-active-tab="overview"] .stats-panel > .resource-drawer {
@@ -2344,6 +2407,10 @@ small {
   .boss-card,
   .sect-summary {
     grid-template-columns: 1fr;
+  }
+
+  .boss-counsel {
+    display: none;
   }
 
   .cave-summary-grid,
