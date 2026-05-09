@@ -43,6 +43,7 @@ import {
   organizeLootEquipment,
   getGoals,
   getNextGuidance,
+  getProgressPlan,
   getResourceGuidance,
   getMainlineChapters,
   getDailyTasks,
@@ -1204,6 +1205,7 @@ test('map bosses unlock from exploration and grant one-time permanent rewards', 
   assert.equal(early.reason, 'notReady');
 
   state.completedMissions.marketTrade = 2;
+  state.mapDepths.qinglanMountain = 2;
   const readyStatus = getMapStatuses(state).find((map) => map.id === 'qinglanMountain');
   assert.equal(MISSION_MAPS.qinglanMountain.boss.name, '青岚山魈');
   assert.equal(readyStatus.exploration.completed, 5);
@@ -1296,6 +1298,7 @@ test('next guidance points players toward the clearest progression step', () => 
   state.completedMissions.herbGathering = 2;
   state.completedMissions.cavePatrol = 1;
   state.completedMissions.marketTrade = 2;
+  state.mapDepths.qinglanMountain = 2;
   state.gear.weapon = 2;
   state.claimedGoals.realmTwo = true;
   state.sectDisciples = 1;
@@ -1565,6 +1568,76 @@ test('loot details compare against equipped items and organize weak unlocked loo
   assert.equal(state.lootEquipment.some((item) => item.uid === 'locked-robe'), true);
   assert.equal(state.forgingEssence, 2);
   assert.equal(state.artifacts, 1);
+});
+
+test('loot organize strategy can preserve best item per slot while cleaning selected tiers', () => {
+  const state = createGameState(1000);
+  state.lootEquipment = [
+    { uid: 'equipped-sword', templateId: 'qingfengSword', name: '旧青锋剑', slot: 'weapon', quality: 1, variant: { rarityId: 'spirit' }, bonuses: { power: 36 } },
+    { uid: 'better-sword', templateId: 'qingfengSword', name: '新青锋剑', slot: 'weapon', quality: 1, variant: { rarityId: 'spirit' }, bonuses: { power: 60 } },
+    { uid: 'weak-sword', templateId: 'bloodCopperBlade', name: '残赤铜刀', slot: 'weapon', quality: 0, variant: { rarityId: 'common' }, bonuses: { power: 20 } },
+    { uid: 'only-boots', templateId: 'windtraceBoots', name: '追风履', slot: 'boots', quality: 0, variant: { rarityId: 'common' }, bonuses: { speed: 3 } },
+  ];
+  state.equippedLoot.weapon = 'equipped-sword';
+
+  const organized = organizeLootEquipment(state, 2000, {
+    rarityIds: ['common', 'spirit'],
+    keepStrategy: 'bestPerSlot',
+  });
+
+  assert.equal(organized.removed, 1);
+  assert.equal(state.lootEquipment.some((item) => item.uid === 'better-sword'), true);
+  assert.equal(state.lootEquipment.some((item) => item.uid === 'only-boots'), true);
+  assert.equal(state.lootEquipment.some((item) => item.uid === 'weak-sword'), false);
+});
+
+test('equipment details expose build school tags for loot decisions', () => {
+  const state = reviveGameState({
+    lootEquipment: [
+      { uid: 'blade', templateId: 'bloodCopperBlade', variant: { rarityId: 'earthFiend', affixIds: ['edge', 'spark'], element: 'fire' } },
+      { uid: 'robe', templateId: 'mountainPatternRobe', variant: { rarityId: 'spirit', affixIds: ['steadyBreath'], element: 'earth' } },
+    ],
+  }, 1000);
+
+  const details = getEquipmentDetails(state);
+  const blade = details.loot.find((item) => item.uid === 'blade');
+  const robe = details.loot.find((item) => item.uid === 'robe');
+
+  assert.equal(blade.buildTags.some((tag) => tag.id === 'swordRuin'), true);
+  assert.equal(blade.primaryBuild.name, '剑煞');
+  assert.equal(robe.buildTags.some((tag) => tag.id === 'earthGuard'), true);
+});
+
+test('progress plan explains the next cultivation loop without exposing raw internals', () => {
+  const state = createGameState(1000);
+  state.completedMissions.herbGathering = 5;
+  state.mapDepths.qinglanMountain = 1;
+  state.permanentBonuses.power = 40;
+
+  const plan = getProgressPlan(state, 1000);
+
+  assert.equal(plan.realm.name, REALMS[state.realmIndex].name);
+  assert.equal(plan.cards.length >= 4, true);
+  assert.equal(plan.cards.some((card) => card.id === 'realm'), true);
+  assert.equal(plan.cards.some((card) => card.id === 'depth'), true);
+  assert.equal(plan.cards.some((card) => card.id === 'boss'), true);
+  assert.equal(plan.actions.some((action) => action.tab === 'missions'), true);
+});
+
+test('map bosses ask for a small depth foothold before challenge readiness', () => {
+  const state = createGameState(1000);
+  state.permanentBonuses.power = 1000;
+  state.completedMissions.herbGathering = MISSION_MAPS.qinglanMountain.explorationTarget;
+
+  const before = getMapStatuses(state).find((map) => map.id === 'qinglanMountain');
+  const denied = challengeMapBoss(state, 'qinglanMountain', 2000);
+  state.mapDepths.qinglanMountain = before.boss.depthGate.required;
+  const after = getMapStatuses(state).find((map) => map.id === 'qinglanMountain');
+
+  assert.equal(before.boss.status, 'depthLocked');
+  assert.equal(before.boss.depthGate.ready, false);
+  assert.equal(denied.reason, 'depthLocked');
+  assert.equal(after.boss.status, 'ready');
 });
 
 test('equipment details expose cultivation intent and tiered growth preview', () => {

@@ -1506,6 +1506,41 @@ export const GEAR_AFFIX_SETS = {
   },
 };
 
+export const BUILD_SCHOOLS = {
+  swordRuin: {
+    id: 'swordRuin',
+    name: '剑煞',
+    detail: '锋芒、破势、会心和灵根杀伐相互叠加。',
+    stats: ['power', 'powerBonus', 'attack', 'pierce', 'critChance', 'elementPower'],
+    elements: ['metal', 'fire', 'dark', 'light'],
+    affixes: ['edge', 'pierce', 'spark', 'swordIntent', 'breakerEdge', 'flameEdge', 'shadowPierce', 'starWheel', 'moonWheel', 'sunWheel'],
+  },
+  spiritFlow: {
+    id: 'spiritFlow',
+    name: '灵息',
+    detail: '吐纳、护关、灵草和丹火缩时更适合长期挂机。',
+    stats: ['qiRate', 'qiBonus', 'breakthrough', 'herbRate', 'alchemySpeed'],
+    elements: ['wood', 'light', 'water'],
+    affixes: ['bell', 'breath', 'gate', 'clear', 'spiritVein', 'calmMind', 'spiritBell', 'clearJade', 'brightJade'],
+  },
+  earthGuard: {
+    id: 'earthGuard',
+    name: '玄守',
+    detail: '护体、血元、避劫和地水气象更适合秘境承压。',
+    stats: ['defense', 'vitality', 'dangerReduction', 'speed'],
+    elements: ['earth', 'water'],
+    affixes: ['guard', 'ward', 'root', 'tread', 'guardedBody', 'earthWard', 'waterMirror', 'jadeRoot', 'cloudStep', 'cloudTrace', 'earthStep'],
+  },
+  beastBlood: {
+    id: 'beastBlood',
+    name: '御血',
+    detail: '御灵培养、血脉凝练和分解精粹服务长期养成。',
+    stats: ['beastTraining', 'bloodEssenceBonus', 'dismantleBonus', 'lootRarity'],
+    elements: ['dark', 'wood', 'fire'],
+    affixes: ['shadow', 'life', 'moonSeal', 'darkJade', 'shadowStep', 'windStep'],
+  },
+};
+
 export const CULTIVATION_PATHS = {
   sword: {
     id: 'sword',
@@ -2431,7 +2466,8 @@ export function getMapStatuses(state) {
     const target = exploration.target;
     const unlocked = (state.realmIndex ?? 0) >= map.unlockRealmIndex;
     const defeated = Boolean(state.defeatedBosses?.[map.id]);
-    const ready = unlocked && completed >= target && !defeated;
+    const depthGate = getBossDepthGate(state, map);
+    const ready = unlocked && completed >= target && depthGate.ready && !defeated;
     const mastery = getMapMastery(state, map.id);
     const readiness = getMapReadiness(state, map, routes);
     return {
@@ -2451,12 +2487,24 @@ export function getMapStatuses(state) {
       depth: getMapDepthStatus(state, map.id),
       boss: {
         ...map.boss,
-        status: defeated ? 'defeated' : ready ? 'ready' : unlocked ? 'hidden' : 'locked',
+        status: defeated ? 'defeated' : ready ? 'ready' : !unlocked ? 'locked' : completed >= target && !depthGate.ready ? 'depthLocked' : 'hidden',
         defeated,
+        depthGate,
         omen: getBossOmen(state, map),
       },
     };
   });
+}
+
+function getBossDepthGate(state, map) {
+  const required = Math.min(8, 2 + Math.floor((map.unlockRealmIndex ?? 0) / 6));
+  const cleared = clampInteger(state.mapDepths?.[map.id] ?? 0, 0, MAP_DEPTH_MAX_LAYER);
+  return {
+    required,
+    cleared,
+    ready: cleared >= required,
+    label: `${cleared} / ${required}`,
+  };
 }
 
 export function getMapDepthStatus(state, mapId) {
@@ -2681,6 +2729,10 @@ export function challengeMapBoss(state, mapId, now = Date.now()) {
   if (status.exploration.completed < status.exploration.target) {
     addLog(state, now, `${map.name}探索不足，尚未找到${map.boss.name}。`);
     return { ok: false, reason: 'notReady' };
+  }
+  if (!status.boss.depthGate?.ready) {
+    addLog(state, now, `${map.name}秘境根基尚浅，需先推进至第 ${status.boss.depthGate.required} 层再寻${map.boss.name}。`);
+    return { ok: false, reason: 'depthLocked', requiredLayer: status.boss.depthGate?.required ?? 0 };
   }
   const battle = simulateBossBattle(state, mapId, now);
   if (battle.outcome !== 'victory') {
@@ -3147,6 +3199,7 @@ export function getEquipmentDetails(state) {
       const maxed = slotLevel >= maxLevel;
       const nextLevel = slotLevel + 1;
       const realmLocked = nextLevel > getRealmUpgradeLimit(state);
+      const buildTags = getLootBuildTags(item);
       return {
         uid: item.uid,
         name: item.name,
@@ -3159,6 +3212,8 @@ export function getEquipmentDetails(state) {
         slotMaxLevel: maxLevel,
         tier: getUpgradeTier(Math.max(1, maxed ? slotLevel : nextLevel)),
         intent: getGearIntent(item.slot),
+        buildTags,
+        primaryBuild: buildTags[0] ?? { id: 'balanced', name: '守中', score: 0, detail: '气象均衡。' },
         equipped: state.equippedLoot?.[item.slot] === item.uid,
         locked: Boolean(state.lockedLoot?.[item.uid]),
         effects: effectsFromBonusObject(item.bonuses ?? {}),
@@ -3256,6 +3311,33 @@ export function getEquippedLoot(state, slot) {
   return state.lootEquipment?.find((item) => item.uid === uid) ?? null;
 }
 
+function getLootBuildTags(item) {
+  const bonuses = item?.bonuses ?? {};
+  const affixIds = new Set([
+    item?.variant?.affixId,
+    ...(item?.variant?.affixIds ?? []),
+    ...(item?.variant?.affixes ?? []).map((affix) => affix.id),
+  ].filter(Boolean));
+  return Object.values(BUILD_SCHOOLS)
+    .map((school) => {
+      const statScore = school.stats.reduce((score, stat) => {
+        const value = Math.abs(Number(bonuses[stat]) || 0);
+        return score + (value > 0 ? (stat === 'critChance' || stat.endsWith('Bonus') || stat === 'qiRate' || stat === 'breakthrough' ? value * 900 : value) : 0);
+      }, 0);
+      const affixScore = school.affixes.reduce((score, affixId) => score + (affixIds.has(affixId) ? 24 : 0), 0);
+      const elementScore = school.elements.includes(item?.element ?? item?.variant?.element) ? 18 : 0;
+      return {
+        id: school.id,
+        name: school.name,
+        detail: school.detail,
+        score: Math.round(statScore + affixScore + elementScore),
+      };
+    })
+    .filter((tag) => tag.score > 0)
+    .sort((left, right) => right.score - left.score)
+    .slice(0, 2);
+}
+
 export function equipLootEquipment(state, uid, now = Date.now()) {
   const item = state.lootEquipment?.find((candidate) => candidate.uid === uid);
   if (!item) {
@@ -3339,17 +3421,27 @@ export function organizeLootEquipment(state, now = Date.now(), options = {}) {
 
   const keepUids = new Set(Object.values(state.equippedLoot ?? {}).filter(Boolean));
   const selectedRarities = normalizeLootRaritySelection(options.rarityIds);
+  const keepStrategy = ['bestPerSlot', 'rareAndSets'].includes(options.keepStrategy) ? options.keepStrategy : 'equippedOnly';
   Object.entries(state.lockedLoot ?? {}).forEach(([uid, locked]) => {
     if (locked) keepUids.add(uid);
   });
 
-  if (!selectedRarities) {
+  if (!selectedRarities || keepStrategy === 'bestPerSlot' || keepStrategy === 'rareAndSets') {
     Object.values(GEAR).forEach((gearItem) => {
       const candidate = items
         .filter((item) => item.slot === gearItem.id && !keepUids.has(item.uid))
         .sort((a, b) => getLootScore(b) - getLootScore(a))[0];
       if (candidate) {
         keepUids.add(candidate.uid);
+      }
+    });
+  }
+  if (keepStrategy === 'rareAndSets') {
+    items.forEach((item) => {
+      const rarityIndex = getRarityIndex(getLootRarity(item).id);
+      const buildTags = getLootBuildTags(item);
+      if (rarityIndex >= getRarityIndex('earthFiend') || buildTags.some((tag) => tag.score >= 90)) {
+        keepUids.add(item.uid);
       }
     });
   }
@@ -3663,6 +3755,113 @@ export function getNextGuidance(state) {
     title: '继续积累底蕴',
     detail: '刷地图声望、强化战利品、提升洞府和阵法，准备下一轮突破。',
     tab: 'missions',
+  };
+}
+
+export function getProgressPlan(state, now = Date.now()) {
+  const realm = getCurrentRealm(state);
+  const qi = Math.max(0, Number(state.qi) || 0);
+  const realmPercent = realm.requiredQi ? Math.min(1, qi / realm.requiredQi) : 1;
+  const power = calculatePower(state);
+  const maps = getMapStatuses(state);
+  const depthTarget = maps.find((map) => map.unlocked && map.boss.status === 'depthLocked')
+    ?? maps.find((map) => map.depth?.unlocked && !map.depth.maxed)
+    ?? maps.find((map) => map.unlocked);
+  const bossTarget = maps.find((map) => ['ready', 'depthLocked', 'hidden'].includes(map.boss.status) && !map.boss.defeated)
+    ?? maps.find((map) => !map.boss.defeated);
+  const resourceGuidance = getResourceGuidance(state);
+  const equipment = getEquipmentDetails(state);
+  const equippedLoot = equipment.loot.filter((item) => item.equipped);
+  const primaryBuild = equippedLoot
+    .flatMap((item) => item.buildTags ?? [])
+    .sort((left, right) => right.score - left.score)[0] ?? null;
+  const nextGuidance = getNextGuidance(state);
+  const cards = [
+    {
+      id: 'realm',
+      title: '境界',
+      value: `${Math.round(realmPercent * 100)}%`,
+      detail: realmPercent >= 1 ? '灵气圆满，可看天劫准备。' : `还差 ${Math.ceil(Math.max(0, realm.requiredQi - qi))} 灵气。`,
+      tab: 'overview',
+      action: realmPercent >= 1 ? 'breakthrough' : '',
+    },
+    {
+      id: 'depth',
+      title: '秘境',
+      value: depthTarget?.depth?.maxed ? '圆满' : `${depthTarget?.name ?? '青岚山'} ${depthTarget?.depth?.clearedLayer ?? 0}/${depthTarget?.depth?.maxLayer ?? MAP_DEPTH_MAX_LAYER}`,
+      detail: depthTarget?.depth?.unlocked
+        ? `下一层 ${depthTarget.depth.nextLayer}，劫象 ${depthTarget.depth.omen.name}，产出 ${formatReward(depthTarget.depth.reward)}。`
+        : `${REALMS[depthTarget?.unlockRealmIndex ?? 0]?.name ?? '更高境界'}后开启。`,
+      tab: 'missions',
+      targetId: depthTarget?.id ?? 'qinglanMountain',
+    },
+    {
+      id: 'boss',
+      title: '首领',
+      value: bossTarget?.boss.status === 'ready' ? '可战' : bossTarget?.boss.status === 'depthLocked' ? `秘境 ${bossTarget.boss.depthGate.label}` : bossTarget?.boss.status === 'defeated' ? '已镇压' : '未显',
+      detail: bossTarget
+        ? `${bossTarget.boss.name} · 道行 ${power}/${bossTarget.boss.power}，${bossTarget.boss.depthGate?.ready ? bossTarget.boss.omen.name : `先稳第 ${bossTarget.boss.depthGate?.required ?? 1} 层` }。`
+        : '暂无首领气机。',
+      tab: 'missions',
+      targetId: bossTarget?.id ?? 'qinglanMountain',
+    },
+    {
+      id: 'gear',
+      title: '器物',
+      value: primaryBuild ? primaryBuild.name : `${equippedLoot.length}/6`,
+      detail: primaryBuild ? `${primaryBuild.detail}` : '先凑齐六个战利品部位，再看流派共鸣。',
+      tab: 'gear',
+      targetId: 'loot',
+    },
+  ];
+  if (!resourceGuidance.stable && resourceGuidance.primary) {
+    cards.push({
+      id: 'resource',
+      title: '材料',
+      value: resourceGuidance.primary.label,
+      detail: `${resourceGuidance.primary.demandText}，${resourceGuidance.primary.route.detail}。`,
+      tab: resourceGuidance.primary.route.unlocked ? 'missions' : 'market',
+      targetId: resourceGuidance.primary.route.missionId ?? resourceGuidance.primary.route.mapId ?? '',
+    });
+  }
+  const actions = [
+    {
+      id: 'next',
+      title: nextGuidance.title,
+      detail: nextGuidance.detail,
+      tab: nextGuidance.tab ?? 'goals',
+      action: nextGuidance.action ?? '',
+      targetId: nextGuidance.targetId ?? '',
+    },
+  ];
+  if (depthTarget?.depth?.unlocked && !depthTarget.depth.maxed) {
+    actions.push({
+      id: 'pushDepth',
+      title: `推进${depthTarget.name}`,
+      detail: `秘境第 ${depthTarget.depth.nextLayer} 层会提高首领准备和中后期材料产出。`,
+      tab: 'missions',
+      targetId: depthTarget.id,
+    });
+  }
+  actions.push({
+    id: 'sortLoot',
+    title: '整理战利品',
+    detail: primaryBuild ? `继续围绕${primaryBuild.name}筛装备。` : '保留高战力和高品器物，低品可沉淀器位材料。',
+    tab: 'gear',
+    targetId: 'loot',
+  });
+  return {
+    realm: {
+      name: realm.name,
+      qi,
+      requiredQi: realm.requiredQi,
+      percent: round(realmPercent),
+    },
+    power,
+    primaryBuild,
+    cards,
+    actions,
+    generatedAt: now,
   };
 }
 

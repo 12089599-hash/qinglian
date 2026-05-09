@@ -1038,6 +1038,41 @@
     },
   };
 
+  const buildSchools = {
+    swordRuin: {
+      id: 'swordRuin',
+      name: '剑煞',
+      detail: '锋芒、破势、会心和灵根杀伐相互叠加。',
+      stats: ['power', 'powerBonus', 'attack', 'pierce', 'critChance', 'elementPower'],
+      elements: ['metal', 'fire', 'dark', 'light'],
+      affixes: ['edge', 'pierce', 'spark', 'swordIntent', 'breakerEdge', 'flameEdge', 'shadowPierce', 'starWheel', 'moonWheel', 'sunWheel'],
+    },
+    spiritFlow: {
+      id: 'spiritFlow',
+      name: '灵息',
+      detail: '吐纳、护关、灵草和丹火缩时更适合长期挂机。',
+      stats: ['qiRate', 'qiBonus', 'breakthrough', 'herbRate', 'alchemySpeed'],
+      elements: ['wood', 'light', 'water'],
+      affixes: ['bell', 'breath', 'gate', 'clear', 'spiritVein', 'calmMind', 'spiritBell', 'clearJade', 'brightJade'],
+    },
+    earthGuard: {
+      id: 'earthGuard',
+      name: '玄守',
+      detail: '护体、血元、避劫和地水气象更适合秘境承压。',
+      stats: ['defense', 'vitality', 'dangerReduction', 'speed'],
+      elements: ['earth', 'water'],
+      affixes: ['guard', 'ward', 'root', 'tread', 'guardedBody', 'earthWard', 'waterMirror', 'jadeRoot', 'cloudStep', 'cloudTrace', 'earthStep'],
+    },
+    beastBlood: {
+      id: 'beastBlood',
+      name: '御血',
+      detail: '御灵培养、血脉凝练和分解精粹服务长期养成。',
+      stats: ['beastTraining', 'bloodEssenceBonus', 'dismantleBonus', 'lootRarity'],
+      elements: ['dark', 'wood', 'fire'],
+      affixes: ['shadow', 'life', 'moonSeal', 'darkJade', 'shadowStep', 'windStep'],
+    },
+  };
+
   const cultivationPaths = {
     sword: {
       id: 'sword',
@@ -1460,6 +1495,7 @@
     battlePlayback: document.querySelector('[data-battle-playback]'),
     missionReport: document.querySelector('[data-mission-report]'),
     resourceGuidance: document.querySelector('[data-resource-guidance]'),
+    progressPlan: document.querySelector('[data-progress-plan]'),
     missionList: document.querySelector('[data-mission-list]'),
     subTabs: document.querySelector('[data-sub-tabs]'),
     gearSubTabs: document.querySelector('[data-gear-subtabs]'),
@@ -1514,6 +1550,11 @@
   const defaultLootDismantleRarities = ['common', 'spirit'];
   const lootDismantleRarityIds = rarityTiers.map((tier) => tier.id);
   let activeLootDismantleRarities = new Set(parseStoredLootDismantleRarities(localStorage.getItem('idle-xianxia-loot-dismantle-rarities')));
+  const lootKeepStrategies = ['equippedOnly', 'bestPerSlot', 'rareAndSets'];
+  let activeLootKeepStrategy = localStorage.getItem('idle-xianxia-loot-keep-strategy') || 'equippedOnly';
+  if (!lootKeepStrategies.includes(activeLootKeepStrategy)) {
+    activeLootKeepStrategy = 'equippedOnly';
+  }
   let activeMissionMapId = localStorage.getItem('idle-xianxia-mission-map') || missionMapIds[0];
   if (!missionMaps[activeMissionMapId]) {
     activeMissionMapId = missionMapIds[0];
@@ -1689,7 +1730,10 @@
       showToast('分解品质未选', '勾选至少一个品质后再批量分解。', 'warning');
       return;
     }
-    const result = organizeLootEquipment(state, Date.now(), { rarityIds: getSelectedLootDismantleRarities() });
+    const result = organizeLootEquipment(state, Date.now(), {
+      rarityIds: getSelectedLootDismantleRarities(),
+      keepStrategy: activeLootKeepStrategy,
+    });
     if (result.removed > 0) {
       result.items.forEach((item) => openLootDetails.delete(item.uid));
       showToast('战利品整理', `拆解 ${result.removed} 件闲置器物，沉淀${formatReward(result.reward)}，可继续提升器位火候。`);
@@ -1728,9 +1772,11 @@
 
   document.querySelector('[data-reset-dismantle-defaults]')?.addEventListener('click', () => {
     activeLootDismantleRarities = new Set(defaultLootDismantleRarities);
+    activeLootKeepStrategy = 'equippedOnly';
     saveLootDismantleRarities();
+    saveLootKeepStrategy();
     renderLoot(true);
-    showToast('默认分解', '已恢复为凡品、蕴灵。');
+    showToast('默认分解', '已恢复为凡品、蕴灵，只保留已穿戴和已锁定。');
   });
 
   document.querySelector('[data-lock-rare-loot]')?.addEventListener('click', () => {
@@ -1748,6 +1794,16 @@
     button.addEventListener('click', () => {
       activeLootFilter = lootFilters.includes(button.dataset.lootFilter) ? button.dataset.lootFilter : 'all';
       localStorage.setItem('idle-xianxia-loot-filter', activeLootFilter);
+      renderLoot(true);
+    });
+  });
+
+  document.querySelectorAll('[data-loot-keep-strategy]').forEach((button) => {
+    button.addEventListener('click', () => {
+      activeLootKeepStrategy = lootKeepStrategies.includes(button.dataset.lootKeepStrategy)
+        ? button.dataset.lootKeepStrategy
+        : 'equippedOnly';
+      saveLootKeepStrategy();
       renderLoot(true);
     });
   });
@@ -1959,6 +2015,8 @@
       } else if (result.reason === 'powerLow') {
         showToast('道行不足', `需要道行 ${result.requiredPower}。`, 'warning');
         triggerBattleFeedback('danger');
+      } else if (result.reason === 'depthLocked') {
+        showToast('秘境未稳', `先推进到第 ${result.requiredLayer} 层，再寻首领气机。`, 'warning');
       }
       saveState();
       render(true);
@@ -2140,6 +2198,18 @@
       return;
     }
     openGuidanceTarget(refs.nextGuidance.dataset.gotoTab, refs.nextGuidance.dataset.guidanceTarget);
+  });
+
+  refs.progressPlan?.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-progress-go]');
+    if (!button) {
+      return;
+    }
+    if (button.dataset.progressAction === 'breakthrough') {
+      document.querySelector('[data-breakthrough]')?.click();
+      return;
+    }
+    openGuidanceTarget(button.dataset.progressGo, button.dataset.progressTarget || '');
   });
 
   document.querySelector('[data-reset]').addEventListener('click', () => {
@@ -3321,6 +3391,7 @@
       refs.nextGuidance.dataset.guidanceAction = guidance.action || '';
       refs.nextGuidance.dataset.guidanceTarget = guidance.targetId || '';
     }
+    renderProgressPlan(forceLists);
 
     if (activeDepth) {
       const map = missionMaps[activeDepth.mapId];
@@ -3814,7 +3885,8 @@
       const completed = exploration.completed;
       const unlocked = state.realmIndex >= map.unlockRealmIndex;
       const defeated = Boolean(state.defeatedBosses[map.id]);
-      const ready = unlocked && completed >= map.explorationTarget && !defeated;
+      const depthGate = getBossDepthGate(state, map);
+      const ready = unlocked && completed >= map.explorationTarget && depthGate.ready && !defeated;
       return {
         ...map,
         unlocked,
@@ -3828,12 +3900,24 @@
         depth: getMapDepthStatus(state, map.id),
         boss: {
           ...map.boss,
-          status: defeated ? 'defeated' : ready ? 'ready' : unlocked ? 'hidden' : 'locked',
+          status: defeated ? 'defeated' : ready ? 'ready' : !unlocked ? 'locked' : completed >= map.explorationTarget && !depthGate.ready ? 'depthLocked' : 'hidden',
           defeated,
+          depthGate,
           omen: getBossOmen(state, map),
         },
       };
     });
+  }
+
+  function getBossDepthGate(state, map) {
+    const required = Math.min(8, 2 + Math.floor((map.unlockRealmIndex || 0) / 6));
+    const cleared = clampInteger(state.mapDepths?.[map.id] || 0, 0, mapDepthMaxLayer);
+    return {
+      required,
+      cleared,
+      ready: cleared >= required,
+      label: `${cleared} / ${required}`,
+    };
   }
 
   function getMapDepthStatus(state, mapId) {
@@ -4020,6 +4104,10 @@
     if (status.exploration.completed < status.exploration.target) {
       addLog(state, now, `${map.name}探索不足，尚未找到${map.boss.name}。`);
       return { ok: false, reason: 'notReady' };
+    }
+    if (!status.boss.depthGate?.ready) {
+      addLog(state, now, `${map.name}秘境根基尚浅，需先推进至第 ${status.boss.depthGate.required} 层再寻${map.boss.name}。`);
+      return { ok: false, reason: 'depthLocked', requiredLayer: status.boss.depthGate?.required || 0 };
     }
     const battle = simulateBossBattle(state, mapId, now);
     if (battle.outcome !== 'victory') {
@@ -4286,6 +4374,7 @@
         const maxed = slotLevel >= maxLevel;
         const nextLevel = slotLevel + 1;
         const realmLocked = nextLevel > getRealmUpgradeLimit(state);
+        const buildTags = getLootBuildTags(item);
         return {
           uid: item.uid,
           name: item.name,
@@ -4298,6 +4387,8 @@
           slotMaxLevel: maxLevel,
           tier: getUpgradeTier(Math.max(1, maxed ? slotLevel : nextLevel)),
           intent: getGearIntent(item.slot),
+          buildTags,
+          primaryBuild: buildTags[0] || { id: 'balanced', name: '守中', score: 0, detail: '气象均衡。' },
           equipped: state.equippedLoot[item.slot] === item.uid,
           locked: Boolean(state.lockedLoot?.[item.uid]),
           effects: effectsFromBonusObject(item.bonuses || {}),
@@ -4559,6 +4650,108 @@
     return { title: '继续积累底蕴', detail: '刷地图声望、强化战利品、提升洞府和阵法，准备下一轮突破。', tab: 'missions' };
   }
 
+  function getProgressPlan(state, now = Date.now()) {
+    const realm = getCurrentRealm(state);
+    const qi = Math.max(0, Number(state.qi) || 0);
+    const realmPercent = realm.requiredQi ? Math.min(1, qi / realm.requiredQi) : 1;
+    const power = calculatePower(state);
+    const maps = getMapStatuses(state);
+    const depthTarget = maps.find((map) => map.unlocked && map.boss.status === 'depthLocked')
+      || maps.find((map) => map.depth?.unlocked && !map.depth.maxed)
+      || maps.find((map) => map.unlocked);
+    const bossTarget = maps.find((map) => ['ready', 'depthLocked', 'hidden'].includes(map.boss.status) && !map.boss.defeated)
+      || maps.find((map) => !map.boss.defeated);
+    const resourceGuidance = getResourceGuidance(state);
+    const equipment = getEquipmentDetails(state);
+    const equippedLoot = equipment.loot.filter((item) => item.equipped);
+    const primaryBuild = equippedLoot
+      .flatMap((item) => item.buildTags || [])
+      .sort((left, right) => right.score - left.score)[0] || null;
+    const nextGuidance = getNextGuidance(state);
+    const cards = [
+      {
+        id: 'realm',
+        title: '境界',
+        value: `${Math.round(realmPercent * 100)}%`,
+        detail: realmPercent >= 1 ? '灵气圆满，可看天劫准备。' : `还差 ${Math.ceil(Math.max(0, realm.requiredQi - qi))} 灵气。`,
+        tab: 'overview',
+        action: realmPercent >= 1 ? 'breakthrough' : '',
+      },
+      {
+        id: 'depth',
+        title: '秘境',
+        value: depthTarget?.depth?.maxed ? '圆满' : `${depthTarget?.name || '青岚山'} ${depthTarget?.depth?.clearedLayer || 0}/${depthTarget?.depth?.maxLayer || mapDepthMaxLayer}`,
+        detail: depthTarget?.depth?.unlocked
+          ? `下一层 ${depthTarget.depth.nextLayer}，劫象 ${depthTarget.depth.omen.name}，产出 ${formatReward(depthTarget.depth.reward)}。`
+          : `${realms[depthTarget?.unlockRealmIndex || 0]?.name || '更高境界'}后开启。`,
+        tab: 'missions',
+        targetId: depthTarget?.id || 'qinglanMountain',
+      },
+      {
+        id: 'boss',
+        title: '首领',
+        value: bossTarget?.boss.status === 'ready' ? '可战' : bossTarget?.boss.status === 'depthLocked' ? `秘境 ${bossTarget.boss.depthGate.label}` : bossTarget?.boss.status === 'defeated' ? '已镇压' : '未显',
+        detail: bossTarget
+          ? `${bossTarget.boss.name} · 道行 ${power}/${bossTarget.boss.power}，${bossTarget.boss.depthGate?.ready ? bossTarget.boss.omen.name : `先稳第 ${bossTarget.boss.depthGate?.required || 1} 层`}。`
+          : '暂无首领气机。',
+        tab: 'missions',
+        targetId: bossTarget?.id || 'qinglanMountain',
+      },
+      {
+        id: 'gear',
+        title: '器物',
+        value: primaryBuild ? primaryBuild.name : `${equippedLoot.length}/6`,
+        detail: primaryBuild ? primaryBuild.detail : '先凑齐六个战利品部位，再看流派共鸣。',
+        tab: 'gear',
+        targetId: 'loot',
+      },
+    ];
+    if (!resourceGuidance.stable && resourceGuidance.primary) {
+      cards.push({
+        id: 'resource',
+        title: '材料',
+        value: resourceGuidance.primary.label,
+        detail: `${resourceGuidance.primary.demandText}，${resourceGuidance.primary.route.detail}。`,
+        tab: resourceGuidance.primary.route.unlocked ? 'missions' : 'market',
+        targetId: resourceGuidance.primary.route.missionId || resourceGuidance.primary.route.mapId || '',
+      });
+    }
+    const actions = [
+      {
+        id: 'next',
+        title: nextGuidance.title,
+        detail: nextGuidance.detail,
+        tab: nextGuidance.tab || 'goals',
+        action: nextGuidance.action || '',
+        targetId: nextGuidance.targetId || '',
+      },
+    ];
+    if (depthTarget?.depth?.unlocked && !depthTarget.depth.maxed) {
+      actions.push({
+        id: 'pushDepth',
+        title: `推进${depthTarget.name}`,
+        detail: `秘境第 ${depthTarget.depth.nextLayer} 层会提高首领准备和中后期材料产出。`,
+        tab: 'missions',
+        targetId: depthTarget.id,
+      });
+    }
+    actions.push({
+      id: 'sortLoot',
+      title: '整理战利品',
+      detail: primaryBuild ? `继续围绕${primaryBuild.name}筛装备。` : '保留高战力和高品器物，低品可沉淀器位材料。',
+      tab: 'gear',
+      targetId: 'loot',
+    });
+    return {
+      realm: { name: realm.name, qi, requiredQi: realm.requiredQi, percent: round(realmPercent) },
+      power,
+      primaryBuild,
+      cards,
+      actions,
+      generatedAt: now,
+    };
+  }
+
   function getSpiritBeastGuidance(state) {
     const activeId = normalizeActiveSpiritBeast(state.activeSpiritBeast, state.spiritBeasts);
     if (!activeId) {
@@ -4794,6 +4987,50 @@
     renderCache.resourceGuidance = signature;
   }
 
+  function renderProgressPlan(force = false) {
+    if (!refs.progressPlan) {
+      return;
+    }
+    const plan = getProgressPlan(state, Date.now());
+    const signature = JSON.stringify({
+      realm: plan.realm,
+      power: plan.power,
+      build: plan.primaryBuild?.id || '',
+      cards: plan.cards.map((card) => `${card.id}:${card.value}:${card.detail}`),
+      actions: plan.actions.map((action) => `${action.id}:${action.title}:${action.tab}:${action.targetId || ''}`),
+    });
+    if (!force && renderCache.progressPlan === signature) {
+      return;
+    }
+    refs.progressPlan.innerHTML = `
+      <header>
+        <div>
+          <span>当前路线</span>
+          <strong>${plan.actions[0]?.title || '继续修行'}</strong>
+        </div>
+        <em>${plan.primaryBuild?.name || '未成流派'}</em>
+      </header>
+      <div class="progress-plan-grid">
+        ${plan.cards.map((card) => `
+          <button data-progress-go="${card.tab}" data-progress-action="${card.action || ''}" data-progress-target="${card.targetId || ''}" type="button">
+            <span>${card.title}</span>
+            <strong>${card.value}</strong>
+            <small>${card.detail}</small>
+          </button>
+        `).join('')}
+      </div>
+      <div class="progress-plan-actions">
+        ${plan.actions.slice(0, 3).map((action) => `
+          <button data-progress-go="${action.tab}" data-progress-action="${action.action || ''}" data-progress-target="${action.targetId || ''}" type="button">
+            <strong>${action.title}</strong>
+            <span>${action.detail}</span>
+          </button>
+        `).join('')}
+      </div>
+    `;
+    renderCache.progressPlan = signature;
+  }
+
   function renderMissions(force = false) {
     if (!refs.missionList) {
       return;
@@ -4833,6 +5070,7 @@
     const bossStatusText = {
       locked: '未解锁',
       hidden: '先探地势',
+      depthLocked: '先稳秘境',
       ready: '镇压首领',
       defeated: '已镇压',
     }[map.boss.status] || '未发现';
@@ -4863,7 +5101,7 @@
           <button data-challenge-boss="${map.id}" ${map.boss.status !== 'ready' || busy ? 'disabled' : ''}>
             <strong>${bossStatusText}</strong>
             <span>${map.boss.name} · 道行 ${calculatePower(state)} / ${map.boss.power}</span>
-            <small>${bossAdvice.label}</small>
+            <small>${map.boss.status === 'depthLocked' ? `秘境 ${map.boss.depthGate.label}` : bossAdvice.label}</small>
           </button>
           ${primaryMission ? `
             <button data-start-mission="${primaryMission.id}" ${busy || !primaryStatus?.unlocked ? 'disabled' : ''}>
@@ -5899,7 +6137,7 @@
     const resonance = equipmentDetails.lootResonance;
     updateLootOrganizeButton();
     updateRareLootLockButton();
-    const signature = `${activeLootFilter}|${getSelectedLootDismantleRarities().join(',')}|${resonance.active ? `${resonance.id}:${resonance.matched}` : 'none'}|${details.map((item) => `${item.uid}:${item.slotLevel || 0}:${item.locked ? 1 : 0}:${item.rarity?.id || ''}`).join('|')}|${Object.entries(state.equippedLoot).map(([slot, uid]) => `${slot}:${uid || ''}`).join('|')}`;
+    const signature = `${activeLootFilter}|${getSelectedLootDismantleRarities().join(',')}|${activeLootKeepStrategy}|${resonance.active ? `${resonance.id}:${resonance.matched}` : 'none'}|${details.map((item) => `${item.uid}:${item.slotLevel || 0}:${item.locked ? 1 : 0}:${item.rarity?.id || ''}:${item.primaryBuild?.id || ''}`).join('|')}|${Object.entries(state.equippedLoot).map(([slot, uid]) => `${slot}:${uid || ''}`).join('|')}`;
     if (!force && renderCache.loot === signature) {
       return;
     }
@@ -5931,6 +6169,7 @@
             </summary>
             <div class="detail-stack">
               <small>品阶：${item.rarity?.name || '凡品'} · ${item.intent.name} · ${(item.variant?.affixes?.length || 1)}词条 · 器位 ${item.slotLevel || 0}/${item.slotMaxLevel || item.maxLevel}</small>
+              <div class="loot-build-tags">${renderBuildTags(item.buildTags)}</div>
               <small>对比：${item.comparison.summary} · ${getLootDismantleHint(item)}</small>
               ${item.variant ? `<small>器纹：${item.variant.name} · ${combatElements[item.variant.element]?.name || '无相'} · ${(item.variant.affixes || []).map((affix) => affix.name).join(' / ') || '无纹'}</small>` : ''}
               <small>当前：${formatEffects(item.effects) || '尚未激活'}</small>
@@ -5990,6 +6229,11 @@
       input.checked = activeLootDismantleRarities.has(input.dataset.lootRarityToggle);
       input.closest('label')?.classList.toggle('active', input.checked);
     });
+    document.querySelectorAll('[data-loot-keep-strategy]').forEach((button) => {
+      const active = button.dataset.lootKeepStrategy === activeLootKeepStrategy;
+      button.classList.toggle('active', active);
+      button.setAttribute('aria-pressed', String(active));
+    });
   }
 
   function parseStoredLootDismantleRarities(raw) {
@@ -6015,13 +6259,17 @@
     localStorage.setItem('idle-xianxia-loot-dismantle-rarities', JSON.stringify(getSelectedLootDismantleRarities()));
   }
 
+  function saveLootKeepStrategy() {
+    localStorage.setItem('idle-xianxia-loot-keep-strategy', activeLootKeepStrategy);
+  }
+
   function updateLootOrganizeButton() {
     const button = document.querySelector('[data-organize-loot]');
     if (!button) {
       return;
     }
     const selected = getSelectedLootDismantleRarities();
-    const summary = getOrganizableLootSummary(state, { rarityIds: selected });
+    const summary = getOrganizableLootSummary(state, { rarityIds: selected, keepStrategy: activeLootKeepStrategy });
     button.disabled = false;
     button.textContent = !selected.length
       ? '请选择品质'
@@ -6095,6 +6343,13 @@
         ${comparison.deltas.map((effect) => `<span class="${effect.value >= 0 ? 'gain' : 'loss'}">${formatEffectDelta(effect)}</span>`).join('')}
       </div>
     `;
+  }
+
+  function renderBuildTags(tags = []) {
+    if (!tags.length) {
+      return '<span>守中</span>';
+    }
+    return tags.map((tag) => `<span title="${tag.detail}">${tag.name}</span>`).join('');
   }
 
   function getLootKeepAdvice(item) {
@@ -8965,6 +9220,33 @@
     return state.lootEquipment?.find((item) => item.uid === uid) || null;
   }
 
+  function getLootBuildTags(item) {
+    const bonuses = item?.bonuses || {};
+    const affixIds = new Set([
+      item?.variant?.affixId,
+      ...(item?.variant?.affixIds || []),
+      ...(item?.variant?.affixes || []).map((affix) => affix.id),
+    ].filter(Boolean));
+    return Object.values(buildSchools)
+      .map((school) => {
+        const statScore = school.stats.reduce((score, stat) => {
+          const value = Math.abs(Number(bonuses[stat]) || 0);
+          return score + (value > 0 ? (stat === 'critChance' || stat.endsWith('Bonus') || stat === 'qiRate' || stat === 'breakthrough' ? value * 900 : value) : 0);
+        }, 0);
+        const affixScore = school.affixes.reduce((score, affixId) => score + (affixIds.has(affixId) ? 24 : 0), 0);
+        const elementScore = school.elements.includes(item?.element || item?.variant?.element) ? 18 : 0;
+        return {
+          id: school.id,
+          name: school.name,
+          detail: school.detail,
+          score: Math.round(statScore + affixScore + elementScore),
+        };
+      })
+      .filter((tag) => tag.score > 0)
+      .sort((left, right) => right.score - left.score)
+      .slice(0, 2);
+  }
+
   function equipLootEquipment(state, uid, now = Date.now()) {
     const item = state.lootEquipment?.find((candidate) => candidate.uid === uid);
     if (!item) {
@@ -9047,19 +9329,29 @@
 
     const keepUids = new Set(Object.values(state.equippedLoot || {}).filter(Boolean));
     const selectedRarities = normalizeLootRaritySelection(options.rarityIds);
+    const keepStrategy = ['bestPerSlot', 'rareAndSets'].includes(options.keepStrategy) ? options.keepStrategy : 'equippedOnly';
     Object.entries(state.lockedLoot || {}).forEach(([uid, locked]) => {
       if (locked) {
         keepUids.add(uid);
       }
     });
 
-    if (!selectedRarities) {
+    if (!selectedRarities || keepStrategy === 'bestPerSlot' || keepStrategy === 'rareAndSets') {
       Object.values(gear).forEach((gearItem) => {
         const candidate = items
           .filter((item) => item.slot === gearItem.id && !keepUids.has(item.uid))
           .sort((a, b) => getLootScore(b) - getLootScore(a))[0];
         if (candidate) {
           keepUids.add(candidate.uid);
+        }
+      });
+    }
+    if (keepStrategy === 'rareAndSets') {
+      items.forEach((item) => {
+        const rarityIndex = getRarityIndex(getLootRarity(item).id);
+        const buildTags = getLootBuildTags(item);
+        if (rarityIndex >= getRarityIndex('earthFiend') || buildTags.some((tag) => tag.score >= 90)) {
+          keepUids.add(item.uid);
         }
       });
     }
@@ -9106,18 +9398,28 @@
     }
     const keepUids = new Set(Object.values(state.equippedLoot || {}).filter(Boolean));
     const selectedRarities = normalizeLootRaritySelection(options.rarityIds);
+    const keepStrategy = ['bestPerSlot', 'rareAndSets'].includes(options.keepStrategy) ? options.keepStrategy : 'equippedOnly';
     Object.entries(state.lockedLoot || {}).forEach(([uid, locked]) => {
       if (locked) {
         keepUids.add(uid);
       }
     });
-    if (!selectedRarities) {
+    if (!selectedRarities || keepStrategy === 'bestPerSlot' || keepStrategy === 'rareAndSets') {
       Object.values(gear).forEach((gearItem) => {
         const candidate = items
           .filter((item) => item.slot === gearItem.id && !keepUids.has(item.uid))
           .sort((a, b) => getLootScore(b) - getLootScore(a))[0];
         if (candidate) {
           keepUids.add(candidate.uid);
+        }
+      });
+    }
+    if (keepStrategy === 'rareAndSets') {
+      items.forEach((item) => {
+        const rarityIndex = getRarityIndex(getLootRarity(item).id);
+        const buildTags = getLootBuildTags(item);
+        if (rarityIndex >= getRarityIndex('earthFiend') || buildTags.some((tag) => tag.score >= 90)) {
+          keepUids.add(item.uid);
         }
       });
     }

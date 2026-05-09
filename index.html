@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>青岚洞府</title>
-    <link rel="stylesheet" href="styles.css?v=202605092022" />
+    <link rel="stylesheet" href="styles.css?v=202605092023" />
   </head>
   <body>
     <main class="shell">
@@ -77,6 +77,7 @@
               <dd><span data-mission>闭关修炼</span> <small data-mission-time>待命</small></dd>
             </div>
           </dl>
+          <section data-progress-plan class="progress-plan" aria-label="当前修行路线"></section>
           <details class="resource-drawer" open>
             <summary>材料丹药</summary>
             <dl class="stats-grid resource-grid">
@@ -236,6 +237,12 @@
                   <label><input type="checkbox" data-loot-rarity-toggle="dao" />道器</label>
                   <button data-reset-dismantle-defaults type="button">恢复默认</button>
                 </div>
+                <div class="loot-keep-options" aria-label="保留策略">
+                  <span>保留</span>
+                  <button data-loot-keep-strategy="equippedOnly" class="active" aria-pressed="true" type="button">已穿戴/锁定</button>
+                  <button data-loot-keep-strategy="bestPerSlot" aria-pressed="false" type="button">每位最佳</button>
+                  <button data-loot-keep-strategy="rareAndSets" aria-pressed="false" type="button">高品流派</button>
+                </div>
                 <div class="loot-toolbar-actions">
                   <button data-lock-rare-loot type="button">锁珍品</button>
                   <button data-organize-loot type="button">一键整理</button>
@@ -314,6 +321,6 @@
 
     <div data-toast-stack class="toast-stack" aria-live="polite"></div>
 
-    <script src="browserGame.js?v=202605092022"></script>
+    <script src="browserGame.js?v=202605092023"></script>
   </body>
 </html>

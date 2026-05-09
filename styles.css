@@ -653,6 +653,82 @@ small {
   display: block;
 }
 
+.progress-plan {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+  border: 1px solid rgba(232, 198, 106, 0.24);
+  border-radius: 8px;
+  padding: 12px;
+  background:
+    linear-gradient(135deg, rgba(232, 198, 106, 0.11), rgba(125, 211, 183, 0.07)),
+    rgba(255, 255, 255, 0.03);
+}
+
+.progress-plan header,
+.progress-plan-grid,
+.progress-plan-actions {
+  display: grid;
+  gap: 8px;
+}
+
+.progress-plan header {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.progress-plan header span,
+.progress-plan button span {
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.progress-plan header strong,
+.progress-plan button strong {
+  display: block;
+  color: var(--paper);
+  font-size: 0.95rem;
+}
+
+.progress-plan header em {
+  border: 1px solid rgba(125, 211, 183, 0.28);
+  border-radius: 999px;
+  padding: 3px 8px;
+  color: var(--jade);
+  font-size: 0.76rem;
+  font-style: normal;
+  font-weight: 900;
+  white-space: nowrap;
+  background: rgba(125, 211, 183, 0.08);
+}
+
+.progress-plan-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.progress-plan-grid button,
+.progress-plan-actions button {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  min-height: 70px;
+  justify-items: start;
+  padding: 9px;
+  text-align: left;
+}
+
+.progress-plan-grid small,
+.progress-plan-actions span {
+  color: var(--muted);
+  font-size: 0.72rem;
+  line-height: 1.35;
+}
+
+.progress-plan-actions {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 .resource-guidance-card strong {
   color: var(--gold);
 }
@@ -1577,7 +1653,8 @@ small {
   grid-template-columns: minmax(0, 1fr) auto;
   grid-template-areas:
     "filters filters"
-    "options actions";
+    "options actions"
+    "keep actions";
   gap: 8px;
   align-items: start;
   border: 1px solid rgba(245, 238, 220, 0.09);
@@ -1649,9 +1726,12 @@ small {
 }
 
 .loot-dismantle-options span {
+  flex: 0 0 auto;
+  min-width: 64px;
   color: var(--muted);
   font-size: 0.76rem;
   font-weight: 900;
+  white-space: nowrap;
 }
 
 .loot-dismantle-options label {
@@ -1688,6 +1768,46 @@ small {
   padding: 0 9px;
   font-size: 0.78rem;
   white-space: nowrap;
+}
+
+.loot-keep-options {
+  display: flex;
+  flex-wrap: nowrap;
+  grid-area: keep;
+  gap: 6px;
+  align-items: center;
+  min-width: 0;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: none;
+}
+
+.loot-keep-options::-webkit-scrollbar {
+  display: none;
+}
+
+.loot-keep-options span {
+  flex: 0 0 auto;
+  min-width: 34px;
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.loot-keep-options button {
+  flex: 0 0 auto;
+  min-height: 30px;
+  padding: 0 9px;
+  color: #cbd5c2;
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+.loot-keep-options button.active {
+  border-color: rgba(232, 198, 106, 0.64);
+  color: #17130b;
+  background: var(--gold);
 }
 
 .resonance-card {
@@ -1827,6 +1947,25 @@ small {
   font-size: 0.78rem;
   font-style: normal;
   font-weight: 900;
+}
+
+.loot-build-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 6px;
+}
+
+.loot-build-tags span {
+  width: fit-content;
+  margin-top: 0;
+  border: 1px solid rgba(125, 211, 183, 0.28);
+  border-radius: 999px;
+  padding: 2px 7px;
+  color: #9de8ca;
+  font-size: 0.72rem;
+  font-weight: 950;
+  background: rgba(125, 211, 183, 0.08);
 }
 
 .rarity-badge {
@@ -3418,6 +3557,23 @@ small {
     grid-template-columns: 1fr;
   }
 
+  .progress-plan {
+    margin-top: 10px;
+    padding: 10px;
+  }
+
+  .progress-plan-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .progress-plan-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .progress-plan-actions button {
+    min-height: 54px;
+  }
+
   .boss-counsel {
     display: none;
   }
@@ -3460,6 +3616,7 @@ small {
     grid-template-areas:
       "filters"
       "options"
+      "keep"
       "actions";
     gap: 7px;
     margin-inline: -2px;
@@ -3517,6 +3674,23 @@ small {
     justify-content: center;
     min-width: 0;
     padding: 0 6px;
+  }
+
+  .loot-keep-options {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 6px;
+  }
+
+  .loot-keep-options span {
+    display: none;
+  }
+
+  .loot-keep-options button {
+    flex: 0 0 auto;
+    min-height: 32px;
+    padding: 0 8px;
   }
 
   .loot-toolbar-actions {
