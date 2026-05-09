@@ -46,14 +46,14 @@ button:disabled {
 }
 
 .shell {
-  width: min(1180px, calc(100vw - 28px));
+  width: min(1280px, calc(100vw - 28px));
   margin: 0 auto;
   padding: 20px 0 32px;
 }
 
 .hero {
   position: relative;
-  min-height: 360px;
+  min-height: 300px;
   overflow: hidden;
   border: 1px solid rgba(245, 238, 220, 0.14);
   border-radius: 8px;
@@ -63,14 +63,14 @@ button:disabled {
 .hero canvas {
   display: block;
   width: 100%;
-  height: min(52vh, 430px);
-  min-height: 340px;
+  height: min(42vh, 360px);
+  min-height: 300px;
 }
 
 .hero-panel {
   position: absolute;
   left: clamp(18px, 4vw, 44px);
-  bottom: clamp(18px, 4vw, 40px);
+  bottom: clamp(16px, 3vw, 34px);
   width: min(520px, calc(100% - 36px));
 }
 
@@ -91,7 +91,7 @@ ol {
 }
 
 h1 {
-  font-size: clamp(2.4rem, 7vw, 5.5rem);
+  font-size: clamp(2.1rem, 5vw, 4.6rem);
   line-height: 0.92;
   letter-spacing: 0;
 }
@@ -168,7 +168,7 @@ h2 {
 
 .dashboard {
   display: grid;
-  grid-template-columns: minmax(360px, 0.95fr) minmax(360px, 1.05fr);
+  grid-template-columns: minmax(320px, 0.72fr) minmax(560px, 1.28fr);
   gap: 14px;
   margin-top: 14px;
 }
@@ -229,7 +229,7 @@ h2 {
   min-width: 0;
   border: 1px solid var(--line);
   border-radius: 8px;
-  padding: 18px;
+  padding: 16px;
   background: var(--panel);
 }
 
@@ -266,10 +266,10 @@ h2 {
 
 .vital-card,
 .stats-grid div {
-  min-height: 76px;
+  min-height: 68px;
   border: 1px solid rgba(245, 238, 220, 0.1);
   border-radius: 8px;
-  padding: 12px;
+  padding: 10px;
   background: rgba(255, 255, 255, 0.04);
 }
 
@@ -292,11 +292,38 @@ h2 {
 }
 
 .resource-drawer summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   list-style: none;
   cursor: pointer;
   color: var(--gold);
   font-size: 0.86rem;
   font-weight: 900;
+}
+
+.resource-drawer summary::after,
+.attribute-card summary::after,
+.dao-heart-card summary::after,
+.tribulation-card summary::after {
+  content: "展开";
+  flex: 0 0 auto;
+  border: 1px solid rgba(245, 238, 220, 0.12);
+  border-radius: 999px;
+  padding: 2px 8px;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 900;
+  background: rgba(0, 0, 0, 0.14);
+}
+
+.resource-drawer[open] summary::after,
+.attribute-card[open] summary::after,
+.dao-heart-card[open] summary::after,
+.tribulation-card[open] summary::after {
+  content: "收起";
+  color: var(--jade);
 }
 
 .resource-drawer summary::-webkit-details-marker {
@@ -310,8 +337,8 @@ h2 {
 }
 
 .resource-grid div {
-  min-height: 62px;
-  padding: 10px;
+  min-height: 54px;
+  padding: 9px;
 }
 
 dt {
@@ -320,7 +347,7 @@ dt {
 }
 
 dd {
-  margin: 8px 0 0;
+  margin: 6px 0 0;
   font-size: 1.08rem;
   font-weight: 800;
 }
@@ -372,17 +399,35 @@ dd {
   font-size: 0.92rem;
 }
 
+.dao-heart-card summary,
+.tribulation-card summary,
 .dao-heart-card header,
 .tribulation-card header {
   display: flex;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
   margin-bottom: 10px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.dao-heart-card summary::-webkit-details-marker,
+.tribulation-card summary::-webkit-details-marker {
+  display: none;
+}
+
+.dao-heart-card:not([open]) summary,
+.tribulation-card:not([open]) summary {
+  margin-bottom: 0;
 }
 
 .attribute-card summary span,
+.dao-heart-card summary span,
+.tribulation-card summary span,
 .dao-heart-card header span,
 .tribulation-card header span {
+  margin-left: auto;
   color: var(--muted);
   font-size: 0.78rem;
   font-weight: 700;
@@ -1522,8 +1567,12 @@ small {
 .loot-toolbar {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto auto;
-  gap: 10px;
+  gap: 8px;
   align-items: start;
+  border: 1px solid rgba(245, 238, 220, 0.09);
+  border-radius: 8px;
+  padding: 8px;
+  background: rgba(0, 0, 0, 0.12);
 }
 
 .loot-toolbar > button {
@@ -1533,13 +1582,21 @@ small {
 
 .loot-filters {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 8px;
   grid-column: 1 / -1;
   min-width: 0;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: none;
+}
+
+.loot-filters::-webkit-scrollbar {
+  display: none;
 }
 
 .loot-filters button {
+  flex: 0 0 auto;
   min-height: 34px;
   padding: 0 11px;
   color: var(--muted);
@@ -1553,11 +1610,18 @@ small {
 
 .loot-dismantle-options {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 6px;
   align-items: center;
   align-self: start;
   min-width: 0;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: none;
+}
+
+.loot-dismantle-options::-webkit-scrollbar {
+  display: none;
 }
 
 .loot-dismantle-options span {
@@ -1567,6 +1631,7 @@ small {
 }
 
 .loot-dismantle-options label {
+  flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -1700,10 +1765,10 @@ small {
 
 .equipment-detail-card {
   display: block;
-  min-height: 78px;
+  min-height: 68px;
   border: 1px solid rgba(245, 238, 220, 0.1);
   border-radius: 8px;
-  padding: 12px;
+  padding: 10px;
   background: rgba(255, 255, 255, 0.035);
 }
 
@@ -1719,14 +1784,14 @@ small {
 }
 
 .equipment-detail-card span {
-  margin-top: 5px;
+  margin-top: 4px;
   color: var(--muted);
   font-size: 0.86rem;
   font-weight: 600;
 }
 
 .equipment-detail-card small {
-  margin-top: 5px;
+  margin-top: 4px;
   color: var(--gold);
 }
 
@@ -1847,7 +1912,7 @@ small {
 .detail-row .row-actions {
   grid-template-columns: repeat(auto-fit, minmax(84px, 1fr));
   min-width: 0;
-  margin-top: 10px;
+  margin-top: 8px;
 }
 
 .comparison-list {
@@ -2834,6 +2899,45 @@ small {
   }
 }
 
+@media (min-width: 1121px) {
+  .stats-panel {
+    position: sticky;
+    top: 12px;
+    max-height: calc(100vh - 24px);
+    overflow-y: auto;
+    scrollbar-width: thin;
+  }
+
+  .stats-panel::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .stats-panel::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    background: rgba(245, 238, 220, 0.18);
+  }
+
+  .stats-panel .attribute-card:not([open]),
+  .stats-panel .resource-drawer:not([open]) {
+    padding: 9px 10px;
+  }
+
+  [data-gear-list],
+  [data-formation-list],
+  [data-treasure-list],
+  [data-beast-list],
+  [data-bloodline-list],
+  [data-loot-list] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  [data-gear-list] .gear-set-panel,
+  [data-loot-list] .resonance-card,
+  [data-loot-list] .muted-row {
+    grid-column: 1 / -1;
+  }
+}
+
 @media (max-width: 1120px) {
   .dashboard {
     grid-template-columns: 1fr;
@@ -2859,20 +2963,29 @@ small {
 
 @media (max-width: 760px) {
   html {
-    scroll-padding-bottom: calc(112px + env(safe-area-inset-bottom));
+    scroll-padding-bottom: calc(88px + env(safe-area-inset-bottom));
   }
 
   .shell {
-    padding-bottom: calc(120px + env(safe-area-inset-bottom));
+    padding-bottom: calc(92px + env(safe-area-inset-bottom));
   }
 
   body[data-active-tab="overview"] .hero {
-    min-height: 286px;
+    min-height: 232px;
   }
 
   body[data-active-tab="overview"] .hero canvas {
-    height: 286px;
-    min-height: 286px;
+    height: 232px;
+    min-height: 232px;
+  }
+
+  body[data-active-tab="overview"] .hero-panel .eyebrow,
+  body[data-active-tab="overview"] .hero-panel h1 {
+    display: none;
+  }
+
+  body[data-active-tab="overview"] .realm-line {
+    margin-top: 0;
   }
 
   body:not([data-active-tab="overview"]) .hero {
@@ -3044,11 +3157,11 @@ small {
   }
 
   body {
-    padding-bottom: calc(150px + env(safe-area-inset-bottom));
+    padding-bottom: calc(78px + env(safe-area-inset-bottom));
   }
 
   .dashboard {
-    padding-bottom: calc(240px + env(safe-area-inset-bottom));
+    padding-bottom: calc(104px + env(safe-area-inset-bottom));
   }
 
   .toast-stack {
@@ -3317,8 +3430,10 @@ small {
   }
 
   .loot-toolbar {
-    grid-template-columns: 1fr;
-    gap: 8px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 7px;
+    margin-inline: -2px;
+    padding: 7px;
   }
 
   .gear-section-stack [data-gear-section-panel].active {
@@ -3326,36 +3441,41 @@ small {
   }
 
   .loot-filters {
-    flex-wrap: wrap;
-    overflow: visible;
-    padding-bottom: 0;
+    grid-column: 1 / -1;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 2px;
   }
 
   .loot-filters button {
-    flex: 1 0 calc(25% - 6px);
+    flex: 0 0 auto;
     min-height: 32px;
     padding: 0 10px;
   }
 
   .loot-dismantle-options {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-column: 1 / -1;
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
     gap: 6px;
   }
 
   .loot-dismantle-options span {
-    grid-column: 1 / -1;
+    flex: 0 0 auto;
+    align-self: center;
   }
 
   .loot-dismantle-options label,
   .loot-dismantle-options button {
+    flex: 0 0 auto;
     justify-content: center;
     min-width: 0;
     padding: 0 6px;
   }
 
   .loot-toolbar > button {
-    width: auto;
+    width: 100%;
     min-height: 34px;
     padding: 0 10px;
     white-space: nowrap;
@@ -3405,7 +3525,7 @@ small {
   }
 
   .hero canvas {
-    min-height: 330px;
+    min-height: 232px;
   }
 
   .stats-grid {
@@ -3425,7 +3545,7 @@ small {
   }
 
   .panel {
-    padding: 14px;
+    padding: 12px;
   }
 
   .system-row {

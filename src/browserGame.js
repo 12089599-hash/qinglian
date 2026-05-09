@@ -5830,11 +5830,15 @@
         return `<li><strong>${heart.name} ${level} / ${heart.maxLevel}</strong><span>${formatEffects(effectsFromBonusObject(scaleBonusObject(heart.bonuses, level)))}</span></li>`;
       })
       .join('');
+    refs.daoHeartList.classList.toggle('choice-active', choices.length > 0);
+    if (choices.length) {
+      refs.daoHeartList.open = true;
+    }
     refs.daoHeartList.innerHTML = `
-      <header>
+      <summary>
         <h3>${choices.length ? '命格择定' : '命格道心'}</h3>
         <span>${claimed.length ? `${claimed.length} 道` : '未凝命格'}</span>
-      </header>
+      </summary>
       ${choices.length ? `
         <p>破境后道心浮现，择其一凝入命格。</p>
         <div class="dao-choice-grid">
@@ -5865,10 +5869,10 @@
       return;
     }
     refs.breakthroughPrep.innerHTML = `
-      <header>
+      <summary>
         <h3>${preparation.title}</h3>
         <span>${Math.round(preparation.readyScore * 100)}%</span>
-      </header>
+      </summary>
       <div class="tribulation-meter"><i style="width:${Math.round(preparation.readyScore * 100)}%"></i></div>
       <p>${preparation.counsel}</p>
       <div class="tribulation-grid">
@@ -9334,12 +9338,18 @@
       return;
     }
     renderCache.mobileOverviewDrawers = layoutSignature;
+    const openOverviewDetails = !mobile && activeTab === 'overview';
     const attributeCard = document.querySelector('.stats-panel > .attribute-card');
     if (attributeCard) {
-      attributeCard.open = !mobile;
+      attributeCard.open = openOverviewDetails;
     }
     document.querySelectorAll('.stats-panel > .resource-drawer').forEach((drawer) => {
-      drawer.open = !mobile;
+      drawer.open = openOverviewDetails;
+    });
+    document.querySelectorAll('.stats-panel > .dao-heart-card, .stats-panel > .tribulation-card').forEach((drawer) => {
+      if (!drawer.classList.contains('choice-active')) {
+        drawer.open = openOverviewDetails;
+      }
     });
   }
 
