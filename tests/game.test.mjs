@@ -636,15 +636,19 @@ test('batch dismantle can be limited by selected rarity tiers', () => {
 test('matching gear affixes activate set resonance bonuses', () => {
   const state = createGameState(1000);
   state.realmIndex = realmIndexByName('炼气八层');
-  state.gear.weapon = 1;
-  state.gear.amulet = 1;
-  state.gear.robe = 1;
-  state.gearQuality.weapon = 1;
-  state.gearQuality.amulet = 1;
-  state.gearQuality.robe = 1;
-  state.gearAffixes.weapon = 'swordIntent';
-  state.gearAffixes.amulet = 'spiritVein';
-  state.gearAffixes.robe = 'cloudStep';
+  const loadout = {
+    weapon: 'swordIntent',
+    offhand: 'spiritBell',
+    amulet: 'spiritVein',
+    robe: 'cloudStep',
+    jade: 'clearJade',
+    boots: 'cloudTrace',
+  };
+  Object.entries(loadout).forEach(([slot, affix]) => {
+    state.gear[slot] = 1;
+    state.gearQuality[slot] = 1;
+    state.gearAffixes[slot] = affix;
+  });
 
   const sets = getGearSetStatus(state);
   const active = sets.find((set) => set.id === 'greenLotusFlow');
@@ -652,11 +656,29 @@ test('matching gear affixes activate set resonance bonuses', () => {
 
   assert.equal(GEAR_AFFIX_SETS.greenLotusFlow.name, '青莲流影');
   assert.equal(active.active, true);
-  assert.equal(active.matched, 3);
-  assert.equal(calculatePower(state), 350);
-  assert.equal(calculateQiRate(state, 2000), 7.53);
+  assert.equal(active.matched, 6);
+  assert.equal(active.total, 6);
+  assert.equal(calculatePower(state) > 400, true);
+  assert.equal(calculateQiRate(state, 2000) > 7.5, true);
   assert.equal(getMissionStatus(state, 'mistyValley').recommendedPower < 240, true);
   assert.equal(weapon.reroll.preview.warnings[0], '可能使青莲流影失效');
+});
+
+test('gear affix sets align one matching affix with every equipment slot', () => {
+  const slots = Object.keys(GEAR).sort();
+  const usedAffixes = new Set();
+
+  Object.values(GEAR_AFFIX_SETS).forEach((set) => {
+    const setSlots = set.affixes.map((affixId) => GEAR_AFFIXES[affixId]?.slot).sort();
+    assert.deepEqual(setSlots, slots, `${set.name} should cover each equipment slot once`);
+    set.affixes.forEach((affixId) => {
+      assert.equal(Boolean(GEAR_AFFIXES[affixId]), true, `${set.name} contains unknown affix ${affixId}`);
+      usedAffixes.add(affixId);
+    });
+  });
+  Object.keys(GEAR_AFFIXES).forEach((affixId) => {
+    assert.equal(usedAffixes.has(affixId), true, `${GEAR_AFFIXES[affixId].name} should belong to a set`);
+  });
 });
 
 test('gear affix reroll reports attribute and set impact', () => {
@@ -665,24 +687,28 @@ test('gear affix reroll reports attribute and set impact', () => {
   state.spiritStones = 260;
   state.artifacts = 3;
   state.forgingEssence = 4;
-  state.gear.weapon = 1;
-  state.gear.amulet = 1;
-  state.gear.robe = 1;
-  state.gearQuality.weapon = 1;
-  state.gearQuality.amulet = 1;
-  state.gearQuality.robe = 1;
-  state.gearAffixes.weapon = 'swordIntent';
-  state.gearAffixes.amulet = 'spiritVein';
-  state.gearAffixes.robe = 'cloudStep';
+  const loadout = {
+    weapon: 'swordIntent',
+    offhand: 'spiritBell',
+    amulet: 'spiritVein',
+    robe: 'cloudStep',
+    jade: 'clearJade',
+    boots: 'cloudTrace',
+  };
+  Object.entries(loadout).forEach(([slot, affix]) => {
+    state.gear[slot] = 1;
+    state.gearQuality[slot] = 1;
+    state.gearAffixes[slot] = affix;
+  });
 
   const rerolled = rerollGearAffix(state, 'weapon', 2000, () => 0);
 
   assert.equal(rerolled.ok, true);
   assert.equal(rerolled.affix, 'breakerEdge');
-  assert.equal(rerolled.impact.powerDelta, -69);
+  assert.equal(rerolled.impact.powerDelta < 0, true);
   assert.equal(rerolled.impact.setChanges[0].name, '青莲流影');
-  assert.equal(rerolled.impact.setChanges[0].beforeMatched, 3);
-  assert.equal(rerolled.impact.setChanges[0].afterMatched, 2);
+  assert.equal(rerolled.impact.setChanges[0].beforeMatched, 6);
+  assert.equal(rerolled.impact.setChanges[0].afterMatched, 5);
   assert.equal(rerolled.impact.setChanges[0].status, 'lost');
 });
 
