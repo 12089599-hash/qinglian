@@ -1521,7 +1521,7 @@ small {
 
 .loot-toolbar {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, auto) auto auto;
   gap: 10px;
   align-items: center;
 }
@@ -1548,6 +1548,53 @@ small {
   border-color: rgba(232, 198, 106, 0.78);
   color: #17130b;
   background: var(--gold);
+}
+
+.loot-dismantle-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  min-width: 0;
+}
+
+.loot-dismantle-options span {
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 900;
+}
+
+.loot-dismantle-options label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 30px;
+  border: 1px solid rgba(245, 238, 220, 0.12);
+  border-radius: 8px;
+  padding: 0 8px;
+  color: #cbd5c2;
+  font-size: 0.78rem;
+  font-weight: 900;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.loot-dismantle-options label.active {
+  border-color: rgba(125, 211, 183, 0.48);
+  color: #dff8ee;
+  background: rgba(125, 211, 183, 0.12);
+}
+
+.loot-dismantle-options input {
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  accent-color: var(--jade);
+}
+
+.loot-dismantle-options button {
+  min-height: 30px;
+  padding: 0 9px;
+  font-size: 0.78rem;
 }
 
 .resonance-card {
@@ -3222,7 +3269,7 @@ small {
   }
 
   .loot-toolbar {
-    grid-template-columns: minmax(0, 1fr) auto auto;
+    grid-template-columns: 1fr;
     gap: 8px;
   }
 
@@ -3240,6 +3287,23 @@ small {
     flex: 1 0 calc(25% - 6px);
     min-height: 32px;
     padding: 0 10px;
+  }
+
+  .loot-dismantle-options {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .loot-dismantle-options span {
+    grid-column: 1 / -1;
+  }
+
+  .loot-dismantle-options label,
+  .loot-dismantle-options button {
+    justify-content: center;
+    min-width: 0;
+    padding: 0 6px;
   }
 
   .loot-toolbar > button {

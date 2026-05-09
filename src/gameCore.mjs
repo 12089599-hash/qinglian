@@ -3331,27 +3331,31 @@ export function disassembleLootEquipment(state, uid, now = Date.now()) {
   return { ok: true, reward, item };
 }
 
-export function organizeLootEquipment(state, now = Date.now()) {
+export function organizeLootEquipment(state, now = Date.now(), options = {}) {
   const items = state.lootEquipment ?? [];
   if (!items.length) {
     return { ok: true, removed: 0, reward: {}, items: [] };
   }
 
   const keepUids = new Set(Object.values(state.equippedLoot ?? {}).filter(Boolean));
+  const selectedRarities = normalizeLootRaritySelection(options.rarityIds);
   Object.entries(state.lockedLoot ?? {}).forEach(([uid, locked]) => {
     if (locked) keepUids.add(uid);
   });
 
-  Object.values(GEAR).forEach((gearItem) => {
-    const candidate = items
-      .filter((item) => item.slot === gearItem.id && !keepUids.has(item.uid))
-      .sort((a, b) => getLootScore(b) - getLootScore(a))[0];
-    if (candidate) {
-      keepUids.add(candidate.uid);
-    }
-  });
+  if (!selectedRarities) {
+    Object.values(GEAR).forEach((gearItem) => {
+      const candidate = items
+        .filter((item) => item.slot === gearItem.id && !keepUids.has(item.uid))
+        .sort((a, b) => getLootScore(b) - getLootScore(a))[0];
+      if (candidate) {
+        keepUids.add(candidate.uid);
+      }
+    });
+  }
 
-  const removedItems = items.filter((item) => !keepUids.has(item.uid));
+  const removedItems = items.filter((item) => !keepUids.has(item.uid)
+    && (!selectedRarities || selectedRarities.has(getLootRarity(item).id)));
   if (!removedItems.length) {
     addLog(state, now, '整理战利品，没有可分解的闲置装备。');
     return { ok: true, removed: 0, reward: {}, items: [] };
@@ -3362,7 +3366,8 @@ export function organizeLootEquipment(state, now = Date.now()) {
     artifacts: total.artifacts + 1,
     bloodEssence: total.bloodEssence + (getRarityIndex(getLootRarity(item).id) >= 2 ? Math.max(1, Math.floor((getRarityIndex(getLootRarity(item).id) - 1) * getLootDismantleMultiplier(state, item))) : 0),
   }), { forgingEssence: 0, artifacts: 0, bloodEssence: 0 }));
-  state.lootEquipment = items.filter((item) => keepUids.has(item.uid));
+  const removedUids = new Set(removedItems.map((item) => item.uid));
+  state.lootEquipment = items.filter((item) => !removedUids.has(item.uid));
   if (state.lockedLoot) {
     Object.keys(state.lockedLoot).forEach((uid) => {
       if (!state.lootEquipment.some((item) => item.uid === uid)) {
@@ -3373,6 +3378,15 @@ export function organizeLootEquipment(state, now = Date.now()) {
   applyResources(state, reward);
   addLog(state, now, `整理战利品，分解 ${removedItems.length} 件闲置装备，获得${formatReward(reward)}。`);
   return { ok: true, removed: removedItems.length, reward, items: removedItems };
+}
+
+function normalizeLootRaritySelection(rarityIds) {
+  if (!Array.isArray(rarityIds)) {
+    return null;
+  }
+  const validIds = new Set(RARITY_TIERS.map((tier) => tier.id));
+  const selected = rarityIds.filter((id) => validIds.has(id));
+  return selected.length ? new Set(selected) : new Set();
 }
 
 export function empowerLootEquipment(state, uid, now = Date.now()) {

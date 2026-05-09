@@ -580,6 +580,29 @@ test('rare loot lock protects high grade drops during batch cleanup', () => {
   assert.equal(state.lootEquipment.some((item) => item.uid === 'spare-weapon-b'), false);
 });
 
+test('batch dismantle can be limited by selected rarity tiers', () => {
+  const state = createGameState(1000);
+  state.lootEquipment = [
+    { uid: 'equipped-weapon', templateId: 'qingfengSword', name: '青锋剑', slot: 'weapon', quality: 0, variant: { rarityId: 'common' }, bonuses: { attack: 8 } },
+    { uid: 'best-mystic', templateId: 'bloodCopperBlade', name: '赤铜刃', slot: 'weapon', quality: 2, variant: { rarityId: 'mystic' }, bonuses: { attack: 30 } },
+    { uid: 'spare-mystic', templateId: 'coldMoonSpear', name: '寒月枪', slot: 'weapon', quality: 2, variant: { rarityId: 'mystic' }, bonuses: { attack: 16 } },
+    { uid: 'spare-spirit', templateId: 'greenJadePendant', name: '青玉佩', slot: 'jade', quality: 1, variant: { rarityId: 'spirit' }, bonuses: { vitality: 12 } },
+    { uid: 'spare-common', templateId: 'windtraceBoots', name: '追风履', slot: 'boots', quality: 0, variant: { rarityId: 'common' }, bonuses: { speed: 3 } },
+  ];
+  state.equippedLoot.weapon = 'equipped-weapon';
+
+  const lowOnly = organizeLootEquipment(state, 2000, { rarityIds: ['common', 'spirit'] });
+  const mystic = organizeLootEquipment(state, 3000, { rarityIds: ['mystic'] });
+
+  assert.equal(lowOnly.removed, 2);
+  assert.equal(state.lootEquipment.some((item) => item.uid === 'spare-common'), false);
+  assert.equal(state.lootEquipment.some((item) => item.uid === 'spare-spirit'), false);
+  assert.equal(mystic.removed, 2);
+  assert.equal(mystic.reward.bloodEssence >= 2, true);
+  assert.equal(state.lootEquipment.some((item) => item.uid === 'best-mystic'), false);
+  assert.equal(state.lootEquipment.some((item) => item.uid === 'spare-mystic'), false);
+});
+
 test('matching gear affixes activate set resonance bonuses', () => {
   const state = createGameState(1000);
   state.realmIndex = realmIndexByName('炼气八层');

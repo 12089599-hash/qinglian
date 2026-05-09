@@ -1511,6 +1511,9 @@
   if (!lootFilters.includes(activeLootFilter)) {
     activeLootFilter = 'all';
   }
+  const defaultLootDismantleRarities = ['common', 'spirit'];
+  const lootDismantleRarityIds = rarityTiers.map((tier) => tier.id);
+  let activeLootDismantleRarities = new Set(parseStoredLootDismantleRarities(localStorage.getItem('idle-xianxia-loot-dismantle-rarities')));
   let activeMissionMapId = localStorage.getItem('idle-xianxia-mission-map') || missionMapIds[0];
   if (!missionMaps[activeMissionMapId]) {
     activeMissionMapId = missionMapIds[0];
@@ -1675,15 +1678,43 @@
   });
 
   document.querySelector('[data-organize-loot]')?.addEventListener('click', () => {
-    const result = organizeLootEquipment(state);
+    const selected = getSelectedLootDismantleRarities();
+    if (!selected.length) {
+      showToast('分解品质未选', '勾选至少一个品质后再批量分解。', 'warning');
+      return;
+    }
+    const result = organizeLootEquipment(state, Date.now(), { rarityIds: getSelectedLootDismantleRarities() });
     if (result.removed > 0) {
       result.items.forEach((item) => openLootDetails.delete(item.uid));
       showToast('战利品整理', `拆解 ${result.removed} 件闲置器物，沉淀${formatReward(result.reward)}，可继续提升器位火候。`);
     } else {
-      showToast('战利品整理', '当前只保留穿戴、锁定和各部位最佳备件；单件仍可手动分解。');
+      showToast('战利品整理', '当前勾选品质没有可分解战利品；已穿戴和已锁定不会分解。');
     }
     saveState();
     render(true);
+  });
+
+  document.querySelectorAll('[data-loot-rarity-toggle]').forEach((input) => {
+    input.addEventListener('change', () => {
+      const rarityId = input.dataset.lootRarityToggle;
+      if (!lootDismantleRarityIds.includes(rarityId)) {
+        return;
+      }
+      if (input.checked) {
+        activeLootDismantleRarities.add(rarityId);
+      } else {
+        activeLootDismantleRarities.delete(rarityId);
+      }
+      saveLootDismantleRarities();
+      renderLoot(true);
+    });
+  });
+
+  document.querySelector('[data-reset-dismantle-defaults]')?.addEventListener('click', () => {
+    activeLootDismantleRarities = new Set(defaultLootDismantleRarities);
+    saveLootDismantleRarities();
+    renderLoot(true);
+    showToast('默认分解', '已恢复为凡品、蕴灵。');
   });
 
   document.querySelector('[data-lock-rare-loot]')?.addEventListener('click', () => {
@@ -5842,12 +5873,13 @@
       return;
     }
     renderLootFilters();
+    renderLootDismantleControls();
     const equipmentDetails = getEquipmentDetails(state);
     const details = equipmentDetails.loot;
     const resonance = equipmentDetails.lootResonance;
     updateLootOrganizeButton();
     updateRareLootLockButton();
-    const signature = `${activeLootFilter}|${resonance.active ? `${resonance.id}:${resonance.matched}` : 'none'}|${details.map((item) => `${item.uid}:${item.slotLevel || 0}:${item.locked ? 1 : 0}:${item.rarity?.id || ''}`).join('|')}|${Object.entries(state.equippedLoot).map(([slot, uid]) => `${slot}:${uid || ''}`).join('|')}`;
+    const signature = `${activeLootFilter}|${getSelectedLootDismantleRarities().join(',')}|${resonance.active ? `${resonance.id}:${resonance.matched}` : 'none'}|${details.map((item) => `${item.uid}:${item.slotLevel || 0}:${item.locked ? 1 : 0}:${item.rarity?.id || ''}`).join('|')}|${Object.entries(state.equippedLoot).map(([slot, uid]) => `${slot}:${uid || ''}`).join('|')}`;
     if (!force && renderCache.loot === signature) {
       return;
     }
@@ -5930,17 +5962,50 @@
     });
   }
 
+  function renderLootDismantleControls() {
+    document.querySelectorAll('[data-loot-rarity-toggle]').forEach((input) => {
+      input.checked = activeLootDismantleRarities.has(input.dataset.lootRarityToggle);
+      input.closest('label')?.classList.toggle('active', input.checked);
+    });
+  }
+
+  function parseStoredLootDismantleRarities(raw) {
+    if (!raw) {
+      return defaultLootDismantleRarities;
+    }
+    try {
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) {
+        return defaultLootDismantleRarities;
+      }
+      return parsed.filter((id) => lootDismantleRarityIds.includes(id));
+    } catch {
+      return defaultLootDismantleRarities;
+    }
+  }
+
+  function getSelectedLootDismantleRarities() {
+    return lootDismantleRarityIds.filter((id) => activeLootDismantleRarities.has(id));
+  }
+
+  function saveLootDismantleRarities() {
+    localStorage.setItem('idle-xianxia-loot-dismantle-rarities', JSON.stringify(getSelectedLootDismantleRarities()));
+  }
+
   function updateLootOrganizeButton() {
     const button = document.querySelector('[data-organize-loot]');
     if (!button) {
       return;
     }
-    const summary = getOrganizableLootSummary(state);
+    const selected = getSelectedLootDismantleRarities();
+    const summary = getOrganizableLootSummary(state, { rarityIds: selected });
     button.disabled = summary.count <= 0;
     button.textContent = summary.count > 0
       ? `分解 ${summary.count}${summary.reward.bloodEssence ? ` · 血脉+${summary.reward.bloodEssence}` : ''}`
       : '无可整理';
-    button.title = summary.count > 0 ? `预计获得 ${formatReward(summary.reward)}` : '没有会被批量分解的闲置战利品';
+    button.title = selected.length
+      ? (summary.count > 0 ? `预计获得 ${formatReward(summary.reward)}` : '当前勾选品质没有可分解战利品')
+      : '先勾选至少一个分解品质';
   }
 
   function updateRareLootLockButton() {
@@ -8936,29 +9001,33 @@
     return { ok: true, reward, item };
   }
 
-  function organizeLootEquipment(state, now = Date.now()) {
+  function organizeLootEquipment(state, now = Date.now(), options = {}) {
     const items = state.lootEquipment || [];
     if (!items.length) {
       return { ok: true, removed: 0, reward: {}, items: [] };
     }
 
     const keepUids = new Set(Object.values(state.equippedLoot || {}).filter(Boolean));
+    const selectedRarities = normalizeLootRaritySelection(options.rarityIds);
     Object.entries(state.lockedLoot || {}).forEach(([uid, locked]) => {
       if (locked) {
         keepUids.add(uid);
       }
     });
 
-    Object.values(gear).forEach((gearItem) => {
-      const candidate = items
-        .filter((item) => item.slot === gearItem.id && !keepUids.has(item.uid))
-        .sort((a, b) => getLootScore(b) - getLootScore(a))[0];
-      if (candidate) {
-        keepUids.add(candidate.uid);
-      }
-    });
+    if (!selectedRarities) {
+      Object.values(gear).forEach((gearItem) => {
+        const candidate = items
+          .filter((item) => item.slot === gearItem.id && !keepUids.has(item.uid))
+          .sort((a, b) => getLootScore(b) - getLootScore(a))[0];
+        if (candidate) {
+          keepUids.add(candidate.uid);
+        }
+      });
+    }
 
-    const removedItems = items.filter((item) => !keepUids.has(item.uid));
+    const removedItems = items.filter((item) => !keepUids.has(item.uid)
+      && (!selectedRarities || selectedRarities.has(getLootRarity(item).id)));
     if (!removedItems.length) {
       addLog(state, now, '整理战利品，没有可分解的闲置装备。');
       return { ok: true, removed: 0, reward: {}, items: [] };
@@ -8969,7 +9038,8 @@
       artifacts: total.artifacts + 1,
       bloodEssence: total.bloodEssence + (getRarityIndex(getLootRarity(item).id) >= 2 ? Math.max(1, Math.floor((getRarityIndex(getLootRarity(item).id) - 1) * getLootDismantleMultiplier(state, item))) : 0),
     }), { forgingEssence: 0, artifacts: 0, bloodEssence: 0 }));
-    state.lootEquipment = items.filter((item) => keepUids.has(item.uid));
+    const removedUids = new Set(removedItems.map((item) => item.uid));
+    state.lootEquipment = items.filter((item) => !removedUids.has(item.uid));
     if (state.lockedLoot) {
       Object.keys(state.lockedLoot).forEach((uid) => {
         if (!state.lootEquipment.some((item) => item.uid === uid)) {
@@ -8982,30 +9052,43 @@
     return { ok: true, removed: removedItems.length, reward, items: removedItems };
   }
 
-  function getOrganizableLootItems(state) {
+  function normalizeLootRaritySelection(rarityIds) {
+    if (!Array.isArray(rarityIds)) {
+      return null;
+    }
+    const validIds = new Set(rarityTiers.map((tier) => tier.id));
+    const selected = rarityIds.filter((id) => validIds.has(id));
+    return selected.length ? new Set(selected) : new Set();
+  }
+
+  function getOrganizableLootItems(state, options = {}) {
     const items = state.lootEquipment || [];
     if (!items.length) {
       return [];
     }
     const keepUids = new Set(Object.values(state.equippedLoot || {}).filter(Boolean));
+    const selectedRarities = normalizeLootRaritySelection(options.rarityIds);
     Object.entries(state.lockedLoot || {}).forEach(([uid, locked]) => {
       if (locked) {
         keepUids.add(uid);
       }
     });
-    Object.values(gear).forEach((gearItem) => {
-      const candidate = items
-        .filter((item) => item.slot === gearItem.id && !keepUids.has(item.uid))
-        .sort((a, b) => getLootScore(b) - getLootScore(a))[0];
-      if (candidate) {
-        keepUids.add(candidate.uid);
-      }
-    });
-    return items.filter((item) => !keepUids.has(item.uid));
+    if (!selectedRarities) {
+      Object.values(gear).forEach((gearItem) => {
+        const candidate = items
+          .filter((item) => item.slot === gearItem.id && !keepUids.has(item.uid))
+          .sort((a, b) => getLootScore(b) - getLootScore(a))[0];
+        if (candidate) {
+          keepUids.add(candidate.uid);
+        }
+      });
+    }
+    return items.filter((item) => !keepUids.has(item.uid)
+      && (!selectedRarities || selectedRarities.has(getLootRarity(item).id)));
   }
 
-  function getOrganizableLootSummary(state) {
-    const items = getOrganizableLootItems(state);
+  function getOrganizableLootSummary(state, options = {}) {
+    const items = getOrganizableLootItems(state, options);
     const reward = filterCost(items.reduce((total, item) => ({
       forgingEssence: total.forgingEssence + Math.floor(2 * getLootDismantleMultiplier(state, item)),
       artifacts: total.artifacts + 1,
