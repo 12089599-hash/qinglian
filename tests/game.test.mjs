@@ -508,11 +508,22 @@ test('equipment combat profile exposes elemental offense and defense', () => {
 });
 
 test('gear affix pools provide multiple elemental build choices', () => {
-  assert.equal(GEAR_AFFIX_POOLS.weapon.length >= 4, true);
-  assert.equal(GEAR_AFFIX_POOLS.amulet.length >= 4, true);
-  assert.equal(GEAR_AFFIX_POOLS.robe.length >= 4, true);
+  assert.deepEqual(Object.keys(GEAR), ['weapon', 'offhand', 'amulet', 'robe', 'jade', 'boots']);
+  Object.keys(GEAR).forEach((slot) => {
+    assert.equal(GEAR_AFFIX_POOLS[slot].length >= 4, true);
+  });
   assert.equal(Object.values(GEAR_AFFIXES).some((affix) => affix.element === 'dark'), true);
   assert.equal(Object.values(GEAR_AFFIXES).some((affix) => affix.element === 'light'), true);
+});
+
+test('loot pool covers six equipment slots and new saves normalize each slot', () => {
+  const state = createGameState(1000);
+  const lootSlots = new Set(Object.values(LOOT_EQUIPMENT).map((item) => item.slot));
+
+  assert.deepEqual(Object.keys(state.equippedLoot), ['weapon', 'offhand', 'amulet', 'robe', 'jade', 'boots']);
+  Object.keys(GEAR).forEach((slot) => {
+    assert.equal(lootSlots.has(slot), true);
+  });
 });
 
 test('matching gear affixes activate set resonance bonuses', () => {
@@ -909,7 +920,7 @@ test('dropped loot carries deterministic variant stats beyond the template', () 
   assert.equal(Object.keys(item.bonuses).some((key) => item.bonuses[key] !== LOOT_EQUIPMENT.cloudthreadRobe.bonuses[key]), true);
 });
 
-test('loot rarity tiers deepen affix pools and strengthening ceilings', () => {
+test('loot rarity tiers deepen affix pools without binding strengthening to items', () => {
   const state = reviveGameState({
     lootEquipment: [
       {
@@ -936,7 +947,8 @@ test('loot rarity tiers deepen affix pools and strengthening ceilings', () => {
   assert.equal(dao.rarity.name, '道器');
   assert.equal(common.variant.affixes.length, 1);
   assert.equal(dao.variant.affixes.length, 3);
-  assert.equal(dao.maxLevel > common.maxLevel, true);
+  assert.equal(dao.slotLevel, common.slotLevel);
+  assert.equal(dao.maxLevel, common.maxLevel);
   assert.equal(dao.effects.find((effect) => effect.id === 'attack').value > common.effects.find((effect) => effect.id === 'attack').value, true);
 });
 
@@ -1393,7 +1405,7 @@ test('midgame spirit stone guidance stays on progression maps', () => {
   assert.equal(guidance.primary.commission.id, 'mine');
 });
 
-test('loot dismantling creates strengthening material and empowerment improves bonuses', () => {
+test('loot dismantling creates strengthening material and empowerment improves the slot', () => {
   const state = createGameState(1000);
   state.realmIndex = realmIndexByName('筑基一层');
   state.gear.weapon = 12;
@@ -1414,19 +1426,23 @@ test('loot dismantling creates strengthening material and empowerment improves b
 
   assert.equal(dismantled.ok, true);
   assert.equal(state.lootEquipment.length, 1);
-  assert.equal(state.forgingEssence, 5);
-  assert.equal(state.artifacts, 9);
+  assert.equal(state.forgingEssence, 6);
+  assert.equal(state.artifacts, 8);
 
   state.spiritStones = 200;
-  const before = calculatePower(state);
   const item = state.lootEquipment[0];
+  const beforeBonuses = { ...item.bonuses };
+  state.gear[item.slot] = 0;
   equipLootEquipment(state, item.uid, 425_000);
+  const before = calculatePower(state);
   const empowered = empowerLootEquipment(state, item.uid, 426_000);
 
   assert.equal(empowered.ok, true);
-  assert.equal(state.lootEquipment[0].level, 1);
-  assert.equal(state.lootEquipment[0].bonuses.power, 44);
-  assert.equal(calculatePower(state) - before, 44);
+  assert.equal(empowered.slot, item.slot);
+  assert.equal(state.gear[item.slot], 1);
+  assert.equal(state.lootEquipment[0].level, 0);
+  assert.deepEqual(state.lootEquipment[0].bonuses, beforeBonuses);
+  assert.equal(calculatePower(state) - before, GEAR[item.slot].powerPerLevel);
 });
 
 test('loot details compare against equipped items and organize weak unlocked loot', () => {
@@ -1497,10 +1513,10 @@ test('formations treasures and spirit beasts expose rarity milestones', () => {
   assert.equal(tiger.rarity.name, '玄纹');
 });
 
-test('loot empowerment uses tiered materials and stronger cross-tier bonuses', () => {
+test('loot empowerment uses slot tiered materials and inherits across replacements', () => {
   const state = createGameState(1000);
   state.realmIndex = realmIndexByName('筑基一层');
-  state.gear.weapon = 12;
+  state.gear.weapon = 0;
   state.gear.robe = 9;
   state.cultivationPaths.sword = 6;
   state.formations.swordArray = 6;
@@ -1517,24 +1533,32 @@ test('loot empowerment uses tiered materials and stronger cross-tier bonuses', (
   empowerLootEquipment(state, item.uid, 142_000);
   empowerLootEquipment(state, item.uid, 143_000);
   empowerLootEquipment(state, item.uid, 144_000);
-  const beforeTierCross = item.bonuses.power;
   const crossed = empowerLootEquipment(state, item.uid, 145_000);
+  const second = reviveGameState({
+    gear: state.gear,
+    lootEquipment: [
+      { uid: 'fresh-sword', templateId: 'qingfengSword', variant: { rarityId: 'common', affixIds: ['edge'], element: 'metal' } },
+    ],
+  }, 146_000);
+  const fresh = getEquipmentDetails(second).loot[0];
 
   assert.equal(crossed.ok, true);
-  assert.equal(item.level, 4);
+  assert.equal(item.level, 0);
+  assert.equal(state.gear.weapon, 4);
   assert.equal(getLootEmpowerCost(4).artifacts, 1);
-  assert.equal(item.bonuses.power > beforeTierCross, true);
-  assert.equal(item.bonuses.power, 71);
+  assert.equal(fresh.slotLevel, 4);
+  assert.equal(fresh.effects.find((effect) => effect.id === 'power').value, item.bonuses.power);
 });
 
 test('equipped elemental trophies awaken loot resonance', () => {
   const state = createGameState(1000);
   state.lootEquipment = [
     { uid: 'fire-sword', templateId: 'qingfengSword', name: '离火青锋剑', slot: 'weapon', quality: 1, level: 1, element: 'fire', bonuses: { power: 40, attack: 28, elementPower: 18 } },
+    { uid: 'fire-wheel', templateId: 'xuanmingWheel', name: '离火玄鸣轮', slot: 'offhand', quality: 1, level: 1, element: 'fire', bonuses: { power: 24, attack: 12, elementPower: 12 } },
     { uid: 'fire-robe', templateId: 'cloudthreadRobe', name: '离火云纹袍', slot: 'robe', quality: 1, level: 1, element: 'fire', bonuses: { defense: 24, dangerReduction: 18, elementPower: 16 } },
     { uid: 'fire-amulet', templateId: 'xuanmuAmulet', name: '离火玄木符', slot: 'amulet', quality: 1, level: 1, element: 'fire', bonuses: { vitality: 42, qiRate: 0.03, elementPower: 14 } },
   ];
-  state.equippedLoot = { weapon: 'fire-sword', robe: 'fire-robe', amulet: 'fire-amulet' };
+  state.equippedLoot = { weapon: 'fire-sword', offhand: 'fire-wheel', robe: 'fire-robe', amulet: 'fire-amulet', jade: null, boots: null };
 
   const resonance = getLootResonanceStatus(state);
   const combat = getCombatProfile(state);
@@ -1542,7 +1566,8 @@ test('equipped elemental trophies awaken loot resonance', () => {
 
   assert.equal(resonance.active, true);
   assert.equal(resonance.element.id, 'fire');
-  assert.equal(resonance.matched, 3);
+  assert.equal(resonance.matched, 4);
+  assert.equal(resonance.total, 6);
   assert.equal(resonance.effects.some((effect) => effect.id === 'attack'), true);
   assert.equal(combat.attack.sources.some((source) => source.label === '战利共鸣'), true);
   assert.equal(combat.elementPower.sources.some((source) => source.label.includes('战利共鸣')), true);

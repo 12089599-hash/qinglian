@@ -1365,15 +1365,72 @@ small {
     rgba(255, 255, 255, 0.026);
 }
 
-.gear-set-panel > strong {
+.gear-set-panel summary {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  cursor: pointer;
+  list-style: none;
+}
+
+.gear-set-panel summary::-webkit-details-marker {
+  display: none;
+}
+
+.gear-set-panel summary > strong {
   color: var(--gold);
   font-size: 0.9rem;
 }
 
-.gear-set-panel > div {
-  display: grid;
+.gear-set-panel summary > span {
+  min-width: 0;
+  color: var(--paper);
+  font-size: 0.82rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gear-set-names {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.gear-set-names em {
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+  border: 1px solid rgba(245, 238, 220, 0.09);
+  border-radius: 999px;
+  padding: 3px 8px;
+  color: var(--muted);
+  font-size: 0.74rem;
+  font-style: normal;
+  font-weight: 900;
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.gear-set-names em.active {
+  border-color: rgba(125, 211, 183, 0.36);
+  color: var(--jade);
+}
+
+.gear-set-names small {
+  margin: 0;
+  color: inherit;
+  font-size: 0.7rem;
+}
+
+.gear-set-details {
+  display: none;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
+}
+
+.gear-set-panel[open] .gear-set-details {
+  display: grid;
 }
 
 .gear-set-panel article {
@@ -1406,6 +1463,21 @@ small {
   font-size: 0.78rem;
   font-style: normal;
   font-weight: 900;
+}
+
+.gear-set-names em {
+  display: inline-flex;
+  margin-top: 0;
+  color: var(--muted);
+}
+
+.gear-set-names em.active {
+  color: var(--jade);
+}
+
+.gear-set-names small {
+  display: inline;
+  margin: 0;
 }
 
 .gear-set-panel ul {
@@ -2681,6 +2753,14 @@ small {
 }
 
 @media (max-width: 760px) {
+  html {
+    scroll-padding-bottom: calc(112px + env(safe-area-inset-bottom));
+  }
+
+  .shell {
+    padding-bottom: calc(120px + env(safe-area-inset-bottom));
+  }
+
   body[data-active-tab="overview"] .hero {
     min-height: 286px;
   }
@@ -3061,6 +3141,12 @@ small {
     scroll-margin-top: 58px;
   }
 
+  .detail-row,
+  .equipment-detail-card,
+  .gear-set-panel {
+    scroll-margin-bottom: calc(112px + env(safe-area-inset-bottom));
+  }
+
   .map-group > .map-heading,
   .map-group > .map-progress,
   .map-group > .map-meta,
@@ -3118,11 +3204,48 @@ small {
     grid-template-columns: 1fr;
   }
 
-  .gear-set-panel > div,
-  .loot-toolbar,
+  .gear-set-details,
   .battle-playback-head,
   .mission-report header {
     grid-template-columns: 1fr;
+  }
+
+  .loot-toolbar {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+  }
+
+  .loot-filters {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+  }
+
+  .loot-filters::-webkit-scrollbar {
+    display: none;
+  }
+
+  .loot-filters button {
+    flex: 0 0 auto;
+    min-height: 32px;
+    padding: 0 10px;
+    scroll-snap-align: start;
+  }
+
+  .loot-toolbar > button {
+    width: auto;
+    min-height: 34px;
+    padding: 0 10px;
+    white-space: nowrap;
+  }
+
+  .loot-summary-effects {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
   }
 
   .mission-report-grid {
@@ -3139,10 +3262,6 @@ small {
 
   .clash-mark {
     min-height: 62px;
-  }
-
-  .loot-toolbar > button {
-    width: 100%;
   }
 
   .map-icon,

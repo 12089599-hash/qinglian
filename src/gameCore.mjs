@@ -94,7 +94,7 @@ export const MISSIONS = {
     unlockRealmIndex: 0,
     duration: 55,
     reward: { spiritStones: 10, qi: 6 },
-    events: ['spiritSpring', 'cloudRobeCache'],
+    events: ['spiritSpring', 'cloudRobeCache', 'greenJadeCache'],
   },
   marketTrade: {
     id: 'marketTrade',
@@ -118,7 +118,7 @@ export const MISSIONS = {
     rareEvery: 4,
     rareReward: { meridianPill: 1 },
     failurePenalty: { qi: -45, heartDemon: 1 },
-    events: ['spiritSpring', 'cloudRobeCache'],
+    events: ['spiritSpring', 'cloudRobeCache', 'cloudBootsCache'],
   },
   herbValley: {
     id: 'herbValley',
@@ -146,7 +146,7 @@ export const MISSIONS = {
     rareEvery: 3,
     rareReward: { beastCores: 2, arrayFlags: 1 },
     failurePenalty: { qi: -60, heartDemon: 1 },
-    events: ['swordRemnant', 'beastAmbush'],
+    events: ['swordRemnant', 'moonWheelCache', 'beastAmbush'],
   },
   demonRift: {
     id: 'demonRift',
@@ -160,7 +160,7 @@ export const MISSIONS = {
     rareEvery: 4,
     rareReward: { meridianPill: 1, arrayFlags: 1 },
     failurePenalty: { qi: -90, heartDemon: 2 },
-    events: ['beastAmbush', 'cloudRobeCache'],
+    events: ['beastAmbush', 'moonWheelCache', 'cloudBootsCache'],
   },
   ancientRuins: {
     id: 'ancientRuins',
@@ -174,7 +174,7 @@ export const MISSIONS = {
     rareEvery: 5,
     rareReward: { artifacts: 3, meridianPill: 1 },
     failurePenalty: { qi: -130, heartDemon: 2 },
-    events: ['ancientCache', 'swordRemnant', 'xuanmuAmuletCache'],
+    events: ['ancientCache', 'swordRemnant', 'xuanmuAmuletCache', 'moonWheelCache', 'greenJadeCache', 'cloudBootsCache'],
   },
 };
 
@@ -447,7 +447,7 @@ const RESOURCE_GUIDES = {
     missionId: 'mistyValley',
     approachId: 'monsterHunt',
     commissionId: 'patrol',
-    detail: '武器、法袍、剑阵和护脉丹容易被妖核卡住。',
+    detail: '武器、护符、法袍、云履、剑阵和护脉丹容易被妖核卡住。',
   },
   artifacts: {
     label: '法器',
@@ -476,7 +476,7 @@ const RESOURCE_GUIDES = {
     approachId: 'relicSearch',
     commissionId: 'forge',
     marketItemId: 'forgingAsh',
-    detail: '战利品强化、法宝和炼器阁中后期都需要炼器精魄。',
+    detail: '器位强化、法宝和炼器阁中后期都需要炼器精魄。',
   },
   insight: {
     label: '悟道',
@@ -711,12 +711,33 @@ export const MISSION_EVENTS = {
     reward: { spiritStones: 24 },
     equipment: 'cloudthreadRobe',
   },
+  moonWheelCache: {
+    id: 'moonWheelCache',
+    name: '玄鸣轮匣',
+    detail: '轮匣中月纹轻震，可入副器位。',
+    reward: { forgingEssence: 1 },
+    equipment: 'xuanmingWheel',
+  },
   xuanmuAmuletCache: {
     id: 'xuanmuAmuletCache',
     name: '玄木符匣',
     detail: '符匣内温润生机，可护持突破。',
     reward: { herbs: 5 },
     equipment: 'xuanmuAmulet',
+  },
+  greenJadeCache: {
+    id: 'greenJadeCache',
+    name: '青玉残佩',
+    detail: '残佩仍含温润地气，可入玉佩位。',
+    reward: { spiritStones: 18 },
+    equipment: 'greenJadePendant',
+  },
+  cloudBootsCache: {
+    id: 'cloudBootsCache',
+    name: '踏云履囊',
+    detail: '旧履藏有轻灵步纹，可入云履位。',
+    reward: { herbs: 4 },
+    equipment: 'cloudstepBoots',
   },
   ancientCache: {
     id: 'ancientCache',
@@ -735,6 +756,14 @@ export const LOOT_EQUIPMENT = {
     element: 'metal',
     bonuses: { power: 36, attack: 22, elementPower: 12 },
   },
+  xuanmingWheel: {
+    id: 'xuanmingWheel',
+    name: '玄鸣法轮',
+    slot: 'offhand',
+    quality: 1,
+    element: 'light',
+    bonuses: { power: 24, attack: 14, pierce: 8, elementPower: 12 },
+  },
   cloudthreadRobe: {
     id: 'cloudthreadRobe',
     name: '云纹法袍',
@@ -751,15 +780,31 @@ export const LOOT_EQUIPMENT = {
     element: 'wood',
     bonuses: { breakthrough: 0.04, qiRate: 0.03, vitality: 35, elementPower: 10 },
   },
+  greenJadePendant: {
+    id: 'greenJadePendant',
+    name: '青玉佩',
+    slot: 'jade',
+    quality: 1,
+    element: 'earth',
+    bonuses: { qiRate: 0.025, defense: 12, vitality: 24, elementPower: 10 },
+  },
+  cloudstepBoots: {
+    id: 'cloudstepBoots',
+    name: '踏云履',
+    slot: 'boots',
+    quality: 1,
+    element: 'water',
+    bonuses: { dangerReduction: 10, speed: 8, defense: 10, elementPower: 8 },
+  },
 };
 
 export const RARITY_TIERS = [
-  { id: 'common', name: '凡品', weight: 420, qualityBonus: 0, bonusMultiplier: 1, maxLevelBonus: 0, affixCount: 1, dismantleMultiplier: 1 },
-  { id: 'spirit', name: '蕴灵', weight: 300, qualityBonus: 0, bonusMultiplier: 1.08, maxLevelBonus: 1, affixCount: 1, dismantleMultiplier: 1 },
-  { id: 'mystic', name: '玄纹', weight: 180, qualityBonus: 1, bonusMultiplier: 1.18, maxLevelBonus: 2, affixCount: 2, dismantleMultiplier: 1.25 },
-  { id: 'earthFiend', name: '地煞', weight: 70, qualityBonus: 2, bonusMultiplier: 1.32, maxLevelBonus: 3, affixCount: 2, dismantleMultiplier: 1.55 },
-  { id: 'heavenWork', name: '天工', weight: 25, qualityBonus: 3, bonusMultiplier: 1.5, maxLevelBonus: 4, affixCount: 3, dismantleMultiplier: 1.9 },
-  { id: 'dao', name: '道器', weight: 5, qualityBonus: 4, bonusMultiplier: 1.72, maxLevelBonus: 6, affixCount: 3, dismantleMultiplier: 2.4 },
+  { id: 'common', name: '凡品', weight: 420, qualityBonus: 0, bonusMultiplier: 1, affixCount: 1, dismantleMultiplier: 1 },
+  { id: 'spirit', name: '蕴灵', weight: 300, qualityBonus: 0, bonusMultiplier: 1.08, affixCount: 1, dismantleMultiplier: 1 },
+  { id: 'mystic', name: '玄纹', weight: 180, qualityBonus: 1, bonusMultiplier: 1.18, affixCount: 2, dismantleMultiplier: 1.25 },
+  { id: 'earthFiend', name: '地煞', weight: 70, qualityBonus: 2, bonusMultiplier: 1.32, affixCount: 2, dismantleMultiplier: 1.55 },
+  { id: 'heavenWork', name: '天工', weight: 25, qualityBonus: 3, bonusMultiplier: 1.5, affixCount: 3, dismantleMultiplier: 1.9 },
+  { id: 'dao', name: '道器', weight: 5, qualityBonus: 4, bonusMultiplier: 1.72, affixCount: 3, dismantleMultiplier: 2.4 },
 ];
 
 export const COMBAT_ELEMENTS = {
@@ -784,6 +829,11 @@ const LOOT_VARIANT_AFFIXES = {
     { id: 'pierce', name: '破势', bonuses: { pierce: 12 } },
     { id: 'spark', name: '会心', bonuses: { critChance: 0.02 } },
   ],
+  offhand: [
+    { id: 'wheel', name: '轮影', bonuses: { attack: 10, pierce: 6 } },
+    { id: 'bell', name: '清音', bonuses: { qiRate: 0.014, defense: 8 } },
+    { id: 'flare', name: '曜纹', bonuses: { critChance: 0.018, elementPower: 8 } },
+  ],
   amulet: [
     { id: 'life', name: '养命', bonuses: { vitality: 28 } },
     { id: 'gate', name: '护关', bonuses: { breakthrough: 0.018 } },
@@ -793,6 +843,16 @@ const LOOT_VARIANT_AFFIXES = {
     { id: 'guard', name: '护体', bonuses: { defense: 16 } },
     { id: 'step', name: '轻身', bonuses: { speed: 5 } },
     { id: 'ward', name: '避劫', bonuses: { dangerReduction: 8 } },
+  ],
+  jade: [
+    { id: 'root', name: '地脉', bonuses: { vitality: 22, defense: 8 } },
+    { id: 'clear', name: '澄息', bonuses: { qiRate: 0.016 } },
+    { id: 'pulse', name: '玉振', bonuses: { elementPower: 10, breakthrough: 0.012 } },
+  ],
+  boots: [
+    { id: 'cloud', name: '云痕', bonuses: { speed: 6 } },
+    { id: 'shadow', name: '掠影', bonuses: { dangerReduction: 6, critChance: 0.012 } },
+    { id: 'tread', name: '踏水', bonuses: { defense: 8, elementPower: 8 } },
   ],
 };
 
@@ -906,6 +966,15 @@ export const GEAR = {
     powerPerLevel: 35,
     attackPerLevel: 16,
   },
+  offhand: {
+    id: 'offhand',
+    name: '副器',
+    maxLevel: 12,
+    cost: (level) => ({ spiritStones: tieredLinearCost(76, level), artifacts: tieredMaterialCost(1, level) }),
+    powerPerLevel: 24,
+    attackPerLevel: 10,
+    piercePerLevel: 4,
+  },
   amulet: {
     id: 'amulet',
     name: '护符',
@@ -922,6 +991,23 @@ export const GEAR = {
     dangerReductionPerLevel: 10,
     defensePerLevel: 18,
   },
+  jade: {
+    id: 'jade',
+    name: '玉佩',
+    maxLevel: 12,
+    cost: (level) => ({ spiritStones: tieredLinearCost(68, level), artifacts: tieredMaterialCost(1, level) }),
+    qiBonusPerLevel: 0.018,
+    vitalityPerLevel: 16,
+    defensePerLevel: 8,
+  },
+  boots: {
+    id: 'boots',
+    name: '云履',
+    maxLevel: 12,
+    cost: (level) => ({ spiritStones: tieredLinearCost(58, level), beastCores: tieredMaterialCost(1, level) }),
+    dangerReductionPerLevel: 6,
+    speedPerLevel: 3,
+  },
 };
 
 export const GEAR_INTENTS = {
@@ -929,6 +1015,11 @@ export const GEAR_INTENTS = {
     id: 'suppressEvil',
     name: '镇煞',
     detail: '剑气锋锐，可压住山门首领与秘境凶煞。',
+  },
+  offhand: {
+    id: 'echoBlade',
+    name: '回响',
+    detail: '副器牵动余势，斗法中更容易补足破势与锋芒。',
   },
   amulet: {
     id: 'knockGate',
@@ -939,6 +1030,16 @@ export const GEAR_INTENTS = {
     id: 'wanderGuard',
     name: '行游',
     detail: '云纹护身，外出历练时更能避开劫象。',
+  },
+  jade: {
+    id: 'holdPulse',
+    name: '藏脉',
+    detail: '玉佩温养地脉，长线吐纳和续战根基更稳。',
+  },
+  boots: {
+    id: 'crossMist',
+    name: '踏雾',
+    detail: '云履承风避劫，深入秘境时更能保全身法。',
   },
 };
 
@@ -1063,12 +1164,123 @@ export const GEAR_AFFIXES = {
     element: 'water',
     elementPower: 20,
   },
+  starWheel: {
+    id: 'starWheel',
+    name: '星轮',
+    slot: 'offhand',
+    attack: 14,
+    pierce: 10,
+    element: 'light',
+    elementPower: 16,
+  },
+  spiritBell: {
+    id: 'spiritBell',
+    name: '灵钟',
+    slot: 'offhand',
+    qiBonus: 0.045,
+    defense: 12,
+    element: 'wood',
+    elementPower: 12,
+  },
+  moonWheel: {
+    id: 'moonWheel',
+    name: '月轮',
+    slot: 'offhand',
+    critChance: 0.03,
+    pierce: 12,
+    element: 'dark',
+    elementPower: 18,
+  },
+  sunWheel: {
+    id: 'sunWheel',
+    name: '日轮',
+    slot: 'offhand',
+    attack: 18,
+    critChance: 0.025,
+    element: 'fire',
+    elementPower: 18,
+  },
+  jadeRoot: {
+    id: 'jadeRoot',
+    name: '玉根',
+    slot: 'jade',
+    vitality: 30,
+    qiBonus: 0.035,
+    element: 'earth',
+    elementPower: 12,
+  },
+  clearJade: {
+    id: 'clearJade',
+    name: '澄玉',
+    slot: 'jade',
+    breakthrough: 0.025,
+    defense: 14,
+    element: 'water',
+    elementPower: 12,
+  },
+  darkJade: {
+    id: 'darkJade',
+    name: '玄玉',
+    slot: 'jade',
+    pierce: 8,
+    vitality: 24,
+    element: 'dark',
+    elementPower: 16,
+  },
+  brightJade: {
+    id: 'brightJade',
+    name: '曜玉',
+    slot: 'jade',
+    breakthrough: 0.02,
+    critChance: 0.018,
+    element: 'light',
+    elementPower: 16,
+  },
+  cloudTrace: {
+    id: 'cloudTrace',
+    name: '云踪',
+    slot: 'boots',
+    speed: 8,
+    dangerReduction: 8,
+    element: 'water',
+    elementPower: 12,
+  },
+  windStep: {
+    id: 'windStep',
+    name: '风行',
+    slot: 'boots',
+    speed: 12,
+    critChance: 0.014,
+    element: 'wood',
+    elementPower: 12,
+  },
+  earthStep: {
+    id: 'earthStep',
+    name: '镇步',
+    slot: 'boots',
+    defense: 16,
+    dangerReduction: 6,
+    element: 'earth',
+    elementPower: 12,
+  },
+  shadowStep: {
+    id: 'shadowStep',
+    name: '影步',
+    slot: 'boots',
+    speed: 8,
+    pierce: 8,
+    element: 'dark',
+    elementPower: 16,
+  },
 };
 
 export const GEAR_AFFIX_POOLS = {
   weapon: ['swordIntent', 'breakerEdge', 'flameEdge', 'shadowPierce'],
+  offhand: ['starWheel', 'spiritBell', 'moonWheel', 'sunWheel'],
   amulet: ['spiritVein', 'calmMind', 'sunSigil', 'moonSeal'],
   robe: ['cloudStep', 'guardedBody', 'earthWard', 'waterMirror'],
+  jade: ['jadeRoot', 'clearJade', 'darkJade', 'brightJade'],
+  boots: ['cloudTrace', 'windStep', 'earthStep', 'shadowStep'],
 };
 
 export const GEAR_AFFIX_SETS = {
@@ -1416,9 +1628,9 @@ export const MAINLINE_CHAPTERS = [
       },
       {
         id: 'empoweredLoot',
-        title: '强化一件战利品',
-        detail: '任意具名战利品强化至 2 级',
-        completed: (state) => (state.lootEquipment ?? []).some((item) => (item.level ?? 0) >= 2),
+        title: '强化一处器位',
+        detail: '任意装备器位强化至 2 级，新战利品会继承火候',
+        completed: (state) => Object.values(state.gear ?? {}).some((level) => level >= 2),
         reward: { forgingEssence: 3, spiritStones: 220 },
       },
       {
@@ -1512,28 +1724,12 @@ export function createGameState(now = Date.now()) {
     marketPurchases: {},
     marketStock: null,
     marketRefreshes: {},
-    gear: {
-      weapon: 0,
-      amulet: 0,
-      robe: 0,
-    },
-    gearQuality: {
-      weapon: 0,
-      amulet: 0,
-      robe: 0,
-    },
-    gearAffixes: {
-      weapon: null,
-      amulet: null,
-      robe: null,
-    },
+    gear: Object.fromEntries(Object.keys(GEAR).map((id) => [id, 0])),
+    gearQuality: Object.fromEntries(Object.keys(GEAR).map((id) => [id, 0])),
+    gearAffixes: Object.fromEntries(Object.keys(GEAR).map((id) => [id, null])),
     lootEquipment: [],
     lootDropSerial: 0,
-    equippedLoot: {
-      weapon: null,
-      amulet: null,
-      robe: null,
-    },
+    equippedLoot: Object.fromEntries(Object.keys(GEAR).map((id) => [id, null])),
     lockedLoot: {},
     treasures: Object.fromEntries(Object.keys(TREASURES).map((id) => [id, 0])),
     spiritBeasts: Object.fromEntries(Object.keys(SPIRIT_BEASTS).map((id) => [id, 0])),
@@ -1619,7 +1815,9 @@ export function reviveGameState(saved, now = Date.now()) {
   state.gear = normalizeLevels(state.gear, GEAR);
   state.gearQuality = normalizeGearQuality(state.gearQuality);
   state.gearAffixes = normalizeGearAffixes(state.gearAffixes);
-  state.lootEquipment = normalizeLootEquipment(state.lootEquipment);
+  const savedLootEquipment = state.lootEquipment;
+  state.lootEquipment = normalizeLootEquipment(savedLootEquipment);
+  state.gear = inheritLootLevelsToGear(state.gear, savedLootEquipment);
   state.lootDropSerial = Math.max(Math.floor(Number(state.lootDropSerial) || 0), state.lootEquipment.length);
   state.equippedLoot = normalizeEquippedLoot(state.equippedLoot, state.lootEquipment);
   state.lockedLoot = normalizeLockedLoot(state.lockedLoot, state.lootEquipment);
@@ -1958,6 +2156,12 @@ function getTieredLevelValue(level, perLevel) {
   return perLevel < 1 ? round(value) : Math.round(value);
 }
 
+function getGearLevelBonus(state, field) {
+  return Object.values(GEAR).reduce((total, item) => (
+    total + getTieredLevelValue(state.gear?.[item.id] ?? 0, item[field] ?? 0)
+  ), 0);
+}
+
 function getTieredLootBonus(level) {
   const safeLevel = clampInteger(level, 0, UPGRADE_TIERS[UPGRADE_TIERS.length - 1].maxLevel);
   return round(UPGRADE_TIERS.reduce((total, tier) => {
@@ -2118,7 +2322,7 @@ function getDepthPressure(map, layer) {
 }
 
 function getDepthDanger(state, map, layer) {
-  return Math.max(0, getDepthPressure(map, layer) - getTieredLevelValue(state.gear?.robe ?? 0, GEAR.robe.dangerReductionPerLevel) - getGearAffixBonus(state, 'dangerReduction') - getGearSetBonus(state, 'dangerReduction') - getEquippedLootBonus(state, 'dangerReduction') - getMapMasteryBonus(state, 'dangerReduction') - getTreasureBonus(state, 'dangerReduction') - getSpiritBeastBonus(state, 'dangerReduction') - getDaoHeartBonus(state, 'dangerReduction') - (state.buildings?.swordArray ?? 0) * BUILDINGS.swordArray.dangerReductionPerLevel - (state.cultivationPaths?.sword ?? 0) * CULTIVATION_PATHS.sword.dangerReductionPerLevel);
+  return Math.max(0, getDepthPressure(map, layer) - getGearLevelBonus(state, 'dangerReductionPerLevel') - getGearAffixBonus(state, 'dangerReduction') - getGearSetBonus(state, 'dangerReduction') - getEquippedLootBonus(state, 'dangerReduction') - getMapMasteryBonus(state, 'dangerReduction') - getTreasureBonus(state, 'dangerReduction') - getSpiritBeastBonus(state, 'dangerReduction') - getDaoHeartBonus(state, 'dangerReduction') - (state.buildings?.swordArray ?? 0) * BUILDINGS.swordArray.dangerReductionPerLevel - (state.cultivationPaths?.sword ?? 0) * CULTIVATION_PATHS.sword.dangerReductionPerLevel);
 }
 
 function getDepthDuration(map, layer) {
@@ -2310,6 +2514,7 @@ export function calculateQiRate(state, now = Date.now()) {
   const realm = getCurrentRealm(state);
   const buildingBonus = 1 + ((state.buildings?.meditationSeat ?? 1) - 1) * BUILDINGS.meditationSeat.qiBonusPerLevel;
   const formationBonus = 1 + (state.formations?.spiritGathering ?? 0) * FORMATIONS.spiritGathering.qiBonusPerLevel;
+  const gearBonus = 1 + getGearLevelBonus(state, 'qiBonusPerLevel');
   const affixBonus = 1 + getGearAffixBonus(state, 'qiBonus');
   const pathBonus = 1 + (state.cultivationPaths?.formation ?? 0) * CULTIVATION_PATHS.formation.qiBonusPerLevel;
   const permanentBonus = 1 + (state.permanentBonuses?.qiRate ?? 0);
@@ -2321,7 +2526,7 @@ export function calculateQiRate(state, now = Date.now()) {
   const setBonus = 1 + getGearSetBonus(state, 'qiBonus');
   const pillBoost = state.pillBoostUntil && state.pillBoostUntil > now ? 1.4 : 1;
   const injuryPenalty = state.injuryUntil && state.injuryUntil > now ? 0.75 : 1;
-  return round(realm.qiRate * buildingBonus * formationBonus * affixBonus * pathBonus * permanentBonus * lootBonus * masteryBonus * treasureBonus * beastBonus * daoHeartBonus * setBonus * pillBoost * injuryPenalty);
+  return round(realm.qiRate * buildingBonus * formationBonus * gearBonus * affixBonus * pathBonus * permanentBonus * lootBonus * masteryBonus * treasureBonus * beastBonus * daoHeartBonus * setBonus * pillBoost * injuryPenalty);
 }
 
 export function calculateBreakthroughChance(state, now = Date.now()) {
@@ -2329,7 +2534,7 @@ export function calculateBreakthroughChance(state, now = Date.now()) {
   const overfill = Math.max(0, state.qi - realm.requiredQi);
   const preparation = Math.min(0.2, overfill / realm.requiredQi / 2);
   const insightBonus = Math.min(0.15, (state.insight ?? 0) * 0.03);
-  const gearBonus = Math.min(0.18, getTieredLevelValue(state.gear?.amulet ?? 0, GEAR.amulet.breakthroughPerLevel));
+  const gearBonus = Math.min(0.18, getGearLevelBonus(state, 'breakthroughPerLevel'));
   const affixBonus = Math.min(0.08, getGearAffixBonus(state, 'breakthrough'));
   const lootBonus = Math.min(0.1, getEquippedLootBonus(state, 'breakthrough'));
   const formationBonus = Math.min(0.12, (state.formations?.mountainGuard ?? 0) * FORMATIONS.mountainGuard.stabilityPerLevel);
@@ -2348,7 +2553,7 @@ export function calculatePower(state) {
   const realmPower = getRealmPower(state);
   const pathPower = (state.cultivationPaths?.sword ?? 0) * CULTIVATION_PATHS.sword.powerPerLevel;
   const swordPower = (state.buildings?.swordArray ?? 0) * BUILDINGS.swordArray.powerPerLevel;
-  const gearPower = getTieredLevelValue(state.gear?.weapon ?? 0, GEAR.weapon.powerPerLevel);
+  const gearPower = getGearLevelBonus(state, 'powerPerLevel');
   const gearQualityPower = Object.values(state.gearQuality ?? {}).reduce((total, qualityIndex) => total + (GEAR_QUALITIES[qualityIndex]?.powerBonus ?? 0), 0);
   const affixPower = getGearAffixBonus(state, 'powerBonus');
   const setPower = getGearSetBonus(state, 'powerBonus');
@@ -2374,7 +2579,7 @@ export function getCombatProfile(state) {
   const power = calculatePower(state);
   const attackSources = compactSources([
     { label: '道行底蕴', value: Math.floor(power * 0.62) },
-    { label: '兵刃锋芒', value: getTieredLevelValue(state.gear?.weapon ?? 0, GEAR.weapon.attackPerLevel) },
+    { label: '器位锋芒', value: getGearLevelBonus(state, 'attackPerLevel') },
     ...getGearAffixSources(state, 'attack'),
     ...getGearSetSources(state, 'attack'),
     ...getEquippedLootSources(state, 'attack'),
@@ -2383,7 +2588,7 @@ export function getCombatProfile(state) {
   ]);
   const defenseSources = compactSources([
     { label: '道体根基', value: Math.floor(power * 0.18) },
-    { label: '法袍护体', value: getTieredLevelValue(state.gear?.robe ?? 0, GEAR.robe.defensePerLevel) },
+    { label: '器位护体', value: getGearLevelBonus(state, 'defensePerLevel') },
     ...getGearAffixSources(state, 'defense'),
     ...getGearSetSources(state, 'defense'),
     ...getEquippedLootSources(state, 'defense'),
@@ -2392,7 +2597,7 @@ export function getCombatProfile(state) {
   ]);
   const vitalitySources = compactSources([
     { label: '境界血元', value: 260 + (state.realmIndex ?? 0) * 36 },
-    { label: '护符养命', value: getTieredLevelValue(state.gear?.amulet ?? 0, GEAR.amulet.vitalityPerLevel) },
+    { label: '器位养命', value: getGearLevelBonus(state, 'vitalityPerLevel') },
     ...getGearAffixSources(state, 'vitality'),
     ...getGearSetSources(state, 'vitality'),
     ...getEquippedLootSources(state, 'vitality'),
@@ -2401,6 +2606,7 @@ export function getCombatProfile(state) {
   ]);
   const speedSources = compactSources([
     { label: '身法根基', value: 12 + Math.floor((state.realmIndex ?? 0) / 2) },
+    { label: '器位身法', value: getGearLevelBonus(state, 'speedPerLevel') },
     ...getGearAffixSources(state, 'speed'),
     ...getGearSetSources(state, 'speed'),
     ...getEquippedLootSources(state, 'speed'),
@@ -2414,6 +2620,7 @@ export function getCombatProfile(state) {
     ...getDeployedSpiritBeastSources(state, 'critChance', 'percent'),
   ]);
   const pierceSources = compactSources([
+    { label: '器位破势', value: getGearLevelBonus(state, 'piercePerLevel') },
     ...getGearAffixSources(state, 'pierce'),
     ...getGearSetSources(state, 'pierce'),
     ...getEquippedLootSources(state, 'pierce'),
@@ -2460,7 +2667,7 @@ export function getCharacterProfile(state, now = Date.now()) {
     { label: '境界威压', value: getRealmPower(state) },
     { label: '剑诀火候', value: (state.cultivationPaths?.sword ?? 0) * CULTIVATION_PATHS.sword.powerPerLevel },
     { label: '洞府剑阵', value: (state.buildings?.swordArray ?? 0) * BUILDINGS.swordArray.powerPerLevel },
-    { label: '兵刃品阶', value: getTieredLevelValue(state.gear?.weapon ?? 0, GEAR.weapon.powerPerLevel) },
+    { label: '器位品阶', value: getGearLevelBonus(state, 'powerPerLevel') },
     { label: '炼器品相', value: Object.values(state.gearQuality ?? {}).reduce((total, qualityIndex) => total + (GEAR_QUALITIES[qualityIndex]?.powerBonus ?? 0), 0) },
     { label: '灵纹词条', value: getGearAffixBonus(state, 'powerBonus') },
     { label: '同调器象', value: getGearSetBonus(state, 'powerBonus') },
@@ -2478,6 +2685,7 @@ export function getCharacterProfile(state, now = Date.now()) {
     { label: '境界周天', value: realm.qiRate, mode: 'base' },
     { label: '静室蒲团', value: ((state.buildings?.meditationSeat ?? 1) - 1) * BUILDINGS.meditationSeat.qiBonusPerLevel, mode: 'percent' },
     { label: '聚灵阵纹', value: (state.formations?.spiritGathering ?? 0) * FORMATIONS.spiritGathering.qiBonusPerLevel, mode: 'percent' },
+    { label: '玉佩藏脉', value: getGearLevelBonus(state, 'qiBonusPerLevel'), mode: 'percent' },
     { label: '护符灵纹', value: getGearAffixBonus(state, 'qiBonus'), mode: 'percent' },
     { label: '同调器象', value: getGearSetBonus(state, 'qiBonus'), mode: 'percent' },
     { label: '阵道感悟', value: (state.cultivationPaths?.formation ?? 0) * CULTIVATION_PATHS.formation.qiBonusPerLevel, mode: 'percent' },
@@ -2491,7 +2699,7 @@ export function getCharacterProfile(state, now = Date.now()) {
   ]);
   const breakthroughSources = compactSources([
     { label: '本命道基', value: 0.75, mode: 'percent' },
-    { label: '护符护脉', value: Math.min(0.18, getTieredLevelValue(state.gear?.amulet ?? 0, GEAR.amulet.breakthroughPerLevel)), mode: 'percent' },
+    { label: '器位护脉', value: Math.min(0.18, getGearLevelBonus(state, 'breakthroughPerLevel')), mode: 'percent' },
     { label: '灵纹词条', value: Math.min(0.08, getGearAffixBonus(state, 'breakthrough')), mode: 'percent' },
     { label: '同调器象', value: Math.min(0.08, getGearSetBonus(state, 'breakthrough')), mode: 'percent' },
     { label: '护山阵势', value: Math.min(0.12, (state.formations?.mountainGuard ?? 0) * FORMATIONS.mountainGuard.stabilityPerLevel), mode: 'percent' },
@@ -2502,7 +2710,7 @@ export function getCharacterProfile(state, now = Date.now()) {
     { label: '根基沉淀', value: Math.min(0.15, (state.foundationStability ?? 0) * 0.05), mode: 'percent' },
     { label: '心魔侵扰', value: -Math.min(0.35, (state.heartDemon ?? 0) * 0.15), mode: 'percent' },
   ], true);
-  const explorationSafety = getTieredLevelValue(state.gear?.robe ?? 0, GEAR.robe.dangerReductionPerLevel)
+  const explorationSafety = getGearLevelBonus(state, 'dangerReductionPerLevel')
     + getGearAffixBonus(state, 'dangerReduction')
     + getGearSetBonus(state, 'dangerReduction')
     + getEquippedLootBonus(state, 'dangerReduction')
@@ -2528,7 +2736,7 @@ export function getCharacterProfile(state, now = Date.now()) {
       { id: 'cultivationSpeed', label: '灵息', value: calculateQiRate(state, now), unit: '/分钟', sources: cultivationSources },
       { id: 'breakthrough', label: '破境天机', value: calculateBreakthroughChance(state, now), unit: '%', sources: breakthroughSources },
       { id: 'explorationSafety', label: '护体玄光', value: explorationSafety, sources: compactSources([
-        { label: '法袍护身', value: getTieredLevelValue(state.gear?.robe ?? 0, GEAR.robe.dangerReductionPerLevel) },
+        { label: '器位护身', value: getGearLevelBonus(state, 'dangerReductionPerLevel') },
         { label: '灵纹词条', value: getGearAffixBonus(state, 'dangerReduction') },
         { label: '同调器象', value: getGearSetBonus(state, 'dangerReduction') },
         { label: '奇珍加持', value: getEquippedLootBonus(state, 'dangerReduction') },
@@ -2588,10 +2796,11 @@ export function getGearSetStatus(state) {
 }
 
 export function getLootResonanceStatus(state) {
-  const equippedItems = ['weapon', 'amulet', 'robe']
+  const slots = Object.keys(GEAR);
+  const equippedItems = slots
     .map((slot) => getEquippedLoot(state, slot))
     .filter((item) => item && COMBAT_ELEMENTS[item.element]);
-  const total = 3;
+  const total = slots.length;
   if (equippedItems.length < 2) {
     return {
       active: false,
@@ -2625,15 +2834,17 @@ export function getLootResonanceStatus(state) {
     };
   }
 
-  const complete = matched >= 3;
+  const complete = matched >= 4;
   const bonuses = complete
     ? { power: 54, attack: 32, defense: 18, vitality: 52, elementPower: 26 }
+    : matched >= 3
+      ? { power: 38, attack: 22, defense: 12, vitality: 28, elementPower: 18 }
     : { power: 22, attack: 14, defense: 8, elementPower: 12 };
   return {
     active: true,
     id: `lootResonance:${element.id}:${matched}`,
-    name: `${element.name}${complete ? '三器同鸣' : '双器相生'}`,
-    detail: complete ? '三件战利品灵根同源，器象贯通成阵。' : '两件战利品灵根相合，气机开始互引。',
+    name: `${element.name}${complete ? '四象成阵' : matched >= 3 ? '三器同鸣' : '双器相生'}`,
+    detail: complete ? '四件以上战利品灵根同源，器象贯通成阵。' : matched >= 3 ? '三件战利品灵根同源，气机互引成势。' : '两件战利品灵根相合，气机开始互引。',
     matched,
     total,
     complete,
@@ -2688,27 +2899,38 @@ export function getEquipmentDetails(state) {
     }),
     sets: getGearSetStatus(state),
     lootResonance: getLootResonanceStatus(state),
-    loot: (state.lootEquipment ?? []).map((item) => ({
-      uid: item.uid,
-      name: item.name,
-      slot: item.slot,
-      variant: item.variant ?? null,
-      rarity: getLootRarity(item),
-      level: item.level ?? 0,
-      maxLevel: getLootMaxLevel(item),
-      tier: getUpgradeTier(Math.max(1, item.level ?? 1)),
-      intent: getGearIntent(item.slot),
-      equipped: state.equippedLoot?.[item.slot] === item.uid,
-      locked: Boolean(state.lockedLoot?.[item.uid]),
-      effects: effectsFromBonusObject(item.bonuses ?? {}),
-      comparison: compareLootEquipment(state, item),
-      nextEffects: (item.level ?? 0) >= getLootMaxLevel(item) ? [] : effectsFromBonusObject(createLootBonuses(item.templateId, (item.level ?? 0) + 1, item.variant)),
-      empower: {
-        maxed: (item.level ?? 0) >= getLootMaxLevel(item),
-        nextLevel: (item.level ?? 0) + 1,
-        cost: (item.level ?? 0) >= getLootMaxLevel(item) ? null : getLootEmpowerCost((item.level ?? 0) + 1),
-      },
-    })),
+    loot: (state.lootEquipment ?? []).map((item) => {
+      const slotLevel = state.gear?.[item.slot] ?? 0;
+      const maxLevel = getLootMaxLevel(item);
+      const maxed = slotLevel >= maxLevel;
+      const nextLevel = slotLevel + 1;
+      const realmLocked = nextLevel > getRealmUpgradeLimit(state);
+      return {
+        uid: item.uid,
+        name: item.name,
+        slot: item.slot,
+        variant: item.variant ?? null,
+        rarity: getLootRarity(item),
+        level: item.level ?? 0,
+        slotLevel,
+        maxLevel,
+        slotMaxLevel: maxLevel,
+        tier: getUpgradeTier(Math.max(1, maxed ? slotLevel : nextLevel)),
+        intent: getGearIntent(item.slot),
+        equipped: state.equippedLoot?.[item.slot] === item.uid,
+        locked: Boolean(state.lockedLoot?.[item.uid]),
+        effects: effectsFromBonusObject(item.bonuses ?? {}),
+        slotEffects: getGearEffects(item.slot, slotLevel, state.gearQuality?.[item.slot] ?? 0, null),
+        comparison: compareLootEquipment(state, item),
+        nextEffects: maxed || realmLocked ? [] : getGearEffects(item.slot, nextLevel, state.gearQuality?.[item.slot] ?? 0, null),
+        empower: {
+          maxed,
+          realmLocked,
+          nextLevel,
+          cost: maxed || realmLocked ? null : getLootEmpowerCost(nextLevel),
+        },
+      };
+    }),
     formations: Object.values(FORMATIONS).map((formation) => {
       const level = state.formations?.[formation.id] ?? 0;
       const maxed = level >= formation.maxLevel;
@@ -2816,7 +3038,7 @@ export function disassembleLootEquipment(state, uid, now = Date.now()) {
   }
   const dismantleMultiplier = getLootDismantleMultiplier(state, item);
   const reward = {
-    forgingEssence: Math.floor((2 + (item.level ?? 0)) * dismantleMultiplier),
+    forgingEssence: Math.floor(2 * dismantleMultiplier),
     artifacts: 1,
   };
   applyResources(state, reward);
@@ -2851,7 +3073,7 @@ export function organizeLootEquipment(state, now = Date.now()) {
   }
 
   const reward = removedItems.reduce((total, item) => ({
-    forgingEssence: total.forgingEssence + Math.floor((2 + (item.level ?? 0)) * getLootDismantleMultiplier(state, item)),
+    forgingEssence: total.forgingEssence + Math.floor(2 * getLootDismantleMultiplier(state, item)),
     artifacts: total.artifacts + 1,
   }), { forgingEssence: 0, artifacts: 0 });
   state.lootEquipment = items.filter((item) => keepUids.has(item.uid));
@@ -2872,22 +3094,31 @@ export function empowerLootEquipment(state, uid, now = Date.now()) {
   if (!item) {
     return { ok: false, reason: 'unknownLoot' };
   }
-  const level = item.level ?? 0;
-  const maxLevel = getLootMaxLevel(item);
-  if (level >= maxLevel) {
+  const slot = item.slot;
+  if (!GEAR[slot]) {
+    return { ok: false, reason: 'unknownSlot' };
+  }
+  state.gear = normalizeLevels(state.gear, GEAR);
+  const level = state.gear[slot] ?? 0;
+  if (level >= GEAR[slot].maxLevel) {
     return { ok: false, reason: 'maxLevel' };
+  }
+  if (level + 1 > getRealmUpgradeLimit(state)) {
+    addLog(state, now, `${getUpgradeTier(level + 1).name}${GEAR[slot].name}需要更高境界。`);
+    return { ok: false, reason: 'realmLocked' };
   }
   const cost = getLootEmpowerCost(level + 1);
   if (!canAfford(state, cost)) {
-    addLog(state, now, `强化${item.name}需要${formatReward(cost)}。`);
+    addLog(state, now, `强化${GEAR[slot].name}器位需要${formatReward(cost)}。`);
     return { ok: false, reason: 'notEnoughResources' };
   }
 
   payResources(state, cost);
-  item.level = level + 1;
-  item.bonuses = createLootBonuses(item.templateId, item.level, item.variant);
-  addLog(state, now, `${item.name}强化至 ${item.level} 级。`);
-  return { ok: true, item, level: item.level };
+  state.gear[slot] = level + 1;
+  item.level = 0;
+  item.bonuses = createLootBonuses(item.templateId, 0, item.variant);
+  addLog(state, now, `${GEAR[slot].name}器位强化至 ${state.gear[slot]} 级，${item.name}继承此火候。`);
+  return { ok: true, item, slot, level: state.gear[slot] };
 }
 
 export function getLootEmpowerCost(nextLevel) {
@@ -4402,7 +4633,7 @@ function getMissionDanger(state, mission, approachId = null) {
   const approach = getSelectedMissionApproach(state, mission, approachId);
   const pressure = getMissionPressure(state, mission);
   const approachPressure = round(pressure * (approach.dangerMultiplier ?? 1));
-  return Math.max(0, approachPressure - getTieredLevelValue(state.gear?.robe ?? 0, GEAR.robe.dangerReductionPerLevel) - getGearAffixBonus(state, 'dangerReduction') - getGearSetBonus(state, 'dangerReduction') - getEquippedLootBonus(state, 'dangerReduction') - getMapMasteryBonus(state, 'dangerReduction') - getTreasureBonus(state, 'dangerReduction') - getSpiritBeastBonus(state, 'dangerReduction') - getDaoHeartBonus(state, 'dangerReduction') - (state.buildings?.swordArray ?? 0) * BUILDINGS.swordArray.dangerReductionPerLevel - (state.cultivationPaths?.sword ?? 0) * CULTIVATION_PATHS.sword.dangerReductionPerLevel);
+  return Math.max(0, approachPressure - getGearLevelBonus(state, 'dangerReductionPerLevel') - getGearAffixBonus(state, 'dangerReduction') - getGearSetBonus(state, 'dangerReduction') - getEquippedLootBonus(state, 'dangerReduction') - getMapMasteryBonus(state, 'dangerReduction') - getTreasureBonus(state, 'dangerReduction') - getSpiritBeastBonus(state, 'dangerReduction') - getDaoHeartBonus(state, 'dangerReduction') - (state.buildings?.swordArray ?? 0) * BUILDINGS.swordArray.dangerReductionPerLevel - (state.cultivationPaths?.sword ?? 0) * CULTIVATION_PATHS.sword.dangerReductionPerLevel);
 }
 
 function getMissionPressure(state, mission) {
@@ -4744,10 +4975,27 @@ function normalizeLootEquipment(items) {
       if (!template) {
         return null;
       }
-      return createLootItem(template.id, item.uid || `${template.id}-${index + 1}`, clampInteger(item.level ?? 0, 0, getLootMaxLevel(item ?? template)), item.variant);
+      return createLootItem(template.id, item.uid || `${template.id}-${index + 1}`, 0, item.variant);
     })
     .filter(Boolean)
     .slice(0, 40);
+}
+
+function inheritLootLevelsToGear(gearLevels, items) {
+  const normalized = normalizeLevels(gearLevels, GEAR);
+  if (!Array.isArray(items)) {
+    return normalized;
+  }
+  items.forEach((item) => {
+    const template = LOOT_EQUIPMENT[item?.templateId] ?? LOOT_EQUIPMENT[item?.id];
+    const slot = template?.slot;
+    if (!slot || !GEAR[slot]) {
+      return;
+    }
+    const legacyLevel = clampInteger(item?.level ?? 0, 0, GEAR[slot].maxLevel);
+    normalized[slot] = Math.max(normalized[slot] ?? 0, legacyLevel);
+  });
+  return normalized;
 }
 
 function normalizeSectAssignments(assignments, disciples = 0) {
@@ -4774,7 +5022,7 @@ function normalizeSectCarry(carry) {
 }
 
 function normalizeEquippedLoot(equippedLoot, lootEquipment) {
-  const slots = { weapon: null, amulet: null, robe: null };
+  const slots = Object.fromEntries(Object.keys(GEAR).map((slot) => [slot, null]));
   Object.keys(slots).forEach((slot) => {
     const uid = equippedLoot?.[slot] ?? null;
     const item = lootEquipment.find((candidate) => candidate.uid === uid && candidate.slot === slot);
@@ -5241,10 +5489,12 @@ function collectResourceNeeds(state) {
     }
   });
 
-  (state.lootEquipment ?? [])
-    .filter((item) => (item.level ?? 0) < getLootMaxLevel(item))
-    .slice(0, 4)
-    .forEach((item) => addCost(`战利品·${item.name}`, getLootEmpowerCost((item.level ?? 0) + 1), 1.35));
+  Object.values(GEAR).forEach((gearItem) => {
+    const level = state.gear?.[gearItem.id] ?? 0;
+    if (level < gearItem.maxLevel && level + 1 <= getRealmUpgradeLimit(state)) {
+      addCost(`器位·${gearItem.name}`, getLootEmpowerCost(level + 1), 1.35);
+    }
+  });
 
   Object.values(TREASURES).forEach((treasure) => {
     const level = state.treasures?.[treasure.id] ?? 0;
@@ -5420,8 +5670,11 @@ function getRefineChance(state, qualityIndex) {
 function getDefaultAffixForGear(gearId) {
   const defaults = {
     weapon: 'swordIntent',
+    offhand: 'starWheel',
     amulet: 'spiritVein',
     robe: 'cloudStep',
+    jade: 'jadeRoot',
+    boots: 'cloudTrace',
   };
   return defaults[gearId] ?? null;
 }
@@ -5896,7 +6149,7 @@ function getLootScore(item) {
   return Object.entries(item?.bonuses ?? {}).reduce((total, [key, value]) => {
     const weight = key === 'qiRate' || key === 'breakthrough' || key === 'herbRate' ? 1000 : 1;
     return total + value * weight;
-  }, 0) + (item?.level ?? 0) * 2 + (item?.quality ?? 0) * 4;
+  }, 0) + (item?.quality ?? 0) * 4;
 }
 
 function getLootDismantleMultiplier(state, item) {
@@ -6037,6 +6290,15 @@ function getGearEffects(gearId, level, qualityIndex, affix) {
   }
   if (item.vitalityPerLevel) {
     effects.push({ id: 'vitality', label: '血元', value: getTieredLevelValue(level, item.vitalityPerLevel), mode: 'flat' });
+  }
+  if (item.qiBonusPerLevel) {
+    effects.push({ id: 'qiBonus', label: '灵息', value: getTieredLevelValue(level, item.qiBonusPerLevel), mode: 'percent' });
+  }
+  if (item.speedPerLevel) {
+    effects.push({ id: 'speed', label: '身法', value: getTieredLevelValue(level, item.speedPerLevel), mode: 'flat' });
+  }
+  if (item.piercePerLevel) {
+    effects.push({ id: 'pierce', label: '破势', value: getTieredLevelValue(level, item.piercePerLevel), mode: 'flat' });
   }
   const qualityPower = GEAR_QUALITIES[qualityIndex]?.powerBonus ?? 0;
   if (qualityPower) {
@@ -6365,7 +6627,6 @@ function createLootItem(templateId, uid, level = 0, savedVariant = null) {
   const template = LOOT_EQUIPMENT[templateId];
   const variant = createLootVariant(template, uid, savedVariant);
   const quality = clampInteger((template.quality ?? 0) + (variant.qualityBonus ?? 0), 0, RARITY_TIERS.length - 1);
-  const safeLevel = clampInteger(level, 0, getLootMaxLevel({ ...template, quality, variant }));
   return {
     uid,
     templateId,
@@ -6374,8 +6635,8 @@ function createLootItem(templateId, uid, level = 0, savedVariant = null) {
     quality,
     element: variant.element ?? template.element ?? null,
     variant,
-    level: safeLevel,
-    bonuses: createLootBonuses(templateId, safeLevel, variant),
+    level: 0,
+    bonuses: createLootBonuses(templateId, 0, variant),
   };
 }
 
@@ -6452,7 +6713,6 @@ function buildLootVariant(template, rarity, affixes, element, savedName = null) 
     name: savedName ?? `${rarity.name}${COMBAT_ELEMENTS[element]?.name ?? ''}${affixNames}`,
     qualityBonus: rarity.qualityBonus,
     bonusMultiplier: rarity.bonusMultiplier,
-    maxLevelBonus: rarity.maxLevelBonus,
     dismantleMultiplier: rarity.dismantleMultiplier,
     element,
     bonuses: scaledBonuses,
@@ -6469,16 +6729,12 @@ function mergeBonusObjects(left, right) {
 
 function createLootBonuses(templateId, level = 0, variant = null) {
   const template = LOOT_EQUIPMENT[templateId];
-  const multiplier = 1 + getTieredLootBonus(level);
-  const percentBonus = getTieredPercentBonus(level);
+  const multiplier = 1;
   const bonuses = Object.fromEntries(
-    Object.entries(template.bonuses).map(([key, value]) => [key, key === 'breakthrough' || key === 'qiRate' || key === 'critChance' ? round(value + percentBonus) : Math.round(value * multiplier)]),
+    Object.entries(template.bonuses).map(([key, value]) => [key, key === 'breakthrough' || key === 'qiRate' || key === 'critChance' ? round(value) : Math.round(value * multiplier)]),
   );
   Object.entries(variant?.bonuses ?? {}).forEach(([key, value]) => {
-    const scaled = key === 'breakthrough' || key === 'qiRate' || key === 'critChance'
-      ? round(value + percentBonus * 0.5)
-      : Math.round(value * (1 + getTieredLootBonus(level) * 0.6));
-    bonuses[key] = round((bonuses[key] ?? 0) + scaled);
+    bonuses[key] = round((bonuses[key] ?? 0) + value);
   });
   if (variant?.element && COMBAT_ELEMENTS[variant.element]) {
     bonuses.elementPower = round((bonuses.elementPower ?? 0) + 8 + (variant.qualityBonus ?? 0) * 4);
@@ -6487,7 +6743,7 @@ function createLootBonuses(templateId, level = 0, variant = null) {
 }
 
 function getLootMaxLevel(itemOrTemplate) {
-  return Math.min(24, Math.max(3, 3 + (itemOrTemplate?.quality ?? 0) * 3 + (itemOrTemplate?.variant?.maxLevelBonus ?? 0)));
+  return GEAR[itemOrTemplate?.slot]?.maxLevel ?? 12;
 }
 
 function getResourceAmount(state, resource) {
