@@ -251,10 +251,12 @@ assert.match(html, /data-loot-rarity-toggle="common"/);
 assert.match(html, /data-reset-dismantle-defaults/);
 assert.match(source, /activeLootDismantleRarities/);
 assert.match(source, /function getSelectedLootDismantleRarities/);
+assert.match(source, /function handleOrganizeLootClick/);
 assert.match(source, /organizeLootEquipment\(state, Date\.now\(\), \{ rarityIds: getSelectedLootDismantleRarities\(\) \}\)/);
 assert.match(source, /getOrganizableLootCount/);
 assert.match(source, /请选择品质/);
 assert.match(source, /button\.disabled = false/);
+assert.match(html, /data-organize-loot type="button"/);
 assert.match(source, /data-toggle-loot-lock/);
 assert.match(source, /data-loot-filter/);
 assert.match(source, /function renderLootComparison/);
@@ -357,6 +359,7 @@ function documentWithoutOptionalPanels() {
 
   return {
     body: element(),
+    addEventListener() {},
     createElement() {
       return element();
     },

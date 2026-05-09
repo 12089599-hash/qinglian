@@ -1683,7 +1683,7 @@
     }
   });
 
-  document.querySelector('[data-organize-loot]')?.addEventListener('click', () => {
+  function handleOrganizeLootClick() {
     const selected = getSelectedLootDismantleRarities();
     if (!selected.length) {
       showToast('分解品质未选', '勾选至少一个品质后再批量分解。', 'warning');
@@ -1698,6 +1698,16 @@
     }
     saveState();
     render(true);
+  }
+
+  document.addEventListener('click', (event) => {
+    const target = event.target instanceof Element ? event.target : event.target?.parentElement;
+    const organizeButton = target?.closest?.('[data-organize-loot]');
+    if (!organizeButton) {
+      return;
+    }
+    event.preventDefault();
+    handleOrganizeLootClick();
   });
 
   document.querySelectorAll('[data-loot-rarity-toggle]').forEach((input) => {
