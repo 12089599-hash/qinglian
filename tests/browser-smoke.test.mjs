@@ -30,7 +30,7 @@ assert.match(source, /currentBalanceVersion\s*=\s*6/);
 assert.match(source, /元婴.*九变/);
 assert.match(source, /\/ 分钟/);
 assert.doesNotMatch(source, /\/ 秒/);
-assert.match(html, /1\.5 \/ 分钟/);
+assert.match(html, /3\.2 \/ 分钟/);
 assert.match(source, /openLootDetails\s*=\s*new Set/);
 assert.match(source, /data-loot-detail=/);
 assert.match(source, /openLootDetails\.has\(item\.uid\)/);

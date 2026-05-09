@@ -1,5 +1,5 @@
 const REALM_GROUPS = [
-  { prefix: '炼气', suffixes: ['一层', '二层', '三层', '四层', '五层', '六层', '七层', '八层', '九层'], startQi: 20, endQi: 5_600, startRate: 2.2, endRate: 7.2, startStone: 4, endStone: 12 },
+  { prefix: '炼气', suffixes: ['一层', '二层', '三层', '四层', '五层', '六层', '七层', '八层', '九层'], startQi: 18, endQi: 4_800, startRate: 3.2, endRate: 7.2, startStone: 4, endStone: 12, qiCurve: 1.46 },
   { prefix: '筑基', suffixes: ['一层', '二层', '三层', '四层', '五层', '六层', '七层', '八层', '九层'], startQi: 16_000, endQi: 220_000, startRate: 6, endRate: 16, startStone: 10, endStone: 24 },
   { prefix: '金丹', suffixes: ['一转', '二转', '三转', '四转', '五转', '六转', '七转', '八转', '九转'], startQi: 360_000, endQi: 2_800_000, startRate: 18, endRate: 45, startStone: 28, endStone: 68 },
   { prefix: '元婴', suffixes: ['一变', '二变', '三变', '四变', '五变', '六变', '七变', '八变', '九变'], startQi: 4_200_000, endQi: 20_000_000, startRate: 55, endRate: 115, startStone: 84, endStone: 170 },
@@ -25,7 +25,7 @@ export const DEPTH_TRIBULATIONS = [
 function createRealmTrack() {
   return REALM_GROUPS.flatMap((group) => group.suffixes.map((suffix, index) => {
     const progress = group.suffixes.length === 1 ? 0 : index / (group.suffixes.length - 1);
-    const qiProgress = Math.pow(progress, 1.24);
+    const qiProgress = Math.pow(progress, group.qiCurve ?? 1.24);
     return {
       name: `${group.prefix}${suffix}`,
       requiredQi: Math.round(interpolate(group.startQi, group.endQi, qiProgress)),
@@ -1491,7 +1491,7 @@ export const BUILDINGS = {
       herbs: level >= 2 ? caveMaterialCost(4, level - 1) : 0,
       arrayFlags: level >= 16 ? caveMaterialCost(1, level - 15) : 0,
     }),
-    qiBonusPerLevel: 0.08,
+    qiBonusPerLevel: 0.055,
   },
   spiritField: {
     id: 'spiritField',
@@ -1608,7 +1608,7 @@ export const GEAR = {
     name: '玉佩',
     maxLevel: 12,
     cost: (level) => ({ spiritStones: tieredLinearCost(68, level), artifacts: tieredMaterialCost(1, level) }),
-    qiBonusPerLevel: 0.018,
+    qiBonusPerLevel: 0.012,
     vitalityPerLevel: 16,
     defensePerLevel: 8,
   },
@@ -1707,7 +1707,7 @@ export const GEAR_AFFIXES = {
     id: 'spiritVein',
     name: '灵脉',
     slot: 'amulet',
-    qiBonus: 0.08,
+    qiBonus: 0.055,
     vitality: 30,
     element: 'wood',
     elementPower: 16,
@@ -1789,7 +1789,7 @@ export const GEAR_AFFIXES = {
     id: 'spiritBell',
     name: '灵钟',
     slot: 'offhand',
-    qiBonus: 0.045,
+    qiBonus: 0.03,
     defense: 12,
     element: 'wood',
     elementPower: 12,
@@ -1817,7 +1817,7 @@ export const GEAR_AFFIXES = {
     name: '玉根',
     slot: 'jade',
     vitality: 30,
-    qiBonus: 0.035,
+    qiBonus: 0.024,
     element: 'earth',
     elementPower: 12,
   },
@@ -1902,9 +1902,9 @@ export const GEAR_AFFIX_SETS = {
     detail: '剑意、灵钟、灵脉、云步、澄玉与云踪相互牵引，行游与吐纳都更顺畅。',
     affixes: ['swordIntent', 'spiritBell', 'spiritVein', 'cloudStep', 'clearJade', 'cloudTrace'],
     tiers: [
-      { pieces: 2, name: '两器相生', bonuses: { powerBonus: 24, qiBonus: 0.03 } },
+      { pieces: 2, name: '两器相生', bonuses: { powerBonus: 24, qiBonus: 0.02 } },
       { pieces: 4, name: '四象成势', bonuses: { dangerReduction: 8, speed: 3 } },
-      { pieces: 6, name: '六器同流', bonuses: { powerBonus: 46, qiBonus: 0.05, dangerReduction: 6, speed: 2 } },
+      { pieces: 6, name: '六器同流', bonuses: { powerBonus: 46, qiBonus: 0.035, dangerReduction: 6, speed: 2 } },
     ],
   },
   xuanGateGuard: {
@@ -1999,7 +1999,7 @@ export const CULTIVATION_PATHS = {
     name: '阵修',
     maxLevel: 12,
     cost: (level) => ({ spiritStones: scaleCost(60, level), arrayFlags: scaleCost(1, level) }),
-    qiBonusPerLevel: 0.05,
+    qiBonusPerLevel: 0.035,
     offlineBonusPerLevel: 0.03,
   },
 };
@@ -2011,7 +2011,7 @@ export const FORMATIONS = {
     rarityId: 'common',
     maxLevel: 12,
     cost: (level) => ({ spiritStones: scaleCost(70, level), arrayFlags: scaleCost(1, level) }),
-    qiBonusPerLevel: 0.1,
+    qiBonusPerLevel: 0.07,
   },
   mountainGuard: {
     id: 'mountainGuard',
@@ -2165,21 +2165,21 @@ export const MAINLINE_CHAPTERS = [
     id: 'qinglanStart',
     title: '青岚初启',
     subtitle: '立洞府、通吐纳、备丹药，完成最初的修行根基。',
-    reward: { spiritStones: 260, herbs: 20, qiRateBonus: 0.04 },
+    reward: { spiritStones: 260, herbs: 20, qiRateBonus: 0.03 },
     objectives: [
       {
         id: 'firstPatrol',
         title: '巡守一次洞府',
         detail: '熟悉行游节奏，带回第一批灵气和灵石',
         completed: (state) => (state.completedMissions?.cavePatrol ?? 0) >= 1,
-        reward: { spiritStones: 80, herbs: 8, qi: 80 },
+        reward: { spiritStones: 80, herbs: 8, qi: 140 },
       },
       {
         id: 'realmTwo',
         title: '首次破境',
         detail: '突破至炼气二层，感受灵息与道行提升',
         completed: (state) => state.realmIndex >= 1,
-        reward: { spiritStones: 120, pills: 2, qi: 60 },
+        reward: { spiritStones: 120, pills: 2, qi: 120 },
       },
       {
         id: 'spiritField',
@@ -2193,7 +2193,7 @@ export const MAINLINE_CHAPTERS = [
         title: '炼成一枚聚气丹',
         detail: '突破前用丹药快速补足灵气',
         completed: (state) => (state.craftedPills ?? 0) >= 1,
-        reward: { qi: 240, spiritStones: 90, herbs: 12 },
+        reward: { qi: 360, spiritStones: 90, herbs: 12 },
       },
     ],
   },
@@ -3216,9 +3216,23 @@ export function calculateQiRate(state, now = Date.now()) {
   const sectSkillBonus = 1 + getSectSkillBonus(state, 'qiRate');
   const daoHeartBonus = 1 + getDaoHeartBonus(state, 'qiRate');
   const setBonus = 1 + getGearSetBonus(state, 'qiBonus');
-  const pillBoost = state.pillBoostUntil && state.pillBoostUntil > now ? 1.4 : 1;
+  const pillBoost = state.pillBoostUntil && state.pillBoostUntil > now ? getGatherQiPillBoostMultiplier(state) : 1;
   const injuryPenalty = state.injuryUntil && state.injuryUntil > now ? 0.75 : 1;
   return round(realm.qiRate * buildingBonus * formationBonus * gearBonus * affixBonus * pathBonus * permanentBonus * lootBonus * masteryBonus * treasureBonus * beastBonus * bloodlineBonus * sectSkillBonus * daoHeartBonus * setBonus * pillBoost * injuryPenalty);
+}
+
+function getGatherQiPillBoostMultiplier(state) {
+  const realmIndex = state.realmIndex ?? 0;
+  if (realmIndex >= 27) {
+    return 1.15;
+  }
+  if (realmIndex >= 18) {
+    return 1.22;
+  }
+  if (realmIndex >= 9) {
+    return 1.32;
+  }
+  return 1.45;
 }
 
 export function calculateBreakthroughChance(state, now = Date.now()) {
@@ -3404,7 +3418,7 @@ export function getCharacterProfile(state, now = Date.now()) {
     { label: '宗门秘传', value: getSectSkillBonus(state, 'qiRate'), mode: 'percent' },
     { label: '命格道心', value: getDaoHeartBonus(state, 'qiRate'), mode: 'percent' },
     { label: '洞天底蕴', value: state.permanentBonuses?.qiRate ?? 0, mode: 'percent' },
-    { label: '丹力催行', value: state.pillBoostUntil && state.pillBoostUntil > now ? 0.4 : 0, mode: 'percent' },
+    { label: '丹力催行', value: state.pillBoostUntil && state.pillBoostUntil > now ? getGatherQiPillBoostMultiplier(state) - 1 : 0, mode: 'percent' },
   ]);
   const breakthroughSources = compactSources([
     { label: '本命道基', value: 0.75, mode: 'percent' },
