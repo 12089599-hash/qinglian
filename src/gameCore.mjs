@@ -1,5 +1,5 @@
 const REALM_GROUPS = [
-  { prefix: '炼气', suffixes: ['一层', '二层', '三层', '四层', '五层', '六层', '七层', '八层', '九层'], startQi: 25, endQi: 8_000, startRate: 1.5, endRate: 5.5, startStone: 2, endStone: 8 },
+  { prefix: '炼气', suffixes: ['一层', '二层', '三层', '四层', '五层', '六层', '七层', '八层', '九层'], startQi: 20, endQi: 5_600, startRate: 2.2, endRate: 7.2, startStone: 4, endStone: 12 },
   { prefix: '筑基', suffixes: ['一层', '二层', '三层', '四层', '五层', '六层', '七层', '八层', '九层'], startQi: 16_000, endQi: 220_000, startRate: 6, endRate: 16, startStone: 10, endStone: 24 },
   { prefix: '金丹', suffixes: ['一转', '二转', '三转', '四转', '五转', '六转', '七转', '八转', '九转'], startQi: 360_000, endQi: 2_800_000, startRate: 18, endRate: 45, startStone: 28, endStone: 68 },
   { prefix: '元婴', suffixes: ['一变', '二变', '三变', '四变', '五变', '六变', '七变', '八变', '九变'], startQi: 4_200_000, endQi: 20_000_000, startRate: 55, endRate: 115, startStone: 84, endStone: 170 },
@@ -83,7 +83,7 @@ export const MISSIONS = {
     map: '青岚山',
     unlockRealmIndex: 0,
     duration: 30,
-    reward: { herbs: 5, spiritStones: 6 },
+    reward: { herbs: 8, spiritStones: 12 },
     events: ['hiddenHerbPatch', 'spiritSpring'],
   },
   cavePatrol: {
@@ -93,7 +93,7 @@ export const MISSIONS = {
     map: '青岚山',
     unlockRealmIndex: 0,
     duration: 55,
-    reward: { spiritStones: 10, qi: 6 },
+    reward: { spiritStones: 18, qi: 18 },
     events: ['spiritSpring', 'cloudRobeCache', 'greenJadeCache'],
   },
   marketTrade: {
@@ -103,7 +103,7 @@ export const MISSIONS = {
     map: '青岚山',
     unlockRealmIndex: 0,
     duration: 90,
-    reward: { spiritStones: 36 },
+    reward: { spiritStones: 55 },
     events: ['wanderingTrader', 'hiddenHerbPatch'],
   },
   mistyValley: {
@@ -114,7 +114,7 @@ export const MISSIONS = {
     unlockRealmIndex: 7,
     duration: 120,
     danger: 180,
-    reward: { spiritStones: 35, qi: 90, beastCores: 1, artifacts: 1 },
+    reward: { spiritStones: 55, qi: 125, beastCores: 1, artifacts: 1 },
     rareEvery: 4,
     rareReward: { meridianPill: 1 },
     failurePenalty: { qi: -45, heartDemon: 1 },
@@ -128,7 +128,7 @@ export const MISSIONS = {
     unlockRealmIndex: 4,
     duration: 70,
     danger: 120,
-    reward: { herbs: 14, spiritStones: 14, qi: 45 },
+    reward: { herbs: 20, spiritStones: 24, qi: 70 },
     rareEvery: 3,
     rareReward: { clearHeartPill: 1 },
     failurePenalty: { qi: -20 },
@@ -1236,11 +1236,11 @@ export const GEAR_INTENTS = {
 };
 
 export const GEAR_QUALITIES = [
-  { name: '凡品', powerBonus: 0, refineChance: 0.82 },
-  { name: '下品', powerBonus: 18, refineChance: 0.66 },
-  { name: '中品', powerBonus: 40, refineChance: 0.5 },
-  { name: '上品', powerBonus: 70, refineChance: 0.36 },
-  { name: '极品', powerBonus: 110, refineChance: 0 },
+  { name: '素胚', powerBonus: 0, refineChance: 0.82 },
+  { name: '初火', powerBonus: 18, refineChance: 0.66 },
+  { name: '凝火', powerBonus: 40, refineChance: 0.5 },
+  { name: '明纹', powerBonus: 70, refineChance: 0.36 },
+  { name: '真形', powerBonus: 110, refineChance: 0 },
 ];
 
 export const GEAR_AFFIXES = {
@@ -1567,7 +1567,7 @@ export const DAILY_TASKS = {
     detail: '累计修炼即可领取基础补给',
     progressKey: 'cultivationSeconds',
     target: 300,
-    reward: { spiritStones: 35, qi: 80 },
+    reward: { spiritStones: 80, qi: 180 },
   },
   dailyMission: {
     id: 'dailyMission',
@@ -1575,7 +1575,7 @@ export const DAILY_TASKS = {
     detail: '完成任意历练后领取额外材料',
     progressKey: 'missions',
     target: 3,
-    reward: { herbs: 8, spiritStones: 25 },
+    reward: { herbs: 20, spiritStones: 70 },
   },
   dailyMarket: {
     id: 'dailyMarket',
@@ -1583,7 +1583,7 @@ export const DAILY_TASKS = {
     detail: '每日补贴一笔交易本金',
     progressKey: 'marketBuys',
     target: 1,
-    reward: { spiritStones: 45 },
+    reward: { spiritStones: 100 },
   },
   dailyDepth: {
     id: 'dailyDepth',
@@ -1694,35 +1694,35 @@ export const MAINLINE_CHAPTERS = [
     id: 'qinglanStart',
     title: '青岚初启',
     subtitle: '立洞府、通吐纳、备丹药，完成最初的修行根基。',
-    reward: { spiritStones: 120, qiRateBonus: 0.03 },
+    reward: { spiritStones: 260, herbs: 20, qiRateBonus: 0.04 },
     objectives: [
       {
         id: 'firstPatrol',
         title: '巡守一次洞府',
         detail: '熟悉行游节奏，带回第一批灵气和灵石',
         completed: (state) => (state.completedMissions?.cavePatrol ?? 0) >= 1,
-        reward: { spiritStones: 40, qi: 35 },
+        reward: { spiritStones: 80, herbs: 8, qi: 80 },
       },
       {
         id: 'realmTwo',
         title: '首次破境',
         detail: '突破至炼气二层，感受灵息与道行提升',
         completed: (state) => state.realmIndex >= 1,
-        reward: { spiritStones: 70, pills: 1 },
+        reward: { spiritStones: 120, pills: 2, qi: 60 },
       },
       {
         id: 'spiritField',
         title: '建成一阶灵田',
         detail: '让洞府开始自动生长灵草',
         completed: (state) => (state.buildings?.spiritField ?? 0) >= 1,
-        reward: { herbs: 10, spiritStones: 30 },
+        reward: { herbs: 25, spiritStones: 80 },
       },
       {
         id: 'firstPill',
         title: '炼成一枚聚气丹',
         detail: '突破前用丹药快速补足灵气',
         completed: (state) => (state.craftedPills ?? 0) >= 1,
-        reward: { qi: 120, spiritStones: 25 },
+        reward: { qi: 240, spiritStones: 90, herbs: 12 },
       },
     ],
   },
@@ -1778,7 +1778,7 @@ export const MAINLINE_CHAPTERS = [
       {
         id: 'refinedGear',
         title: '完成一次法器淬炼',
-        detail: '任意装备品质提升至下品或以上',
+        detail: '任意穿戴火候提升至初火或以上',
         completed: (state) => Object.values(state.gearQuality ?? {}).some((quality) => quality >= 1),
         reward: { artifacts: 2, spiritStones: 180 },
       },
@@ -2881,8 +2881,8 @@ export function getCharacterProfile(state, now = Date.now()) {
     { label: '境界威压', value: getRealmPower(state) },
     { label: '剑诀火候', value: (state.cultivationPaths?.sword ?? 0) * CULTIVATION_PATHS.sword.powerPerLevel },
     { label: '洞府剑阵', value: (state.buildings?.swordArray ?? 0) * BUILDINGS.swordArray.powerPerLevel },
-    { label: '器位品阶', value: getGearLevelBonus(state, 'powerPerLevel') },
-    { label: '炼器品相', value: Object.values(state.gearQuality ?? {}).reduce((total, qualityIndex) => total + (GEAR_QUALITIES[qualityIndex]?.powerBonus ?? 0), 0) },
+    { label: '器位阶位', value: getGearLevelBonus(state, 'powerPerLevel') },
+    { label: '炼器火候', value: Object.values(state.gearQuality ?? {}).reduce((total, qualityIndex) => total + (GEAR_QUALITIES[qualityIndex]?.powerBonus ?? 0), 0) },
     { label: '灵纹词条', value: getGearAffixBonus(state, 'powerBonus') },
     { label: '同调器象', value: getGearSetBonus(state, 'powerBonus') },
     { label: '剑阵杀意', value: (state.formations?.swordArray ?? 0) * FORMATIONS.swordArray.powerPerLevel },
@@ -4474,7 +4474,7 @@ export function refineGear(state, gearId, now = Date.now(), random = Math.random
   payResources(state, cost);
   const chance = getRefineChance(state, currentQuality);
   if (random() > chance) {
-    addLog(state, now, `淬炼${gear.name}火候不足，品质未提升。`);
+    addLog(state, now, `淬炼${gear.name}火候不足，器火未进。`);
     return { ok: false, reason: 'failed', chance };
   }
   state.gearQuality[gearId] = currentQuality + 1;

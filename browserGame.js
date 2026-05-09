@@ -1,6 +1,6 @@
 (function () {
   const realmGroups = [
-    { prefix: '炼气', suffixes: ['一层', '二层', '三层', '四层', '五层', '六层', '七层', '八层', '九层'], startQi: 25, endQi: 8_000, startRate: 1.5, endRate: 5.5, startStone: 2, endStone: 8 },
+    { prefix: '炼气', suffixes: ['一层', '二层', '三层', '四层', '五层', '六层', '七层', '八层', '九层'], startQi: 20, endQi: 5_600, startRate: 2.2, endRate: 7.2, startStone: 4, endStone: 12 },
     { prefix: '筑基', suffixes: ['一层', '二层', '三层', '四层', '五层', '六层', '七层', '八层', '九层'], startQi: 16_000, endQi: 220_000, startRate: 6, endRate: 16, startStone: 10, endStone: 24 },
     { prefix: '金丹', suffixes: ['一转', '二转', '三转', '四转', '五转', '六转', '七转', '八转', '九转'], startQi: 360_000, endQi: 2_800_000, startRate: 18, endRate: 45, startStone: 28, endStone: 68 },
     { prefix: '元婴', suffixes: ['一变', '二变', '三变', '四变', '五变', '六变', '七变', '八变', '九变'], startQi: 4_200_000, endQi: 20_000_000, startRate: 55, endRate: 115, startStone: 84, endStone: 170 },
@@ -83,7 +83,7 @@
       map: '青岚山',
       unlockRealmIndex: 0,
       duration: 30,
-      reward: { herbs: 5, spiritStones: 6 },
+      reward: { herbs: 8, spiritStones: 12 },
       events: ['hiddenHerbPatch', 'spiritSpring'],
     },
     cavePatrol: {
@@ -93,7 +93,7 @@
       map: '青岚山',
       unlockRealmIndex: 0,
       duration: 55,
-      reward: { spiritStones: 10, qi: 6 },
+      reward: { spiritStones: 18, qi: 18 },
       events: ['spiritSpring', 'cloudRobeCache', 'greenJadeCache'],
     },
     marketTrade: {
@@ -103,7 +103,7 @@
       map: '青岚山',
       unlockRealmIndex: 0,
       duration: 90,
-      reward: { spiritStones: 36 },
+      reward: { spiritStones: 55 },
       events: ['wanderingTrader', 'hiddenHerbPatch'],
     },
     mistyValley: {
@@ -114,7 +114,7 @@
       unlockRealmIndex: 7,
       duration: 120,
       danger: 180,
-      reward: { spiritStones: 35, qi: 90, beastCores: 1, artifacts: 1 },
+      reward: { spiritStones: 55, qi: 125, beastCores: 1, artifacts: 1 },
       rareEvery: 4,
       rareReward: { meridianPill: 1 },
       failurePenalty: { qi: -45, heartDemon: 1 },
@@ -128,7 +128,7 @@
       unlockRealmIndex: 4,
       duration: 70,
       danger: 120,
-      reward: { herbs: 14, spiritStones: 14, qi: 45 },
+      reward: { herbs: 20, spiritStones: 24, qi: 70 },
       rareEvery: 3,
       rareReward: { clearHeartPill: 1 },
       failurePenalty: { qi: -20 },
@@ -768,11 +768,11 @@
   };
 
   const gearQualities = [
-    { name: '凡品', powerBonus: 0, refineChance: 0.82 },
-    { name: '下品', powerBonus: 18, refineChance: 0.66 },
-    { name: '中品', powerBonus: 40, refineChance: 0.5 },
-    { name: '上品', powerBonus: 70, refineChance: 0.36 },
-    { name: '极品', powerBonus: 110, refineChance: 0 },
+    { name: '素胚', powerBonus: 0, refineChance: 0.82 },
+    { name: '初火', powerBonus: 18, refineChance: 0.66 },
+    { name: '凝火', powerBonus: 40, refineChance: 0.5 },
+    { name: '明纹', powerBonus: 70, refineChance: 0.36 },
+    { name: '真形', powerBonus: 110, refineChance: 0 },
   ];
 
   const gearAffixes = {
@@ -1099,7 +1099,7 @@
       detail: '累计修炼即可领取基础补给',
       progressKey: 'cultivationSeconds',
       target: 300,
-      reward: { spiritStones: 35, qi: 80 },
+      reward: { spiritStones: 80, qi: 180 },
     },
     dailyMission: {
       id: 'dailyMission',
@@ -1107,7 +1107,7 @@
       detail: '完成任意历练后领取额外材料',
       progressKey: 'missions',
       target: 3,
-      reward: { herbs: 8, spiritStones: 25 },
+      reward: { herbs: 20, spiritStones: 70 },
     },
     dailyMarket: {
       id: 'dailyMarket',
@@ -1115,7 +1115,7 @@
       detail: '每日补贴一笔交易本金',
       progressKey: 'marketBuys',
       target: 1,
-      reward: { spiritStones: 45 },
+      reward: { spiritStones: 100 },
     },
     dailyDepth: {
       id: 'dailyDepth',
@@ -1226,35 +1226,35 @@
       id: 'qinglanStart',
       title: '青岚初启',
       subtitle: '立洞府、通吐纳、备丹药，完成最初的修行根基。',
-      reward: { spiritStones: 120, qiRateBonus: 0.03 },
+      reward: { spiritStones: 260, herbs: 20, qiRateBonus: 0.04 },
       objectives: [
         {
           id: 'firstPatrol',
           title: '巡守一次洞府',
           detail: '熟悉行游节奏，带回第一批灵气和灵石',
           completed: (state) => (state.completedMissions.cavePatrol || 0) >= 1,
-          reward: { spiritStones: 40, qi: 35 },
+          reward: { spiritStones: 80, herbs: 8, qi: 80 },
         },
         {
           id: 'realmTwo',
           title: '首次破境',
           detail: '突破至炼气二层，感受灵息与道行提升',
           completed: (state) => state.realmIndex >= 1,
-          reward: { spiritStones: 70, pills: 1 },
+          reward: { spiritStones: 120, pills: 2, qi: 60 },
         },
         {
           id: 'spiritField',
           title: '建成一阶灵田',
           detail: '让洞府开始自动生长灵草',
           completed: (state) => (state.buildings.spiritField || 0) >= 1,
-          reward: { herbs: 10, spiritStones: 30 },
+          reward: { herbs: 25, spiritStones: 80 },
         },
         {
           id: 'firstPill',
           title: '炼成一枚聚气丹',
           detail: '突破前用丹药快速补足灵气',
           completed: (state) => (state.craftedPills || 0) >= 1,
-          reward: { qi: 120, spiritStones: 25 },
+          reward: { qi: 240, spiritStones: 90, herbs: 12 },
         },
       ],
     },
@@ -1310,7 +1310,7 @@
         {
           id: 'refinedGear',
           title: '完成一次法器淬炼',
-          detail: '任意装备品质提升至下品或以上',
+          detail: '任意穿戴火候提升至初火或以上',
           completed: (state) => Object.values(state.gearQuality || {}).some((quality) => quality >= 1),
           reward: { artifacts: 2, spiritStones: 180 },
         },
@@ -1614,7 +1614,7 @@
     if (!refineButton) return;
     const result = refineGear(state, refineButton.dataset.refineGear);
     if (result.ok) {
-      showToast('淬炼成功', `${gear[refineButton.dataset.refineGear].name}提升为${gearQualities[result.quality].name}。`);
+      showToast('淬炼成功', `${gear[refineButton.dataset.refineGear].name}火候提升为${gearQualities[result.quality].name}。`);
     }
     saveState();
     render(true);
@@ -1671,6 +1671,12 @@
       if (result.ok) {
         openLootDetails.delete(result.item.uid);
         showToast('战利品分解', `获得${formatReward(result.reward)}。`);
+      } else if (result.reason === 'equipped') {
+        showToast('正在穿戴', '已穿戴的战利品不会直接分解，先换上其他同部位装备。', 'warning');
+      } else if (result.reason === 'locked') {
+        showToast('已锁定', '先解锁这件战利品，再进行分解。', 'warning');
+      } else {
+        showToast('分解失败', '这件战利品已经不在库藏中。', 'warning');
       }
       saveState();
       render(true);
@@ -2628,7 +2634,7 @@
     }
     const currentQuality = state.gearQuality[gearId] || 0;
     if (currentQuality >= gearQualities.length - 1) {
-      addLog(state, now, `${item.name}已是极品。`);
+      addLog(state, now, `${item.name}火候已至真形。`);
       return { ok: false, reason: 'maxQuality' };
     }
     const cost = getRefineCost(currentQuality + 1);
@@ -2639,7 +2645,7 @@
     payResources(state, cost);
     const chance = getRefineChance(state, currentQuality);
     if (random() > chance) {
-      addLog(state, now, `淬炼${item.name}火候不足，品质未提升。`);
+      addLog(state, now, `淬炼${item.name}火候不足，器火未进。`);
       return { ok: false, reason: 'failed', chance };
     }
     state.gearQuality[gearId] = currentQuality + 1;
@@ -4118,8 +4124,8 @@
       { label: '境界威压', value: getRealmPower(state) },
       { label: '剑诀火候', value: (state.cultivationPaths.sword || 0) * cultivationPaths.sword.powerPerLevel },
       { label: '洞府剑阵', value: (state.buildings.swordArray || 0) * buildings.swordArray.powerPerLevel },
-      { label: '器位品阶', value: getGearLevelBonus(state, 'powerPerLevel') },
-      { label: '炼器品相', value: Object.values(state.gearQuality || {}).reduce((total, qualityIndex) => total + (gearQualities[qualityIndex]?.powerBonus || 0), 0) },
+      { label: '器位阶位', value: getGearLevelBonus(state, 'powerPerLevel') },
+      { label: '炼器火候', value: Object.values(state.gearQuality || {}).reduce((total, qualityIndex) => total + (gearQualities[qualityIndex]?.powerBonus || 0), 0) },
       { label: '灵纹词条', value: getGearAffixBonus(state, 'powerBonus') },
       { label: '同调器象', value: getGearSetBonus(state, 'powerBonus') },
       { label: '剑阵杀意', value: (state.formations.swordArray || 0) * formations.swordArray.powerPerLevel },
@@ -5901,14 +5907,17 @@
         const maxed = item.empower.maxed;
         return `
           <details class="equipment-detail-card detail-row" data-loot-detail="${item.uid}" ${openLootDetails.has(item.uid) ? 'open' : ''}>
-            <summary>
-              <strong>${item.locked ? '锁 ' : ''}${item.name} <small>${item.intent.name} · ${getSlotName(item.slot)} · ${item.rarity?.name || '凡品'} · ${(item.variant?.affixes?.length || 1)}词条 · 器位 ${item.slotLevel || 0}/${item.slotMaxLevel || item.maxLevel}</small></strong>
+            <summary class="loot-card-brief">
+              <span class="loot-brief-main">
+                <strong>${item.locked ? '锁 ' : ''}${item.name}</strong>
+                <small>${getSlotName(item.slot)} · ${item.rarity?.name || '凡品'}${item.equipped ? ' · 已穿戴' : ''}</small>
+              </span>
               <em class="rarity-badge rarity-${item.rarity?.id || 'common'}">${item.rarity?.name || '凡品'}</em>
-              ${item.variant ? `<em class="loot-variant">${item.variant.name}</em>` : ''}
-              <span class="loot-summary-effects">${formatCompactEffects(item.effects, 3) || '尚未激活'}${item.equipped ? ' · 已穿戴' : ''}</span>
-              <small>${item.comparison.summary} · ${getLootDismantleHint(item)} · 展开查看器象、对比和器位火候</small>
+              <span class="loot-power-delta ${item.comparison.scoreDelta >= 0 ? 'gain' : 'loss'}">${getLootPowerComparisonText(item.comparison)}</span>
             </summary>
             <div class="detail-stack">
+              <small>品阶：${item.rarity?.name || '凡品'} · ${item.intent.name} · ${(item.variant?.affixes?.length || 1)}词条 · 器位 ${item.slotLevel || 0}/${item.slotMaxLevel || item.maxLevel}</small>
+              <small>对比：${item.comparison.summary} · ${getLootDismantleHint(item)}</small>
               ${item.variant ? `<small>器纹：${item.variant.name} · ${combatElements[item.variant.element]?.name || '无相'} · ${(item.variant.affixes || []).map((affix) => affix.name).join(' / ') || '无纹'}</small>` : ''}
               <small>当前：${formatEffects(item.effects) || '尚未激活'}</small>
               <small>器位：${formatEffects(item.slotEffects) || '尚未强化'}</small>
@@ -5926,7 +5935,7 @@
               <button data-equip-loot="${item.uid}" ${item.equipped ? 'disabled' : ''}>${item.equipped ? '已穿戴' : '穿戴'}</button>
               <button data-empower-loot="${item.uid}" ${maxed || item.empower.realmLocked ? 'disabled' : ''}>强化器位</button>
               <button data-toggle-loot-lock="${item.uid}">${item.locked ? '解锁' : '锁定'}</button>
-              <button data-disassemble-loot="${item.uid}" ${item.equipped || item.locked ? 'disabled' : ''}>分解</button>
+              <button data-disassemble-loot="${item.uid}">分解</button>
             </div>
           </details>
         `;
@@ -5999,10 +6008,12 @@
     }
     const selected = getSelectedLootDismantleRarities();
     const summary = getOrganizableLootSummary(state, { rarityIds: selected });
-    button.disabled = summary.count <= 0;
-    button.textContent = summary.count > 0
-      ? `分解 ${summary.count}${summary.reward.bloodEssence ? ` · 血脉+${summary.reward.bloodEssence}` : ''}`
-      : '无可整理';
+    button.disabled = false;
+    button.textContent = !selected.length
+      ? '请选择品质'
+      : summary.count > 0
+        ? `分解 ${summary.count}${summary.reward.bloodEssence ? ` · 血脉+${summary.reward.bloodEssence}` : ''}`
+        : '无可分解';
     button.title = selected.length
       ? (summary.count > 0 ? `预计获得 ${formatReward(summary.reward)}` : '当前勾选品质没有可分解战利品')
       : '先勾选至少一个分解品质';
@@ -6034,6 +6045,19 @@
       return total + effect.value * weight;
     }, 0);
     return effectScore + (item.comparison?.scoreDelta || 0);
+  }
+
+  function getLootPowerComparisonText(comparison) {
+    if (!comparison) {
+      return '对比 --';
+    }
+    if (comparison.scoreDelta > 0) {
+      return `战力对比 +${Math.round(comparison.scoreDelta)}`;
+    }
+    if (comparison.scoreDelta < 0) {
+      return `战力对比 ${Math.round(comparison.scoreDelta)}`;
+    }
+    return comparison.summary === '已穿戴' ? '已穿戴' : '战力对比 0';
   }
 
   function getLootDismantleHint(item) {
@@ -6473,7 +6497,7 @@
             <small>器象：${item.intent.detail}</small>
             <small>${item.affix.id ? `词条：${item.affix.name}（${formatEffects(item.affix.effects)}）` : '词条：无'}</small>
             <small>${maxed ? '已达上限' : realmLocked ? `${getUpgradeTier(nextLevel).name}需更高境界` : `升级需 ${formatReward(upgradeCost)}`}</small>
-            <small>${qualityMaxed ? '品质已满' : level <= 0 ? '先升级后可淬炼' : `淬炼 ${gearQualities[nextQuality]?.name || ''} · 火候 ${Math.round((item.refinement?.chance ?? gearQualities[item.qualityIndex]?.refineChance ?? 0) * 100)}% · ${formatReward(refineCost)}`}</small>
+            <small>${qualityMaxed ? '火候已满' : level <= 0 ? '先升级后可淬炼' : `淬炼 ${gearQualities[nextQuality]?.name || ''} · 成火 ${Math.round((item.refinement?.chance ?? gearQualities[item.qualityIndex]?.refineChance ?? 0) * 100)}% · ${formatReward(refineCost)}`}</small>
             <small>${item.reroll?.available ? `洗练词条 · ${formatReward(rerollCost)}` : '淬炼后可洗练词条'}</small>
             ${item.reroll?.preview?.warnings?.length ? `<small class="reroll-warning">洗练风险：${item.reroll.preview.warnings.join('、')}</small>` : ''}
           </details>
