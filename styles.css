@@ -1491,6 +1491,13 @@ small {
   color: var(--gold);
 }
 
+.beast-row.active {
+  border-color: rgba(125, 211, 183, 0.44);
+  background:
+    linear-gradient(135deg, rgba(125, 211, 183, 0.1), rgba(232, 198, 106, 0.06)),
+    rgba(255, 255, 255, 0.035);
+}
+
 .equipment-detail-card {
   display: block;
   min-height: 78px;
@@ -1889,6 +1896,11 @@ small {
   background: rgba(125, 211, 183, 0.13);
 }
 
+.battle-round-list small.beast {
+  color: #f7e8b8;
+  background: rgba(232, 198, 106, 0.13);
+}
+
 .battle-round-list small.enemy {
   color: #f0c6bc;
   background: rgba(238, 181, 164, 0.1);
@@ -1987,6 +1999,11 @@ small {
   align-items: stretch;
 }
 
+.ally-stack {
+  display: grid;
+  gap: 8px;
+}
+
 .combatant-card {
   display: grid;
   gap: 6px;
@@ -2043,6 +2060,14 @@ small {
 
 .combatant-card.enemy i b {
   background: linear-gradient(90deg, #eeb5a4, #e8c66a);
+}
+
+.combatant-card.beast {
+  border-color: rgba(125, 211, 183, 0.2);
+}
+
+.combatant-card.beast i b {
+  background: linear-gradient(90deg, #7dd3b7, #9fc8ff);
 }
 
 .clash-mark {
@@ -2137,6 +2162,10 @@ small {
 
 .battle-playback-log li.player {
   background: rgba(125, 211, 183, 0.11);
+}
+
+.battle-playback-log li.beast {
+  background: rgba(232, 198, 106, 0.12);
 }
 
 .battle-playback-log li.enemy {

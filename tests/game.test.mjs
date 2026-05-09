@@ -34,6 +34,7 @@ import {
   createGameState,
   buyMarketItem,
   disassembleLootEquipment,
+  deploySpiritBeast,
   equipLootEquipment,
   empowerLootEquipment,
   organizeLootEquipment,
@@ -1728,6 +1729,44 @@ test('magic treasures and spirit beasts add long term stat bonuses', () => {
   assert.equal(state.spiritBeasts.cloudFox, 1);
   assert.equal(calculateBreakthroughChance({ ...state, qi: 160 }, 3000) > 0.75, true);
   assert.equal(calculateQiRate(state, 3000) > REALMS[0].qiRate, true);
+});
+
+test('spirit beasts separate collection effects from deployed battle effects', () => {
+  const state = createGameState(1000);
+  state.spiritStones = 2_000;
+  state.herbs = 800;
+  state.beastCores = 80;
+
+  trainSpiritBeast(state, 'cloudFox', 1000);
+  trainSpiritBeast(state, 'thunderTiger', 2000);
+  const deployed = deploySpiritBeast(state, 'thunderTiger', 3000);
+  const details = getEquipmentDetails(state).spiritBeasts;
+  const fox = details.find((beast) => beast.id === 'cloudFox');
+  const tiger = details.find((beast) => beast.id === 'thunderTiger');
+  const combat = getCombatProfile(state);
+
+  assert.equal(deployed.ok, true);
+  assert.equal(tiger.deployed, true);
+  assert.equal(fox.deployed, false);
+  assert.equal(fox.collectionEffects.some((effect) => effect.id === 'qiRate'), true);
+  assert.equal(tiger.battleEffects.some((effect) => effect.id === 'attack'), true);
+  assert.equal(combat.attack.sources.some((source) => source.label === '出战灵兽'), true);
+});
+
+test('deployed spirit beasts join turn battles as their own actor', () => {
+  const state = createGameState(1000);
+  state.realmIndex = realmIndexByName('筑基一层');
+  state.gear.weapon = 3;
+  state.gear.amulet = 2;
+  state.gear.robe = 2;
+  state.spiritBeasts.thunderTiger = 3;
+  deploySpiritBeast(state, 'thunderTiger', 1000);
+
+  const battle = simulateBossBattle(state, 'swordTomb', 2000);
+
+  assert.equal(battle.pet.name, '雷纹幼虎');
+  assert.equal(battle.rounds.some((round) => round.actor === 'beast'), true);
+  assert.equal(battle.rounds.some((round) => round.actorName === '雷纹幼虎' && round.damage > 0), true);
 });
 
 test('character profile and equipment details expose concrete attribute sources', () => {

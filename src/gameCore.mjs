@@ -608,6 +608,8 @@ export const SPIRIT_BEASTS = {
     maxLevel: 8,
     cost: (level) => ({ spiritStones: scaleCost(90, level), herbs: scaleCost(18, level), beastCores: level }),
     bonuses: { qiRate: 0.04, herbRate: 0.015 },
+    deployedBonuses: { vitality: 30, speed: 2, defense: 8 },
+    combat: { element: 'wood', attack: 24, defense: 8, vitality: 64, speed: 15, critChance: 0.04, pierce: 3 },
   },
   thunderTiger: {
     id: 'thunderTiger',
@@ -616,6 +618,8 @@ export const SPIRIT_BEASTS = {
     maxLevel: 8,
     cost: (level) => ({ spiritStones: scaleCost(130, level), beastCores: level * 2 }),
     bonuses: { power: 22, dangerReduction: 5 },
+    deployedBonuses: { attack: 22, pierce: 6, critChance: 0.012, vitality: 18 },
+    combat: { element: 'light', attack: 38, defense: 6, vitality: 78, speed: 13, critChance: 0.08, pierce: 8 },
   },
 };
 
@@ -1504,6 +1508,7 @@ export function createGameState(now = Date.now()) {
     lockedLoot: {},
     treasures: Object.fromEntries(Object.keys(TREASURES).map((id) => [id, 0])),
     spiritBeasts: Object.fromEntries(Object.keys(SPIRIT_BEASTS).map((id) => [id, 0])),
+    activeSpiritBeast: null,
     daoHearts: Object.fromEntries(Object.keys(DAO_HEARTS).map((id) => [id, 0])),
     claimedDaoHeartRealms: {},
     pendingDaoHeartChoice: null,
@@ -1590,6 +1595,7 @@ export function reviveGameState(saved, now = Date.now()) {
   state.lockedLoot = normalizeLockedLoot(state.lockedLoot, state.lootEquipment);
   state.treasures = normalizeLevels(state.treasures, TREASURES);
   state.spiritBeasts = normalizeLevels(state.spiritBeasts, SPIRIT_BEASTS);
+  state.activeSpiritBeast = normalizeActiveSpiritBeast(state.activeSpiritBeast, state.spiritBeasts);
   state.daoHearts = normalizeLevels(state.daoHearts, DAO_HEARTS);
   state.claimedDaoHeartRealms = normalizeDaoHeartClaims(state.claimedDaoHeartRealms);
   state.pendingDaoHeartChoice = normalizePendingDaoHeartChoice(state.pendingDaoHeartChoice, state);
@@ -2323,6 +2329,7 @@ export function getCombatProfile(state) {
     ...getGearAffixSources(state, 'attack'),
     ...getGearSetSources(state, 'attack'),
     ...getEquippedLootSources(state, 'attack'),
+    ...getDeployedSpiritBeastSources(state, 'attack'),
   ]);
   const defenseSources = compactSources([
     { label: '道体根基', value: Math.floor(power * 0.18) },
@@ -2330,6 +2337,7 @@ export function getCombatProfile(state) {
     ...getGearAffixSources(state, 'defense'),
     ...getGearSetSources(state, 'defense'),
     ...getEquippedLootSources(state, 'defense'),
+    ...getDeployedSpiritBeastSources(state, 'defense'),
   ]);
   const vitalitySources = compactSources([
     { label: '境界血元', value: 260 + (state.realmIndex ?? 0) * 36 },
@@ -2337,23 +2345,27 @@ export function getCombatProfile(state) {
     ...getGearAffixSources(state, 'vitality'),
     ...getGearSetSources(state, 'vitality'),
     ...getEquippedLootSources(state, 'vitality'),
+    ...getDeployedSpiritBeastSources(state, 'vitality'),
   ]);
   const speedSources = compactSources([
     { label: '身法根基', value: 12 + Math.floor((state.realmIndex ?? 0) / 2) },
     ...getGearAffixSources(state, 'speed'),
     ...getGearSetSources(state, 'speed'),
     ...getEquippedLootSources(state, 'speed'),
+    ...getDeployedSpiritBeastSources(state, 'speed'),
   ]);
   const critSources = compactSources([
     { label: '本命灵觉', value: 0.05, mode: 'percent' },
     ...getGearAffixSources(state, 'critChance', 'percent'),
     ...getGearSetSources(state, 'critChance', 'percent'),
     ...getEquippedLootSources(state, 'critChance', 'percent'),
+    ...getDeployedSpiritBeastSources(state, 'critChance', 'percent'),
   ]);
   const pierceSources = compactSources([
     ...getGearAffixSources(state, 'pierce'),
     ...getGearSetSources(state, 'pierce'),
     ...getEquippedLootSources(state, 'pierce'),
+    ...getDeployedSpiritBeastSources(state, 'pierce'),
   ]);
   const elementScores = getCombatElementScores(state);
   const element = getDominantCombatElement(elementScores);
@@ -2385,6 +2397,7 @@ export function simulateBossBattle(state, mapId, now = Date.now(), random = null
     type: 'boss',
     now,
     random,
+    beast: getSpiritBeastCombatant(state),
   });
 }
 
@@ -2598,8 +2611,12 @@ export function getEquipmentDetails(state) {
         detail: beast.detail,
         level,
         maxLevel: beast.maxLevel,
+        deployed: state.activeSpiritBeast === beast.id,
         effects: effectsFromBonusObject(scaleBonusObject(beast.bonuses, level)),
+        collectionEffects: effectsFromBonusObject(scaleBonusObject(beast.bonuses, level)),
+        battleEffects: effectsFromBonusObject(scaleBonusObject(beast.deployedBonuses ?? {}, level)),
         nextEffects: level < beast.maxLevel ? effectsFromBonusObject(scaleBonusObject(beast.bonuses, level + 1)) : [],
+        nextBattleEffects: level < beast.maxLevel ? effectsFromBonusObject(scaleBonusObject(beast.deployedBonuses ?? {}, level + 1)) : [],
       };
     }),
   };
@@ -3266,8 +3283,22 @@ export function trainSpiritBeast(state, beastId, now = Date.now()) {
 
   payResources(state, cost);
   state.spiritBeasts[beastId] = nextLevel;
+  state.activeSpiritBeast = normalizeActiveSpiritBeast(state.activeSpiritBeast, state.spiritBeasts);
   addLog(state, now, `${beast.name}培养至 ${nextLevel} 级。`);
   return { ok: true, level: nextLevel };
+}
+
+export function deploySpiritBeast(state, beastId, now = Date.now()) {
+  if (!SPIRIT_BEASTS[beastId]) {
+    return { ok: false, reason: 'unknownSpiritBeast' };
+  }
+  state.spiritBeasts = normalizeLevels(state.spiritBeasts, SPIRIT_BEASTS);
+  if ((state.spiritBeasts[beastId] ?? 0) <= 0) {
+    return { ok: false, reason: 'notOwned' };
+  }
+  state.activeSpiritBeast = beastId;
+  addLog(state, now, `${SPIRIT_BEASTS[beastId].name}随行出战。`);
+  return { ok: true, beast: SPIRIT_BEASTS[beastId], level: state.spiritBeasts[beastId] };
 }
 
 export function claimGoalReward(state, goalId, now = Date.now()) {
@@ -4275,7 +4306,7 @@ function normalizeBattle(battle) {
     .filter((round) => round && typeof round === 'object')
     .map((round) => ({
       round: Math.max(1, Math.floor(Number(round.round) || 1)),
-      actor: round.actor === 'enemy' ? 'enemy' : 'player',
+      actor: ['enemy', 'beast'].includes(round.actor) ? round.actor : 'player',
       actorName: String(round.actorName || ''),
       targetName: String(round.targetName || ''),
       damage: Math.max(0, Math.round(Number(round.damage) || 0)),
@@ -4294,6 +4325,7 @@ function normalizeBattle(battle) {
     type: battle.type === 'boss' ? 'boss' : 'depth',
     outcome: battle.outcome === 'victory' ? 'victory' : 'defeat',
     player: normalizeBattleCombatant(battle.player, '修士'),
+    pet: battle.pet ? normalizeBattleCombatant(battle.pet, '灵兽') : null,
     enemy: normalizeBattleCombatant(battle.enemy, '劫影'),
     rounds,
     diagnosis: battle.diagnosis && typeof battle.diagnosis === 'object' ? { ...battle.diagnosis } : null,
@@ -4347,6 +4379,13 @@ function normalizeLevels(savedLevels, definitions) {
     normalized[id] = clampInteger(savedLevels?.[id] ?? 0, 0, definitions[id].maxLevel);
   });
   return normalized;
+}
+
+function normalizeActiveSpiritBeast(activeId, levels) {
+  if (activeId && SPIRIT_BEASTS[activeId] && (levels?.[activeId] ?? 0) > 0) {
+    return activeId;
+  }
+  return Object.keys(SPIRIT_BEASTS).find((id) => (levels?.[id] ?? 0) > 0) ?? null;
 }
 
 function normalizeDaoHeartClaims(claims) {
@@ -5304,6 +5343,12 @@ function getCombatElementScores(state) {
     add(item?.element ?? template?.element, item?.bonuses?.elementPower ?? 0, `战利${item?.name ?? ''}`);
   });
 
+  const activeBeast = getActiveSpiritBeast(state);
+  if (activeBeast) {
+    const level = state.spiritBeasts?.[activeBeast.id] ?? 0;
+    add(activeBeast.combat?.element, (activeBeast.combat?.attack ?? 0) * level * 0.3, `出战${activeBeast.name}`);
+  }
+
   return scores;
 }
 
@@ -5324,6 +5369,25 @@ function getPlayerCombatant(state) {
     speed: Math.max(1, profile.speed.value),
     critChance: Math.min(0.5, Math.max(0, profile.critChance.value)),
     pierce: Math.max(0, profile.pierce.value),
+  };
+}
+
+function getSpiritBeastCombatant(state) {
+  const beast = getActiveSpiritBeast(state);
+  if (!beast) {
+    return null;
+  }
+  const level = state.spiritBeasts?.[beast.id] ?? 0;
+  const combat = beast.combat ?? {};
+  return {
+    name: beast.name,
+    element: COMBAT_ELEMENTS[combat.element] ?? COMBAT_ELEMENTS.wood,
+    attack: Math.max(1, Math.round((combat.attack ?? 16) * level)),
+    defense: Math.max(0, Math.round((combat.defense ?? 4) * level)),
+    vitality: Math.max(1, Math.round((combat.vitality ?? 40) + level * 18)),
+    speed: Math.max(1, Math.round((combat.speed ?? 10) + level)),
+    critChance: Math.min(0.42, Math.max(0, (combat.critChance ?? 0.04) + level * 0.006)),
+    pierce: Math.max(0, Math.round((combat.pierce ?? 2) * level)),
   };
 }
 
@@ -5362,10 +5426,11 @@ function simulateDepthBattle(state, map, layer, now = Date.now(), random = null)
     type: 'depth',
     now,
     random,
+    beast: getSpiritBeastCombatant(state),
   });
 }
 
-function runTurnBattle(player, enemy, { type = 'boss', now = Date.now(), random = null } = {}) {
+function runTurnBattle(player, enemy, { type = 'boss', now = Date.now(), random = null, beast = null } = {}) {
   let playerHp = player.vitality;
   let enemyHp = enemy.vitality;
   const rounds = [];
@@ -5376,6 +5441,15 @@ function runTurnBattle(player, enemy, { type = 'boss', now = Date.now(), random 
     rounds.push(createBattleRound(round, 'player', player, enemy, playerHit, enemyHp));
     if (enemyHp <= 0) {
       break;
+    }
+
+    if (beast) {
+      const beastHit = resolveCombatHit(beast, enemy, round, true, now, random);
+      enemyHp = Math.max(0, enemyHp - beastHit.damage);
+      rounds.push(createBattleRound(round, 'beast', beast, enemy, beastHit, enemyHp));
+      if (enemyHp <= 0) {
+        break;
+      }
     }
 
     const enemyHit = resolveCombatHit(enemy, player, round, false, now, random);
@@ -5396,6 +5470,12 @@ function runTurnBattle(player, enemy, { type = 'boss', now = Date.now(), random 
       maxHp: player.vitality,
       hp: playerHp,
     },
+    pet: beast ? {
+      name: beast.name,
+      element: beast.element,
+      maxHp: beast.vitality,
+      hp: beast.vitality,
+    } : null,
     enemy: {
       name: enemy.name,
       element: enemy.element,
@@ -5411,7 +5491,7 @@ function runTurnBattle(player, enemy, { type = 'boss', now = Date.now(), random 
 }
 
 function createBattleDiagnosis(player, enemy, rounds, playerHp, enemyHp, outcome) {
-  const playerRounds = rounds.filter((round) => round.actor === 'player');
+  const playerRounds = rounds.filter((round) => round.actor === 'player' || round.actor === 'beast');
   const enemyRounds = rounds.filter((round) => round.actor === 'enemy');
   const playerDamage = playerRounds.reduce((total, round) => total + round.damage, 0);
   const enemyDamage = enemyRounds.reduce((total, round) => total + round.damage, 0);
@@ -5494,7 +5574,7 @@ function createBattleRound(round, actor, attacker, defender, hit, targetHp) {
     elementModifier: hit.elementModifier,
     elementText: formatElementInteraction(attacker.element, defender.element, hit.elementModifier),
     targetHp,
-    targetMaxHp: defender.maxHp,
+    targetMaxHp: defender.maxHp ?? defender.vitality,
   };
 }
 
@@ -5630,11 +5710,30 @@ function getTreasureBonus(state, key) {
   }, 0);
 }
 
+function getActiveSpiritBeast(state) {
+  const activeId = normalizeActiveSpiritBeast(state.activeSpiritBeast, state.spiritBeasts);
+  return activeId ? SPIRIT_BEASTS[activeId] : null;
+}
+
 function getSpiritBeastBonus(state, key) {
   return Object.entries(state.spiritBeasts ?? {}).reduce((total, [beastId, level]) => {
     const beast = SPIRIT_BEASTS[beastId];
     return total + (beast?.bonuses?.[key] ?? 0) * (level ?? 0);
   }, 0);
+}
+
+function getDeployedSpiritBeastBonus(state, key) {
+  const beast = getActiveSpiritBeast(state);
+  if (!beast) {
+    return 0;
+  }
+  const level = state.spiritBeasts?.[beast.id] ?? 0;
+  return (beast.deployedBonuses?.[key] ?? 0) * level;
+}
+
+function getDeployedSpiritBeastSources(state, key, mode = 'flat') {
+  const value = getDeployedSpiritBeastBonus(state, key);
+  return value ? [{ label: '出战灵兽', value, mode }] : [];
 }
 
 function getDaoHeartBonus(state, key) {
