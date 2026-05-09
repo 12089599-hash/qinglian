@@ -542,8 +542,23 @@ test('loot pool covers six equipment slots and new saves normalize each slot', (
   assert.deepEqual(Object.keys(state.equippedLoot), ['weapon', 'offhand', 'amulet', 'robe', 'jade', 'boots']);
   Object.keys(GEAR).forEach((slot) => {
     assert.equal(lootSlots.has(slot), true);
-    assert.equal(Object.values(LOOT_EQUIPMENT).filter((item) => item.slot === slot).length >= 3, true);
+    assert.equal(Object.values(LOOT_EQUIPMENT).filter((item) => item.slot === slot).length >= 6, true);
   });
+});
+
+test('loot templates carry realm bands for long term equipment chase', () => {
+  const templates = Object.values(LOOT_EQUIPMENT);
+  const realmBands = new Set(templates.map((item) => item.realmBand));
+  const lateTemplates = templates.filter((item) => item.minRealmIndex >= realmIndexByName('金丹一转'));
+
+  assert.equal(templates.length >= 36, true);
+  assert.equal(realmBands.has('炼气'), true);
+  assert.equal(realmBands.has('筑基'), true);
+  assert.equal(realmBands.has('金丹'), true);
+  assert.equal(realmBands.has('元婴'), true);
+  assert.equal(lateTemplates.length >= 12, true);
+  assert.equal(templates.some((item) => item.name === '太微星盘'), true);
+  assert.equal(templates.some((item) => item.name === '蛟骨战戟'), true);
 });
 
 test('early maps can roll the full equipment pool with very rare top rarity', () => {
@@ -2097,6 +2112,23 @@ test('spirit beasts separate collection effects from deployed battle effects', (
   assert.equal(fox.collectionEffects.some((effect) => effect.id === 'qiRate'), true);
   assert.equal(tiger.battleEffects.some((effect) => effect.id === 'attack'), true);
   assert.equal(combat.attack.sources.some((source) => source.label === '出战灵兽'), true);
+});
+
+test('spirit beasts expose bloodline quality and differentiated growth', () => {
+  const state = createGameState(1000);
+  const beasts = Object.values(SPIRIT_BEASTS);
+  const qualities = new Set(beasts.map((beast) => beast.qualityId));
+  const details = getEquipmentDetails(state).spiritBeasts;
+  const fox = details.find((beast) => beast.id === 'cloudFox');
+  const dragon = details.find((beast) => beast.id === 'floodDragon');
+
+  assert.equal(beasts.length >= 12, true);
+  ['wild', 'spirit', 'mystic', 'earth', 'heaven', 'ancient'].forEach((qualityId) => {
+    assert.equal(qualities.has(qualityId), true);
+  });
+  assert.equal(dragon.quality.name, '古血');
+  assert.equal(dragon.growthMultiplier > fox.growthMultiplier, true);
+  assert.equal(dragon.maxLevel > fox.maxLevel, true);
 });
 
 test('training the first spirit beast reports automatic deployment', () => {

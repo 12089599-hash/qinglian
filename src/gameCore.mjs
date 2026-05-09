@@ -660,12 +660,35 @@ export const TREASURES = {
   },
 };
 
+export const SPIRIT_BEAST_QUALITIES = {
+  wild: { id: 'wild', name: '野灵', growthMultiplier: 0.86, costMultiplier: 0.7 },
+  spirit: { id: 'spirit', name: '通灵', growthMultiplier: 1, costMultiplier: 1 },
+  mystic: { id: 'mystic', name: '玄裔', growthMultiplier: 1.18, costMultiplier: 1.35 },
+  earth: { id: 'earth', name: '地脉', growthMultiplier: 1.38, costMultiplier: 1.85 },
+  heaven: { id: 'heaven', name: '天种', growthMultiplier: 1.65, costMultiplier: 2.55 },
+  ancient: { id: 'ancient', name: '古血', growthMultiplier: 2.05, costMultiplier: 3.6 },
+};
+
 export const SPIRIT_BEASTS = {
+  stoneMarten: {
+    id: 'stoneMarten',
+    name: '岩纹灵貂',
+    detail: '山岩间常见的小兽，善寻矿脉，适合作为最早的御灵伙伴。',
+    rarityId: 'common',
+    qualityId: 'wild',
+    maxLevel: 6,
+    cost: (level) => ({ spiritStones: scaleCost(48, level), beastCores: Math.max(1, Math.ceil(level / 2)) }),
+    bonuses: { power: 9, defense: 5 },
+    deployedBonuses: { defense: 8, vitality: 16 },
+    combat: { element: 'earth', attack: 14, defense: 8, vitality: 48, speed: 11, critChance: 0.025, pierce: 2 },
+    skill: { name: '裂石扑击', cadence: 4, multiplier: 1.18, critBonus: 0.02, detail: '每四回合借岩势扑击，造成厚土战技。' },
+  },
   cloudFox: {
     id: 'cloudFox',
     name: '云纹灵狐',
     detail: '亲近灵气，辅助周天灵息和灵田照料。',
     rarityId: 'spirit',
+    qualityId: 'spirit',
     maxLevel: 8,
     cost: (level) => ({ spiritStones: scaleCost(90, level), herbs: scaleCost(18, level), beastCores: level }),
     bonuses: { qiRate: 0.04, herbRate: 0.015 },
@@ -673,17 +696,148 @@ export const SPIRIT_BEASTS = {
     combat: { element: 'wood', attack: 24, defense: 8, vitality: 64, speed: 15, critChance: 0.04, pierce: 3 },
     skill: { name: '云息缠灵', cadence: 3, multiplier: 1.32, critBonus: 0.03, detail: '每三回合牵引云息缠住劫影，造成一次青木战技。' },
   },
+  greenFeatherCrane: {
+    id: 'greenFeatherCrane',
+    name: '青羽灵鹤',
+    detail: '性情清正，能梳理气机，适合破境前长期培养。',
+    rarityId: 'spirit',
+    qualityId: 'spirit',
+    maxLevel: 8,
+    cost: (level) => ({ spiritStones: scaleCost(95, level), herbs: scaleCost(22, level), beastCores: level }),
+    bonuses: { breakthrough: 0.012, speed: 2 },
+    deployedBonuses: { speed: 4, defense: 6, vitality: 20 },
+    combat: { element: 'light', attack: 22, defense: 7, vitality: 58, speed: 17, critChance: 0.035, pierce: 3 },
+    skill: { name: '青羽拂劫', cadence: 3, multiplier: 1.24, critBonus: 0.02, detail: '每三回合拂散劫影，造成曜阳战技。' },
+  },
   thunderTiger: {
     id: 'thunderTiger',
     name: '雷纹幼虎',
     detail: '守山善战，凝练道威并护持外出行游。',
     rarityId: 'mystic',
+    qualityId: 'mystic',
     maxLevel: 8,
     cost: (level) => ({ spiritStones: scaleCost(130, level), beastCores: level * 2 }),
     bonuses: { power: 22, dangerReduction: 5 },
     deployedBonuses: { attack: 22, pierce: 6, critChance: 0.012, vitality: 18 },
     combat: { element: 'light', attack: 38, defense: 6, vitality: 78, speed: 13, critChance: 0.08, pierce: 8 },
     skill: { name: '雷痕扑杀', cadence: 2, multiplier: 1.58, critBonus: 0.08, detail: '隔回合扑杀劫影，曜阳雷痕更容易压出会心。' },
+  },
+  flameMarten: {
+    id: 'flameMarten',
+    name: '赤焰灵貂',
+    detail: '喜食火脉残晶，出战时能补足离火杀伤。',
+    rarityId: 'mystic',
+    qualityId: 'mystic',
+    maxLevel: 8,
+    cost: (level) => ({ spiritStones: scaleCost(128, level), beastCores: level * 2, herbs: scaleCost(10, level) }),
+    bonuses: { power: 18, alchemySpeed: 0.012 },
+    deployedBonuses: { attack: 18, critChance: 0.012, speed: 2 },
+    combat: { element: 'fire', attack: 36, defense: 5, vitality: 66, speed: 18, critChance: 0.085, pierce: 6 },
+    skill: { name: '焰尾连环', cadence: 2, multiplier: 1.44, critBonus: 0.07, detail: '隔回合甩出焰尾，造成离火战技。' },
+  },
+  snowSpiritDeer: {
+    id: 'snowSpiritDeer',
+    name: '雪魄灵鹿',
+    detail: '踏雪无声，能安定识海，适合心魔压力较高的阶段。',
+    rarityId: 'mystic',
+    qualityId: 'mystic',
+    maxLevel: 8,
+    cost: (level) => ({ spiritStones: scaleCost(132, level), herbs: scaleCost(26, level), beastCores: level }),
+    bonuses: { breakthrough: 0.014, dangerReduction: 4 },
+    deployedBonuses: { defense: 12, vitality: 32, speed: 2 },
+    combat: { element: 'water', attack: 26, defense: 12, vitality: 82, speed: 14, critChance: 0.035, pierce: 4 },
+    skill: { name: '雪魄凝心', cadence: 4, multiplier: 1.2, critBonus: 0.02, detail: '每四回合凝出雪魄寒芒，造成玄水战技。' },
+  },
+  blackTurtle: {
+    id: 'blackTurtle',
+    name: '玄甲灵龟',
+    detail: '背负玄甲地脉，能显著提升续战和守御。',
+    rarityId: 'earthFiend',
+    qualityId: 'earth',
+    maxLevel: 10,
+    cost: (level) => ({ spiritStones: scaleCost(180, level), beastCores: level * 3, bloodEssence: Math.max(1, Math.ceil(level / 2)) }),
+    bonuses: { defense: 18, vitality: 58, dangerReduction: 4 },
+    deployedBonuses: { defense: 22, vitality: 54 },
+    combat: { element: 'earth', attack: 30, defense: 20, vitality: 120, speed: 7, critChance: 0.025, pierce: 5 },
+    skill: { name: '玄甲镇岳', cadence: 3, multiplier: 1.3, critBonus: 0.02, detail: '每三回合以玄甲镇压劫影，造成厚土战技。' },
+  },
+  goldenEyeApe: {
+    id: 'goldenEyeApe',
+    name: '金瞳灵猿',
+    detail: '金瞳善破虚妄，斗法时更容易打穿敌方护势。',
+    rarityId: 'earthFiend',
+    qualityId: 'earth',
+    maxLevel: 10,
+    cost: (level) => ({ spiritStones: scaleCost(190, level), beastCores: level * 3, forgingEssence: Math.max(1, Math.ceil(level / 2)) }),
+    bonuses: { power: 26, pierce: 5 },
+    deployedBonuses: { attack: 24, pierce: 10, critChance: 0.012 },
+    combat: { element: 'metal', attack: 46, defense: 12, vitality: 94, speed: 14, critChance: 0.09, pierce: 13 },
+    skill: { name: '金瞳破妄', cadence: 2, multiplier: 1.56, critBonus: 0.06, detail: '隔回合以金瞳锁定破绽，造成庚金战技。' },
+  },
+  shadowMoonLeopard: {
+    id: 'shadowMoonLeopard',
+    name: '影月灵豹',
+    detail: '潜行月影之间，适合高速斗法与玄阴流派。',
+    rarityId: 'earthFiend',
+    qualityId: 'earth',
+    maxLevel: 10,
+    cost: (level) => ({ spiritStones: scaleCost(196, level), beastCores: level * 3, bloodEssence: Math.max(1, Math.ceil(level / 2)) }),
+    bonuses: { speed: 4, dangerReduction: 5 },
+    deployedBonuses: { attack: 18, speed: 7, critChance: 0.018, pierce: 5 },
+    combat: { element: 'dark', attack: 42, defense: 8, vitality: 82, speed: 22, critChance: 0.1, pierce: 10 },
+    skill: { name: '影月裂身', cadence: 2, multiplier: 1.5, critBonus: 0.08, detail: '隔回合穿入影月，造成玄阴战技。' },
+  },
+  starSandCarp: {
+    id: 'starSandCarp',
+    name: '星砂灵鲤',
+    detail: '吞吐星砂灵机，能提升长线吐纳和资源沉淀。',
+    rarityId: 'heavenWork',
+    qualityId: 'heaven',
+    maxLevel: 12,
+    cost: (level) => ({ spiritStones: scaleCost(260, level), herbs: scaleCost(45, level), beastCores: level * 4, insight: Math.max(1, Math.ceil(level / 3)) }),
+    bonuses: { qiRate: 0.052, herbRate: 0.02, bloodEssenceBonus: 0.018 },
+    deployedBonuses: { vitality: 42, defense: 14, elementPower: 10 },
+    combat: { element: 'water', attack: 34, defense: 16, vitality: 108, speed: 13, critChance: 0.045, pierce: 7 },
+    skill: { name: '星砂回潮', cadence: 3, multiplier: 1.42, critBonus: 0.03, detail: '每三回合卷起星砂潮汐，造成玄水战技。' },
+  },
+  nineSunCrow: {
+    id: 'nineSunCrow',
+    name: '九曜灵鸦',
+    detail: '翎羽含曜阳残火，斗法爆发极强。',
+    rarityId: 'heavenWork',
+    qualityId: 'heaven',
+    maxLevel: 12,
+    cost: (level) => ({ spiritStones: scaleCost(280, level), beastCores: level * 4, forgingEssence: level, insight: Math.max(1, Math.ceil(level / 3)) }),
+    bonuses: { power: 40, critChance: 0.01 },
+    deployedBonuses: { attack: 32, critChance: 0.026, speed: 4, elementPower: 12 },
+    combat: { element: 'light', attack: 58, defense: 9, vitality: 92, speed: 19, critChance: 0.13, pierce: 12 },
+    skill: { name: '九曜坠火', cadence: 2, multiplier: 1.72, critBonus: 0.1, detail: '隔回合坠下曜阳火羽，造成高爆发战技。' },
+  },
+  qingqiuFox: {
+    id: 'qingqiuFox',
+    name: '青丘幼狐',
+    detail: '古狐血脉未显锋芒，却能深度牵引周天与识海。',
+    rarityId: 'dao',
+    qualityId: 'ancient',
+    maxLevel: 14,
+    cost: (level) => ({ spiritStones: scaleCost(420, level), herbs: scaleCost(70, level), beastCores: level * 5, bloodEssence: Math.max(2, Math.ceil(level / 2)), insight: Math.max(1, Math.ceil(level / 3)) }),
+    bonuses: { qiRate: 0.07, breakthrough: 0.018, herbRate: 0.024 },
+    deployedBonuses: { vitality: 56, defense: 20, speed: 5, elementPower: 14 },
+    combat: { element: 'wood', attack: 46, defense: 18, vitality: 128, speed: 18, critChance: 0.07, pierce: 9 },
+    skill: { name: '青丘幻息', cadence: 3, multiplier: 1.62, critBonus: 0.05, detail: '每三回合化出幻息灵尾，造成青木战技。' },
+  },
+  floodDragon: {
+    id: 'floodDragon',
+    name: '蛟影幼龙',
+    detail: '蛟龙古血初醒，收集与出战成长都极高。',
+    rarityId: 'dao',
+    qualityId: 'ancient',
+    maxLevel: 14,
+    cost: (level) => ({ spiritStones: scaleCost(460, level), beastCores: level * 6, bloodEssence: Math.max(2, Math.ceil(level / 2)), forgingEssence: level, insight: Math.max(1, Math.ceil(level / 3)) }),
+    bonuses: { power: 56, qiRate: 0.032, dangerReduction: 8, elementPower: 8 },
+    deployedBonuses: { attack: 42, defense: 18, vitality: 62, pierce: 12, critChance: 0.018 },
+    combat: { element: 'water', attack: 68, defense: 18, vitality: 142, speed: 16, critChance: 0.1, pierce: 16 },
+    skill: { name: '蛟影翻江', cadence: 2, multiplier: 1.86, critBonus: 0.08, detail: '隔回合翻起蛟影江潮，造成古血玄水战技。' },
   },
 };
 
@@ -839,6 +993,9 @@ export const LOOT_EQUIPMENT = {
     id: 'qingfengSword',
     name: '青锋剑',
     slot: 'weapon',
+    realmBand: '炼气',
+    minRealmIndex: 0,
+    lootTier: 0,
     quality: 1,
     element: 'metal',
     bonuses: { power: 36, attack: 22, elementPower: 12 },
@@ -847,6 +1004,9 @@ export const LOOT_EQUIPMENT = {
     id: 'bloodCopperBlade',
     name: '赤铜刀',
     slot: 'weapon',
+    realmBand: '炼气',
+    minRealmIndex: 0,
+    lootTier: 0,
     quality: 0,
     element: 'fire',
     bonuses: { power: 30, attack: 26, critChance: 0.012, elementPower: 10 },
@@ -855,14 +1015,53 @@ export const LOOT_EQUIPMENT = {
     id: 'coldMoonSpear',
     name: '寒月枪',
     slot: 'weapon',
+    realmBand: '筑基',
+    minRealmIndex: 9,
+    lootTier: 1,
     quality: 1,
     element: 'water',
     bonuses: { power: 34, attack: 18, pierce: 10, speed: 2, elementPower: 12 },
+  },
+  zhexiaSword: {
+    id: 'zhexiaSword',
+    name: '折霞剑',
+    slot: 'weapon',
+    realmBand: '筑基',
+    minRealmIndex: 12,
+    lootTier: 2,
+    quality: 2,
+    element: 'fire',
+    bonuses: { power: 52, attack: 30, critChance: 0.018, elementPower: 18 },
+  },
+  floodBoneHalberd: {
+    id: 'floodBoneHalberd',
+    name: '蛟骨战戟',
+    slot: 'weapon',
+    realmBand: '金丹',
+    minRealmIndex: 18,
+    lootTier: 3,
+    quality: 2,
+    element: 'water',
+    bonuses: { power: 68, attack: 34, pierce: 18, vitality: 36, elementPower: 20 },
+  },
+  taiyiFlyingSword: {
+    id: 'taiyiFlyingSword',
+    name: '太乙飞剑',
+    slot: 'weapon',
+    realmBand: '元婴',
+    minRealmIndex: 27,
+    lootTier: 4,
+    quality: 3,
+    element: 'light',
+    bonuses: { power: 90, attack: 44, critChance: 0.026, speed: 5, elementPower: 28 },
   },
   xuanmingWheel: {
     id: 'xuanmingWheel',
     name: '玄鸣法轮',
     slot: 'offhand',
+    realmBand: '筑基',
+    minRealmIndex: 9,
+    lootTier: 1,
     quality: 1,
     element: 'light',
     bonuses: { power: 24, attack: 14, pierce: 8, elementPower: 12 },
@@ -871,6 +1070,9 @@ export const LOOT_EQUIPMENT = {
     id: 'spiritEchoBell',
     name: '回灵铃',
     slot: 'offhand',
+    realmBand: '炼气',
+    minRealmIndex: 0,
+    lootTier: 0,
     quality: 0,
     element: 'wood',
     bonuses: { qiRate: 0.024, defense: 10, vitality: 20, elementPower: 8 },
@@ -879,14 +1081,53 @@ export const LOOT_EQUIPMENT = {
     id: 'sevenStarMirror',
     name: '七星镜',
     slot: 'offhand',
+    realmBand: '筑基',
+    minRealmIndex: 9,
+    lootTier: 1,
     quality: 1,
     element: 'light',
     bonuses: { power: 18, breakthrough: 0.028, defense: 14, elementPower: 14 },
+  },
+  zhaoyingBanner: {
+    id: 'zhaoyingBanner',
+    name: '照影幡',
+    slot: 'offhand',
+    realmBand: '金丹',
+    minRealmIndex: 18,
+    lootTier: 2,
+    quality: 2,
+    element: 'dark',
+    bonuses: { power: 42, attack: 18, pierce: 14, critChance: 0.018, elementPower: 18 },
+  },
+  taiweiAstrolabe: {
+    id: 'taiweiAstrolabe',
+    name: '太微星盘',
+    slot: 'offhand',
+    realmBand: '金丹',
+    minRealmIndex: 21,
+    lootTier: 3,
+    quality: 2,
+    element: 'light',
+    bonuses: { breakthrough: 0.038, defense: 24, qiRate: 0.026, elementPower: 22 },
+  },
+  netherBoneLamp: {
+    id: 'netherBoneLamp',
+    name: '冥骨灯',
+    slot: 'offhand',
+    realmBand: '元婴',
+    minRealmIndex: 27,
+    lootTier: 4,
+    quality: 3,
+    element: 'dark',
+    bonuses: { power: 70, attack: 28, pierce: 22, dangerReduction: 16, elementPower: 28 },
   },
   cloudthreadRobe: {
     id: 'cloudthreadRobe',
     name: '云纹法袍',
     slot: 'robe',
+    realmBand: '炼气',
+    minRealmIndex: 0,
+    lootTier: 0,
     quality: 1,
     element: 'water',
     bonuses: { dangerReduction: 16, defense: 20, speed: 5, elementPower: 8 },
@@ -895,6 +1136,9 @@ export const LOOT_EQUIPMENT = {
     id: 'mountainPatternRobe',
     name: '山纹道衣',
     slot: 'robe',
+    realmBand: '炼气',
+    minRealmIndex: 0,
+    lootTier: 0,
     quality: 0,
     element: 'earth',
     bonuses: { dangerReduction: 12, defense: 24, vitality: 36, elementPower: 8 },
@@ -903,14 +1147,53 @@ export const LOOT_EQUIPMENT = {
     id: 'nightSilkVest',
     name: '玄绡法衣',
     slot: 'robe',
+    realmBand: '筑基',
+    minRealmIndex: 9,
+    lootTier: 1,
     quality: 1,
     element: 'dark',
     bonuses: { dangerReduction: 14, defense: 16, speed: 6, critChance: 0.01, elementPower: 12 },
+  },
+  liuyunFeatherRobe: {
+    id: 'liuyunFeatherRobe',
+    name: '流云羽衣',
+    slot: 'robe',
+    realmBand: '筑基',
+    minRealmIndex: 12,
+    lootTier: 2,
+    quality: 2,
+    element: 'wood',
+    bonuses: { dangerReduction: 20, defense: 24, speed: 9, qiRate: 0.018, elementPower: 16 },
+  },
+  starsandDaoistRobe: {
+    id: 'starsandDaoistRobe',
+    name: '星砂道袍',
+    slot: 'robe',
+    realmBand: '金丹',
+    minRealmIndex: 18,
+    lootTier: 3,
+    quality: 2,
+    element: 'earth',
+    bonuses: { dangerReduction: 26, defense: 36, vitality: 70, breakthrough: 0.016, elementPower: 20 },
+  },
+  wushangRobe: {
+    id: 'wushangRobe',
+    name: '无相法袍',
+    slot: 'robe',
+    realmBand: '元婴',
+    minRealmIndex: 27,
+    lootTier: 4,
+    quality: 3,
+    element: 'light',
+    bonuses: { dangerReduction: 34, defense: 46, speed: 12, qiRate: 0.028, elementPower: 26 },
   },
   xuanmuAmulet: {
     id: 'xuanmuAmulet',
     name: '玄木护符',
     slot: 'amulet',
+    realmBand: '筑基',
+    minRealmIndex: 9,
+    lootTier: 1,
     quality: 1,
     element: 'wood',
     bonuses: { breakthrough: 0.04, qiRate: 0.03, vitality: 35, elementPower: 10 },
@@ -919,6 +1202,9 @@ export const LOOT_EQUIPMENT = {
     id: 'heartGuardTalisman',
     name: '守心符',
     slot: 'amulet',
+    realmBand: '炼气',
+    minRealmIndex: 0,
+    lootTier: 0,
     quality: 0,
     element: 'light',
     bonuses: { breakthrough: 0.026, defense: 12, vitality: 42, elementPower: 8 },
@@ -927,14 +1213,53 @@ export const LOOT_EQUIPMENT = {
     id: 'sunfireSeal',
     name: '离火印',
     slot: 'amulet',
+    realmBand: '筑基',
+    minRealmIndex: 9,
+    lootTier: 1,
     quality: 1,
     element: 'fire',
     bonuses: { power: 22, attack: 12, critChance: 0.014, elementPower: 16 },
+  },
+  zhenhunTalisman: {
+    id: 'zhenhunTalisman',
+    name: '镇魂符',
+    slot: 'amulet',
+    realmBand: '金丹',
+    minRealmIndex: 18,
+    lootTier: 2,
+    quality: 2,
+    element: 'dark',
+    bonuses: { breakthrough: 0.044, defense: 24, vitality: 74, dangerReduction: 12, elementPower: 18 },
+  },
+  xuanhuangSeal: {
+    id: 'xuanhuangSeal',
+    name: '玄黄印',
+    slot: 'amulet',
+    realmBand: '金丹',
+    minRealmIndex: 21,
+    lootTier: 3,
+    quality: 2,
+    element: 'earth',
+    bonuses: { power: 48, defense: 28, vitality: 62, breakthrough: 0.026, elementPower: 22 },
+  },
+  taixuHeartCharm: {
+    id: 'taixuHeartCharm',
+    name: '太虚心符',
+    slot: 'amulet',
+    realmBand: '元婴',
+    minRealmIndex: 27,
+    lootTier: 4,
+    quality: 3,
+    element: 'light',
+    bonuses: { breakthrough: 0.06, qiRate: 0.032, vitality: 90, defense: 30, elementPower: 28 },
   },
   greenJadePendant: {
     id: 'greenJadePendant',
     name: '青玉佩',
     slot: 'jade',
+    realmBand: '炼气',
+    minRealmIndex: 0,
+    lootTier: 0,
     quality: 1,
     element: 'earth',
     bonuses: { qiRate: 0.025, defense: 12, vitality: 24, elementPower: 10 },
@@ -943,6 +1268,9 @@ export const LOOT_EQUIPMENT = {
     id: 'spiritRootJade',
     name: '灵根玉',
     slot: 'jade',
+    realmBand: '炼气',
+    minRealmIndex: 0,
+    lootTier: 0,
     quality: 0,
     element: 'wood',
     bonuses: { qiRate: 0.032, breakthrough: 0.012, vitality: 18, elementPower: 8 },
@@ -951,14 +1279,53 @@ export const LOOT_EQUIPMENT = {
     id: 'moonwellJade',
     name: '月井璧',
     slot: 'jade',
+    realmBand: '筑基',
+    minRealmIndex: 9,
+    lootTier: 1,
     quality: 1,
     element: 'water',
     bonuses: { qiRate: 0.02, defense: 18, speed: 3, elementPower: 14 },
+  },
+  starsandPendant: {
+    id: 'starsandPendant',
+    name: '星砂佩',
+    slot: 'jade',
+    realmBand: '筑基',
+    minRealmIndex: 12,
+    lootTier: 2,
+    quality: 2,
+    element: 'earth',
+    bonuses: { qiRate: 0.034, defense: 24, vitality: 42, breakthrough: 0.018, elementPower: 18 },
+  },
+  dongxuanJade: {
+    id: 'dongxuanJade',
+    name: '洞玄玉',
+    slot: 'jade',
+    realmBand: '金丹',
+    minRealmIndex: 18,
+    lootTier: 3,
+    quality: 2,
+    element: 'dark',
+    bonuses: { qiRate: 0.04, power: 36, pierce: 10, critChance: 0.014, elementPower: 22 },
+  },
+  hunyuanJade: {
+    id: 'hunyuanJade',
+    name: '混元璧',
+    slot: 'jade',
+    realmBand: '元婴',
+    minRealmIndex: 27,
+    lootTier: 4,
+    quality: 3,
+    element: 'light',
+    bonuses: { qiRate: 0.052, breakthrough: 0.034, vitality: 72, defense: 28, elementPower: 26 },
   },
   cloudstepBoots: {
     id: 'cloudstepBoots',
     name: '踏云履',
     slot: 'boots',
+    realmBand: '炼气',
+    minRealmIndex: 0,
+    lootTier: 0,
     quality: 1,
     element: 'water',
     bonuses: { dangerReduction: 10, speed: 8, defense: 10, elementPower: 8 },
@@ -967,6 +1334,9 @@ export const LOOT_EQUIPMENT = {
     id: 'windtraceBoots',
     name: '追风履',
     slot: 'boots',
+    realmBand: '炼气',
+    minRealmIndex: 0,
+    lootTier: 0,
     quality: 0,
     element: 'wood',
     bonuses: { dangerReduction: 8, speed: 10, attack: 6, elementPower: 8 },
@@ -975,9 +1345,45 @@ export const LOOT_EQUIPMENT = {
     id: 'stoneTreadBoots',
     name: '踏岩靴',
     slot: 'boots',
+    realmBand: '筑基',
+    minRealmIndex: 9,
+    lootTier: 1,
     quality: 1,
     element: 'earth',
     bonuses: { dangerReduction: 14, defense: 16, vitality: 22, elementPower: 10 },
+  },
+  zhenyueBoots: {
+    id: 'zhenyueBoots',
+    name: '镇岳靴',
+    slot: 'boots',
+    realmBand: '筑基',
+    minRealmIndex: 12,
+    lootTier: 2,
+    quality: 2,
+    element: 'earth',
+    bonuses: { dangerReduction: 18, speed: 7, defense: 26, vitality: 42, elementPower: 16 },
+  },
+  zhuyueShoes: {
+    id: 'zhuyueShoes',
+    name: '逐月履',
+    slot: 'boots',
+    realmBand: '金丹',
+    minRealmIndex: 18,
+    lootTier: 3,
+    quality: 2,
+    element: 'water',
+    bonuses: { dangerReduction: 22, speed: 14, critChance: 0.014, defense: 18, elementPower: 20 },
+  },
+  voidstepBoots: {
+    id: 'voidstepBoots',
+    name: '虚空履',
+    slot: 'boots',
+    realmBand: '元婴',
+    minRealmIndex: 27,
+    lootTier: 4,
+    quality: 3,
+    element: 'dark',
+    bonuses: { dangerReduction: 30, speed: 18, attack: 18, pierce: 10, elementPower: 26 },
   },
 };
 
@@ -3062,6 +3468,27 @@ export function getRarityTierForLevel(level = 0, baseRarityId = 'common') {
   return getRarityTier(getGrowthRarityId(level, baseRarityId));
 }
 
+function getSpiritBeastQuality(beast) {
+  return SPIRIT_BEAST_QUALITIES[beast?.qualityId] ?? SPIRIT_BEAST_QUALITIES.spirit;
+}
+
+function getSpiritBeastGrowthMultiplier(beast) {
+  const quality = getSpiritBeastQuality(beast);
+  return round((quality.growthMultiplier ?? 1) * (beast?.growthMultiplier ?? 1));
+}
+
+function getSpiritBeastGuidanceUnlockRealm(beast) {
+  const qualityUnlocks = {
+    wild: 0,
+    spirit: 0,
+    mystic: 7,
+    earth: 14,
+    heaven: 18,
+    ancient: 24,
+  };
+  return beast?.unlockRealmIndex ?? qualityUnlocks[beast?.qualityId] ?? 0;
+}
+
 export function getGearSetStatus(state) {
   const activeAffixes = new Set(Object.entries(state.gearAffixes ?? {})
     .filter(([gearId, affixId]) => (state.gear?.[gearId] ?? 0) > 0 && GEAR_AFFIXES[affixId])
@@ -3204,6 +3631,9 @@ export function getEquipmentDetails(state) {
         uid: item.uid,
         name: item.name,
         slot: item.slot,
+        realmBand: LOOT_EQUIPMENT[item.templateId]?.realmBand ?? '炼气',
+        minRealmIndex: LOOT_EQUIPMENT[item.templateId]?.minRealmIndex ?? 0,
+        lootTier: LOOT_EQUIPMENT[item.templateId]?.lootTier ?? 0,
         variant: item.variant ?? null,
         rarity: getLootRarity(item),
         level: item.level ?? 0,
@@ -3265,20 +3695,24 @@ export function getEquipmentDetails(state) {
     }),
     spiritBeasts: Object.values(SPIRIT_BEASTS).map((beast) => {
       const level = state.spiritBeasts?.[beast.id] ?? 0;
+      const quality = getSpiritBeastQuality(beast);
+      const growthMultiplier = getSpiritBeastGrowthMultiplier(beast);
       return {
         id: beast.id,
         name: beast.name,
         detail: beast.detail,
+        quality,
+        growthMultiplier,
         level,
         maxLevel: beast.maxLevel,
         rarity: getRarityTierForLevel(level, beast.rarityId ?? 'common'),
         nextRarity: getNextRarityMilestone(level, beast.maxLevel, beast.rarityId ?? 'common'),
         deployed: state.activeSpiritBeast === beast.id,
-        effects: effectsFromBonusObject(scaleBonusObject(beast.bonuses, level)),
-        collectionEffects: effectsFromBonusObject(scaleBonusObject(beast.bonuses, level)),
-        battleEffects: effectsFromBonusObject(scaleBonusObject(beast.deployedBonuses ?? {}, level)),
-        nextEffects: level < beast.maxLevel ? effectsFromBonusObject(scaleBonusObject(beast.bonuses, level + 1)) : [],
-        nextBattleEffects: level < beast.maxLevel ? effectsFromBonusObject(scaleBonusObject(beast.deployedBonuses ?? {}, level + 1)) : [],
+        effects: effectsFromBonusObject(scaleBonusObject(beast.bonuses, level * growthMultiplier)),
+        collectionEffects: effectsFromBonusObject(scaleBonusObject(beast.bonuses, level * growthMultiplier)),
+        battleEffects: effectsFromBonusObject(scaleBonusObject(beast.deployedBonuses ?? {}, level * growthMultiplier)),
+        nextEffects: level < beast.maxLevel ? effectsFromBonusObject(scaleBonusObject(beast.bonuses, (level + 1) * growthMultiplier)) : [],
+        nextBattleEffects: level < beast.maxLevel ? effectsFromBonusObject(scaleBonusObject(beast.deployedBonuses ?? {}, (level + 1) * growthMultiplier)) : [],
         skill: beast.skill ? { ...beast.skill } : null,
       };
     }),
@@ -6085,7 +6519,7 @@ function collectResourceNeeds(state) {
 
   Object.values(SPIRIT_BEASTS).forEach((beast) => {
     const level = state.spiritBeasts?.[beast.id] ?? 0;
-    if (level < beast.maxLevel) {
+    if (level < beast.maxLevel && (level > 0 || state.realmIndex >= getSpiritBeastGuidanceUnlockRealm(beast))) {
       addCost(`灵兽·${beast.name}`, beast.cost(level + 1), 0.9);
     }
   });
@@ -6408,16 +6842,17 @@ function getSpiritBeastCombatant(state) {
     return null;
   }
   const level = state.spiritBeasts?.[beast.id] ?? 0;
+  const growthMultiplier = getSpiritBeastGrowthMultiplier(beast);
   const combat = beast.combat ?? {};
   return {
     name: beast.name,
     element: COMBAT_ELEMENTS[combat.element] ?? COMBAT_ELEMENTS.wood,
-    attack: Math.max(1, Math.round((combat.attack ?? 16) * level)),
-    defense: Math.max(0, Math.round((combat.defense ?? 4) * level)),
-    vitality: Math.max(1, Math.round((combat.vitality ?? 40) + level * 18)),
-    speed: Math.max(1, Math.round((combat.speed ?? 10) + level)),
-    critChance: Math.min(0.42, Math.max(0, (combat.critChance ?? 0.04) + level * 0.006)),
-    pierce: Math.max(0, Math.round((combat.pierce ?? 2) * level)),
+    attack: Math.max(1, Math.round((combat.attack ?? 16) * level * growthMultiplier)),
+    defense: Math.max(0, Math.round((combat.defense ?? 4) * level * growthMultiplier)),
+    vitality: Math.max(1, Math.round((combat.vitality ?? 40) + level * 18 * growthMultiplier)),
+    speed: Math.max(1, Math.round((combat.speed ?? 10) + level * growthMultiplier)),
+    critChance: Math.min(0.42, Math.max(0, (combat.critChance ?? 0.04) + level * 0.006 * growthMultiplier)),
+    pierce: Math.max(0, Math.round((combat.pierce ?? 2) * level * growthMultiplier)),
     skill: beast.skill ? { ...beast.skill } : null,
     skillName: beast.skill?.name ?? null,
   };
@@ -6800,7 +7235,7 @@ function getActiveSpiritBeast(state) {
 function getSpiritBeastBonus(state, key) {
   return Object.entries(state.spiritBeasts ?? {}).reduce((total, [beastId, level]) => {
     const beast = SPIRIT_BEASTS[beastId];
-    return total + (beast?.bonuses?.[key] ?? 0) * (level ?? 0);
+    return total + (beast?.bonuses?.[key] ?? 0) * (level ?? 0) * getSpiritBeastGrowthMultiplier(beast);
   }, 0);
 }
 
@@ -6844,7 +7279,7 @@ function getDeployedSpiritBeastBonus(state, key) {
     return 0;
   }
   const level = state.spiritBeasts?.[beast.id] ?? 0;
-  return (beast.deployedBonuses?.[key] ?? 0) * level;
+  return (beast.deployedBonuses?.[key] ?? 0) * level * getSpiritBeastGrowthMultiplier(beast);
 }
 
 function getDeployedSpiritBeastSources(state, key, mode = 'flat') {
@@ -7327,13 +7762,17 @@ function shouldDropMapLoot(state, mission, eventResult) {
 }
 
 function selectMapLootTemplate(state, mission) {
-  const templates = Object.values(LOOT_EQUIPMENT);
   const mapId = getMissionMapId(mission);
   const profile = getMapLootProfile(mapId);
   const completed = state.completedMissions?.[mission.id] ?? 0;
   const dropIndex = Math.max(0, Math.floor(completed / profile.dropEvery) - 1);
+  const allTemplates = Object.values(LOOT_EQUIPMENT);
+  const preferredTemplates = allTemplates.filter((template) => (template.lootTier ?? 0) <= (profile.tier ?? 0) + 1);
+  const rareWindow = Math.max(10, 34 - (profile.tier ?? 0) * 5);
+  const useFullPool = dropIndex > 0 && (dropIndex + hashString(`${mapId}:rare`)) % rareWindow === 0;
+  const templates = useFullPool ? allTemplates : preferredTemplates;
   const seedOffset = hashString(`${mapId}:${mission.id}`) % templates.length;
-  return templates[(dropIndex + seedOffset) % templates.length]?.id ?? templates[0].id;
+  return templates[(dropIndex + seedOffset) % templates.length]?.id ?? allTemplates[0].id;
 }
 
 function resolveMapLootDrop(state, mission, eventResult, now) {
