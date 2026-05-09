@@ -1036,6 +1036,15 @@ small {
   display: block;
 }
 
+.depth-tribulation-row {
+  display: block;
+  margin-top: 6px;
+  color: #f4e7bd;
+  font-size: 0.78rem;
+  font-weight: 850;
+  line-height: 1.35;
+}
+
 .depth-reward-row {
   color: var(--jade);
 }
@@ -1467,6 +1476,60 @@ small {
   border-color: rgba(232, 198, 106, 0.78);
   color: #17130b;
   background: var(--gold);
+}
+
+.resonance-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(112px, auto);
+  gap: 12px;
+  align-items: center;
+  border: 1px solid rgba(245, 238, 220, 0.1);
+  border-radius: 8px;
+  padding: 12px;
+  background:
+    linear-gradient(135deg, rgba(232, 198, 106, 0.08), rgba(125, 211, 183, 0.05)),
+    rgba(255, 255, 255, 0.03);
+}
+
+.resonance-card.active {
+  border-color: rgba(232, 198, 106, 0.44);
+  background:
+    linear-gradient(135deg, rgba(232, 198, 106, 0.15), rgba(125, 211, 183, 0.08)),
+    rgba(255, 255, 255, 0.035);
+}
+
+.resonance-card span,
+.resonance-card strong,
+.resonance-card small,
+.resonance-card em {
+  display: block;
+  line-height: 1.35;
+}
+
+.resonance-card span {
+  color: var(--jade);
+  font-size: 0.74rem;
+  font-weight: 900;
+}
+
+.resonance-card strong {
+  margin-top: 4px;
+  color: var(--gold);
+}
+
+.resonance-card small {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 750;
+}
+
+.resonance-card em {
+  color: var(--paper);
+  font-size: 1rem;
+  font-style: normal;
+  font-weight: 950;
+  text-align: right;
 }
 
 .system-row {

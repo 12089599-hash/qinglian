@@ -11,6 +11,15 @@ export const REALMS = createRealmTrack();
 
 export const CURRENT_BALANCE_VERSION = 6;
 export const MAP_DEPTH_MAX_LAYER = 30;
+export const DEPTH_TRIBULATIONS = [
+  { id: 'goldRain', name: '金刃雨', element: 'metal', detail: '细密剑雨压低回旋余地，劫影锋芒更盛。', pressureMultiplier: 1.06, attackMultiplier: 1.12, pierceBonus: 4 },
+  { id: 'woodMiasma', name: '青瘴潮', element: 'wood', detail: '青瘴生息不绝，劫影血元更厚。', pressureMultiplier: 1.05, vitalityMultiplier: 1.16, defenseMultiplier: 1.04 },
+  { id: 'waterMirror', name: '玄水镜', element: 'water', detail: '水镜扰乱神识，劫影身法更快。', pressureMultiplier: 1.04, speedBonus: 3, defenseMultiplier: 1.08 },
+  { id: 'firePulse', name: '离火脉', element: 'fire', detail: '火脉暴烈，劫影会心更重。', pressureMultiplier: 1.07, attackMultiplier: 1.06, critBonus: 0.035 },
+  { id: 'earthSeal', name: '厚土禁', element: 'earth', detail: '地脉封镇，劫影护体更稳。', pressureMultiplier: 1.05, defenseMultiplier: 1.18, vitalityMultiplier: 1.06 },
+  { id: 'darkEclipse', name: '玄阴蚀', element: 'dark', detail: '阴影蚀神，劫影破势更深。', pressureMultiplier: 1.08, attackMultiplier: 1.06, pierceBonus: 8, critBonus: 0.015 },
+  { id: 'lightJudgement', name: '曜阳照', element: 'light', detail: '曜光照形，劫影出手更准。', pressureMultiplier: 1.06, attackMultiplier: 1.08, speedBonus: 2 },
+];
 
 function createRealmTrack() {
   return REALM_GROUPS.flatMap((group) => group.suffixes.map((suffix, index) => {
@@ -610,6 +619,7 @@ export const SPIRIT_BEASTS = {
     bonuses: { qiRate: 0.04, herbRate: 0.015 },
     deployedBonuses: { vitality: 30, speed: 2, defense: 8 },
     combat: { element: 'wood', attack: 24, defense: 8, vitality: 64, speed: 15, critChance: 0.04, pierce: 3 },
+    skill: { name: '云息缠灵', cadence: 3, multiplier: 1.32, critBonus: 0.03, detail: '每三回合牵引云息缠住劫影，造成一次青木战技。' },
   },
   thunderTiger: {
     id: 'thunderTiger',
@@ -620,6 +630,7 @@ export const SPIRIT_BEASTS = {
     bonuses: { power: 22, dangerReduction: 5 },
     deployedBonuses: { attack: 22, pierce: 6, critChance: 0.012, vitality: 18 },
     combat: { element: 'light', attack: 38, defense: 6, vitality: 78, speed: 13, critChance: 0.08, pierce: 8 },
+    skill: { name: '雷痕扑杀', cadence: 2, multiplier: 1.58, critBonus: 0.08, detail: '隔回合扑杀劫影，曜阳雷痕更容易压出会心。' },
   },
 };
 
@@ -2039,6 +2050,7 @@ export function getMapDepthStatus(state, mapId) {
   const danger = maxed ? 0 : getDepthDanger(state, map, nextLayer);
   const duration = getDepthDuration(map, nextLayer);
   const reward = maxed ? {} : getDepthReward(map, nextLayer);
+  const tribulation = maxed ? null : getDepthTribulation(map, nextLayer);
 
   return {
     exists: true,
@@ -2053,20 +2065,37 @@ export function getMapDepthStatus(state, mapId) {
     danger,
     duration,
     reward,
+    tribulation,
     omen: buildOmen({
       power: calculatePower(state),
       pressure: danger,
-      demon: nextLayer >= 8 ? 1 : 0,
+      demon: nextLayer >= 8 || tribulation?.element === 'dark' ? 1 : 0,
       mapMastery: getMapMastery(state, map.id).level,
       unlocked,
     }),
   };
 }
 
+export function getDepthTribulation(mapOrId, layer) {
+  const map = typeof mapOrId === 'string' ? MISSION_MAPS[mapOrId] : mapOrId;
+  const safeLayer = clampInteger(layer, 1, MAP_DEPTH_MAX_LAYER);
+  const mapIndex = Math.max(0, Object.keys(MISSION_MAPS).indexOf(map?.id));
+  const base = DEPTH_TRIBULATIONS[(mapIndex + safeLayer - 1) % DEPTH_TRIBULATIONS.length] ?? DEPTH_TRIBULATIONS[0];
+  const intensity = 1 + Math.floor((safeLayer - 1) / 8);
+  return {
+    ...base,
+    intensity,
+    name: intensity > 1 ? `${base.name}${intensity}重` : base.name,
+    detail: intensity > 1 ? `${base.detail}劫象已入第 ${intensity} 重。` : base.detail,
+  };
+}
+
 function getDepthPressure(map, layer) {
   const base = Math.max(180, (map.boss?.power ?? 180) + (map.unlockRealmIndex ?? 0) * 24);
   const ramp = 1 + (layer - 1) * 0.2 + Math.pow(Math.max(0, layer - 1), 1.35) * 0.05;
-  return Math.round(base * ramp);
+  const tribulation = getDepthTribulation(map, layer);
+  const intensity = tribulation.intensity ?? 1;
+  return Math.round(base * ramp * (tribulation.pressureMultiplier ?? 1) * (1 + (intensity - 1) * 0.035));
 }
 
 function getDepthDanger(state, map, layer) {
@@ -2307,6 +2336,7 @@ export function calculatePower(state) {
   const formationPower = (state.formations?.swordArray ?? 0) * FORMATIONS.swordArray.powerPerLevel;
   const permanentPower = state.permanentBonuses?.power ?? 0;
   const lootPower = getEquippedLootBonus(state, 'power');
+  const lootResonancePower = getLootResonanceBonus(state, 'power');
   const masteryPower = getMapMasteryBonus(state, 'power');
   const treasurePower = getTreasureBonus(state, 'power');
   const beastPower = getSpiritBeastBonus(state, 'power');
@@ -2314,7 +2344,7 @@ export function calculatePower(state) {
   const sectPower = Math.floor((state.sectReputation ?? 0) / 20) * 4;
   const qiPower = Math.min(90, Math.floor((state.qi ?? 0) * 0.5));
   const demonPenalty = (state.heartDemon ?? 0) * 8;
-  return Math.max(10, Math.floor(realmPower + pathPower + swordPower + gearPower + gearQualityPower + affixPower + setPower + formationPower + permanentPower + lootPower + masteryPower + treasurePower + beastPower + daoHeartPower + sectPower + qiPower - demonPenalty));
+  return Math.max(10, Math.floor(realmPower + pathPower + swordPower + gearPower + gearQualityPower + affixPower + setPower + formationPower + permanentPower + lootPower + lootResonancePower + masteryPower + treasurePower + beastPower + daoHeartPower + sectPower + qiPower - demonPenalty));
 }
 
 function getRealmPower(state) {
@@ -2329,6 +2359,7 @@ export function getCombatProfile(state) {
     ...getGearAffixSources(state, 'attack'),
     ...getGearSetSources(state, 'attack'),
     ...getEquippedLootSources(state, 'attack'),
+    ...getLootResonanceSources(state, 'attack'),
     ...getDeployedSpiritBeastSources(state, 'attack'),
   ]);
   const defenseSources = compactSources([
@@ -2337,6 +2368,7 @@ export function getCombatProfile(state) {
     ...getGearAffixSources(state, 'defense'),
     ...getGearSetSources(state, 'defense'),
     ...getEquippedLootSources(state, 'defense'),
+    ...getLootResonanceSources(state, 'defense'),
     ...getDeployedSpiritBeastSources(state, 'defense'),
   ]);
   const vitalitySources = compactSources([
@@ -2345,6 +2377,7 @@ export function getCombatProfile(state) {
     ...getGearAffixSources(state, 'vitality'),
     ...getGearSetSources(state, 'vitality'),
     ...getEquippedLootSources(state, 'vitality'),
+    ...getLootResonanceSources(state, 'vitality'),
     ...getDeployedSpiritBeastSources(state, 'vitality'),
   ]);
   const speedSources = compactSources([
@@ -2414,6 +2447,7 @@ export function getCharacterProfile(state, now = Date.now()) {
     { label: '同调器象', value: getGearSetBonus(state, 'powerBonus') },
     { label: '剑阵杀意', value: (state.formations?.swordArray ?? 0) * FORMATIONS.swordArray.powerPerLevel },
     { label: '奇珍加持', value: getEquippedLootBonus(state, 'power') },
+    { label: '战利共鸣', value: getLootResonanceBonus(state, 'power') },
     { label: '地脉熟稔', value: getMapMasteryBonus(state, 'power') },
     { label: '法宝灵蕴', value: getTreasureBonus(state, 'power') },
     { label: '灵兽护持', value: getSpiritBeastBonus(state, 'power') },
@@ -2528,6 +2562,62 @@ export function getGearSetStatus(state) {
   });
 }
 
+export function getLootResonanceStatus(state) {
+  const equippedItems = ['weapon', 'amulet', 'robe']
+    .map((slot) => getEquippedLoot(state, slot))
+    .filter((item) => item && COMBAT_ELEMENTS[item.element]);
+  const total = 3;
+  if (equippedItems.length < 2) {
+    return {
+      active: false,
+      name: '器象未合',
+      detail: '装备同源灵根的战利品可唤起额外器象。',
+      matched: equippedItems.length,
+      total,
+      element: null,
+      bonuses: {},
+      effects: [],
+    };
+  }
+
+  const elementCounts = equippedItems.reduce((counts, item) => {
+    counts[item.element] = (counts[item.element] ?? 0) + 1;
+    return counts;
+  }, {});
+  const [elementId, matched] = Object.entries(elementCounts)
+    .sort((a, b) => b[1] - a[1])[0] ?? [null, 0];
+  const element = COMBAT_ELEMENTS[elementId];
+  if (!element || matched < 2) {
+    return {
+      active: false,
+      name: '器象未合',
+      detail: '装备同源灵根的战利品可唤起额外器象。',
+      matched,
+      total,
+      element: null,
+      bonuses: {},
+      effects: [],
+    };
+  }
+
+  const complete = matched >= 3;
+  const bonuses = complete
+    ? { power: 54, attack: 32, defense: 18, vitality: 52, elementPower: 26 }
+    : { power: 22, attack: 14, defense: 8, elementPower: 12 };
+  return {
+    active: true,
+    id: `lootResonance:${element.id}:${matched}`,
+    name: `${element.name}${complete ? '三器同鸣' : '双器相生'}`,
+    detail: complete ? '三件战利品灵根同源，器象贯通成阵。' : '两件战利品灵根相合，气机开始互引。',
+    matched,
+    total,
+    complete,
+    element,
+    bonuses,
+    effects: effectsFromBonusObject(bonuses),
+  };
+}
+
 export function getEquipmentDetails(state) {
   return {
     gear: Object.values(GEAR).map((item) => {
@@ -2571,6 +2661,7 @@ export function getEquipmentDetails(state) {
       };
     }),
     sets: getGearSetStatus(state),
+    lootResonance: getLootResonanceStatus(state),
     loot: (state.lootEquipment ?? []).map((item) => ({
       uid: item.uid,
       name: item.name,
@@ -2617,6 +2708,7 @@ export function getEquipmentDetails(state) {
         battleEffects: effectsFromBonusObject(scaleBonusObject(beast.deployedBonuses ?? {}, level)),
         nextEffects: level < beast.maxLevel ? effectsFromBonusObject(scaleBonusObject(beast.bonuses, level + 1)) : [],
         nextBattleEffects: level < beast.maxLevel ? effectsFromBonusObject(scaleBonusObject(beast.deployedBonuses ?? {}, level + 1)) : [],
+        skill: beast.skill ? { ...beast.skill } : null,
       };
     }),
   };
@@ -4344,6 +4436,7 @@ function normalizeBattle(battle) {
       targetName: String(round.targetName || ''),
       damage: Math.max(0, Math.round(Number(round.damage) || 0)),
       critical: Boolean(round.critical),
+      skillName: typeof round.skillName === 'string' ? round.skillName : null,
       element: normalizeBattleElement(round.element),
       targetElement: normalizeBattleElement(round.targetElement),
       elementModifier: Number.isFinite(Number(round.elementModifier)) ? Number(round.elementModifier) : 1,
@@ -4372,6 +4465,8 @@ function normalizeBattleCombatant(combatant, fallbackName) {
     element: normalizeBattleElement(combatant?.element),
     maxHp: Math.max(1, Math.round(Number(combatant?.maxHp) || Number(combatant?.vitality) || 1)),
     hp: Math.max(0, Math.round(Number(combatant?.hp) || 0)),
+    skillName: typeof combatant?.skillName === 'string' ? combatant.skillName : null,
+    tribulation: combatant?.tribulation && typeof combatant.tribulation === 'object' ? { ...combatant.tribulation } : null,
   };
 }
 
@@ -5335,6 +5430,19 @@ function getEquippedLootSources(state, key, mode = 'flat') {
     }));
 }
 
+function getLootResonanceBonus(state, key) {
+  const resonance = getLootResonanceStatus(state);
+  return resonance.active ? resonance.bonuses?.[key] ?? 0 : 0;
+}
+
+function getLootResonanceSources(state, key, mode = 'flat') {
+  const value = getLootResonanceBonus(state, key);
+  if (!value) {
+    return [];
+  }
+  return [{ label: '战利共鸣', value, mode }];
+}
+
 function createCombatStat(label, sources, mode = 'flat') {
   return {
     label,
@@ -5375,6 +5483,11 @@ function getCombatElementScores(state) {
     const template = LOOT_EQUIPMENT[item?.templateId];
     add(item?.element ?? template?.element, item?.bonuses?.elementPower ?? 0, `战利${item?.name ?? ''}`);
   });
+
+  const resonance = getLootResonanceStatus(state);
+  if (resonance.active) {
+    add(resonance.element?.id, resonance.bonuses.elementPower ?? 0, '战利共鸣');
+  }
 
   const activeBeast = getActiveSpiritBeast(state);
   if (activeBeast) {
@@ -5421,6 +5534,8 @@ function getSpiritBeastCombatant(state) {
     speed: Math.max(1, Math.round((combat.speed ?? 10) + level)),
     critChance: Math.min(0.42, Math.max(0, (combat.critChance ?? 0.04) + level * 0.006)),
     pierce: Math.max(0, Math.round((combat.pierce ?? 2) * level)),
+    skill: beast.skill ? { ...beast.skill } : null,
+    skillName: beast.skill?.name ?? null,
   };
 }
 
@@ -5440,16 +5555,22 @@ function getBossCombatant(map) {
 }
 
 function getDepthCombatant(map, layer, danger) {
-  const elementId = map.boss?.element ?? 'earth';
+  const tribulation = getDepthTribulation(map, layer);
+  const elementId = tribulation.element ?? map.boss?.element ?? 'earth';
+  const intensity = tribulation.intensity ?? 1;
+  const attack = Math.round((danger * 0.42 + layer * 3) * (tribulation.attackMultiplier ?? 1) * (1 + (intensity - 1) * 0.04));
+  const defense = Math.round((danger * 0.18 + layer * 2) * (tribulation.defenseMultiplier ?? 1) * (1 + (intensity - 1) * 0.035));
+  const vitality = Math.round((danger * 1.05 + layer * 24) * (tribulation.vitalityMultiplier ?? 1) * (1 + (intensity - 1) * 0.04));
   return {
-    name: `${map.name}第 ${layer} 层劫影`,
+    name: `${tribulation.name}·${map.name}第 ${layer} 层劫影`,
     element: COMBAT_ELEMENTS[elementId] ?? COMBAT_ELEMENTS.earth,
-    attack: Math.round(danger * 0.42 + layer * 3),
-    defense: Math.round(danger * 0.18 + layer * 2),
-    vitality: Math.round(danger * 1.05 + layer * 24),
-    speed: 9 + Math.floor(layer / 5),
-    critChance: Math.min(0.16, 0.035 + layer * 0.002),
-    pierce: Math.round(layer * 1.5),
+    attack,
+    defense,
+    vitality,
+    speed: 9 + Math.floor(layer / 5) + (tribulation.speedBonus ?? 0),
+    critChance: Math.min(0.24, 0.035 + layer * 0.002 + (tribulation.critBonus ?? 0)),
+    pierce: Math.round(layer * 1.5 + (tribulation.pierceBonus ?? 0) * intensity),
+    tribulation,
   };
 }
 
@@ -5472,17 +5593,18 @@ function runTurnBattle(player, enemy, { type = 'boss', now = Date.now(), random 
     const playerHit = resolveCombatHit(player, enemy, round, true, now, random);
     enemyHp = Math.max(0, enemyHp - playerHit.damage);
     rounds.push(createBattleRound(round, 'player', player, enemy, playerHit, enemyHp));
-    if (enemyHp <= 0) {
-      break;
-    }
-
-    if (beast) {
-      const beastHit = resolveCombatHit(beast, enemy, round, true, now, random);
-      enemyHp = Math.max(0, enemyHp - beastHit.damage);
-      rounds.push(createBattleRound(round, 'beast', beast, enemy, beastHit, enemyHp));
       if (enemyHp <= 0) {
         break;
       }
+
+      if (beast) {
+        const skill = getBeastSkillForRound(beast, round);
+        const beastHit = resolveCombatHit(beast, enemy, round, true, now, random, skill);
+        enemyHp = Math.max(0, enemyHp - beastHit.damage);
+        rounds.push(createBattleRound(round, 'beast', beast, enemy, beastHit, enemyHp, skill?.name ?? null));
+        if (enemyHp <= 0) {
+          break;
+        }
     }
 
     const enemyHit = resolveCombatHit(enemy, player, round, false, now, random);
@@ -5503,18 +5625,20 @@ function runTurnBattle(player, enemy, { type = 'boss', now = Date.now(), random 
       maxHp: player.vitality,
       hp: playerHp,
     },
-    pet: beast ? {
-      name: beast.name,
-      element: beast.element,
-      maxHp: beast.vitality,
-      hp: beast.vitality,
-    } : null,
-    enemy: {
-      name: enemy.name,
-      element: enemy.element,
-      maxHp: enemy.vitality,
-      hp: enemyHp,
-    },
+      pet: beast ? {
+        name: beast.name,
+        element: beast.element,
+        maxHp: beast.vitality,
+        hp: beast.vitality,
+        skillName: beast.skill?.name ?? null,
+      } : null,
+      enemy: {
+        name: enemy.name,
+        element: enemy.element,
+        maxHp: enemy.vitality,
+        hp: enemyHp,
+        tribulation: enemy.tribulation ?? null,
+      },
     rounds,
     diagnosis,
     summary: outcome === 'victory'
@@ -5567,13 +5691,19 @@ function createBattleDiagnosis(player, enemy, rounds, playerHp, enemyHp, outcome
   };
 }
 
-function resolveCombatHit(attacker, defender, round, isPlayer, now, random) {
+function getBeastSkillForRound(beast, round) {
+  const skill = beast?.skill;
+  const cadence = Math.max(1, Math.floor(skill?.cadence ?? 0));
+  return skill && cadence > 0 && round % cadence === 0 ? skill : null;
+}
+
+function resolveCombatHit(attacker, defender, round, isPlayer, now, random, technique = null) {
   const elementModifier = getElementModifier(attacker.element, defender.element);
   const roll = typeof random === 'function'
     ? random()
     : seededCombatRoll(now, round, isPlayer ? 13 : 71);
-  const critical = roll < attacker.critChance;
-  const raw = attacker.attack * elementModifier * (critical ? 1.45 : 1)
+  const critical = roll < Math.min(0.75, attacker.critChance + (technique?.critBonus ?? 0));
+  const raw = attacker.attack * (technique?.multiplier ?? 1) * elementModifier * (critical ? 1.45 : 1)
     + attacker.pierce
     - defender.defense * 0.42;
   return {
@@ -5583,7 +5713,7 @@ function resolveCombatHit(attacker, defender, round, isPlayer, now, random) {
   };
 }
 
-function createBattleRound(round, actor, attacker, defender, hit, targetHp) {
+function createBattleRound(round, actor, attacker, defender, hit, targetHp, skillName = null) {
   return {
     round,
     actor,
@@ -5591,6 +5721,7 @@ function createBattleRound(round, actor, attacker, defender, hit, targetHp) {
     targetName: defender.name,
     damage: hit.damage,
     critical: hit.critical,
+    skillName,
     element: attacker.element,
     targetElement: defender.element,
     elementModifier: hit.elementModifier,

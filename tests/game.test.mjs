@@ -4,6 +4,7 @@ import {
   CAVE_STAGES,
   CULTIVATION_PATHS,
   DAO_HEARTS,
+  DEPTH_TRIBULATIONS,
   FORMATIONS,
   GEAR,
   GEAR_AFFIXES,
@@ -53,6 +54,7 @@ import {
   getDaoHeartChoices,
   getEquipmentDetails,
   getLootEmpowerCost,
+  getLootResonanceStatus,
   getMapDepthStatus,
   getMapStatuses,
   getMissionStatus,
@@ -1453,6 +1455,28 @@ test('loot empowerment uses tiered materials and stronger cross-tier bonuses', (
   assert.equal(item.bonuses.power, 71);
 });
 
+test('equipped elemental trophies awaken loot resonance', () => {
+  const state = createGameState(1000);
+  state.lootEquipment = [
+    { uid: 'fire-sword', templateId: 'qingfengSword', name: '离火青锋剑', slot: 'weapon', quality: 1, level: 1, element: 'fire', bonuses: { power: 40, attack: 28, elementPower: 18 } },
+    { uid: 'fire-robe', templateId: 'cloudthreadRobe', name: '离火云纹袍', slot: 'robe', quality: 1, level: 1, element: 'fire', bonuses: { defense: 24, dangerReduction: 18, elementPower: 16 } },
+    { uid: 'fire-amulet', templateId: 'xuanmuAmulet', name: '离火玄木符', slot: 'amulet', quality: 1, level: 1, element: 'fire', bonuses: { vitality: 42, qiRate: 0.03, elementPower: 14 } },
+  ];
+  state.equippedLoot = { weapon: 'fire-sword', robe: 'fire-robe', amulet: 'fire-amulet' };
+
+  const resonance = getLootResonanceStatus(state);
+  const combat = getCombatProfile(state);
+  const details = getEquipmentDetails(state);
+
+  assert.equal(resonance.active, true);
+  assert.equal(resonance.element.id, 'fire');
+  assert.equal(resonance.matched, 3);
+  assert.equal(resonance.effects.some((effect) => effect.id === 'attack'), true);
+  assert.equal(combat.attack.sources.some((source) => source.label === '战利共鸣'), true);
+  assert.equal(combat.elementPower.sources.some((source) => source.label.includes('战利共鸣')), true);
+  assert.equal(details.lootResonance.active, true);
+});
+
 test('map reputation and mastery grow from exploration', () => {
   const state = createGameState(1000);
 
@@ -1814,6 +1838,23 @@ test('deployed spirit beasts join turn battles as their own actor', () => {
   assert.equal(battle.rounds.some((round) => round.actorName === '雷纹幼虎' && round.damage > 0), true);
 });
 
+test('deployed spirit beasts trigger named battle techniques', () => {
+  const state = createGameState(1000);
+  state.realmIndex = realmIndexByName('筑基一层');
+  state.gear.weapon = 2;
+  state.gear.amulet = 4;
+  state.gear.robe = 4;
+  state.spiritBeasts.thunderTiger = 4;
+  deploySpiritBeast(state, 'thunderTiger', 1000);
+
+  const battle = simulateBossBattle(state, 'demonRift', 2000, () => 0.5);
+  const skillRound = battle.rounds.find((round) => round.actor === 'beast' && round.skillName);
+
+  assert.equal(battle.pet.skillName, SPIRIT_BEASTS.thunderTiger.skill.name);
+  assert.equal(skillRound.skillName, SPIRIT_BEASTS.thunderTiger.skill.name);
+  assert.equal(skillRound.damage > 0, true);
+});
+
 test('character profile and equipment details expose concrete attribute sources', () => {
   const state = createGameState(1000);
   state.realmIndex = realmIndexByName('筑基一层');
@@ -2008,6 +2049,21 @@ test('map depth trials scale difficulty and grant first-clear rewards', () => {
   assert.equal(state.lastMissionReport.battle.rounds.length > 0, true);
   assert.equal(state.lastMissionReport.battle.outcome, 'victory');
   assert.equal(state.spiritStones > 0, true);
+});
+
+test('map depth trials rotate tribulations into combat', () => {
+  const state = createGameState(1000);
+  state.permanentBonuses.power = 800;
+  state.mapDepths.qinglanMountain = 2;
+
+  const status = getMapDepthStatus(state, 'qinglanMountain');
+  const started = startMapDepthTrial(state, 'qinglanMountain', 1000);
+
+  assert.equal(DEPTH_TRIBULATIONS.some((tribulation) => tribulation.id === status.tribulation.id), true);
+  assert.equal(started.ok, true);
+  assert.equal(started.battle.enemy.tribulation.id, status.tribulation.id);
+  assert.match(started.battle.enemy.name, new RegExp(status.tribulation.name));
+  assert.equal(started.report.battle.enemy.tribulation.id, status.tribulation.id);
 });
 
 test('map depth trials settle immediately after creating battle data', () => {

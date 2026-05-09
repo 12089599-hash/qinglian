@@ -11,6 +11,15 @@
 
   const currentBalanceVersion = 6;
   const mapDepthMaxLayer = 30;
+  const DEPTH_TRIBULATIONS = [
+    { id: 'goldRain', name: '金刃雨', element: 'metal', detail: '细密剑雨压低回旋余地，劫影锋芒更盛。', pressureMultiplier: 1.06, attackMultiplier: 1.12, pierceBonus: 4 },
+    { id: 'woodMiasma', name: '青瘴潮', element: 'wood', detail: '青瘴生息不绝，劫影血元更厚。', pressureMultiplier: 1.05, vitalityMultiplier: 1.16, defenseMultiplier: 1.04 },
+    { id: 'waterMirror', name: '玄水镜', element: 'water', detail: '水镜扰乱神识，劫影身法更快。', pressureMultiplier: 1.04, speedBonus: 3, defenseMultiplier: 1.08 },
+    { id: 'firePulse', name: '离火脉', element: 'fire', detail: '火脉暴烈，劫影会心更重。', pressureMultiplier: 1.07, attackMultiplier: 1.06, critBonus: 0.035 },
+    { id: 'earthSeal', name: '厚土禁', element: 'earth', detail: '地脉封镇，劫影护体更稳。', pressureMultiplier: 1.05, defenseMultiplier: 1.18, vitalityMultiplier: 1.06 },
+    { id: 'darkEclipse', name: '玄阴蚀', element: 'dark', detail: '阴影蚀神，劫影破势更深。', pressureMultiplier: 1.08, attackMultiplier: 1.06, pierceBonus: 8, critBonus: 0.015 },
+    { id: 'lightJudgement', name: '曜阳照', element: 'light', detail: '曜光照形，劫影出手更准。', pressureMultiplier: 1.06, attackMultiplier: 1.08, speedBonus: 2 },
+  ];
 
   function createRealmTrack() {
     return realmGroups.flatMap((group) => group.suffixes.map((suffix, index) => {
@@ -357,8 +366,8 @@
   };
 
   const spiritBeasts = {
-    cloudFox: { id: 'cloudFox', name: '云纹灵狐', detail: '亲近灵气，辅助周天灵息和灵田照料。', maxLevel: 8, cost: (level) => ({ spiritStones: scaleCost(90, level), herbs: scaleCost(18, level), beastCores: level }), bonuses: { qiRate: 0.04, herbRate: 0.015 }, deployedBonuses: { vitality: 30, speed: 2, defense: 8 }, combat: { element: 'wood', attack: 24, defense: 8, vitality: 64, speed: 15, critChance: 0.04, pierce: 3 } },
-    thunderTiger: { id: 'thunderTiger', name: '雷纹幼虎', detail: '守山善战，凝练道威并护持外出行游。', maxLevel: 8, cost: (level) => ({ spiritStones: scaleCost(130, level), beastCores: level * 2 }), bonuses: { power: 22, dangerReduction: 5 }, deployedBonuses: { attack: 22, pierce: 6, critChance: 0.012, vitality: 18 }, combat: { element: 'light', attack: 38, defense: 6, vitality: 78, speed: 13, critChance: 0.08, pierce: 8 } },
+    cloudFox: { id: 'cloudFox', name: '云纹灵狐', detail: '亲近灵气，辅助周天灵息和灵田照料。', maxLevel: 8, cost: (level) => ({ spiritStones: scaleCost(90, level), herbs: scaleCost(18, level), beastCores: level }), bonuses: { qiRate: 0.04, herbRate: 0.015 }, deployedBonuses: { vitality: 30, speed: 2, defense: 8 }, combat: { element: 'wood', attack: 24, defense: 8, vitality: 64, speed: 15, critChance: 0.04, pierce: 3 }, skill: { name: '云息缠灵', cadence: 3, multiplier: 1.32, critBonus: 0.03, detail: '每三回合牵引云息缠住劫影，造成一次青木战技。' } },
+    thunderTiger: { id: 'thunderTiger', name: '雷纹幼虎', detail: '守山善战，凝练道威并护持外出行游。', maxLevel: 8, cost: (level) => ({ spiritStones: scaleCost(130, level), beastCores: level * 2 }), bonuses: { power: 22, dangerReduction: 5 }, deployedBonuses: { attack: 22, pierce: 6, critChance: 0.012, vitality: 18 }, combat: { element: 'light', attack: 38, defense: 6, vitality: 78, speed: 13, critChance: 0.08, pierce: 8 }, skill: { name: '雷痕扑杀', cadence: 2, multiplier: 1.58, critBonus: 0.08, detail: '隔回合扑杀劫影，曜阳雷痕更容易压出会心。' } },
   };
 
   const daoHearts = {
@@ -3445,6 +3454,7 @@
     const danger = maxed ? 0 : getDepthDanger(state, map, nextLayer);
     const duration = getDepthDuration(map, nextLayer);
     const reward = maxed ? {} : getDepthReward(map, nextLayer);
+    const tribulation = maxed ? null : getDepthTribulation(map, nextLayer);
 
     return {
       exists: true,
@@ -3459,20 +3469,37 @@
       danger,
       duration,
       reward,
+      tribulation,
       omen: buildOmen({
         power: calculatePower(state),
         pressure: danger,
-        demon: nextLayer >= 8 ? 1 : 0,
+        demon: nextLayer >= 8 || tribulation?.element === 'dark' ? 1 : 0,
         mapMastery: getMapMastery(state, map.id).level,
         unlocked,
       }),
     };
   }
 
+  function getDepthTribulation(mapOrId, layer) {
+    const map = typeof mapOrId === 'string' ? missionMaps[mapOrId] : mapOrId;
+    const safeLayer = clampInteger(layer, 1, mapDepthMaxLayer);
+    const mapIndex = Math.max(0, Object.keys(missionMaps).indexOf(map?.id));
+    const base = DEPTH_TRIBULATIONS[(mapIndex + safeLayer - 1) % DEPTH_TRIBULATIONS.length] || DEPTH_TRIBULATIONS[0];
+    const intensity = 1 + Math.floor((safeLayer - 1) / 8);
+    return {
+      ...base,
+      intensity,
+      name: intensity > 1 ? `${base.name}${intensity}重` : base.name,
+      detail: intensity > 1 ? `${base.detail}劫象已入第 ${intensity} 重。` : base.detail,
+    };
+  }
+
   function getDepthPressure(map, layer) {
     const base = Math.max(180, (map.boss?.power || 180) + (map.unlockRealmIndex || 0) * 24);
     const ramp = 1 + (layer - 1) * 0.2 + Math.pow(Math.max(0, layer - 1), 1.35) * 0.05;
-    return Math.round(base * ramp);
+    const tribulation = getDepthTribulation(map, layer);
+    const intensity = tribulation.intensity || 1;
+    return Math.round(base * ramp * (tribulation.pressureMultiplier || 1) * (1 + (intensity - 1) * 0.035));
   }
 
   function getDepthDanger(state, map, layer) {
@@ -3663,6 +3690,43 @@
     });
   }
 
+  function getLootResonanceStatus(state) {
+    const equippedItems = ['weapon', 'amulet', 'robe']
+      .map((slot) => getEquippedLoot(state, slot))
+      .filter((item) => item && combatElements[item.element]);
+    const total = 3;
+    if (equippedItems.length < 2) {
+      return { active: false, name: '器象未合', detail: '装备同源灵根的战利品可唤起额外器象。', matched: equippedItems.length, total, element: null, bonuses: {}, effects: [] };
+    }
+
+    const elementCounts = equippedItems.reduce((counts, item) => {
+      counts[item.element] = (counts[item.element] || 0) + 1;
+      return counts;
+    }, {});
+    const [elementId, matched] = Object.entries(elementCounts).sort((a, b) => b[1] - a[1])[0] || [null, 0];
+    const element = combatElements[elementId];
+    if (!element || matched < 2) {
+      return { active: false, name: '器象未合', detail: '装备同源灵根的战利品可唤起额外器象。', matched, total, element: null, bonuses: {}, effects: [] };
+    }
+
+    const complete = matched >= 3;
+    const bonuses = complete
+      ? { power: 54, attack: 32, defense: 18, vitality: 52, elementPower: 26 }
+      : { power: 22, attack: 14, defense: 8, elementPower: 12 };
+    return {
+      active: true,
+      id: `lootResonance:${element.id}:${matched}`,
+      name: `${element.name}${complete ? '三器同鸣' : '双器相生'}`,
+      detail: complete ? '三件战利品灵根同源，器象贯通成阵。' : '两件战利品灵根相合，气机开始互引。',
+      matched,
+      total,
+      complete,
+      element,
+      bonuses,
+      effects: effectsFromBonusObject(bonuses),
+    };
+  }
+
   function getCharacterProfile(state, now = Date.now()) {
     const realm = getCurrentRealm(state);
     const combat = getCombatProfile(state);
@@ -3676,6 +3740,7 @@
       { label: '同调器象', value: getGearSetBonus(state, 'powerBonus') },
       { label: '剑阵杀意', value: (state.formations.swordArray || 0) * formations.swordArray.powerPerLevel },
       { label: '奇珍加持', value: getEquippedLootBonus(state, 'power') },
+      { label: '战利共鸣', value: getLootResonanceBonus(state, 'power') },
       { label: '地脉熟稔', value: getMapMasteryBonus(state, 'power') },
       { label: '法宝灵蕴', value: getTreasureBonus(state, 'power') },
       { label: '灵兽护持', value: getSpiritBeastBonus(state, 'power') },
@@ -3784,6 +3849,7 @@
         };
       }),
       sets: getGearSetStatus(state),
+      lootResonance: getLootResonanceStatus(state),
       loot: (state.lootEquipment || []).map((item) => ({
         uid: item.uid,
         name: item.name,
@@ -3822,6 +3888,7 @@
           battleEffects: effectsFromBonusObject(scaleBonusObject(beast.deployedBonuses || {}, level)),
           nextEffects: level < beast.maxLevel ? effectsFromBonusObject(scaleBonusObject(beast.bonuses, level + 1)) : [],
           nextBattleEffects: level < beast.maxLevel ? effectsFromBonusObject(scaleBonusObject(beast.deployedBonuses || {}, level + 1)) : [],
+          skill: beast.skill ? { ...beast.skill } : null,
         };
       }),
     };
@@ -4309,7 +4376,7 @@
           <button data-start-depth="${map.id}" ${!depth?.unlocked || depth?.maxed || busy ? 'disabled' : ''}>
             <strong>${depth?.maxed ? '秘境圆满' : `秘境第 ${depth?.nextLayer || 1} 层`}</strong>
             <span>${depth?.maxed ? '可转往更高地图' : `道行 ${calculatePower(state)} / 劫象 ${depth?.danger || 0}`}</span>
-            <small>${depthAdvice.label}</small>
+            <small>${depth?.tribulation ? `${depth.tribulation.name} · ${depthAdvice.label}` : depthAdvice.label}</small>
           </button>
           <button data-challenge-boss="${map.id}" ${map.boss.status !== 'ready' || busy ? 'disabled' : ''}>
             <strong>${bossStatusText}</strong>
@@ -4486,7 +4553,7 @@
     const hp = getBattlePlaybackHp(battle, shownRounds);
     const progressPercent = rounds.length ? Math.round((visibleCount / rounds.length) * 100) : 0;
     const latestLowHp = latest?.targetHp <= Math.max(1, Math.round((latest?.targetMaxHp || 1) * 0.28));
-    const signature = `${report.id}:${visibleCount}:${latest?.damage || 0}:${latest?.targetHp || ''}`;
+    const signature = `${report.id}:${visibleCount}:${latest?.damage || 0}:${latest?.targetHp || ''}:${latest?.skillName || ''}`;
     if (!force && renderCache.battlePlayback === signature) {
       return;
     }
@@ -4509,19 +4576,19 @@
         </div>
         <div class="clash-mark ${latest?.critical ? 'critical' : ''} ${latestLowHp ? 'lowhp' : ''}">
           <span>${latest ? latest.damage : '起势'}</span>
-          <small>${latest?.critical ? '会心' : latestLowHp ? '气血将尽' : latest?.elementText || '凝神'}</small>
+          <small>${latest?.skillName || (latest?.critical ? '会心' : latestLowHp ? '气血将尽' : latest?.elementText || '凝神')}</small>
         </div>
         ${renderCombatantCard('enemy', battle.enemy, hp.enemy, latest?.actor === 'enemy')}
       </div>
       <div class="battle-playback-event ${latest?.actor || ''} ${latest?.critical ? 'critical' : ''} ${latestLowHp ? 'lowhp' : ''}">
-        <strong>${latest ? `${formatBattleActorName(latest)}出手${latest.critical ? ' · 会心' : ''}` : '剑气未发'}</strong>
+        <strong>${latest ? `${formatBattleActorName(latest)}${latest.skillName ? `施展「${latest.skillName}」` : '出手'}${latest.critical ? ' · 会心' : ''}` : '剑气未发'}</strong>
         <span>${latest ? `${latest.elementText}，造成 ${latest.damage} 伤害，${latest.targetName}余 ${latest.targetHp} 血元。` : '双方气机相探，五行生克正在流转。'}</span>
       </div>
       <ol class="battle-playback-log">
         ${shownRounds.slice(-6).map((round) => `
           <li class="${round.actor} ${round.critical ? 'critical' : ''}">
             <span>${round.round}</span>
-            <strong>${formatBattleActorName(round)} · ${round.elementText}</strong>
+            <strong>${formatBattleActorName(round)} · ${round.skillName || round.elementText}</strong>
             <em>${round.critical ? '会心 · ' : ''}${round.damage}</em>
           </li>
         `).join('') || '<li class="muted"><span>0</span><strong>起势</strong><em>待发</em></li>'}
@@ -4535,11 +4602,16 @@
     const currentHp = Math.max(0, Math.round(hp));
     const percent = Math.max(0, Math.min(100, Math.round((currentHp / maxHp) * 100)));
     const sideLabel = side === 'player' ? '我方' : side === 'beast' ? '灵兽' : '劫影';
+    const suffix = side === 'beast' && combatant?.skillName
+      ? ` · 战技 ${combatant.skillName}`
+      : side === 'enemy' && combatant?.tribulation
+        ? ` · ${combatant.tribulation.name}`
+        : '';
     return `
       <article class="combatant-card ${side} ${active ? 'active' : ''}">
         <span>${sideLabel}</span>
         <strong>${combatant?.name || sideLabel}</strong>
-        <small>${formatElementName(combatant?.element)} · 血元 ${currentHp} / ${maxHp}</small>
+        <small>${formatElementName(combatant?.element)} · 血元 ${currentHp} / ${maxHp}${suffix}</small>
         <i><b style="width:${percent}%"></b></i>
       </article>
     `;
@@ -4651,7 +4723,7 @@
           <div class="battle-round-list">
             ${report.battle.rounds.slice(0, 6).map((round) => `
               <small class="${round.actor}">
-                ${round.round} · ${formatBattleActorName(round)} · ${round.elementText}${round.critical ? ' · 会心' : ''} · ${round.damage}
+                ${round.round} · ${formatBattleActorName(round)} · ${round.skillName || round.elementText}${round.critical ? ' · 会心' : ''} · ${round.damage}
               </small>
             `).join('')}
           </div>
@@ -4760,6 +4832,7 @@
               <small>道行 ${calculatePower(state)} / 劫象 ${depth.danger}</small>
               <small>${advice.label}</small>
             </div>
+            <small class="depth-tribulation-row">秘境劫象：${depth.tribulation.name} · ${depth.tribulation.detail}</small>
             <small class="depth-reward-row">首通 ${formatReward(depth.reward)}</small>
           `}
         </div>
@@ -5258,9 +5331,11 @@
       return;
     }
     renderLootFilters();
-    const details = getEquipmentDetails(state).loot;
+    const equipmentDetails = getEquipmentDetails(state);
+    const details = equipmentDetails.loot;
+    const resonance = equipmentDetails.lootResonance;
     updateLootOrganizeButton();
-    const signature = `${activeLootFilter}|${details.map((item) => `${item.uid}:${item.level || 0}:${item.locked ? 1 : 0}`).join('|')}|${Object.entries(state.equippedLoot).map(([slot, uid]) => `${slot}:${uid || ''}`).join('|')}`;
+    const signature = `${activeLootFilter}|${resonance.active ? `${resonance.id}:${resonance.matched}` : 'none'}|${details.map((item) => `${item.uid}:${item.level || 0}:${item.locked ? 1 : 0}`).join('|')}|${Object.entries(state.equippedLoot).map(([slot, uid]) => `${slot}:${uid || ''}`).join('|')}`;
     if (!force && renderCache.loot === signature) {
       return;
     }
@@ -5271,11 +5346,11 @@
     }
     const visibleLoot = activeLootFilter === 'all' ? details : details.filter((item) => item.slot === activeLootFilter);
     if (!visibleLoot.length) {
-      refs.lootList.innerHTML = '<div class="system-row muted-row"><div><strong>当前筛选暂无战利品</strong><span>切换筛选或继续历练获取对应装备。</span></div></div>';
+      refs.lootList.innerHTML = `${renderLootResonanceCard(resonance)}<div class="system-row muted-row"><div><strong>当前筛选暂无战利品</strong><span>切换筛选或继续历练获取对应装备。</span></div></div>`;
       renderCache.loot = signature;
       return;
     }
-    refs.lootList.innerHTML = visibleLoot
+    refs.lootList.innerHTML = `${renderLootResonanceCard(resonance)}${visibleLoot
       .map((item) => {
         const maxed = item.empower.maxed;
         return `
@@ -5307,8 +5382,27 @@
           </details>
         `;
       })
-      .join('');
+      .join('')}`;
     renderCache.loot = signature;
+  }
+
+  function renderLootResonanceCard(resonance) {
+    if (!resonance) {
+      return '';
+    }
+    return `
+      <section class="resonance-card ${resonance.active ? 'active' : ''}">
+        <div>
+          <span>战利共鸣</span>
+          <strong>${resonance.name}</strong>
+          <small>${resonance.detail}</small>
+        </div>
+        <div>
+          <em>${resonance.matched} / ${resonance.total}</em>
+          <small>${resonance.active ? formatEffects(resonance.effects) : '穿戴同源灵根战利品后激活'}</small>
+        </div>
+      </section>
+    `;
   }
 
   function renderLootFilters() {
@@ -5398,6 +5492,7 @@
           <span>${item.detail}</span>
           <small>收集：${formatEffects(item.collectionEffects) || '尚未驯养'}</small>
           <small>出战：${formatEffects(item.battleEffects) || '尚未形成协战'}${maxed ? '' : ` · 下阶 ${formatEffects(item.nextBattleEffects)}`}</small>
+          ${item.skill ? `<small>战技：${item.skill.name} · ${item.skill.detail}</small>` : ''}
           <small>${maxed ? '已达上限' : `培养需 ${formatReward(cost)}`}</small>
         </div>
         <div class="row-actions">
@@ -5999,6 +6094,7 @@
     const formationPower = (state.formations.swordArray || 0) * formations.swordArray.powerPerLevel;
     const permanentPower = state.permanentBonuses.power || 0;
     const lootPower = getEquippedLootBonus(state, 'power');
+    const lootResonancePower = getLootResonanceBonus(state, 'power');
     const masteryPower = getMapMasteryBonus(state, 'power');
     const treasurePower = getTreasureBonus(state, 'power');
     const beastPower = getSpiritBeastBonus(state, 'power');
@@ -6006,7 +6102,7 @@
     const sectPower = Math.floor((state.sectReputation || 0) / 20) * 4;
     const qiPower = Math.min(90, Math.floor((state.qi || 0) * 0.5));
     const demonPenalty = (state.heartDemon || 0) * 8;
-    return Math.max(10, Math.floor(realmPower + pathPower + swordPower + gearPower + gearQualityPower + affixPower + setPower + formationPower + permanentPower + lootPower + masteryPower + treasurePower + beastPower + daoHeartPower + sectPower + qiPower - demonPenalty));
+    return Math.max(10, Math.floor(realmPower + pathPower + swordPower + gearPower + gearQualityPower + affixPower + setPower + formationPower + permanentPower + lootPower + lootResonancePower + masteryPower + treasurePower + beastPower + daoHeartPower + sectPower + qiPower - demonPenalty));
   }
 
   function getRealmPower(state) {
@@ -6021,6 +6117,7 @@
       ...getGearAffixSources(state, 'attack'),
       ...getGearSetSources(state, 'attack'),
       ...getEquippedLootSources(state, 'attack'),
+      ...getLootResonanceSources(state, 'attack'),
       ...getDeployedSpiritBeastSources(state, 'attack'),
     ]);
     const defenseSources = compactSources([
@@ -6029,6 +6126,7 @@
       ...getGearAffixSources(state, 'defense'),
       ...getGearSetSources(state, 'defense'),
       ...getEquippedLootSources(state, 'defense'),
+      ...getLootResonanceSources(state, 'defense'),
       ...getDeployedSpiritBeastSources(state, 'defense'),
     ]);
     const vitalitySources = compactSources([
@@ -6037,6 +6135,7 @@
       ...getGearAffixSources(state, 'vitality'),
       ...getGearSetSources(state, 'vitality'),
       ...getEquippedLootSources(state, 'vitality'),
+      ...getLootResonanceSources(state, 'vitality'),
       ...getDeployedSpiritBeastSources(state, 'vitality'),
     ]);
     const speedSources = compactSources([
@@ -6243,6 +6342,7 @@
         targetName: String(round.targetName || ''),
         damage: Math.max(0, Math.round(Number(round.damage) || 0)),
         critical: Boolean(round.critical),
+        skillName: typeof round.skillName === 'string' ? round.skillName : null,
         element: normalizeBattleElement(round.element),
         targetElement: normalizeBattleElement(round.targetElement),
         elementModifier: Number.isFinite(Number(round.elementModifier)) ? Number(round.elementModifier) : 1,
@@ -6271,6 +6371,8 @@
       element: normalizeBattleElement(combatant?.element),
       maxHp: Math.max(1, Math.round(Number(combatant?.maxHp) || Number(combatant?.vitality) || 1)),
       hp: Math.max(0, Math.round(Number(combatant?.hp) || 0)),
+      skillName: typeof combatant?.skillName === 'string' ? combatant.skillName : null,
+      tribulation: combatant?.tribulation && typeof combatant.tribulation === 'object' ? { ...combatant.tribulation } : null,
     };
   }
 
@@ -7013,6 +7115,16 @@
       }));
   }
 
+  function getLootResonanceBonus(state, key) {
+    const resonance = getLootResonanceStatus(state);
+    return resonance.active ? resonance.bonuses?.[key] || 0 : 0;
+  }
+
+  function getLootResonanceSources(state, key, mode = 'flat') {
+    const value = getLootResonanceBonus(state, key);
+    return value ? [{ label: '战利共鸣', value, mode }] : [];
+  }
+
   function createCombatStat(label, sources, mode = 'flat') {
     return {
       label,
@@ -7053,6 +7165,11 @@
       const template = lootEquipment[item?.templateId];
       add(item?.element || template?.element, item?.bonuses?.elementPower || 0, `战利${item?.name || ''}`);
     });
+
+    const resonance = getLootResonanceStatus(state);
+    if (resonance.active) {
+      add(resonance.element?.id, resonance.bonuses.elementPower || 0, '战利共鸣');
+    }
 
     const activeBeast = getActiveSpiritBeast(state);
     if (activeBeast) {
@@ -7099,6 +7216,8 @@
       speed: Math.max(1, Math.round((combat.speed || 10) + level)),
       critChance: Math.min(0.42, Math.max(0, (combat.critChance || 0.04) + level * 0.006)),
       pierce: Math.max(0, Math.round((combat.pierce || 2) * level)),
+      skill: beast.skill ? { ...beast.skill } : null,
+      skillName: beast.skill?.name || null,
     };
   }
 
@@ -7118,16 +7237,22 @@
   }
 
   function getDepthCombatant(map, layer, danger) {
-    const elementId = map.boss?.element || 'earth';
+    const tribulation = getDepthTribulation(map, layer);
+    const elementId = tribulation.element || map.boss?.element || 'earth';
+    const intensity = tribulation.intensity || 1;
+    const attack = Math.round((danger * 0.42 + layer * 3) * (tribulation.attackMultiplier || 1) * (1 + (intensity - 1) * 0.04));
+    const defense = Math.round((danger * 0.18 + layer * 2) * (tribulation.defenseMultiplier || 1) * (1 + (intensity - 1) * 0.035));
+    const vitality = Math.round((danger * 1.05 + layer * 24) * (tribulation.vitalityMultiplier || 1) * (1 + (intensity - 1) * 0.04));
     return {
-      name: `${map.name}第 ${layer} 层劫影`,
+      name: `${tribulation.name}·${map.name}第 ${layer} 层劫影`,
       element: combatElements[elementId] || combatElements.earth,
-      attack: Math.round(danger * 0.42 + layer * 3),
-      defense: Math.round(danger * 0.18 + layer * 2),
-      vitality: Math.round(danger * 1.05 + layer * 24),
-      speed: 9 + Math.floor(layer / 5),
-      critChance: Math.min(0.16, 0.035 + layer * 0.002),
-      pierce: Math.round(layer * 1.5),
+      attack,
+      defense,
+      vitality,
+      speed: 9 + Math.floor(layer / 5) + (tribulation.speedBonus || 0),
+      critChance: Math.min(0.24, 0.035 + layer * 0.002 + (tribulation.critBonus || 0)),
+      pierce: Math.round(layer * 1.5 + (tribulation.pierceBonus || 0) * intensity),
+      tribulation,
     };
   }
 
@@ -7155,9 +7280,10 @@
       }
 
       if (beast) {
-        const beastHit = resolveCombatHit(beast, enemy, round, true, now, random);
+        const skill = getBeastSkillForRound(beast, round);
+        const beastHit = resolveCombatHit(beast, enemy, round, true, now, random, skill);
         enemyHp = Math.max(0, enemyHp - beastHit.damage);
-        rounds.push(createBattleRound(round, 'beast', beast, enemy, beastHit, enemyHp));
+        rounds.push(createBattleRound(round, 'beast', beast, enemy, beastHit, enemyHp, skill?.name || null));
         if (enemyHp <= 0) {
           break;
         }
@@ -7186,12 +7312,14 @@
         element: beast.element,
         maxHp: beast.vitality,
         hp: beast.vitality,
+        skillName: beast.skill?.name || null,
       } : null,
       enemy: {
         name: enemy.name,
         element: enemy.element,
         maxHp: enemy.vitality,
         hp: enemyHp,
+        tribulation: enemy.tribulation || null,
       },
       rounds,
       diagnosis,
@@ -7245,13 +7373,19 @@
     };
   }
 
-  function resolveCombatHit(attacker, defender, round, isPlayer, now, random) {
+  function getBeastSkillForRound(beast, round) {
+    const skill = beast?.skill;
+    const cadence = Math.max(1, Math.floor(skill?.cadence || 0));
+    return skill && cadence > 0 && round % cadence === 0 ? skill : null;
+  }
+
+  function resolveCombatHit(attacker, defender, round, isPlayer, now, random, technique = null) {
     const elementModifier = getElementModifier(attacker.element, defender.element);
     const roll = typeof random === 'function'
       ? random()
       : seededCombatRoll(now, round, isPlayer ? 13 : 71);
-    const critical = roll < attacker.critChance;
-    const raw = attacker.attack * elementModifier * (critical ? 1.45 : 1)
+    const critical = roll < Math.min(0.75, attacker.critChance + (technique?.critBonus || 0));
+    const raw = attacker.attack * (technique?.multiplier || 1) * elementModifier * (critical ? 1.45 : 1)
       + attacker.pierce
       - defender.defense * 0.42;
     return {
@@ -7261,7 +7395,7 @@
     };
   }
 
-  function createBattleRound(round, actor, attacker, defender, hit, targetHp) {
+  function createBattleRound(round, actor, attacker, defender, hit, targetHp, skillName = null) {
     return {
       round,
       actor,
@@ -7269,6 +7403,7 @@
       targetName: defender.name,
       damage: hit.damage,
       critical: hit.critical,
+      skillName,
       element: attacker.element,
       targetElement: defender.element,
       elementModifier: hit.elementModifier,
