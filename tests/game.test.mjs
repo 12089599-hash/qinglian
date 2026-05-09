@@ -6,6 +6,8 @@ import {
   DAO_HEARTS,
   FORMATIONS,
   GEAR,
+  GEAR_AFFIXES,
+  GEAR_AFFIX_POOLS,
   GEAR_AFFIX_SETS,
   GEAR_QUALITIES,
   LOOT_EQUIPMENT,
@@ -45,6 +47,7 @@ import {
   getCaveStatus,
   getCaveUpgradeLimit,
   getCharacterProfile,
+  getCombatProfile,
   getBreakthroughPreparation,
   getDaoHeartChoices,
   getEquipmentDetails,
@@ -73,6 +76,7 @@ import {
   stabilizeFoundation,
   startMapDepthTrial,
   startMission,
+  simulateBossBattle,
   setMissionApproach,
   trainSpiritBeast,
   toggleLootLock,
@@ -471,6 +475,40 @@ test('gear affixes support cultivation and exploration roles', () => {
 
   assert.equal(calculateQiRate(state, 2000) > REALMS[state.realmIndex].qiRate, true);
   assert.equal(getMissionStatus(state, 'mistyValley').unlocked, true);
+});
+
+test('equipment combat profile exposes elemental offense and defense', () => {
+  const state = createGameState(1000);
+  state.realmIndex = realmIndexByName('筑基一层');
+  state.gear.weapon = 4;
+  state.gear.amulet = 3;
+  state.gear.robe = 3;
+  state.gearQuality.weapon = 2;
+  state.gearQuality.amulet = 1;
+  state.gearQuality.robe = 1;
+  state.gearAffixes.weapon = 'flameEdge';
+  state.gearAffixes.amulet = 'sunSigil';
+  state.gearAffixes.robe = 'earthWard';
+
+  const combat = getCombatProfile(state);
+  const equipment = getEquipmentDetails(state);
+  const weapon = equipment.gear.find((item) => item.id === 'weapon');
+
+  assert.equal(combat.element.id, 'fire');
+  assert.equal(combat.attack.value > combat.defense.value, true);
+  assert.equal(combat.vitality.value > 0, true);
+  assert.equal(combat.critChance.value > 0.05, true);
+  assert.equal(combat.elementPower.sources.some((source) => source.label.includes('离火')), true);
+  assert.equal(weapon.affix.name, '离火');
+  assert.equal(weapon.affix.effects.some((effect) => effect.id === 'critChance'), true);
+});
+
+test('gear affix pools provide multiple elemental build choices', () => {
+  assert.equal(GEAR_AFFIX_POOLS.weapon.length >= 4, true);
+  assert.equal(GEAR_AFFIX_POOLS.amulet.length >= 4, true);
+  assert.equal(GEAR_AFFIX_POOLS.robe.length >= 4, true);
+  assert.equal(Object.values(GEAR_AFFIXES).some((affix) => affix.element === 'dark'), true);
+  assert.equal(Object.values(GEAR_AFFIXES).some((affix) => affix.element === 'light'), true);
 });
 
 test('matching gear affixes activate set resonance bonuses', () => {
@@ -995,11 +1033,36 @@ test('map bosses unlock from exploration and grant one-time permanent rewards', 
   const repeated = challengeMapBoss(state, 'qinglanMountain', 3000);
 
   assert.equal(defeated.ok, true);
+  assert.equal(defeated.battle.outcome, 'victory');
+  assert.equal(defeated.battle.rounds.length > 0, true);
+  assert.equal(defeated.battle.rounds.some((round) => round.damage > 0), true);
   assert.equal(state.defeatedBosses.qinglanMountain, true);
   assert.equal(state.permanentBonuses.power, 24);
   assert.equal(state.forgingEssence, 2);
   assert.equal(repeated.ok, false);
   assert.equal(repeated.reason, 'alreadyDefeated');
+});
+
+test('boss battle simulation reacts to elemental gear and records rounds', () => {
+  const state = createGameState(1000);
+  state.realmIndex = realmIndexByName('筑基一层');
+  state.gear.weapon = 4;
+  state.gear.amulet = 2;
+  state.gear.robe = 2;
+  state.gearQuality.weapon = 2;
+  state.gearAffixes.weapon = 'flameEdge';
+  state.gearAffixes.amulet = 'spiritVein';
+  state.gearAffixes.robe = 'earthWard';
+
+  const battle = simulateBossBattle(state, 'swordTomb', 2000);
+
+  assert.equal(battle.player.element.id, 'fire');
+  assert.equal(battle.enemy.element.id, 'metal');
+  assert.equal(['victory', 'defeat'].includes(battle.outcome), true);
+  assert.equal(battle.rounds.length > 0, true);
+  assert.equal(battle.rounds[0].actor, 'player');
+  assert.equal(typeof battle.rounds[0].damage, 'number');
+  assert.equal(battle.summary.includes('回合'), true);
 });
 
 test('next guidance points players toward the clearest progression step', () => {
@@ -1545,7 +1608,8 @@ test('character profile and equipment details expose concrete attribute sources'
   const weapon = equipment.gear.find((item) => item.id === 'weapon');
 
   assert.equal(profile.combatPower.value, calculatePower(state));
-  assert.equal(profile.attributes.some((attribute) => attribute.id === 'attack' && attribute.value > 0), true);
+  assert.equal(profile.attributes.some((attribute) => attribute.id === 'combatAttack' && attribute.value > 0), true);
+  assert.equal(profile.attributes.some((attribute) => attribute.id === 'elementPower'), true);
   assert.equal(profile.attributes.some((attribute) => attribute.id === 'cultivationSpeed' && attribute.sources.length > 0), true);
   assert.equal(weapon.qualityName, '下品');
   assert.equal(weapon.affix.name, '剑意');
@@ -1563,7 +1627,7 @@ test('character profile uses xianxia themed attribute names', () => {
   const weapon = equipment.gear.find((item) => item.id === 'weapon');
 
   assert.equal(profile.combatPower.label, '道行总纲');
-  assert.deepEqual(profile.attributes.map((attribute) => attribute.label), ['道威', '灵息', '破境天机', '护体玄光', '山门气运']);
+  assert.deepEqual(profile.attributes.map((attribute) => attribute.label), ['锋芒', '护体', '血元', '会心', '灵根偏向', '灵息', '破境天机', '护体玄光', '山门气运']);
   assert.equal(weapon.effects.some((effect) => effect.label === '道威'), true);
 });
 
@@ -1722,6 +1786,8 @@ test('map depth trials scale difficulty and grant first-clear rewards', () => {
   assert.equal(secondDepth.pressure > firstDepth.pressure, true);
   assert.equal(state.lastMissionReport.mapName, '青岚山');
   assert.match(state.lastMissionReport.summary, /秘境/);
+  assert.equal(state.lastMissionReport.battle.rounds.length > 0, true);
+  assert.equal(state.lastMissionReport.battle.outcome, 'victory');
   assert.equal(state.spiritStones > 0, true);
 });
 

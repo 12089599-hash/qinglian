@@ -179,7 +179,7 @@
       explorationTarget: 5,
       reputationPerMission: 6,
       masteryBonus: { qiRate: 0.03 },
-      boss: { name: '青岚山魈', title: '山门首领', power: 180, reward: { spiritStones: 120, powerBonus: 24, forgingEssence: 2 }, reputation: 25, failurePenalty: { qi: -35, heartDemon: 1 } },
+      boss: { name: '青岚山魈', title: '山门首领', element: 'earth', power: 180, reward: { spiritStones: 120, powerBonus: 24, forgingEssence: 2 }, reputation: 25, failurePenalty: { qi: -35, heartDemon: 1 } },
     },
     herbValley: {
       id: 'herbValley',
@@ -190,7 +190,7 @@
       explorationTarget: 6,
       reputationPerMission: 7,
       masteryBonus: { qiRate: 0.02 },
-      boss: { name: '百年药灵', title: '谷中灵魄', power: 300, reward: { herbs: 36, qiRateBonus: 0.02, forgingEssence: 3 }, reputation: 30, failurePenalty: { qi: -45 } },
+      boss: { name: '百年药灵', title: '谷中灵魄', element: 'wood', power: 300, reward: { herbs: 36, qiRateBonus: 0.02, forgingEssence: 3 }, reputation: 30, failurePenalty: { qi: -45 } },
     },
     mistyValley: {
       id: 'mistyValley',
@@ -201,7 +201,7 @@
       explorationTarget: 5,
       reputationPerMission: 8,
       masteryBonus: { dangerReduction: 6 },
-      boss: { name: '雾隐妖', title: '秘境守影', power: 420, reward: { beastCores: 3, artifacts: 1, powerBonus: 32, forgingEssence: 4 }, reputation: 35, failurePenalty: { qi: -65, heartDemon: 1 } },
+      boss: { name: '雾隐妖', title: '秘境守影', element: 'water', power: 420, reward: { beastCores: 3, artifacts: 1, powerBonus: 32, forgingEssence: 4 }, reputation: 35, failurePenalty: { qi: -65, heartDemon: 1 } },
     },
     swordTomb: {
       id: 'swordTomb',
@@ -212,7 +212,7 @@
       explorationTarget: 6,
       reputationPerMission: 9,
       masteryBonus: { power: 14 },
-      boss: { name: '无名剑魂', title: '剑冢残念', power: 650, reward: { artifacts: 3, beastCores: 2, powerBonus: 48, forgingEssence: 5 }, reputation: 40, failurePenalty: { qi: -90, heartDemon: 1 } },
+      boss: { name: '无名剑魂', title: '剑冢残念', element: 'metal', power: 650, reward: { artifacts: 3, beastCores: 2, powerBonus: 48, forgingEssence: 5 }, reputation: 40, failurePenalty: { qi: -90, heartDemon: 1 } },
     },
     demonRift: {
       id: 'demonRift',
@@ -223,7 +223,7 @@
       explorationTarget: 7,
       reputationPerMission: 10,
       masteryBonus: { power: 18, dangerReduction: 4 },
-      boss: { name: '裂隙魔影', title: '魔气化身', power: 950, reward: { beastCores: 5, arrayFlags: 2, powerBonus: 64, forgingEssence: 6 }, reputation: 45, failurePenalty: { qi: -120, heartDemon: 2 } },
+      boss: { name: '裂隙魔影', title: '魔气化身', element: 'dark', power: 950, reward: { beastCores: 5, arrayFlags: 2, powerBonus: 64, forgingEssence: 6 }, reputation: 45, failurePenalty: { qi: -120, heartDemon: 2 } },
     },
     ancientRuins: {
       id: 'ancientRuins',
@@ -234,7 +234,7 @@
       explorationTarget: 8,
       reputationPerMission: 12,
       masteryBonus: { qiRate: 0.015, power: 16 },
-      boss: { name: '残阵守灵', title: '遗迹阵枢', power: 1300, reward: { spiritStones: 320, arrayFlags: 4, qiRateBonus: 0.03, forgingEssence: 8 }, reputation: 55, failurePenalty: { qi: -160, heartDemon: 2 } },
+      boss: { name: '残阵守灵', title: '遗迹阵枢', element: 'light', power: 1300, reward: { spiritStones: 320, arrayFlags: 4, qiRateBonus: 0.03, forgingEssence: 8 }, reputation: 55, failurePenalty: { qi: -160, heartDemon: 2 } },
     },
   };
   const missionMapIds = Object.keys(missionMaps);
@@ -435,22 +435,35 @@
       name: '青锋剑',
       slot: 'weapon',
       quality: 1,
-      bonuses: { power: 36 },
+      element: 'metal',
+      bonuses: { power: 36, attack: 22, elementPower: 12 },
     },
     cloudthreadRobe: {
       id: 'cloudthreadRobe',
       name: '云纹法袍',
       slot: 'robe',
       quality: 1,
-      bonuses: { dangerReduction: 16 },
+      element: 'water',
+      bonuses: { dangerReduction: 16, defense: 20, speed: 5, elementPower: 8 },
     },
     xuanmuAmulet: {
       id: 'xuanmuAmulet',
       name: '玄木护符',
       slot: 'amulet',
       quality: 1,
-      bonuses: { breakthrough: 0.04, qiRate: 0.03 },
+      element: 'wood',
+      bonuses: { breakthrough: 0.04, qiRate: 0.03, vitality: 35, elementPower: 10 },
     },
+  };
+
+  const combatElements = {
+    metal: { id: 'metal', name: '庚金', restrains: 'wood' },
+    wood: { id: 'wood', name: '青木', restrains: 'earth' },
+    earth: { id: 'earth', name: '厚土', restrains: 'water' },
+    water: { id: 'water', name: '玄水', restrains: 'fire' },
+    fire: { id: 'fire', name: '离火', restrains: 'metal' },
+    dark: { id: 'dark', name: '玄阴', restrains: 'light' },
+    light: { id: 'light', name: '曜阳', restrains: 'dark' },
   };
 
   const buildings = {
@@ -561,6 +574,7 @@
       maxLevel: 12,
       cost: (level) => ({ spiritStones: tieredLinearCost(80, level), beastCores: tieredMaterialCost(1, level) }),
       powerPerLevel: 35,
+      attackPerLevel: 16,
     },
     amulet: {
       id: 'amulet',
@@ -568,6 +582,7 @@
       maxLevel: 12,
       cost: (level) => ({ spiritStones: tieredLinearCost(70, level), beastCores: tieredMaterialCost(1, level) }),
       breakthroughPerLevel: 0.03,
+      vitalityPerLevel: 26,
     },
     robe: {
       id: 'robe',
@@ -575,6 +590,7 @@
       maxLevel: 12,
       cost: (level) => ({ spiritStones: tieredLinearCost(60, level), beastCores: tieredMaterialCost(1, level) }),
       dangerReductionPerLevel: 10,
+      defensePerLevel: 18,
     },
   };
 
@@ -598,6 +614,10 @@
       name: '剑意',
       slot: 'weapon',
       powerBonus: 25,
+      attack: 18,
+      critChance: 0.03,
+      element: 'metal',
+      elementPower: 16,
     },
     breakerEdge: {
       id: 'breakerEdge',
@@ -605,24 +625,73 @@
       slot: 'weapon',
       powerBonus: 16,
       dangerReduction: 8,
+      attack: 12,
+      pierce: 16,
+      element: 'metal',
+      elementPower: 10,
+    },
+    flameEdge: {
+      id: 'flameEdge',
+      name: '离火',
+      slot: 'weapon',
+      attack: 24,
+      critChance: 0.05,
+      element: 'fire',
+      elementPower: 24,
+    },
+    shadowPierce: {
+      id: 'shadowPierce',
+      name: '玄阴',
+      slot: 'weapon',
+      attack: 18,
+      pierce: 20,
+      element: 'dark',
+      elementPower: 22,
     },
     spiritVein: {
       id: 'spiritVein',
       name: '灵脉',
       slot: 'amulet',
       qiBonus: 0.08,
+      vitality: 30,
+      element: 'wood',
+      elementPower: 16,
     },
     calmMind: {
       id: 'calmMind',
       name: '凝神',
       slot: 'amulet',
       breakthrough: 0.04,
+      defense: 12,
+      element: 'light',
+      elementPower: 10,
+    },
+    sunSigil: {
+      id: 'sunSigil',
+      name: '曜阳',
+      slot: 'amulet',
+      breakthrough: 0.025,
+      critChance: 0.025,
+      element: 'light',
+      elementPower: 22,
+    },
+    moonSeal: {
+      id: 'moonSeal',
+      name: '玄阴印',
+      slot: 'amulet',
+      vitality: 42,
+      pierce: 10,
+      element: 'dark',
+      elementPower: 18,
     },
     cloudStep: {
       id: 'cloudStep',
       name: '云步',
       slot: 'robe',
       dangerReduction: 18,
+      speed: 8,
+      element: 'water',
+      elementPower: 14,
     },
     guardedBody: {
       id: 'guardedBody',
@@ -630,13 +699,34 @@
       slot: 'robe',
       dangerReduction: 10,
       breakthrough: 0.02,
+      defense: 18,
+      element: 'earth',
+      elementPower: 12,
+    },
+    earthWard: {
+      id: 'earthWard',
+      name: '厚土',
+      slot: 'robe',
+      dangerReduction: 12,
+      defense: 30,
+      element: 'earth',
+      elementPower: 22,
+    },
+    waterMirror: {
+      id: 'waterMirror',
+      name: '玄水镜',
+      slot: 'robe',
+      defense: 18,
+      speed: 6,
+      element: 'water',
+      elementPower: 20,
     },
   };
 
   const gearAffixPools = {
-    weapon: ['swordIntent', 'breakerEdge'],
-    amulet: ['spiritVein', 'calmMind'],
-    robe: ['cloudStep', 'guardedBody'],
+    weapon: ['swordIntent', 'breakerEdge', 'flameEdge', 'shadowPierce'],
+    amulet: ['spiritVein', 'calmMind', 'sunSigil', 'moonSeal'],
+    robe: ['cloudStep', 'guardedBody', 'earthWard', 'waterMirror'],
   };
 
   const gearAffixSets = {
@@ -653,6 +743,20 @@
       detail: '破阵、凝神与护体相互成势，叩关和历练更稳。',
       affixes: ['breakerEdge', 'calmMind', 'guardedBody'],
       bonuses: { powerBonus: 20, breakthrough: 0.05, dangerReduction: 18 },
+    },
+    fivePhaseTemper: {
+      id: 'fivePhaseTemper',
+      name: '五行炼形',
+      detail: '离火、灵脉与厚土相济，斗法时攻守更有层次。',
+      affixes: ['flameEdge', 'spiritVein', 'earthWard'],
+      bonuses: { attack: 30, defense: 22, elementPower: 18 },
+    },
+    eclipseMirror: {
+      id: 'eclipseMirror',
+      name: '阴阳照影',
+      detail: '玄阴锋、曜阳符与玄水镜交错，破邪和续战更强。',
+      affixes: ['shadowPierce', 'sunSigil', 'waterMirror'],
+      bonuses: { pierce: 18, vitality: 40, critChance: 0.03 },
     },
   };
 
@@ -1447,10 +1551,13 @@
     if (bossButton) {
       const result = challengeMapBoss(state, bossButton.dataset.challengeBoss);
       if (result.ok) {
-        showToast('首领镇压', `击败${result.boss.name}，获得${formatReward(result.reward)}。`);
+        showToast('首领镇压', `${result.battle?.summary || `击败${result.boss.name}`} 获得${formatReward(result.reward)}。`);
         triggerBattleFeedback('victory');
+      } else if (result.reason === 'battleLost') {
+        showToast('斗法失利', result.battle?.summary || '对方气机仍盛，需调整装备或继续修行。', 'warning');
+        triggerBattleFeedback('danger');
       } else if (result.reason === 'powerLow') {
-      showToast('道行不足', `需要道行 ${result.requiredPower}。`, 'warning');
+        showToast('道行不足', `需要道行 ${result.requiredPower}。`, 'warning');
         triggerBattleFeedback('danger');
       }
       saveState();
@@ -2544,8 +2651,8 @@
       return;
     }
     const layer = clampInteger(active.layer || 1, 1, mapDepthMaxLayer);
-    const danger = getDepthDanger(state, map, layer);
-    if (calculatePower(state) < danger) {
+    const battle = simulateDepthBattle(state, map, layer, now);
+    if (battle.outcome !== 'victory') {
       const penalty = {
         qi: -Math.max(25, Math.round(layer * 12 + (map.unlockRealmIndex || 0) * 6)),
         heartDemon: layer >= 8 ? 1 : 0,
@@ -2556,10 +2663,11 @@
         outcome: 'failure',
         reward: penalty,
         reputationGained: 0,
+        battle,
         now,
       }));
       addLog(state, now, `${map.name}秘境第 ${layer} 层折返，劫象反噬。`);
-      showToast('秘境折返', `${map.name}第 ${layer} 层劫象过重。`, 'warning');
+      showToast('秘境折返', battle.summary || `${map.name}第 ${layer} 层劫象过重。`, 'warning');
       triggerBattleFeedback('shake');
       return;
     }
@@ -2576,14 +2684,15 @@
       outcome: 'success',
       reward,
       reputationGained,
+      battle,
       now,
     }));
     addLog(state, now, `打通${map.name}秘境第 ${layer} 层，获得${formatReward(reward)}。`);
-    showToast('秘境突破', `${map.name}第 ${layer} 层收获${formatReward(reward)}。`);
+    showToast('秘境突破', `${battle.summary} 收获${formatReward(reward)}。`);
     triggerBattleFeedback('pulse');
   }
 
-  function createDepthReport(state, map, layer, { outcome, reward, reputationGained = 0, now = Date.now() }) {
+  function createDepthReport(state, map, layer, { outcome, reward, reputationGained = 0, battle = null, now = Date.now() }) {
     const rewardText = formatReward(reward);
     return {
       id: `depth-${map.id}-${layer}-${now}`,
@@ -2599,9 +2708,36 @@
       reputationGained,
       completedCount: state.mapDepths?.[map.id] || 0,
       event: null,
+      mapProgress: getReportMapProgress(state, map.id),
+      battle,
       summary: outcome === 'success'
-        ? `打通${map.name}秘境第 ${layer} 层，收获${rewardText}。`
-        : `${map.name}秘境第 ${layer} 层折返，劫象反噬${rewardText ? `：${rewardText}` : '。'}`,
+        ? `打通${map.name}秘境第 ${layer} 层，${battle?.summary || ''} 收获${rewardText}。`
+        : `${map.name}秘境第 ${layer} 层折返，${battle?.summary || '劫象反噬'}${rewardText ? `：${rewardText}` : '。'}`,
+      time: now,
+    };
+  }
+
+  function createBossReport(state, map, { outcome, reward, battle = null, now = Date.now() }) {
+    const rewardText = formatReward(reward);
+    return {
+      id: `boss-${map.id}-${now}`,
+      missionId: `boss:${map.id}`,
+      missionName: map.boss.name,
+      mapId: map.id,
+      mapName: map.name,
+      outcome,
+      reward: reward || {},
+      rewardText,
+      rareReward: null,
+      rareRewardText: '',
+      reputationGained: outcome === 'success' ? map.boss.reputation || 0 : 0,
+      completedCount: state.defeatedBosses?.[map.id] ? 1 : 0,
+      event: null,
+      mapProgress: getReportMapProgress(state, map.id),
+      battle,
+      summary: outcome === 'success'
+        ? `镇压${map.boss.name}，${battle?.summary || ''} 获得${rewardText}。`
+        : `挑战${map.boss.name}失利，${battle?.summary || '需继续整备'}${rewardText ? `：${rewardText}` : '。'}`,
       time: now,
     };
   }
@@ -3393,17 +3529,30 @@
       addLog(state, now, `${map.name}探索不足，尚未找到${map.boss.name}。`);
       return { ok: false, reason: 'notReady' };
     }
-    if (calculatePower(state) < map.boss.power) {
+    const battle = simulateBossBattle(state, mapId, now);
+    if (battle.outcome !== 'victory') {
       applyResources(state, map.boss.failurePenalty || {});
       state.injuryUntil = now + 120 * 1000;
-      addLog(state, now, `挑战${map.boss.name}失利，需继续提升道行。`);
-      return { ok: false, reason: 'powerLow', requiredPower: map.boss.power };
+      recordMissionReport(state, createBossReport(state, map, {
+        outcome: 'failure',
+        reward: map.boss.failurePenalty || {},
+        battle,
+        now,
+      }));
+      addLog(state, now, `挑战${map.boss.name}失利，${battle.summary}`);
+      return { ok: false, reason: 'battleLost', requiredPower: map.boss.power, battle };
     }
     applyResources(state, map.boss.reward);
     addMapReputation(state, map.id, map.boss.reputation || 0);
     state.defeatedBosses[map.id] = true;
+    recordMissionReport(state, createBossReport(state, map, {
+      outcome: 'success',
+      reward: map.boss.reward,
+      battle,
+      now,
+    }));
     addLog(state, now, `镇压${map.boss.name}，${map.name}声望大涨，获得${formatReward(map.boss.reward)}。`);
-    return { ok: true, reward: map.boss.reward, boss: map.boss };
+    return { ok: true, reward: map.boss.reward, boss: map.boss, battle };
   }
 
   function getGearQuality(state, gearId) {
@@ -3446,6 +3595,7 @@
 
   function getCharacterProfile(state, now = Date.now()) {
     const realm = getCurrentRealm(state);
+    const combat = getCombatProfile(state);
     const attackSources = compactSources([
       { label: '境界威压', value: getRealmPower(state) },
       { label: '剑诀火候', value: (state.cultivationPaths.sword || 0) * cultivationPaths.sword.powerPerLevel },
@@ -3504,7 +3654,11 @@
       realmName: realm.name,
       combatPower: { label: '道行总纲', value: calculatePower(state), sources: attackSources },
       attributes: [
-        { id: 'attack', label: '道威', value: attackSources.reduce((total, source) => total + source.value, 0), sources: attackSources },
+        { id: 'combatAttack', label: combat.attack.label, value: combat.attack.value, sources: combat.attack.sources },
+        { id: 'combatDefense', label: combat.defense.label, value: combat.defense.value, sources: combat.defense.sources },
+        { id: 'vitality', label: combat.vitality.label, value: combat.vitality.value, sources: combat.vitality.sources },
+        { id: 'critChance', label: combat.critChance.label, value: combat.critChance.value, unit: '%', sources: combat.critChance.sources },
+        { id: 'elementPower', label: combat.elementPower.label, value: combat.elementPower.value, unit: combat.element.name, sources: combat.elementPower.sources },
         { id: 'cultivationSpeed', label: '灵息', value: calculateQiRate(state, now), unit: '/分钟', sources: cultivationSources },
         { id: 'breakthrough', label: '破境天机', value: calculateBreakthroughChance(state, now), unit: '%', sources: breakthroughSources },
         { id: 'explorationSafety', label: '护体玄光', value: explorationSafety, sources: compactSources([
@@ -3990,7 +4144,8 @@
       return;
     }
     const report = state.lastMissionReport;
-    const signature = report ? `${report.id}:${report.outcome}:${report.rewardText}:${report.approach?.id || ''}:${report.approachRewardText || ''}:${report.specialDropText || ''}:${report.rareRewardText}:${report.event?.id || ''}` : 'none';
+    const battleSignature = report?.battle ? `${report.battle.outcome}:${report.battle.summary}:${report.battle.rounds?.map((round) => `${round.actor}-${round.damage}-${round.targetHp}`).join(',')}` : '';
+    const signature = report ? `${report.id}:${report.outcome}:${report.rewardText}:${report.approach?.id || ''}:${report.approachRewardText || ''}:${report.specialDropText || ''}:${report.rareRewardText}:${report.event?.id || ''}:${battleSignature}` : 'none';
     if (!force && renderCache.missionReport === signature) {
       return;
     }
@@ -4023,6 +4178,19 @@
         ${report.rareRewardText ? `<div><span>稀有</span><strong>${report.rareRewardText}</strong></div>` : ''}
         ${report.event ? `<div><span>奇遇</span><strong>${report.event.name}${report.event.equipmentName ? ` · ${report.event.equipmentName}` : ''}</strong></div>` : ''}
       </div>
+      ${report.battle ? `
+        <div class="battle-report">
+          <span>斗法回合</span>
+          <strong>${report.battle.summary}</strong>
+          <div class="battle-round-list">
+            ${report.battle.rounds.slice(0, 6).map((round) => `
+              <small class="${round.actor}">
+                ${round.round} · ${round.actor === 'player' ? '我方' : '劫影'} · ${round.elementText}${round.critical ? ' · 会心' : ''} · ${round.damage}
+              </small>
+            `).join('')}
+          </div>
+        </div>
+      ` : ''}
       ${history.length ? `
         <div class="mission-report-history">
           <span>近几次行游</span>
@@ -4143,6 +4311,9 @@
     const currentPower = calculatePower(state);
     const explorationGap = Math.max(0, map.exploration.target - map.exploration.cappedCompleted);
     const powerGap = Math.max(0, map.boss.power - currentPower);
+    const bossElement = combatElements[map.boss.element] || combatElements.earth;
+    const playerElement = getCombatProfile(state).element;
+    const elementText = formatElementInteraction(playerElement, bossElement, getElementModifier(playerElement, bossElement));
     const bossNextStep = explorationGap
       ? `先探山势 ${map.exploration.cappedCompleted} / ${map.exploration.target}`
       : powerGap
@@ -4158,6 +4329,7 @@
           <div class="boss-requirements">
             <small>探索 ${map.exploration.cappedCompleted} / ${map.exploration.target}</small>
             <small>道行 ${currentPower} / ${map.boss.power}</small>
+            <small>${bossElement.name} · ${elementText}</small>
           </div>
           <div class="boss-action-list">
             <small>${explorationGap ? `山势未明 ${explorationGap}` : '山势已明'}</small>
@@ -5329,6 +5501,79 @@
     return Math.round(((state.realmIndex || 0) + 1) * 22);
   }
 
+  function getCombatProfile(state) {
+    const power = calculatePower(state);
+    const attackSources = compactSources([
+      { label: '道行底蕴', value: Math.floor(power * 0.62) },
+      { label: '兵刃锋芒', value: getTieredLevelValue(state.gear?.weapon || 0, gear.weapon.attackPerLevel) },
+      ...getGearAffixSources(state, 'attack'),
+      ...getGearSetSources(state, 'attack'),
+      ...getEquippedLootSources(state, 'attack'),
+    ]);
+    const defenseSources = compactSources([
+      { label: '道体根基', value: Math.floor(power * 0.18) },
+      { label: '法袍护体', value: getTieredLevelValue(state.gear?.robe || 0, gear.robe.defensePerLevel) },
+      ...getGearAffixSources(state, 'defense'),
+      ...getGearSetSources(state, 'defense'),
+      ...getEquippedLootSources(state, 'defense'),
+    ]);
+    const vitalitySources = compactSources([
+      { label: '境界血元', value: 260 + (state.realmIndex || 0) * 36 },
+      { label: '护符养命', value: getTieredLevelValue(state.gear?.amulet || 0, gear.amulet.vitalityPerLevel) },
+      ...getGearAffixSources(state, 'vitality'),
+      ...getGearSetSources(state, 'vitality'),
+      ...getEquippedLootSources(state, 'vitality'),
+    ]);
+    const speedSources = compactSources([
+      { label: '身法根基', value: 12 + Math.floor((state.realmIndex || 0) / 2) },
+      ...getGearAffixSources(state, 'speed'),
+      ...getGearSetSources(state, 'speed'),
+      ...getEquippedLootSources(state, 'speed'),
+    ]);
+    const critSources = compactSources([
+      { label: '本命灵觉', value: 0.05, mode: 'percent' },
+      ...getGearAffixSources(state, 'critChance', 'percent'),
+      ...getGearSetSources(state, 'critChance', 'percent'),
+      ...getEquippedLootSources(state, 'critChance', 'percent'),
+    ]);
+    const pierceSources = compactSources([
+      ...getGearAffixSources(state, 'pierce'),
+      ...getGearSetSources(state, 'pierce'),
+      ...getEquippedLootSources(state, 'pierce'),
+    ]);
+    const elementScores = getCombatElementScores(state);
+    const element = getDominantCombatElement(elementScores);
+    const elementSources = compactSources(elementScores[element.id]?.sources || []);
+
+    return {
+      element,
+      attack: createCombatStat('锋芒', attackSources),
+      defense: createCombatStat('护体', defenseSources),
+      vitality: createCombatStat('血元', vitalitySources),
+      speed: createCombatStat('身法', speedSources),
+      critChance: createCombatStat('会心', critSources, 'percent'),
+      pierce: createCombatStat('破势', pierceSources),
+      elementPower: {
+        label: '灵根偏向',
+        value: Math.max(0, elementScores[element.id]?.value || 0),
+        element,
+        sources: elementSources,
+      },
+    };
+  }
+
+  function simulateBossBattle(state, mapId, now = Date.now(), random = null) {
+    const map = missionMaps[mapId];
+    if (!map) {
+      return { outcome: 'defeat', reason: 'unknownMap', rounds: [] };
+    }
+    return runTurnBattle(getPlayerCombatant(state), getBossCombatant(map), {
+      type: 'boss',
+      now,
+      random,
+    });
+  }
+
   function calculateBreakthroughCarryQi(state, realm = getCurrentRealm(state)) {
     const overflowQi = Math.max(0, (state.qi || 0) - realm.requiredQi);
     return round(overflowQi * 0.5);
@@ -6126,6 +6371,242 @@
     }, 0);
   }
 
+  function getGearAffixSources(state, key, mode = 'flat') {
+    return Object.entries(state.gearAffixes || {})
+      .filter(([gearId, affixId]) => (state.gear?.[gearId] || 0) > 0 && gearAffixes[affixId]?.[key])
+      .map(([, affixId]) => ({
+        label: `灵纹·${gearAffixes[affixId].name}`,
+        value: gearAffixes[affixId][key],
+        mode,
+      }));
+  }
+
+  function getGearSetSources(state, key, mode = 'flat') {
+    return getGearSetStatus(state)
+      .filter((set) => set.active && gearAffixSets[set.id]?.bonuses?.[key])
+      .map((set) => ({
+        label: `同调·${set.name}`,
+        value: gearAffixSets[set.id].bonuses[key],
+        mode,
+      }));
+  }
+
+  function getEquippedLootSources(state, key, mode = 'flat') {
+    return Object.values(state.equippedLoot || {})
+      .map((uid) => state.lootEquipment?.find((item) => item.uid === uid))
+      .filter((item) => item?.bonuses?.[key])
+      .map((item) => ({
+        label: `战利·${item.name}`,
+        value: item.bonuses[key],
+        mode,
+      }));
+  }
+
+  function createCombatStat(label, sources, mode = 'flat') {
+    return {
+      label,
+      value: round(sources.reduce((total, source) => total + source.value, 0)),
+      mode,
+      sources,
+    };
+  }
+
+  function getCombatElementScores(state) {
+    const scores = Object.fromEntries(Object.values(combatElements).map((element) => [element.id, { value: 0, sources: [] }]));
+    const add = (elementId, value, label) => {
+      const element = combatElements[elementId];
+      if (!element || value <= 0) {
+        return;
+      }
+      scores[element.id].value += value;
+      scores[element.id].sources.push({ label: `${label}·${element.name}`, value });
+    };
+
+    Object.entries(state.gearAffixes || {}).forEach(([gearId, affixId]) => {
+      if ((state.gear?.[gearId] || 0) <= 0) {
+        return;
+      }
+      const affix = gearAffixes[affixId];
+      add(affix?.element, affix?.elementPower || 0, `灵纹${affix?.name || ''}`);
+    });
+
+    getGearSetStatus(state).forEach((set) => {
+      if (set.active) {
+        const elementId = set.affixes.map((affix) => gearAffixes[affix.id]?.element).find((id) => id && combatElements[id]);
+        add(elementId, gearAffixSets[set.id]?.bonuses?.elementPower || 0, `同调${set.name}`);
+      }
+    });
+
+    Object.values(state.equippedLoot || {}).forEach((uid) => {
+      const item = state.lootEquipment?.find((candidate) => candidate.uid === uid);
+      const template = lootEquipment[item?.templateId];
+      add(item?.element || template?.element, item?.bonuses?.elementPower || 0, `战利${item?.name || ''}`);
+    });
+
+    return scores;
+  }
+
+  function getDominantCombatElement(scores) {
+    const [elementId] = Object.entries(scores)
+      .sort((a, b) => b[1].value - a[1].value || Object.keys(combatElements).indexOf(a[0]) - Object.keys(combatElements).indexOf(b[0]))[0] || ['metal'];
+    return combatElements[elementId] || combatElements.metal;
+  }
+
+  function getPlayerCombatant(state) {
+    const profile = getCombatProfile(state);
+    return {
+      name: '修士',
+      element: profile.element,
+      attack: Math.max(1, profile.attack.value),
+      defense: Math.max(0, profile.defense.value),
+      vitality: Math.max(1, profile.vitality.value),
+      speed: Math.max(1, profile.speed.value),
+      critChance: Math.min(0.5, Math.max(0, profile.critChance.value)),
+      pierce: Math.max(0, profile.pierce.value),
+    };
+  }
+
+  function getBossCombatant(map) {
+    const power = map.boss.power || 120;
+    const unlock = map.unlockRealmIndex || 0;
+    return {
+      name: map.boss.name,
+      element: combatElements[map.boss.element] || combatElements.earth,
+      attack: Math.round(power * 0.46 + unlock * 2),
+      defense: Math.round(power * 0.2 + unlock),
+      vitality: Math.round(power * 1.18 + unlock * 14),
+      speed: 10 + Math.floor(unlock / 3),
+      critChance: Math.min(0.18, 0.04 + unlock * 0.003),
+      pierce: Math.round(unlock * 1.4),
+    };
+  }
+
+  function getDepthCombatant(map, layer, danger) {
+    const elementId = map.boss?.element || 'earth';
+    return {
+      name: `${map.name}第 ${layer} 层劫影`,
+      element: combatElements[elementId] || combatElements.earth,
+      attack: Math.round(danger * 0.42 + layer * 3),
+      defense: Math.round(danger * 0.18 + layer * 2),
+      vitality: Math.round(danger * 1.05 + layer * 24),
+      speed: 9 + Math.floor(layer / 5),
+      critChance: Math.min(0.16, 0.035 + layer * 0.002),
+      pierce: Math.round(layer * 1.5),
+    };
+  }
+
+  function simulateDepthBattle(state, map, layer, now = Date.now(), random = null) {
+    const danger = getDepthDanger(state, map, layer);
+    return runTurnBattle(getPlayerCombatant(state), getDepthCombatant(map, layer, danger), {
+      type: 'depth',
+      now,
+      random,
+    });
+  }
+
+  function runTurnBattle(player, enemy, { type = 'boss', now = Date.now(), random = null } = {}) {
+    let playerHp = player.vitality;
+    let enemyHp = enemy.vitality;
+    const rounds = [];
+    const maxRounds = type === 'depth' ? 8 : 10;
+    for (let round = 1; round <= maxRounds; round += 1) {
+      const playerHit = resolveCombatHit(player, enemy, round, true, now, random);
+      enemyHp = Math.max(0, enemyHp - playerHit.damage);
+      rounds.push(createBattleRound(round, 'player', player, enemy, playerHit, enemyHp));
+      if (enemyHp <= 0) {
+        break;
+      }
+
+      const enemyHit = resolveCombatHit(enemy, player, round, false, now, random);
+      playerHp = Math.max(0, playerHp - enemyHit.damage);
+      rounds.push(createBattleRound(round, 'enemy', enemy, player, enemyHit, playerHp));
+      if (playerHp <= 0) {
+        break;
+      }
+    }
+    const outcome = enemyHp <= 0 ? 'victory' : 'defeat';
+    return {
+      type,
+      outcome,
+      player: {
+        name: player.name,
+        element: player.element,
+        maxHp: player.vitality,
+        hp: playerHp,
+      },
+      enemy: {
+        name: enemy.name,
+        element: enemy.element,
+        maxHp: enemy.vitality,
+        hp: enemyHp,
+      },
+      rounds,
+      summary: outcome === 'victory'
+        ? `${rounds.at(-1)?.round || 0} 回合压住${enemy.name}。`
+        : `${rounds.at(-1)?.round || 0} 回合后退守，${enemy.name}仍有余势。`,
+    };
+  }
+
+  function resolveCombatHit(attacker, defender, round, isPlayer, now, random) {
+    const elementModifier = getElementModifier(attacker.element, defender.element);
+    const roll = typeof random === 'function'
+      ? random()
+      : seededCombatRoll(now, round, isPlayer ? 13 : 71);
+    const critical = roll < attacker.critChance;
+    const raw = attacker.attack * elementModifier * (critical ? 1.45 : 1)
+      + attacker.pierce
+      - defender.defense * 0.42;
+    return {
+      damage: Math.max(1, Math.round(raw)),
+      critical,
+      elementModifier,
+    };
+  }
+
+  function createBattleRound(round, actor, attacker, defender, hit, targetHp) {
+    return {
+      round,
+      actor,
+      actorName: attacker.name,
+      targetName: defender.name,
+      damage: hit.damage,
+      critical: hit.critical,
+      element: attacker.element,
+      targetElement: defender.element,
+      elementModifier: hit.elementModifier,
+      elementText: formatElementInteraction(attacker.element, defender.element, hit.elementModifier),
+      targetHp,
+    };
+  }
+
+  function seededCombatRoll(now, round, salt) {
+    const seed = Math.abs(Math.floor(now / 1000) + round * 97 + salt * 17);
+    return ((seed * 9301 + 49297) % 233280) / 233280;
+  }
+
+  function getElementModifier(attacker, defender) {
+    if (!attacker || !defender) {
+      return 1;
+    }
+    if (attacker.restrains === defender.id) {
+      return 1.16;
+    }
+    if (defender.restrains === attacker.id) {
+      return 0.9;
+    }
+    return 1;
+  }
+
+  function formatElementInteraction(attacker, defender, modifier) {
+    if (modifier > 1) {
+      return `${attacker.name}克${defender.name}`;
+    }
+    if (modifier < 1) {
+      return `${attacker.name}受${defender.name}所制`;
+    }
+    return `${attacker.name}平势`;
+  }
+
   function getGearAffixImpactSnapshot(state, now) {
     return {
       power: calculatePower(state),
@@ -6274,6 +6755,9 @@
     if (item.powerPerLevel) effects.push({ id: 'power', label: '道威', value: getTieredLevelValue(level, item.powerPerLevel), mode: 'flat' });
     if (item.breakthroughPerLevel) effects.push({ id: 'breakthrough', label: '破境天机', value: getTieredLevelValue(level, item.breakthroughPerLevel), mode: 'percent' });
     if (item.dangerReductionPerLevel) effects.push({ id: 'dangerReduction', label: '劫象消解', value: getTieredLevelValue(level, item.dangerReductionPerLevel), mode: 'reduction' });
+    if (item.attackPerLevel) effects.push({ id: 'attack', label: '锋芒', value: getTieredLevelValue(level, item.attackPerLevel), mode: 'flat' });
+    if (item.defensePerLevel) effects.push({ id: 'defense', label: '护体', value: getTieredLevelValue(level, item.defensePerLevel), mode: 'flat' });
+    if (item.vitalityPerLevel) effects.push({ id: 'vitality', label: '血元', value: getTieredLevelValue(level, item.vitalityPerLevel), mode: 'flat' });
     const qualityPower = gearQualities[qualityIndex]?.powerBonus || 0;
     if (qualityPower) effects.push({ id: 'qualityPower', label: '炼器道威', value: qualityPower, mode: 'flat' });
     if (affix) effects.push(...effectsFromBonusObject(affix, '词条'));
@@ -6288,6 +6772,13 @@
       qiBonus: '灵息',
       breakthrough: '破境天机',
       dangerReduction: '劫象消解',
+      attack: '锋芒',
+      defense: '护体',
+      vitality: '血元',
+      speed: '身法',
+      critChance: '会心',
+      pierce: '破势',
+      elementPower: '灵根',
       herbRate: '灵草生长',
       alchemySpeed: '丹火缩时',
     };
@@ -6297,7 +6788,7 @@
         id: key,
         label: `${prefix}${labels[key]}`,
         value,
-        mode: key === 'qiRate' || key === 'qiBonus' || key === 'breakthrough' || key === 'herbRate' || key === 'alchemySpeed' ? 'percent' : key === 'dangerReduction' ? 'reduction' : 'flat',
+        mode: key === 'qiRate' || key === 'qiBonus' || key === 'breakthrough' || key === 'herbRate' || key === 'alchemySpeed' || key === 'critChance' ? 'percent' : key === 'dangerReduction' ? 'reduction' : 'flat',
       }));
   }
 
@@ -6550,6 +7041,7 @@
       name: template.name,
       slot: template.slot,
       quality: template.quality,
+      element: template.element || null,
       level: safeLevel,
       bonuses: createLootBonuses(templateId, safeLevel),
     };
@@ -6714,7 +7206,7 @@
     const multiplier = 1 + getTieredLootBonus(level);
     const percentBonus = getTieredPercentBonus(level);
     return Object.fromEntries(
-      Object.entries(template.bonuses).map(([key, value]) => [key, key === 'breakthrough' || key === 'qiRate' ? round(value + percentBonus) : Math.round(value * multiplier)]),
+      Object.entries(template.bonuses).map(([key, value]) => [key, key === 'breakthrough' || key === 'qiRate' || key === 'critChance' ? round(value + percentBonus) : Math.round(value * multiplier)]),
     );
   }
 
