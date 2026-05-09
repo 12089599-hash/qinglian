@@ -2759,11 +2759,11 @@ small {
   }
 
   body {
-    padding-bottom: calc(98px + env(safe-area-inset-bottom));
+    padding-bottom: calc(150px + env(safe-area-inset-bottom));
   }
 
   .dashboard {
-    padding-bottom: calc(128px + env(safe-area-inset-bottom));
+    padding-bottom: calc(190px + env(safe-area-inset-bottom));
   }
 
   .toast-stack {
@@ -2791,12 +2791,29 @@ small {
   }
 
   .mission-map-layout {
-    grid-template-columns: 1fr;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
   }
 
-  .map-action-panel header,
+  .map-action-panel {
+    gap: 8px;
+    margin-bottom: 8px;
+    padding: 10px;
+  }
+
+  .map-action-panel header {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+  }
+
+  .map-action-panel header small {
+    display: none;
+  }
+
   .map-action-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
   }
 
   .map-action-panel em {
@@ -2804,7 +2821,40 @@ small {
   }
 
   .map-action-grid button {
-    min-height: 66px;
+    min-height: 68px;
+    padding: 8px 6px;
+  }
+
+  .map-action-grid button span {
+    display: none;
+  }
+
+  .combat-advice {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+  }
+
+  [data-mission-list],
+  .mission-list,
+  .mission-map-layout,
+  .mission-map-detail,
+  .map-action-panel,
+  .map-group {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .mission-map-selector,
+  .approach-selector {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .map-action-grid {
+    min-width: 0;
   }
 
   .resource-guidance-card {
@@ -2837,11 +2887,16 @@ small {
   }
 
   .mission-map-selector {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    display: flex;
     gap: 8px;
-    overflow: visible;
-    padding-bottom: 0;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+  }
+
+  .mission-map-selector::-webkit-scrollbar {
+    display: none;
   }
 
   .building-grid::-webkit-scrollbar {
@@ -2849,20 +2904,34 @@ small {
   }
 
   .map-select-button {
+    flex: 0 0 136px;
     min-width: 0;
+    min-height: 58px;
+    scroll-snap-align: start;
+  }
+
+  .map-select-button small {
+    display: none;
   }
 
   .approach-selector {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    display: flex;
     gap: 8px;
-    overflow: visible;
-    padding-bottom: 0;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+  }
+
+  .approach-selector::-webkit-scrollbar {
+    display: none;
   }
 
   .approach-selector button {
+    flex: 0 0 146px;
     min-width: 0;
-    min-height: 88px;
+    min-height: 72px;
+    scroll-snap-align: start;
   }
 
   .approach-selector span {
@@ -2890,6 +2959,27 @@ small {
 
   .mission-report {
     scroll-margin-top: 58px;
+  }
+
+  .map-group > .map-heading,
+  .map-group > .map-progress,
+  .map-group > .map-meta,
+  .map-group > .depth-card,
+  .map-group > .boss-card {
+    display: none;
+  }
+
+  body[data-battle-playback-active="true"] [data-mission-list],
+  body[data-battle-playback-active="true"] [data-resource-guidance],
+  body[data-battle-playback-active="true"] [data-opportunity],
+  body[data-battle-playback-active="true"] [data-mission-report] {
+    display: none;
+  }
+
+  body[data-battle-playback-active="true"] .battle-playback {
+    position: sticky;
+    top: 54px;
+    z-index: 8;
   }
 
   .map-heading,

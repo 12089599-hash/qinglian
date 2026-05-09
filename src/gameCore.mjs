@@ -5535,34 +5535,22 @@ function createBattleDiagnosis(player, enemy, rounds, playerHp, enemyHp, outcome
   const elementText = formatElementInteraction(player.element, enemy.element, playerModifier);
 
   if (outcome === 'victory') {
-    return {
-      outcome,
-      title: '压制成功',
-      detail: `${elementText}，我方余 ${playerRemainingHp} 血元。`,
-      advice: '可继续推进同地图秘境，或尝试更高地图。',
-      playerDamage,
-      enemyDamage,
-      playerRemainingHp,
-      enemyRemainingHp,
-      playerElementModifier: playerModifier,
-      enemyElementModifier: enemyModifier,
-      elementText,
-    };
+    return null;
   }
 
   let title = '锋芒不足';
-  let advice = '提升武器、剑修、剑阵，或换成克制首领的灵根词条。';
+  let advice = '锋芒尚未破开劫影，可先温养杀伐气机，待阵势相随后再入局。';
   if (playerModifier < 1) {
     title = '灵根受制';
-    advice = '洗练克制词条或更换具名战利品，先把灵根从受制调到平势或克制。';
+    advice = '灵根被劫象牵制，宜先调整器纹与随行气机，避开此地锋芒。';
   } else if (playerHp <= 0 && enemyDamage >= player.vitality * 0.85) {
     title = '护体不足';
-    advice = '提升法袍、护符、厚土或玄水词条，先把承伤压下来。';
+    advice = '护身气机被冲散，宜先稳住衣符与山门阵势，少与劫影硬撼。';
   } else if (playerHp <= 0 && enemyHp <= enemy.vitality * 0.28) {
     title = '血元不足';
-    advice = '提升护符、血元词条或阴阳照影续战，再回来收尾。';
+    advice = '只差收束一口气，宜先养血元与道心，让随行护持补上余势。';
   }
-  advice = `${advice} 仍差一线时，可服清心丹/护脉丹，培养出战灵兽，或补剑阵与护山阵。`;
+  advice = `${advice} 若仍觉差一线，先整备随行、丹息与阵势，再试探一层。`;
 
   return {
     outcome,

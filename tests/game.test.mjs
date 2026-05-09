@@ -1085,6 +1085,17 @@ test('boss battle simulation reacts to elemental gear and records rounds', () =>
   assert.equal(battle.summary.includes('回合'), true);
 });
 
+test('winning boss battles settle without failure diagnosis', () => {
+  const state = createGameState(1000);
+  state.realmIndex = realmIndexByName('筑基一层');
+  state.permanentBonuses.power = 5000;
+
+  const battle = simulateBossBattle(state, 'qinglanMountain', 2000);
+
+  assert.equal(battle.outcome, 'victory');
+  assert.equal(battle.diagnosis, null);
+});
+
 test('failed boss battles explain the most useful preparation lever', () => {
   const state = createGameState(1000);
   state.realmIndex = realmIndexByName('筑基一层');
@@ -1098,7 +1109,8 @@ test('failed boss battles explain the most useful preparation lever', () => {
   assert.equal(battle.diagnosis.outcome, 'defeat');
   assert.equal(['锋芒不足', '护体不足', '血元不足', '灵根受制'].includes(battle.diagnosis.title), true);
   assert.equal(battle.diagnosis.advice.length > 0, true);
-  assert.match(battle.diagnosis.advice, /灵兽|丹药|阵法/);
+  assert.match(battle.diagnosis.advice, /随行|丹息|阵势/);
+  assert.doesNotMatch(battle.diagnosis.advice, /清心丹|护脉丹|培养出战灵兽|剑阵与护山阵/);
   assert.equal(typeof battle.diagnosis.playerDamage, 'number');
   assert.equal(typeof battle.diagnosis.enemyRemainingHp, 'number');
 });
