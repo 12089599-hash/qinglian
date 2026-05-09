@@ -3205,12 +3205,12 @@ small {
   }
 
   body[data-active-tab="overview"] .stats-panel > .dao-heart-card {
-    order: 7;
+    order: 8;
     margin-top: 0;
   }
 
   body[data-active-tab="overview"] .stats-panel > .tribulation-card {
-    order: 8;
+    order: 9;
     margin-top: 0;
   }
 
@@ -3224,11 +3224,11 @@ small {
   }
 
   body[data-active-tab="overview"] .stats-panel > .state-drawer {
-    order: 5;
+    order: 6;
   }
 
   body[data-active-tab="overview"] .stats-panel > .resource-drawer:not(.state-drawer) {
-    order: 6;
+    order: 7;
   }
 
   body[data-active-tab="overview"] .stats-panel > .action-row {
@@ -3240,6 +3240,10 @@ small {
 
   body[data-active-tab="overview"] .stats-panel > .action-row .ghost-button {
     margin-left: 0;
+  }
+
+  body[data-active-tab="overview"] .stats-panel > .progress-plan {
+    order: 5;
   }
 
   body[data-active-tab="overview"] .stats-panel > .resource-drawer {
@@ -3559,19 +3563,72 @@ small {
 
   .progress-plan {
     margin-top: 10px;
-    padding: 10px;
+    gap: 6px;
+    padding: 7px;
+  }
+
+  .progress-plan header {
+    gap: 8px;
+    min-height: 28px;
+  }
+
+  .progress-plan header strong {
+    max-width: min(230px, 58vw);
+    font-size: 0.86rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .progress-plan header em {
+    padding: 2px 7px;
   }
 
   .progress-plan-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    display: flex;
+    grid-template-columns: none;
+    gap: 6px;
+    margin-inline: -2px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    padding: 0 2px 2px;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .progress-plan-grid::-webkit-scrollbar {
+    display: none;
+  }
+
+  .progress-plan-grid button {
+    align-content: center;
+    flex: 0 0 86px;
+    min-height: 48px;
+    padding: 6px 7px;
+    scroll-snap-align: start;
   }
 
   .progress-plan-actions {
-    grid-template-columns: 1fr;
+    display: none;
   }
 
-  .progress-plan-actions button {
-    min-height: 54px;
+  .progress-plan-grid button strong {
+    max-width: 100%;
+    font-size: 0.82rem;
+    line-height: 1.25;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .progress-plan header span,
+  .progress-plan button span {
+    font-size: 0.68rem;
+  }
+
+  .progress-plan-grid small,
+  .progress-plan-actions span {
+    display: none;
   }
 
   .boss-counsel {
