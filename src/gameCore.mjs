@@ -4213,8 +4213,11 @@ function ensureActiveDepthBattle(state, now = Date.now()) {
     state.activeMission = null;
     return;
   }
-  active.battle = normalizeBattle(active.battle)
-    ?? simulateDepthBattle(state, map, active.layer ?? 1, Number(active.startedAt) || now);
+  const layer = clampInteger(active.layer ?? 1, 1, MAP_DEPTH_MAX_LAYER);
+  const battle = normalizeBattle(active.battle)
+    ?? simulateDepthBattle(state, map, layer, Number(active.startedAt) || now);
+  state.activeMission = null;
+  settleMapDepthTrial(state, map, layer, battle, now);
 }
 
 function normalizeBattle(battle) {

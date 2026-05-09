@@ -1913,6 +1913,25 @@ test('map depth trials settle immediately after creating battle data', () => {
   assert.deepEqual(state.lastMissionReport.battle.rounds, started.battle.rounds);
 });
 
+test('legacy active map depth saves settle on revive without waiting', () => {
+  const state = createGameState(1000);
+  state.permanentBonuses.power = 500;
+  state.activeMission = {
+    type: 'mapDepth',
+    id: 'depth:qinglanMountain:1',
+    mapId: 'qinglanMountain',
+    layer: 1,
+    startedAt: 1000,
+    endsAt: 121_000,
+  };
+
+  const revived = reviveGameState(JSON.parse(JSON.stringify(state)), 1500);
+
+  assert.equal(revived.activeMission, null);
+  assert.equal(revived.mapDepths.qinglanMountain, 1);
+  assert.equal(revived.lastMissionReport.battle.rounds.length > 0, true);
+});
+
 test('map depth trials remain threatening compared with same-map routes', () => {
   const state = createGameState(1000);
   state.realmIndex = realmIndexByName('金丹一转');

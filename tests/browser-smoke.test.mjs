@@ -17,6 +17,7 @@ assert.match(styles, /\.equipment-detail-card\s*\{/);
 assert.match(styles, /\.nested-detail\s*\{/);
 assert.match(html, /styles\.css\?v=/);
 assert.match(html, /browserGame\.js\?v=/);
+assert.match(source, /localStorage\.setItem\(saveKey, JSON\.stringify\(revived\)\)/);
 assert.match(source, /function createRealmTrack/);
 assert.match(source, /currentBalanceVersion\s*=\s*6/);
 assert.match(source, /元婴.*九变/);
