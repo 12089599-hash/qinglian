@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>青岚洞府</title>
-    <link rel="stylesheet" href="styles.css?v=202605091845" />
+    <link rel="stylesheet" href="styles.css?v=202605091900" />
   </head>
   <body>
     <main class="shell">
@@ -112,6 +112,10 @@
                 <dt>精魄</dt>
                 <dd data-forging-essence>0</dd>
               </div>
+              <div>
+                <dt>血脉精魄</dt>
+                <dd data-blood-essence>0</dd>
+              </div>
             </dl>
           </details>
           <details class="resource-drawer state-drawer" open>
@@ -201,6 +205,7 @@
             <button data-gear-section="loot">战利品</button>
             <button data-gear-section="treasures">法宝</button>
             <button data-gear-section="beasts">灵兽</button>
+            <button data-gear-section="bloodlines">血脉</button>
           </nav>
           <div class="gear-section-stack">
             <section data-gear-section-panel="wear" class="active">
@@ -221,6 +226,7 @@
                   <button data-loot-filter="jade" aria-pressed="false">玉佩</button>
                   <button data-loot-filter="boots" aria-pressed="false">云履</button>
                 </div>
+                <button data-lock-rare-loot>锁高品</button>
                 <button data-organize-loot>一键整理</button>
               </div>
               <div data-loot-list class="system-list"></div>
@@ -232,6 +238,11 @@
             <section data-gear-section-panel="beasts">
               <h3>灵兽</h3>
               <div data-beast-list class="system-list"></div>
+            </section>
+            <section data-gear-section-panel="bloodlines">
+              <h3>血脉</h3>
+              <p class="section-note">血脉提供长期属性底蕴，血脉精魄主要来自玄纹以上战利品分解。</p>
+              <div data-bloodline-list class="system-list"></div>
             </section>
           </div>
         </article>
@@ -291,6 +302,6 @@
 
     <div data-toast-stack class="toast-stack" aria-live="polite"></div>
 
-    <script src="browserGame.js?v=202605091845"></script>
+    <script src="browserGame.js?v=202605091900"></script>
   </body>
 </html>

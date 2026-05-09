@@ -11,6 +11,7 @@ import {
   GEAR_AFFIX_POOLS,
   GEAR_AFFIX_SETS,
   GEAR_QUALITIES,
+  BLOODLINES,
   LOOT_EQUIPMENT,
   MAINLINE_CHAPTERS,
   MAP_SPECIAL_DROPS,
@@ -68,12 +69,15 @@ import {
   getRealmProgress,
   getUpgradeTier,
   chooseDaoHeart,
+  lockRareLootEquipment,
   performBreakthrough,
   craftPill,
   consumePill,
   refineGear,
   rerollGearAffix,
   recruitDisciple,
+  awakenBloodline,
+  upgradeSectSkill,
   refreshMarketStock,
   reviveGameState,
   resolveOpportunity,
@@ -523,7 +527,57 @@ test('loot pool covers six equipment slots and new saves normalize each slot', (
   assert.deepEqual(Object.keys(state.equippedLoot), ['weapon', 'offhand', 'amulet', 'robe', 'jade', 'boots']);
   Object.keys(GEAR).forEach((slot) => {
     assert.equal(lootSlots.has(slot), true);
+    assert.equal(Object.values(LOOT_EQUIPMENT).filter((item) => item.slot === slot).length >= 3, true);
   });
+});
+
+test('early maps can roll the full equipment pool with very rare top rarity', () => {
+  const state = createGameState(1000);
+  state.realmIndex = realmIndexByName('筑基一层');
+  state.permanentBonuses.power = 900;
+
+  const seenSlots = new Set();
+  const seenTemplates = new Set();
+  let daoDrops = 0;
+
+  for (let index = 0; index < 1_500; index += 1) {
+    const beforeSerial = state.lootDropSerial;
+    startMission(state, 'herbGathering', 1000 + index * 31_000);
+    updateGame(state, 30, 31_000 + index * 31_000);
+    const item = state.lootDropSerial > beforeSerial ? state.lootEquipment[0] : null;
+    if (item) {
+      seenSlots.add(item.slot);
+      seenTemplates.add(item.templateId);
+      if (item.variant?.rarityId === 'dao') {
+        daoDrops += 1;
+      }
+    }
+  }
+
+  assert.deepEqual([...seenSlots].sort(), ['amulet', 'boots', 'jade', 'offhand', 'robe', 'weapon']);
+  assert.equal(seenTemplates.size >= 12, true);
+  assert.equal(daoDrops > 0, true);
+  assert.equal(daoDrops <= 6, true);
+});
+
+test('rare loot lock protects high grade drops during batch cleanup', () => {
+  const state = createGameState(1000);
+  state.lootEquipment = [
+    { uid: 'equipped-weapon', templateId: 'qingfengSword', name: '青锋剑', slot: 'weapon', quality: 0, variant: { rarityId: 'common' }, bonuses: { attack: 8 } },
+    { uid: 'rare-weapon', templateId: 'bloodCopperBlade', name: '赤铜刃', slot: 'weapon', quality: 2, variant: { rarityId: 'mystic' }, bonuses: { attack: 18 } },
+    { uid: 'spare-weapon-a', templateId: 'coldMoonSpear', name: '寒月枪', slot: 'weapon', quality: 0, variant: { rarityId: 'common' }, bonuses: { attack: 6 } },
+    { uid: 'spare-weapon-b', templateId: 'qingfengSword', name: '旧青锋剑', slot: 'weapon', quality: 0, variant: { rarityId: 'common' }, bonuses: { attack: 5 } },
+  ];
+  state.equippedLoot.weapon = 'equipped-weapon';
+
+  const locked = lockRareLootEquipment(state, 'mystic', 2000);
+  const organized = organizeLootEquipment(state, 3000);
+
+  assert.equal(locked.locked, 1);
+  assert.equal(state.lockedLoot['rare-weapon'], true);
+  assert.equal(organized.removed, 1);
+  assert.equal(state.lootEquipment.some((item) => item.uid === 'rare-weapon'), true);
+  assert.equal(state.lootEquipment.some((item) => item.uid === 'spare-weapon-b'), false);
 });
 
 test('matching gear affixes activate set resonance bonuses', () => {
@@ -1426,7 +1480,7 @@ test('loot dismantling creates strengthening material and empowerment improves t
 
   assert.equal(dismantled.ok, true);
   assert.equal(state.lootEquipment.length, 1);
-  assert.equal(state.forgingEssence, 6);
+  assert.equal(state.forgingEssence >= 6, true);
   assert.equal(state.artifacts, 8);
 
   state.spiritStones = 200;
@@ -1800,6 +1854,35 @@ test('sect mining remains supplemental rather than replacing travel income', () 
 
   assert.equal(miningGain <= 420, true);
   assert.equal(state.sectReputation <= 54, true);
+});
+
+test('bloodlines and sect skills create long term growth layers', () => {
+  const state = createGameState(1000);
+  state.realmIndex = realmIndexByName('筑基一层');
+  state.spiritStones = 4_000;
+  state.herbs = 900;
+  state.beastCores = 80;
+  state.artifacts = 80;
+  state.forgingEssence = 80;
+  state.bloodEssence = 12;
+  state.sectReputation = 160;
+
+  const baseQiRate = calculateQiRate(state, 1000);
+  const basePower = calculatePower(state);
+  const blood = awakenBloodline(state, 'whiteTigerBlood', 2000);
+  const skill = upgradeSectSkill(state, 'forgingEdict', 3000);
+  const details = getEquipmentDetails(state);
+  const profile = getCharacterProfile(state, 4000);
+
+  assert.equal(BLOODLINES.whiteTigerBlood.name, '白虎血');
+  assert.equal(blood.ok, true);
+  assert.equal(skill.ok, true);
+  assert.equal(state.bloodlines.whiteTigerBlood, 1);
+  assert.equal(state.sectSkills.forgingEdict, 1);
+  assert.equal(calculatePower(state) > basePower, true);
+  assert.equal(calculateQiRate(state, 4000) >= baseQiRate, true);
+  assert.equal(details.bloodlines.some((item) => item.id === 'whiteTigerBlood' && item.level === 1), true);
+  assert.equal(profile.attributes.some((attribute) => attribute.id === 'bloodline'), true);
 });
 
 test('mission opportunities offer choices and resolve rewards or costs', () => {

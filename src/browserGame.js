@@ -317,6 +317,7 @@
     artifacts: { label: '法器', priority: 1.2, mapIds: ['swordTomb', 'mistyValley', 'qinglanMountain'], missionId: 'ancientSwordTomb', approachId: 'relicSearch', commissionId: 'forge', detail: '法器可用于淬炼、分解和炼器阁营建。' },
     arrayFlags: { label: '阵旗', priority: 1.15, mapIds: ['ancientRuins', 'demonRift', 'swordTomb'], missionId: 'demonRift', approachId: 'relicSearch', commissionId: null, marketItemId: 'arrayManual', detail: '阵法、静室高阶和藏经阁会持续消耗阵旗。' },
     forgingEssence: { label: '炼器精魄', priority: 1.35, mapIds: ['swordTomb', 'mistyValley', 'qinglanMountain'], missionId: 'ancientSwordTomb', approachId: 'relicSearch', commissionId: 'forge', marketItemId: 'forgingAsh', detail: '器位强化、法宝和炼器阁中后期都需要炼器精魄。' },
+    bloodEssence: { label: '血脉精魄', priority: 1.3, mapIds: ['demonRift', 'swordTomb', 'mistyValley', 'qinglanMountain'], missionId: 'ancientSwordTomb', approachId: 'relicSearch', commissionId: null, detail: '血脉精魄主要来自玄纹以上战利品分解，是血脉和御灵秘传的长期材料。' },
     insight: { label: '悟道', priority: 1.05, mapIds: ['ancientRuins', 'demonRift', 'swordTomb', 'qinglanMountain'], missionId: 'ancientRuins', approachId: 'daoInquiry', commissionId: null, marketItemId: 'insightScroll', detail: '悟道支撑藏经阁高阶和后续功法沉淀。' },
     qi: { label: '灵气', priority: 0.55, mapIds: ['ancientRuins', 'demonRift', 'swordTomb', 'herbValley', 'qinglanMountain'], missionId: 'ancientRuins', approachId: 'daoInquiry', commissionId: null, detail: '灵气不足时，问道路线、丹药和长期吐纳更重要。' },
   };
@@ -328,6 +329,13 @@
     { level: 4, name: '一方名门', reputation: 180, capacityBonus: 3, commissionBonus: 0.2 },
     { level: 5, name: '洞天雏形', reputation: 320, capacityBonus: 5, commissionBonus: 0.3 },
   ];
+
+  const sectSkills = {
+    scriptureInheritance: { id: 'scriptureInheritance', name: '传功经阁', detail: '门中讲经传法，令周天运转更稳。', maxLevel: 8, requiredReputation: (level) => 45 + (level - 1) * 55, cost: (level) => ({ spiritStones: scaleCost(120, level), insight: Math.max(1, Math.ceil(level / 2)) }), bonuses: { qiRate: 0.018, breakthrough: 0.008 } },
+    mountainWard: { id: 'mountainWard', name: '护山真令', detail: '令牌贯通山势，护持行游与叩关。', maxLevel: 8, requiredReputation: (level) => 35 + (level - 1) * 50, cost: (level) => ({ spiritStones: scaleCost(100, level), arrayFlags: Math.max(1, Math.ceil(level / 2)) }), bonuses: { dangerReduction: 5, defense: 8, vitality: 18 } },
+    forgingEdict: { id: 'forgingEdict', name: '炼器敕令', detail: '山门火脉归一，分解和寻器更有章法。', maxLevel: 8, requiredReputation: (level) => 60 + (level - 1) * 60, cost: (level) => ({ spiritStones: scaleCost(140, level), artifacts: Math.max(1, Math.ceil(level / 2)), forgingEssence: level }), bonuses: { power: 18, attack: 12, dismantleBonus: 0.06, lootRarity: 0.04 } },
+    beastTamingCanon: { id: 'beastTamingCanon', name: '御灵兽谱', detail: '宗门记载妖脉习性，灵兽和血脉培养更顺。', maxLevel: 8, requiredReputation: (level) => 75 + (level - 1) * 65, cost: (level) => ({ spiritStones: scaleCost(150, level), beastCores: Math.max(1, level), bloodEssence: Math.max(1, Math.ceil(level / 3)) }), bonuses: { power: 10, vitality: 24, bloodEssenceBonus: 0.12, beastTraining: 0.04 } },
+  };
 
   const opportunities = {
     swordEcho: {
@@ -368,6 +376,13 @@
   const spiritBeasts = {
     cloudFox: { id: 'cloudFox', name: '云纹灵狐', detail: '亲近灵气，辅助周天灵息和灵田照料。', rarityId: 'spirit', maxLevel: 8, cost: (level) => ({ spiritStones: scaleCost(90, level), herbs: scaleCost(18, level), beastCores: level }), bonuses: { qiRate: 0.04, herbRate: 0.015 }, deployedBonuses: { vitality: 30, speed: 2, defense: 8 }, combat: { element: 'wood', attack: 24, defense: 8, vitality: 64, speed: 15, critChance: 0.04, pierce: 3 }, skill: { name: '云息缠灵', cadence: 3, multiplier: 1.32, critBonus: 0.03, detail: '每三回合牵引云息缠住劫影，造成一次青木战技。' } },
     thunderTiger: { id: 'thunderTiger', name: '雷纹幼虎', detail: '守山善战，凝练道威并护持外出行游。', rarityId: 'mystic', maxLevel: 8, cost: (level) => ({ spiritStones: scaleCost(130, level), beastCores: level * 2 }), bonuses: { power: 22, dangerReduction: 5 }, deployedBonuses: { attack: 22, pierce: 6, critChance: 0.012, vitality: 18 }, combat: { element: 'light', attack: 38, defense: 6, vitality: 78, speed: 13, critChance: 0.08, pierce: 8 }, skill: { name: '雷痕扑杀', cadence: 2, multiplier: 1.58, critBonus: 0.08, detail: '隔回合扑杀劫影，曜阳雷痕更容易压出会心。' } },
+  };
+
+  const bloodlines = {
+    greenPhoenixBlood: { id: 'greenPhoenixBlood', name: '青鸾血', detail: '青鸾余息入脉，吐纳与身法更轻灵。', rarityId: 'spirit', maxLevel: 6, cost: (level) => ({ bloodEssence: level, herbs: scaleCost(26, level), spiritStones: scaleCost(90, level) }), bonuses: { qiRate: 0.028, speed: 2, herbRate: 0.01 } },
+    blackTurtleBlood: { id: 'blackTurtleBlood', name: '玄武血', detail: '玄甲藏息，护住血元与叩关余地。', rarityId: 'mystic', maxLevel: 6, cost: (level) => ({ bloodEssence: level, beastCores: Math.max(1, level), spiritStones: scaleCost(110, level) }), bonuses: { defense: 14, vitality: 48, breakthrough: 0.014, dangerReduction: 4 } },
+    whiteTigerBlood: { id: 'whiteTigerBlood', name: '白虎血', detail: '杀伐脉象渐醒，锋芒与破势随之抬升。', rarityId: 'mystic', maxLevel: 6, cost: (level) => ({ bloodEssence: level, beastCores: Math.max(1, level), forgingEssence: Math.max(1, Math.ceil(level / 2)), spiritStones: scaleCost(120, level) }), bonuses: { power: 34, attack: 22, pierce: 5, critChance: 0.008 } },
+    candleDragonBlood: { id: 'candleDragonBlood', name: '烛阴血', detail: '阴阳烛照，五行斗法与神识底蕴更深。', rarityId: 'earthFiend', maxLevel: 6, cost: (level) => ({ bloodEssence: level + 1, insight: Math.max(1, Math.ceil(level / 2)), spiritStones: scaleCost(160, level) }), bonuses: { elementPower: 16, power: 18, qiRate: 0.012, critChance: 0.006 } },
   };
 
   const daoHearts = {
@@ -468,6 +483,8 @@
       element: 'metal',
       bonuses: { power: 36, attack: 22, elementPower: 12 },
     },
+    bloodCopperBlade: { id: 'bloodCopperBlade', name: '赤铜刀', slot: 'weapon', quality: 0, element: 'fire', bonuses: { power: 30, attack: 26, critChance: 0.012, elementPower: 10 } },
+    coldMoonSpear: { id: 'coldMoonSpear', name: '寒月枪', slot: 'weapon', quality: 1, element: 'water', bonuses: { power: 34, attack: 18, pierce: 10, speed: 2, elementPower: 12 } },
     xuanmingWheel: {
       id: 'xuanmingWheel',
       name: '玄鸣法轮',
@@ -476,6 +493,8 @@
       element: 'light',
       bonuses: { power: 24, attack: 14, pierce: 8, elementPower: 12 },
     },
+    spiritEchoBell: { id: 'spiritEchoBell', name: '回灵铃', slot: 'offhand', quality: 0, element: 'wood', bonuses: { qiRate: 0.024, defense: 10, vitality: 20, elementPower: 8 } },
+    sevenStarMirror: { id: 'sevenStarMirror', name: '七星镜', slot: 'offhand', quality: 1, element: 'light', bonuses: { power: 18, breakthrough: 0.028, defense: 14, elementPower: 14 } },
     cloudthreadRobe: {
       id: 'cloudthreadRobe',
       name: '云纹法袍',
@@ -484,6 +503,8 @@
       element: 'water',
       bonuses: { dangerReduction: 16, defense: 20, speed: 5, elementPower: 8 },
     },
+    mountainPatternRobe: { id: 'mountainPatternRobe', name: '山纹道衣', slot: 'robe', quality: 0, element: 'earth', bonuses: { dangerReduction: 12, defense: 24, vitality: 36, elementPower: 8 } },
+    nightSilkVest: { id: 'nightSilkVest', name: '玄绡法衣', slot: 'robe', quality: 1, element: 'dark', bonuses: { dangerReduction: 14, defense: 16, speed: 6, critChance: 0.01, elementPower: 12 } },
     xuanmuAmulet: {
       id: 'xuanmuAmulet',
       name: '玄木护符',
@@ -492,6 +513,8 @@
       element: 'wood',
       bonuses: { breakthrough: 0.04, qiRate: 0.03, vitality: 35, elementPower: 10 },
     },
+    heartGuardTalisman: { id: 'heartGuardTalisman', name: '守心符', slot: 'amulet', quality: 0, element: 'light', bonuses: { breakthrough: 0.026, defense: 12, vitality: 42, elementPower: 8 } },
+    sunfireSeal: { id: 'sunfireSeal', name: '离火印', slot: 'amulet', quality: 1, element: 'fire', bonuses: { power: 22, attack: 12, critChance: 0.014, elementPower: 16 } },
     greenJadePendant: {
       id: 'greenJadePendant',
       name: '青玉佩',
@@ -500,6 +523,8 @@
       element: 'earth',
       bonuses: { qiRate: 0.025, defense: 12, vitality: 24, elementPower: 10 },
     },
+    spiritRootJade: { id: 'spiritRootJade', name: '灵根玉', slot: 'jade', quality: 0, element: 'wood', bonuses: { qiRate: 0.032, breakthrough: 0.012, vitality: 18, elementPower: 8 } },
+    moonwellJade: { id: 'moonwellJade', name: '月井璧', slot: 'jade', quality: 1, element: 'water', bonuses: { qiRate: 0.02, defense: 18, speed: 3, elementPower: 14 } },
     cloudstepBoots: {
       id: 'cloudstepBoots',
       name: '踏云履',
@@ -508,6 +533,8 @@
       element: 'water',
       bonuses: { dangerReduction: 10, speed: 8, defense: 10, elementPower: 8 },
     },
+    windtraceBoots: { id: 'windtraceBoots', name: '追风履', slot: 'boots', quality: 0, element: 'wood', bonuses: { dangerReduction: 8, speed: 10, attack: 6, elementPower: 8 } },
+    stoneTreadBoots: { id: 'stoneTreadBoots', name: '踏岩靴', slot: 'boots', quality: 1, element: 'earth', bonuses: { dangerReduction: 14, defense: 16, vitality: 22, elementPower: 10 } },
   };
 
   const rarityTiers = [
@@ -518,6 +545,15 @@
     { id: 'heavenWork', name: '天工', weight: 25, qualityBonus: 3, bonusMultiplier: 1.5, affixCount: 3, dismantleMultiplier: 1.9 },
     { id: 'dao', name: '道器', weight: 5, qualityBonus: 4, bonusMultiplier: 1.72, affixCount: 3, dismantleMultiplier: 2.4 },
   ];
+
+  const mapLootProfiles = {
+    qinglanMountain: { tier: 0, dropEvery: 2, daoInterval: 500 },
+    herbValley: { tier: 1, dropEvery: 2, daoInterval: 460 },
+    mistyValley: { tier: 1, dropEvery: 2, daoInterval: 440 },
+    swordTomb: { tier: 2, dropEvery: 4, daoInterval: 380 },
+    demonRift: { tier: 3, dropEvery: 4, daoInterval: 320 },
+    ancientRuins: { tier: 4, dropEvery: 4, daoInterval: 260 },
+  };
 
   const combatElements = {
     metal: { id: 'metal', name: '庚金', restrains: 'wood' },
@@ -1382,6 +1418,7 @@
     artifacts: document.querySelector('[data-artifacts]'),
     arrayFlags: document.querySelector('[data-array-flags]'),
     forgingEssence: document.querySelector('[data-forging-essence]'),
+    bloodEssence: document.querySelector('[data-blood-essence]'),
     heartDemon: document.querySelector('[data-heart-demon]'),
     power: document.querySelector('[data-power]'),
     breakthroughChance: document.querySelector('[data-breakthrough-chance]'),
@@ -1410,6 +1447,7 @@
     formationList: document.querySelector('[data-formation-list]'),
     treasureList: document.querySelector('[data-treasure-list]'),
     beastList: document.querySelector('[data-beast-list]'),
+    bloodlineList: document.querySelector('[data-bloodline-list]'),
     cultivationList: document.querySelector('[data-cultivation-list]'),
     caveList: document.querySelector('[data-cave-list]'),
     sectList: document.querySelector('[data-sect-list]'),
@@ -1457,7 +1495,7 @@
     missions: '历练',
     log: '日志',
   };
-  const gearSections = ['wear', 'loot', 'treasures', 'beasts'];
+  const gearSections = ['wear', 'loot', 'treasures', 'beasts', 'bloodlines'];
   const isMobileLayout = () => typeof window !== 'undefined' && window.matchMedia?.('(max-width: 760px)').matches;
   const storedActiveTab = localStorage.getItem('idle-xianxia-active-tab');
   let activeTab = isMobileLayout() ? 'overview' : (storedActiveTab === 'overview' ? 'goals' : storedActiveTab || 'goals');
@@ -1648,6 +1686,17 @@
     render(true);
   });
 
+  document.querySelector('[data-lock-rare-loot]')?.addEventListener('click', () => {
+    const result = lockRareLootEquipment(state);
+    if (result.locked > 0) {
+      showToast('高品已锁', `已保留 ${result.locked} 件玄纹以上战利品。`);
+    } else {
+      showToast('无需锁定', '当前没有新的玄纹以上闲置战利品。');
+    }
+    saveState();
+    render(true);
+  });
+
   document.querySelectorAll('[data-loot-filter]').forEach((button) => {
     button.addEventListener('click', () => {
       activeLootFilter = lootFilters.includes(button.dataset.lootFilter) ? button.dataset.lootFilter : 'all';
@@ -1713,6 +1762,31 @@
     const result = trainSpiritBeast(state, button.dataset.trainBeast);
     if (result.ok) {
       showToast('灵兽培养', `${spiritBeasts[button.dataset.trainBeast].name}升至 ${result.level} 级${result.autoDeployed ? '，已自动出战。' : '。'}`);
+    }
+    saveState();
+    render(true);
+  });
+
+  refs.bloodlineList?.addEventListener('click', (event) => {
+    const lootButton = event.target.closest('[data-open-loot-from-bloodline]');
+    if (lootButton) {
+      activeGearSection = 'loot';
+      activeLootFilter = 'all';
+      localStorage.setItem('idle-xianxia-gear-section', activeGearSection);
+      localStorage.setItem('idle-xianxia-loot-filter', activeLootFilter);
+      renderGearSections();
+      renderLoot(true);
+      refs.lootList?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+      showToast('血脉材料', '玄纹以上战利品分解后可得血脉精魄。');
+      return;
+    }
+    const button = event.target.closest('[data-awaken-bloodline]');
+    if (!button) return;
+    const result = awakenBloodline(state, button.dataset.awakenBloodline);
+    if (result.ok) {
+      showToast('血脉淬醒', `${result.bloodline.name}升至 ${result.level} 重。`);
+    } else if (result.reason === 'notEnoughResources') {
+      showToast('血脉未成', `还需要${formatReward(result.cost)}。`, 'warning');
     }
     saveState();
     render(true);
@@ -1858,6 +1932,20 @@
     const assignButton = event.target.closest('[data-assign-sect]');
     if (assignButton) {
       assignSectDisciple(state, assignButton.dataset.assignSect, Number(assignButton.dataset.delta || 1));
+      saveState();
+      render(true);
+      return;
+    }
+    const skillButton = event.target.closest('[data-upgrade-sect-skill]');
+    if (skillButton) {
+      const result = upgradeSectSkill(state, skillButton.dataset.upgradeSectSkill);
+      if (result.ok) {
+        showToast('宗门秘传', `${result.skill.name}升至 ${result.level} 重。`);
+      } else if (result.reason === 'reputationLocked') {
+        showToast('声望不足', `需要宗门声望 ${result.requiredReputation}。`, 'warning');
+      } else if (result.reason === 'notEnoughResources') {
+        showToast('材料不足', `研修需要${formatReward(result.cost)}。`, 'warning');
+      }
       saveState();
       render(true);
     }
@@ -2051,6 +2139,7 @@
       artifacts: 0,
       arrayFlags: 0,
       forgingEssence: 0,
+      bloodEssence: 0,
       realmIndex: 0,
       heartDemon: 0,
       insight: 0,
@@ -2094,6 +2183,7 @@
       treasures: Object.fromEntries(Object.keys(treasures).map((id) => [id, 0])),
       spiritBeasts: Object.fromEntries(Object.keys(spiritBeasts).map((id) => [id, 0])),
       activeSpiritBeast: null,
+      bloodlines: Object.fromEntries(Object.keys(bloodlines).map((id) => [id, 0])),
       daoHearts: Object.fromEntries(Object.keys(daoHearts).map((id) => [id, 0])),
       claimedDaoHeartRealms: {},
       pendingDaoHeartChoice: null,
@@ -2116,6 +2206,7 @@
       sectDisciples: 0,
       sectRoster: [],
       sectReputation: 0,
+      sectSkills: Object.fromEntries(Object.keys(sectSkills).map((id) => [id, 0])),
       sectAssignments: {
         herbGarden: 0,
         mine: 0,
@@ -2128,6 +2219,7 @@
         beastCores: 0,
         artifacts: 0,
         forgingEssence: 0,
+        bloodEssence: 0,
         reputation: 0,
       },
       buildings: {
@@ -2183,8 +2275,10 @@
     state.autoMissionId = missions[state.autoMissionId] ? state.autoMissionId : null;
     state.arrayFlags = Math.max(0, Number(state.arrayFlags) || 0);
     state.forgingEssence = Math.max(0, Number(state.forgingEssence) || 0);
+    state.bloodEssence = Math.max(0, Number(state.bloodEssence) || 0);
     state.sectDisciples = clampInteger(state.sectDisciples, 0, getSectCapacity(state));
     state.sectReputation = Math.max(0, Number(state.sectReputation) || 0);
+    state.sectSkills = normalizeLevels(state.sectSkills, sectSkills);
     state.sectRoster = normalizeSectRoster(state.sectRoster, state.sectDisciples);
     state.sectAssignments = normalizeSectAssignments(state.sectAssignments, state.sectDisciples);
     syncSectRosterJobs(state);
@@ -2206,6 +2300,7 @@
     state.treasures = normalizeLevels(state.treasures, treasures);
     state.spiritBeasts = normalizeLevels(state.spiritBeasts, spiritBeasts);
     state.activeSpiritBeast = normalizeActiveSpiritBeast(state.activeSpiritBeast, state.spiritBeasts);
+    state.bloodlines = normalizeLevels(state.bloodlines, bloodlines);
     state.daoHearts = normalizeLevels(state.daoHearts, daoHearts);
     state.claimedDaoHeartRealms = normalizeDaoHeartClaims(state.claimedDaoHeartRealms);
     state.pendingDaoHeartChoice = normalizePendingDaoHeartChoice(state.pendingDaoHeartChoice, state);
@@ -2245,7 +2340,7 @@
     const realm = getCurrentRealm(state);
     state.qi = round(state.qi + (calculateQiRate(state, now) / 60) * seconds);
     state.stoneCarry += (realm.stoneRate / 60) * seconds;
-    state.herbCarry += ((state.buildings.spiritField || 0) * buildings.spiritField.herbRatePerLevel + getSpiritBeastBonus(state, 'herbRate')) * seconds;
+    state.herbCarry += ((state.buildings.spiritField || 0) * buildings.spiritField.herbRatePerLevel + getSpiritBeastBonus(state, 'herbRate') + getBloodlineBonus(state, 'herbRate')) * seconds;
     state.insightCarry += ((state.buildings.scriptureLibrary || 0) * buildings.scriptureLibrary.insightRatePerLevel) * seconds;
 
     const stonesGained = Math.floor(state.stoneCarry);
@@ -2785,6 +2880,46 @@
     return drop;
   }
 
+  function getMapLootProfile(mapId) {
+    return mapLootProfiles[mapId] || mapLootProfiles.qinglanMountain;
+  }
+
+  function shouldDropMapLoot(state, mission, eventResult) {
+    if (eventResult?.item) {
+      return false;
+    }
+    const profile = getMapLootProfile(getMissionMapId(mission));
+    const completed = state.completedMissions?.[mission.id] || 0;
+    return completed > 0 && completed % profile.dropEvery === 0;
+  }
+
+  function selectMapLootTemplate(state, mission) {
+    const templates = Object.values(lootEquipment);
+    const mapId = getMissionMapId(mission);
+    const profile = getMapLootProfile(mapId);
+    const completed = state.completedMissions?.[mission.id] || 0;
+    const dropIndex = Math.max(0, Math.floor(completed / profile.dropEvery) - 1);
+    const seedOffset = hashString(`${mapId}:${mission.id}`) % templates.length;
+    return templates[(dropIndex + seedOffset) % templates.length]?.id || templates[0].id;
+  }
+
+  function resolveMapLootDrop(state, mission, eventResult, now) {
+    if (!shouldDropMapLoot(state, mission, eventResult)) {
+      return null;
+    }
+    const mapId = getMissionMapId(mission);
+    const item = addLootEquipment(state, selectMapLootTemplate(state, mission), { mapId, missionId: mission.id, state });
+    if (!item) {
+      return null;
+    }
+    if (state.lastMissionEvent?.missionId === mission.id && state.lastMissionEvent.time === now) {
+      state.lastMissionEvent.item = item;
+      state.lastMissionEvent.mapLootName = item.name;
+    }
+    addLog(state, now, `${missionMaps[mapId]?.name || mission.map || mission.name}行游中寻得${item.name}。`);
+    return item;
+  }
+
   function getFailureScoutingReputation(state, mission, danger) {
     const map = missionMaps[getMissionMapId(mission)];
     if (!map || !danger) {
@@ -2808,7 +2943,7 @@
     const approach = getSelectedMissionApproach(state, mission, approachId);
     const pressure = getMissionPressure(state, mission);
     const approachPressure = round(pressure * (approach.dangerMultiplier || 1));
-    return Math.max(0, approachPressure - getGearLevelBonus(state, 'dangerReductionPerLevel') - getGearAffixBonus(state, 'dangerReduction') - getGearSetBonus(state, 'dangerReduction') - getEquippedLootBonus(state, 'dangerReduction') - getMapMasteryBonus(state, 'dangerReduction') - getTreasureBonus(state, 'dangerReduction') - getSpiritBeastBonus(state, 'dangerReduction') - getDaoHeartBonus(state, 'dangerReduction') - (state.buildings.swordArray || 0) * buildings.swordArray.dangerReductionPerLevel - (state.cultivationPaths.sword || 0) * cultivationPaths.sword.dangerReductionPerLevel);
+    return Math.max(0, approachPressure - getGearLevelBonus(state, 'dangerReductionPerLevel') - getGearAffixBonus(state, 'dangerReduction') - getGearSetBonus(state, 'dangerReduction') - getEquippedLootBonus(state, 'dangerReduction') - getMapMasteryBonus(state, 'dangerReduction') - getTreasureBonus(state, 'dangerReduction') - getSpiritBeastBonus(state, 'dangerReduction') - getBloodlineBonus(state, 'dangerReduction') - getSectSkillBonus(state, 'dangerReduction') - getDaoHeartBonus(state, 'dangerReduction') - (state.buildings.swordArray || 0) * buildings.swordArray.dangerReductionPerLevel - (state.cultivationPaths.sword || 0) * cultivationPaths.sword.dangerReductionPerLevel);
   }
 
   function getMissionPressure(state, mission) {
@@ -2894,6 +3029,10 @@
     if (specialDrop) {
       showToast('路线收获', `${specialDrop.name} · ${formatReward(specialDrop.reward)}`);
     }
+    const mapLoot = resolveMapLootDrop(state, mission, eventResult, now);
+    if (mapLoot) {
+      showToast('地图战利', `${mapLoot.name} · ${mapLoot.variant?.rarity?.name || '凡品'}`);
+    }
     maybeCreateOpportunity(state, mission, now);
     addDailyProgress(state, 'missions', 1, now);
     recordMissionReport(state, createMissionReport(state, mission, {
@@ -2902,6 +3041,7 @@
       approach,
       approachReward,
       specialDrop,
+      mapLoot,
       reputationGained,
       eventResult,
       rareReward,
@@ -3121,6 +3261,7 @@
     refs.artifacts.textContent = Math.floor(state.artifacts);
     if (refs.arrayFlags) refs.arrayFlags.textContent = Math.floor(state.arrayFlags);
     if (refs.forgingEssence) refs.forgingEssence.textContent = Math.floor(state.forgingEssence || 0);
+    if (refs.bloodEssence) refs.bloodEssence.textContent = Math.floor(state.bloodEssence || 0);
     refs.heartDemon.textContent = Math.floor(state.heartDemon);
     refs.power.textContent = calculatePower(state);
     refs.breakthroughChance.textContent = `${Math.round(calculateBreakthroughChance(state, Date.now()) * 100)}%`;
@@ -3187,6 +3328,7 @@
     renderFormations(forceLists);
     renderTreasures(forceLists);
     renderSpiritBeasts(forceLists);
+    renderBloodlines(forceLists);
     renderCultivation(forceLists);
     renderCave(forceLists);
     renderSect(forceLists);
@@ -3709,7 +3851,7 @@
   }
 
   function getDepthDanger(state, map, layer) {
-    return Math.max(0, getDepthPressure(map, layer) - getGearLevelBonus(state, 'dangerReductionPerLevel') - getGearAffixBonus(state, 'dangerReduction') - getGearSetBonus(state, 'dangerReduction') - getEquippedLootBonus(state, 'dangerReduction') - getMapMasteryBonus(state, 'dangerReduction') - getTreasureBonus(state, 'dangerReduction') - getSpiritBeastBonus(state, 'dangerReduction') - getDaoHeartBonus(state, 'dangerReduction') - (state.buildings.swordArray || 0) * buildings.swordArray.dangerReductionPerLevel - (state.cultivationPaths?.sword || 0) * cultivationPaths.sword.dangerReductionPerLevel);
+    return Math.max(0, getDepthPressure(map, layer) - getGearLevelBonus(state, 'dangerReductionPerLevel') - getGearAffixBonus(state, 'dangerReduction') - getGearSetBonus(state, 'dangerReduction') - getEquippedLootBonus(state, 'dangerReduction') - getMapMasteryBonus(state, 'dangerReduction') - getTreasureBonus(state, 'dangerReduction') - getSpiritBeastBonus(state, 'dangerReduction') - getBloodlineBonus(state, 'dangerReduction') - getSectSkillBonus(state, 'dangerReduction') - getDaoHeartBonus(state, 'dangerReduction') - (state.buildings.swordArray || 0) * buildings.swordArray.dangerReductionPerLevel - (state.cultivationPaths?.sword || 0) * cultivationPaths.sword.dangerReductionPerLevel);
   }
 
   function getDepthDuration(map, layer) {
@@ -3955,6 +4097,8 @@
       { label: '地脉熟稔', value: getMapMasteryBonus(state, 'power') },
       { label: '法宝灵蕴', value: getTreasureBonus(state, 'power') },
       { label: '灵兽护持', value: getSpiritBeastBonus(state, 'power') },
+      { label: '血脉灵契', value: getBloodlineBonus(state, 'power') },
+      { label: '宗门秘传', value: getSectSkillBonus(state, 'power') },
       { label: '命格道心', value: getDaoHeartBonus(state, 'power') },
       { label: '洞天底蕴', value: state.permanentBonuses.power || 0 },
       { label: '山门威望', value: Math.floor((state.sectReputation || 0) / 20) * 4 },
@@ -3971,6 +4115,8 @@
       { label: '地脉熟稔', value: getMapMasteryBonus(state, 'qiRate'), mode: 'percent' },
       { label: '法宝灵蕴', value: getTreasureBonus(state, 'qiRate'), mode: 'percent' },
       { label: '灵兽护持', value: getSpiritBeastBonus(state, 'qiRate'), mode: 'percent' },
+      { label: '血脉灵契', value: getBloodlineBonus(state, 'qiRate'), mode: 'percent' },
+      { label: '宗门秘传', value: getSectSkillBonus(state, 'qiRate'), mode: 'percent' },
       { label: '命格道心', value: getDaoHeartBonus(state, 'qiRate'), mode: 'percent' },
       { label: '洞天底蕴', value: state.permanentBonuses.qiRate || 0, mode: 'percent' },
       { label: '丹力催行', value: state.pillBoostUntil && state.pillBoostUntil > now ? 0.4 : 0, mode: 'percent' },
@@ -3983,6 +4129,8 @@
       { label: '护山阵势', value: Math.min(0.12, (state.formations.mountainGuard || 0) * formations.mountainGuard.stabilityPerLevel), mode: 'percent' },
       { label: '奇珍加持', value: Math.min(0.1, getEquippedLootBonus(state, 'breakthrough')), mode: 'percent' },
       { label: '法宝灵蕴', value: Math.min(0.12, getTreasureBonus(state, 'breakthrough')), mode: 'percent' },
+      { label: '血脉灵契', value: Math.min(0.1, getBloodlineBonus(state, 'breakthrough')), mode: 'percent' },
+      { label: '宗门秘传', value: Math.min(0.08, getSectSkillBonus(state, 'breakthrough')), mode: 'percent' },
       { label: '命格道心', value: Math.min(0.1, getDaoHeartBonus(state, 'breakthrough')), mode: 'percent' },
       { label: '悟道灵光', value: Math.min(0.15, (state.insight || 0) * 0.03), mode: 'percent' },
       { label: '根基沉淀', value: Math.min(0.15, (state.foundationStability || 0) * 0.05), mode: 'percent' },
@@ -3995,31 +4143,53 @@
       + getMapMasteryBonus(state, 'dangerReduction')
       + getTreasureBonus(state, 'dangerReduction')
       + getSpiritBeastBonus(state, 'dangerReduction')
+      + getBloodlineBonus(state, 'dangerReduction')
+      + getSectSkillBonus(state, 'dangerReduction')
       + getDaoHeartBonus(state, 'dangerReduction')
       + (state.cultivationPaths.sword || 0) * cultivationPaths.sword.dangerReductionPerLevel;
+    const bloodlinePower = getBloodlineBonus(state, 'power')
+      + getBloodlineBonus(state, 'attack')
+      + getBloodlineBonus(state, 'defense')
+      + getBloodlineBonus(state, 'vitality')
+      + getBloodlineBonus(state, 'elementPower');
+    const bloodlineSources = compactSources([
+      ...getBloodlineSources(state, 'power'),
+      ...getBloodlineSources(state, 'attack'),
+      ...getBloodlineSources(state, 'defense'),
+      ...getBloodlineSources(state, 'vitality'),
+      ...getBloodlineSources(state, 'elementPower'),
+      ...getBloodlineSources(state, 'qiRate', 'percent'),
+      ...getBloodlineSources(state, 'breakthrough', 'percent'),
+    ]);
+    const attributes = [
+      { id: 'combatAttack', label: combat.attack.label, value: combat.attack.value, sources: combat.attack.sources },
+      { id: 'combatDefense', label: combat.defense.label, value: combat.defense.value, sources: combat.defense.sources },
+      { id: 'vitality', label: combat.vitality.label, value: combat.vitality.value, sources: combat.vitality.sources },
+      { id: 'critChance', label: combat.critChance.label, value: combat.critChance.value, unit: '%', sources: combat.critChance.sources },
+      { id: 'elementPower', label: combat.elementPower.label, value: combat.elementPower.value, unit: combat.element.name, sources: combat.elementPower.sources },
+      { id: 'cultivationSpeed', label: '灵息', value: calculateQiRate(state, now), unit: '/分钟', sources: cultivationSources },
+      { id: 'breakthrough', label: '破境天机', value: calculateBreakthroughChance(state, now), unit: '%', sources: breakthroughSources },
+      { id: 'explorationSafety', label: '护体玄光', value: explorationSafety, sources: compactSources([
+        { label: '器位护身', value: getGearLevelBonus(state, 'dangerReductionPerLevel') },
+        { label: '灵纹词条', value: getGearAffixBonus(state, 'dangerReduction') },
+        { label: '同调器象', value: getGearSetBonus(state, 'dangerReduction') },
+        { label: '奇珍加持', value: getEquippedLootBonus(state, 'dangerReduction') },
+        { label: '地脉熟稔', value: getMapMasteryBonus(state, 'dangerReduction') },
+        { label: '法宝灵蕴', value: getTreasureBonus(state, 'dangerReduction') },
+        { label: '灵兽护持', value: getSpiritBeastBonus(state, 'dangerReduction') },
+        { label: '血脉灵契', value: getBloodlineBonus(state, 'dangerReduction') },
+        { label: '宗门秘传', value: getSectSkillBonus(state, 'dangerReduction') },
+        { label: '命格道心', value: getDaoHeartBonus(state, 'dangerReduction') },
+      ]) },
+      { id: 'sectInfluence', label: '山门气运', value: Math.floor(state.sectReputation || 0), sources: [{ label: getSectLevel(state).name, value: Math.floor(state.sectReputation || 0) }] },
+    ];
+    if (bloodlineSources.length) {
+      attributes.splice(5, 0, { id: 'bloodline', label: '血脉灵契', value: round(bloodlinePower), sources: bloodlineSources });
+    }
     return {
       realmName: realm.name,
       combatPower: { label: '道行总纲', value: calculatePower(state), sources: attackSources },
-      attributes: [
-        { id: 'combatAttack', label: combat.attack.label, value: combat.attack.value, sources: combat.attack.sources },
-        { id: 'combatDefense', label: combat.defense.label, value: combat.defense.value, sources: combat.defense.sources },
-        { id: 'vitality', label: combat.vitality.label, value: combat.vitality.value, sources: combat.vitality.sources },
-        { id: 'critChance', label: combat.critChance.label, value: combat.critChance.value, unit: '%', sources: combat.critChance.sources },
-        { id: 'elementPower', label: combat.elementPower.label, value: combat.elementPower.value, unit: combat.element.name, sources: combat.elementPower.sources },
-        { id: 'cultivationSpeed', label: '灵息', value: calculateQiRate(state, now), unit: '/分钟', sources: cultivationSources },
-        { id: 'breakthrough', label: '破境天机', value: calculateBreakthroughChance(state, now), unit: '%', sources: breakthroughSources },
-        { id: 'explorationSafety', label: '护体玄光', value: explorationSafety, sources: compactSources([
-          { label: '器位护身', value: getGearLevelBonus(state, 'dangerReductionPerLevel') },
-          { label: '灵纹词条', value: getGearAffixBonus(state, 'dangerReduction') },
-          { label: '同调器象', value: getGearSetBonus(state, 'dangerReduction') },
-          { label: '奇珍加持', value: getEquippedLootBonus(state, 'dangerReduction') },
-          { label: '地脉熟稔', value: getMapMasteryBonus(state, 'dangerReduction') },
-          { label: '法宝灵蕴', value: getTreasureBonus(state, 'dangerReduction') },
-          { label: '灵兽护持', value: getSpiritBeastBonus(state, 'dangerReduction') },
-          { label: '命格道心', value: getDaoHeartBonus(state, 'dangerReduction') },
-        ]) },
-        { id: 'sectInfluence', label: '山门气运', value: Math.floor(state.sectReputation || 0), sources: [{ label: getSectLevel(state).name, value: Math.floor(state.sectReputation || 0) }] },
-      ],
+      attributes,
     };
   }
 
@@ -4133,6 +4303,27 @@
           nextEffects: level < beast.maxLevel ? effectsFromBonusObject(scaleBonusObject(beast.bonuses, level + 1)) : [],
           nextBattleEffects: level < beast.maxLevel ? effectsFromBonusObject(scaleBonusObject(beast.deployedBonuses || {}, level + 1)) : [],
           skill: beast.skill ? { ...beast.skill } : null,
+        };
+      }),
+      bloodlines: Object.values(bloodlines).map((bloodline) => {
+        const level = state.bloodlines?.[bloodline.id] || 0;
+        const maxed = level >= bloodline.maxLevel;
+        const nextLevel = level + 1;
+        return {
+          id: bloodline.id,
+          name: bloodline.name,
+          detail: bloodline.detail,
+          level,
+          maxLevel: bloodline.maxLevel,
+          rarity: getRarityTierForLevel(level, bloodline.rarityId || 'common'),
+          nextRarity: getNextRarityMilestone(level, bloodline.maxLevel, bloodline.rarityId || 'common'),
+          effects: effectsFromBonusObject(scaleBonusObject(bloodline.bonuses, level)),
+          nextEffects: maxed ? [] : effectsFromBonusObject(scaleBonusObject(bloodline.bonuses, nextLevel)),
+          upgrade: {
+            maxed,
+            nextLevel,
+            cost: maxed ? null : bloodline.cost(nextLevel),
+          },
         };
       }),
     };
@@ -5270,6 +5461,31 @@
       commissionBonus: sectLevel.commissionBonus,
       roster: roster.map((disciple) => hydrateDisciple(disciple)),
       recruitCost: disciples >= capacity ? null : getRecruitCost(disciples + 1),
+      skills: Object.values(sectSkills).map((skill) => {
+        const level = state.sectSkills?.[skill.id] || 0;
+        const maxed = level >= skill.maxLevel;
+        const nextLevel = level + 1;
+        const requiredReputation = maxed ? null : skill.requiredReputation(nextLevel);
+        const reputationLocked = !maxed && (state.sectReputation || 0) < requiredReputation;
+        return {
+          id: skill.id,
+          name: skill.name,
+          detail: skill.detail,
+          level,
+          maxLevel: skill.maxLevel,
+          rarity: getRarityTierForLevel(level, 'spirit'),
+          nextRarity: getNextRarityMilestone(level, skill.maxLevel, 'spirit'),
+          effects: effectsFromBonusObject(scaleBonusObject(skill.bonuses, level)),
+          nextEffects: maxed ? [] : effectsFromBonusObject(scaleBonusObject(skill.bonuses, nextLevel)),
+          upgrade: {
+            maxed,
+            nextLevel,
+            reputationLocked,
+            requiredReputation,
+            cost: maxed ? null : skill.cost(nextLevel),
+          },
+        };
+      }),
       commissions: Object.values(sectCommissions).map((commission) => ({
         ...commission,
         assigned: assignments[commission.id] || 0,
@@ -5420,6 +5636,57 @@
     state.activeSpiritBeast = beastId;
     addLog(state, now, `${spiritBeasts[beastId].name}随行出战。`);
     return { ok: true, beast: spiritBeasts[beastId], level: state.spiritBeasts[beastId] };
+  }
+
+  function awakenBloodline(state, bloodlineId, now = Date.now()) {
+    const bloodline = bloodlines[bloodlineId];
+    if (!bloodline) {
+      return { ok: false, reason: 'unknownBloodline' };
+    }
+    state.bloodlines = normalizeLevels(state.bloodlines, bloodlines);
+    const currentLevel = state.bloodlines[bloodlineId] || 0;
+    if (currentLevel >= bloodline.maxLevel) {
+      return { ok: false, reason: 'maxLevel' };
+    }
+    const nextLevel = currentLevel + 1;
+    const cost = bloodline.cost(nextLevel);
+    if (!canAfford(state, cost)) {
+      addLog(state, now, `淬醒${bloodline.name}需要${formatReward(cost)}。`);
+      return { ok: false, reason: 'notEnoughResources', cost };
+    }
+    payResources(state, cost);
+    state.bloodlines[bloodlineId] = nextLevel;
+    addLog(state, now, `${bloodline.name}淬醒至 ${nextLevel} 重。`);
+    return { ok: true, bloodline, level: nextLevel };
+  }
+
+  function upgradeSectSkill(state, skillId, now = Date.now()) {
+    const skill = sectSkills[skillId];
+    if (!skill) {
+      return { ok: false, reason: 'unknownSectSkill' };
+    }
+    if (!isSectUnlocked(state)) {
+      return { ok: false, reason: 'locked' };
+    }
+    state.sectSkills = normalizeLevels(state.sectSkills, sectSkills);
+    const currentLevel = state.sectSkills[skillId] || 0;
+    if (currentLevel >= skill.maxLevel) {
+      return { ok: false, reason: 'maxLevel' };
+    }
+    const nextLevel = currentLevel + 1;
+    const requiredReputation = skill.requiredReputation(nextLevel);
+    if ((state.sectReputation || 0) < requiredReputation) {
+      return { ok: false, reason: 'reputationLocked', requiredReputation };
+    }
+    const cost = skill.cost(nextLevel);
+    if (!canAfford(state, cost)) {
+      addLog(state, now, `研修${skill.name}需要${formatReward(cost)}。`);
+      return { ok: false, reason: 'notEnoughResources', cost };
+    }
+    payResources(state, cost);
+    state.sectSkills[skillId] = nextLevel;
+    addLog(state, now, `${skill.name}研修至 ${nextLevel} 重。`);
+    return { ok: true, skill, level: nextLevel };
   }
 
   function renderAlchemy(force = false) {
@@ -5579,7 +5846,8 @@
     const details = equipmentDetails.loot;
     const resonance = equipmentDetails.lootResonance;
     updateLootOrganizeButton();
-    const signature = `${activeLootFilter}|${resonance.active ? `${resonance.id}:${resonance.matched}` : 'none'}|${details.map((item) => `${item.uid}:${item.slotLevel || 0}:${item.locked ? 1 : 0}`).join('|')}|${Object.entries(state.equippedLoot).map(([slot, uid]) => `${slot}:${uid || ''}`).join('|')}`;
+    updateRareLootLockButton();
+    const signature = `${activeLootFilter}|${resonance.active ? `${resonance.id}:${resonance.matched}` : 'none'}|${details.map((item) => `${item.uid}:${item.slotLevel || 0}:${item.locked ? 1 : 0}:${item.rarity?.id || ''}`).join('|')}|${Object.entries(state.equippedLoot).map(([slot, uid]) => `${slot}:${uid || ''}`).join('|')}`;
     if (!force && renderCache.loot === signature) {
       return;
     }
@@ -5588,7 +5856,9 @@
       renderCache.loot = signature;
       return;
     }
-    const visibleLoot = activeLootFilter === 'all' ? details : details.filter((item) => item.slot === activeLootFilter);
+    const visibleLoot = (activeLootFilter === 'all' ? details : details.filter((item) => item.slot === activeLootFilter))
+      .slice()
+      .sort(sortLootForDisplay);
     if (!visibleLoot.length) {
       refs.lootList.innerHTML = `${renderLootResonanceCard(resonance)}<div class="system-row muted-row"><div><strong>当前筛选暂无战利品</strong><span>切换筛选或继续历练获取对应装备。</span></div></div>`;
       renderCache.loot = signature;
@@ -5604,7 +5874,7 @@
               <em class="rarity-badge rarity-${item.rarity?.id || 'common'}">${item.rarity?.name || '凡品'}</em>
               ${item.variant ? `<em class="loot-variant">${item.variant.name}</em>` : ''}
               <span class="loot-summary-effects">${formatCompactEffects(item.effects, 3) || '尚未激活'}${item.equipped ? ' · 已穿戴' : ''}</span>
-              <small>${item.comparison.summary} · 展开查看器象、对比和器位火候</small>
+              <small>${item.comparison.summary} · ${getLootDismantleHint(item)} · 展开查看器象、对比和器位火候</small>
             </summary>
             <div class="detail-stack">
               ${item.variant ? `<small>器纹：${item.variant.name} · ${combatElements[item.variant.element]?.name || '无相'} · ${(item.variant.affixes || []).map((affix) => affix.name).join(' / ') || '无纹'}</small>` : ''}
@@ -5665,9 +5935,46 @@
     if (!button) {
       return;
     }
-    const count = getOrganizableLootCount(state);
+    const summary = getOrganizableLootSummary(state);
+    button.disabled = summary.count <= 0;
+    button.textContent = summary.count > 0 ? `批量分解 ${summary.count}` : '无可整理';
+    button.title = summary.count > 0 ? `预计获得 ${formatReward(summary.reward)}` : '没有会被批量分解的闲置战利品';
+  }
+
+  function updateRareLootLockButton() {
+    const button = document.querySelector('[data-lock-rare-loot]');
+    if (!button) {
+      return;
+    }
+    const count = getLockableRareLootCount(state);
     button.disabled = count <= 0;
-    button.textContent = count > 0 ? `批量分解 ${count}` : '无可整理';
+    button.textContent = count > 0 ? `锁高品 ${count}` : '高品已锁';
+  }
+
+  function sortLootForDisplay(left, right) {
+    const slotOrder = Object.keys(gear);
+    return Number(right.equipped) - Number(left.equipped)
+      || getRarityIndex(right.rarity?.id || 'common') - getRarityIndex(left.rarity?.id || 'common')
+      || Number(right.locked) - Number(left.locked)
+      || getLootDisplayScore(right) - getLootDisplayScore(left)
+      || slotOrder.indexOf(left.slot) - slotOrder.indexOf(right.slot)
+      || String(right.uid).localeCompare(String(left.uid));
+  }
+
+  function getLootDisplayScore(item) {
+    const effectScore = (item.effects || []).reduce((total, effect) => {
+      const weight = effect.mode === 'percent' ? 1000 : 1;
+      return total + effect.value * weight;
+    }, 0);
+    return effectScore + (item.comparison?.scoreDelta || 0);
+  }
+
+  function getLootDismantleHint(item) {
+    const rarityIndex = getRarityIndex(item.rarity?.id || 'common');
+    if (rarityIndex >= getRarityIndex('mystic')) {
+      return '分解可得血脉精魄';
+    }
+    return '分解沉淀器位材料';
   }
 
   function renderLootComparison(comparison) {
@@ -5763,6 +6070,62 @@
     `;
   }
 
+  function renderBloodlines(force = false) {
+    if (!refs.bloodlineList) {
+      return;
+    }
+    const lootStats = getBloodEssenceLootStats(state);
+    const signature = `${state.spiritStones}|${state.herbs}|${state.beastCores}|${state.forgingEssence}|${state.bloodEssence}|${state.insight}|${lootStats.total}:${lootStats.available}|${Object.entries(state.bloodlines || {}).map(([id, level]) => `${id}:${level}`).join('|')}`;
+    if (!force && renderCache.bloodlines === signature) {
+      return;
+    }
+    refs.bloodlineList.innerHTML = getEquipmentDetails(state).bloodlines
+      .map((item) => renderBloodlineRow(item))
+      .join('');
+    renderCache.bloodlines = signature;
+  }
+
+  function renderBloodlineRow(item) {
+    const maxed = item.upgrade.maxed;
+    const cost = item.upgrade.cost || {};
+    const bloodShort = Math.max(0, (cost.bloodEssence || 0) - (state.bloodEssence || 0));
+    const lootStats = getBloodEssenceLootStats(state);
+    const sourceHint = bloodShort
+      ? `缺 ${bloodShort} 血脉精魄 · 玄纹以上战利品分解可得，当前可分解 ${lootStats.available} 件`
+      : `${lootStats.total ? `库中有 ${lootStats.total} 件玄纹以上战利品可沉淀血脉精魄` : '玄纹以上战利品分解可沉淀血脉精魄'}`;
+    return `
+      <div class="system-row">
+        <div>
+          <strong>${item.name} <small>${item.rarity.name} · ${item.level} / ${item.maxLevel}</small></strong>
+          <span>${item.detail}</span>
+          <small>当前：${formatEffects(item.effects) || '未淬醒'}</small>
+          <small>下阶：${maxed ? '已达上限' : formatEffects(item.nextEffects)}</small>
+          <small>${item.nextRarity ? `下个血阶 ${item.nextRarity.name} · ${item.nextRarity.level} 重` : '血阶已稳'}</small>
+          <small>${maxed ? '已达上限' : `淬醒需 ${formatReward(item.upgrade.cost)}`}</small>
+          ${maxed ? '' : `<small class="source-hint">${sourceHint}</small>`}
+        </div>
+        <div class="row-actions">
+          ${bloodShort ? '<button data-open-loot-from-bloodline>去战利品</button>' : ''}
+          <button data-awaken-bloodline="${item.id}" ${maxed ? 'disabled' : ''}>淬醒</button>
+        </div>
+      </div>
+    `;
+  }
+
+  function getBloodEssenceLootStats(state) {
+    return (state.lootEquipment || []).reduce((stats, item) => {
+      const rarityIndex = getRarityIndex(getLootRarity(item).id);
+      if (rarityIndex < getRarityIndex('mystic')) {
+        return stats;
+      }
+      stats.total += 1;
+      if (state.equippedLoot?.[item.slot] !== item.uid && !state.lockedLoot?.[item.uid]) {
+        stats.available += 1;
+      }
+      return stats;
+    }, { total: 0, available: 0 });
+  }
+
   function renderCultivation(force = false) {
     if (!refs.cultivationList) {
       return;
@@ -5854,7 +6217,7 @@
     const sect = getSectStatus(state);
     refs.sectStatus.textContent = sect.unlocked ? `${sect.levelName} · ${sect.disciples} / ${sect.capacity} 弟子` : '炼气三层后解锁';
     const recommendation = getSectRecommendation(state);
-    const signature = `${sect.unlocked}:${sect.levelName}:${sect.disciples}:${sect.capacity}:${sect.assigned}:${sect.reputation}:${state.spiritStones}:${state.herbs}:${state.beastCores}:${state.artifacts}:${state.forgingEssence}:${recommendation.id}:${sect.roster.map((disciple) => `${disciple.id}:${disciple.level}:${Math.floor(disciple.experience)}:${disciple.job}`).join('|')}:${Object.entries(state.sectAssignments).map(([id, count]) => `${id}:${count}`).join('|')}`;
+    const signature = `${sect.unlocked}:${sect.levelName}:${sect.disciples}:${sect.capacity}:${sect.assigned}:${sect.reputation}:${state.spiritStones}:${state.herbs}:${state.beastCores}:${state.artifacts}:${state.forgingEssence}:${state.bloodEssence}:${state.insight}:${recommendation.id}:${sect.roster.map((disciple) => `${disciple.id}:${disciple.level}:${Math.floor(disciple.experience)}:${disciple.job}`).join('|')}:${Object.entries(state.sectAssignments).map(([id, count]) => `${id}:${count}`).join('|')}:${Object.entries(state.sectSkills || {}).map(([id, level]) => `${id}:${level}`).join('|')}`;
     if (!force && renderCache.sect === signature) {
       return;
     }
@@ -5875,6 +6238,21 @@
           <strong>委托建议 <small>${recommendation.title}</small></strong>
           <span>${recommendation.detail}</span>
         </div>
+      </div>
+      <div class="sect-skill-grid">
+        ${sect.skills.map((skill) => `
+          <div class="system-row">
+            <div>
+              <strong>${skill.name} <small>${skill.rarity.name} · ${skill.level} / ${skill.maxLevel}</small></strong>
+              <span>${skill.detail}</span>
+              <small>当前：${formatEffects(skill.effects) || '未研修'}</small>
+              <small>${skill.upgrade.maxed ? '已达上限' : skill.upgrade.reputationLocked ? `声望 ${sect.reputation} / ${skill.upgrade.requiredReputation}` : `研修需 ${formatReward(skill.upgrade.cost)}`}</small>
+            </div>
+            <div class="row-actions">
+              <button data-upgrade-sect-skill="${skill.id}" ${skill.upgrade.maxed || skill.upgrade.reputationLocked ? 'disabled' : ''}>研修</button>
+            </div>
+          </div>
+        `).join('')}
       </div>
       <div class="disciple-roster">
         ${sect.roster.length ? sect.roster.map((disciple) => `
@@ -6304,6 +6682,7 @@
       artifacts: Math.max(0, round(after.artifacts - before.artifacts)),
       arrayFlags: Math.max(0, round(after.arrayFlags - before.arrayFlags)),
       forgingEssence: Math.max(0, round((after.forgingEssence || 0) - (before.forgingEssence || 0))),
+      bloodEssence: Math.max(0, round((after.bloodEssence || 0) - (before.bloodEssence || 0))),
     };
   }
 
@@ -6322,6 +6701,7 @@
       ['法器', `+${Math.floor(summary.artifacts)}`],
       ['阵旗', `+${Math.floor(summary.arrayFlags || 0)}`],
       ['精魄', `+${Math.floor(summary.forgingEssence || 0)}`],
+      ['血脉精魄', `+${Math.floor(summary.bloodEssence || 0)}`],
     ].filter((row, index) => index === 0 || row[1] !== '+0');
 
     refs.offlineSummary.innerHTML = rows
@@ -6352,11 +6732,13 @@
     const masteryBonus = 1 + getMapMasteryBonus(state, 'qiRate');
     const treasureBonus = 1 + getTreasureBonus(state, 'qiRate');
     const beastBonus = 1 + getSpiritBeastBonus(state, 'qiRate');
+    const bloodlineBonus = 1 + getBloodlineBonus(state, 'qiRate');
+    const sectSkillBonus = 1 + getSectSkillBonus(state, 'qiRate');
     const daoHeartBonus = 1 + getDaoHeartBonus(state, 'qiRate');
     const setBonus = 1 + getGearSetBonus(state, 'qiBonus');
     const pillBoost = state.pillBoostUntil && state.pillBoostUntil > now ? 1.4 : 1;
     const injuryPenalty = state.injuryUntil && state.injuryUntil > now ? 0.75 : 1;
-    return round(realm.qiRate * buildingBonus * formationBonus * gearBonus * affixBonus * pathBonus * permanentBonus * lootBonus * masteryBonus * treasureBonus * beastBonus * daoHeartBonus * setBonus * pillBoost * injuryPenalty);
+    return round(realm.qiRate * buildingBonus * formationBonus * gearBonus * affixBonus * pathBonus * permanentBonus * lootBonus * masteryBonus * treasureBonus * beastBonus * bloodlineBonus * sectSkillBonus * daoHeartBonus * setBonus * pillBoost * injuryPenalty);
   }
 
   function calculateBreakthroughChance(state, now = Date.now()) {
@@ -6370,13 +6752,15 @@
     const formationBonus = Math.min(0.12, (state.formations.mountainGuard || 0) * formations.mountainGuard.stabilityPerLevel);
     const treasureBonus = Math.min(0.12, getTreasureBonus(state, 'breakthrough'));
     const beastBonus = Math.min(0.08, getSpiritBeastBonus(state, 'breakthrough'));
+    const bloodlineBonus = Math.min(0.1, getBloodlineBonus(state, 'breakthrough'));
+    const sectSkillBonus = Math.min(0.08, getSectSkillBonus(state, 'breakthrough'));
     const daoHeartBonus = Math.min(0.1, getDaoHeartBonus(state, 'breakthrough'));
     const setBonus = Math.min(0.08, getGearSetBonus(state, 'breakthrough'));
     const scriptureBonus = Math.min(0.12, (state.buildings.scriptureLibrary || 0) * buildings.scriptureLibrary.breakthroughPerLevel);
     const pillBonus = state.breakthroughBoostUntil && state.breakthroughBoostUntil > now ? 0.12 : 0;
     const foundationBonus = Math.min(0.15, (state.foundationStability || 0) * 0.05);
     const heartDemonPenalty = Math.min(0.35, state.heartDemon * 0.15);
-    return round(Math.max(0.25, Math.min(0.95, 0.75 + preparation + insightBonus + gearBonus + affixBonus + lootBonus + formationBonus + treasureBonus + beastBonus + daoHeartBonus + setBonus + scriptureBonus + pillBonus + foundationBonus - heartDemonPenalty)));
+    return round(Math.max(0.25, Math.min(0.95, 0.75 + preparation + insightBonus + gearBonus + affixBonus + lootBonus + formationBonus + treasureBonus + beastBonus + bloodlineBonus + sectSkillBonus + daoHeartBonus + setBonus + scriptureBonus + pillBonus + foundationBonus - heartDemonPenalty)));
   }
 
   function calculatePower(state) {
@@ -6394,11 +6778,13 @@
     const masteryPower = getMapMasteryBonus(state, 'power');
     const treasurePower = getTreasureBonus(state, 'power');
     const beastPower = getSpiritBeastBonus(state, 'power');
+    const bloodlinePower = getBloodlineBonus(state, 'power');
+    const sectSkillPower = getSectSkillBonus(state, 'power');
     const daoHeartPower = getDaoHeartBonus(state, 'power');
     const sectPower = Math.floor((state.sectReputation || 0) / 20) * 4;
     const qiPower = Math.min(90, Math.floor((state.qi || 0) * 0.5));
     const demonPenalty = (state.heartDemon || 0) * 8;
-    return Math.max(10, Math.floor(realmPower + pathPower + swordPower + gearPower + gearQualityPower + affixPower + setPower + formationPower + permanentPower + lootPower + lootResonancePower + masteryPower + treasurePower + beastPower + daoHeartPower + sectPower + qiPower - demonPenalty));
+    return Math.max(10, Math.floor(realmPower + pathPower + swordPower + gearPower + gearQualityPower + affixPower + setPower + formationPower + permanentPower + lootPower + lootResonancePower + masteryPower + treasurePower + beastPower + bloodlinePower + sectSkillPower + daoHeartPower + sectPower + qiPower - demonPenalty));
   }
 
   function getRealmPower(state) {
@@ -6414,6 +6800,8 @@
       ...getGearSetSources(state, 'attack'),
       ...getEquippedLootSources(state, 'attack'),
       ...getLootResonanceSources(state, 'attack'),
+      ...getBloodlineSources(state, 'attack'),
+      ...getSectSkillSources(state, 'attack'),
       ...getDeployedSpiritBeastSources(state, 'attack'),
     ]);
     const defenseSources = compactSources([
@@ -6423,6 +6811,8 @@
       ...getGearSetSources(state, 'defense'),
       ...getEquippedLootSources(state, 'defense'),
       ...getLootResonanceSources(state, 'defense'),
+      ...getBloodlineSources(state, 'defense'),
+      ...getSectSkillSources(state, 'defense'),
       ...getDeployedSpiritBeastSources(state, 'defense'),
     ]);
     const vitalitySources = compactSources([
@@ -6432,6 +6822,8 @@
       ...getGearSetSources(state, 'vitality'),
       ...getEquippedLootSources(state, 'vitality'),
       ...getLootResonanceSources(state, 'vitality'),
+      ...getBloodlineSources(state, 'vitality'),
+      ...getSectSkillSources(state, 'vitality'),
       ...getDeployedSpiritBeastSources(state, 'vitality'),
     ]);
     const speedSources = compactSources([
@@ -6440,6 +6832,7 @@
       ...getGearAffixSources(state, 'speed'),
       ...getGearSetSources(state, 'speed'),
       ...getEquippedLootSources(state, 'speed'),
+      ...getBloodlineSources(state, 'speed'),
       ...getDeployedSpiritBeastSources(state, 'speed'),
     ]);
     const critSources = compactSources([
@@ -6447,6 +6840,7 @@
       ...getGearAffixSources(state, 'critChance', 'percent'),
       ...getGearSetSources(state, 'critChance', 'percent'),
       ...getEquippedLootSources(state, 'critChance', 'percent'),
+      ...getBloodlineSources(state, 'critChance', 'percent'),
       ...getDeployedSpiritBeastSources(state, 'critChance', 'percent'),
     ]);
     const pierceSources = compactSources([
@@ -6454,6 +6848,7 @@
       ...getGearAffixSources(state, 'pierce'),
       ...getGearSetSources(state, 'pierce'),
       ...getEquippedLootSources(state, 'pierce'),
+      ...getBloodlineSources(state, 'pierce'),
       ...getDeployedSpiritBeastSources(state, 'pierce'),
     ]);
     const elementScores = getCombatElementScores(state);
@@ -7039,6 +7434,7 @@
       beastCores: Math.max(0, Number(carry?.beastCores) || 0),
       artifacts: Math.max(0, Number(carry?.artifacts) || 0),
       forgingEssence: Math.max(0, Number(carry?.forgingEssence) || 0),
+      bloodEssence: Math.max(0, Number(carry?.bloodEssence) || 0),
       reputation: Math.max(0, Number(carry?.reputation) || 0),
     };
   }
@@ -7177,6 +7573,7 @@
       artifacts: state.artifacts || 0,
       arrayFlags: state.arrayFlags || 0,
       forgingEssence: state.forgingEssence || 0,
+      bloodEssence: state.bloodEssence || 0,
     };
   }
 
@@ -7242,6 +7639,17 @@
     Object.values(spiritBeasts).forEach((beast) => {
       const level = state.spiritBeasts?.[beast.id] || 0;
       if (level < beast.maxLevel) addCost(`灵兽·${beast.name}`, beast.cost(level + 1), 0.9);
+    });
+    Object.values(bloodlines).forEach((bloodline) => {
+      const level = state.bloodlines?.[bloodline.id] || 0;
+      if (level < bloodline.maxLevel) addCost(`血脉·${bloodline.name}`, bloodline.cost(level + 1), 1.05);
+    });
+    Object.values(sectSkills).forEach((skill) => {
+      const level = state.sectSkills?.[skill.id] || 0;
+      const nextLevel = level + 1;
+      if (level < skill.maxLevel && (state.sectReputation || 0) >= skill.requiredReputation(nextLevel)) {
+        addCost(`宗门·${skill.name}`, skill.cost(nextLevel), 0.95);
+      }
     });
     if (!state.activeAlchemy) {
       const recipe = Object.values(pillRecipes).find((candidate) => (state.buildings?.alchemyFurnace || 0) >= candidate.unlockLevel);
@@ -7847,7 +8255,8 @@
 
   function getLootDismantleMultiplier(state, item) {
     const forgeMultiplier = 1 + (state.buildings?.forgingHall || 0) * buildings.forgingHall.dismantleBonusPerLevel;
-    return forgeMultiplier * (getLootRarity(item).dismantleMultiplier || 1);
+    const sectMultiplier = 1 + getSectSkillBonus(state, 'dismantleBonus');
+    return forgeMultiplier * sectMultiplier * (getLootRarity(item).dismantleMultiplier || 1);
   }
 
   function formatEffectDelta(effect) {
@@ -7952,6 +8361,34 @@
     return Object.entries(state.spiritBeasts || {}).reduce((total, [beastId, level]) => total + (spiritBeasts[beastId]?.bonuses?.[key] || 0) * (level || 0), 0);
   }
 
+  function getBloodlineBonus(state, key) {
+    return Object.entries(state.bloodlines || {}).reduce((total, [bloodlineId, level]) => total + (bloodlines[bloodlineId]?.bonuses?.[key] || 0) * (level || 0), 0);
+  }
+
+  function getBloodlineSources(state, key, mode = 'flat') {
+    return Object.entries(state.bloodlines || {})
+      .map(([bloodlineId, level]) => {
+        const bloodline = bloodlines[bloodlineId];
+        const value = (bloodline?.bonuses?.[key] || 0) * (level || 0);
+        return value ? { label: bloodline.name, value, mode } : null;
+      })
+      .filter(Boolean);
+  }
+
+  function getSectSkillBonus(state, key) {
+    return Object.entries(state.sectSkills || {}).reduce((total, [skillId, level]) => total + (sectSkills[skillId]?.bonuses?.[key] || 0) * (level || 0), 0);
+  }
+
+  function getSectSkillSources(state, key, mode = 'flat') {
+    return Object.entries(state.sectSkills || {})
+      .map(([skillId, level]) => {
+        const skill = sectSkills[skillId];
+        const value = (skill?.bonuses?.[key] || 0) * (level || 0);
+        return value ? { label: skill.name, value, mode } : null;
+      })
+      .filter(Boolean);
+  }
+
   function getDeployedSpiritBeastBonus(state, key) {
     const beast = getActiveSpiritBeast(state);
     if (!beast) {
@@ -8025,6 +8462,10 @@
       elementPower: '灵根',
       herbRate: '灵草生长',
       alchemySpeed: '丹火缩时',
+      dismantleBonus: '分解精粹',
+      lootRarity: '寻器气运',
+      bloodEssenceBonus: '血脉凝练',
+      beastTraining: '御灵培养',
     };
     return Object.entries(bonuses)
       .filter(([key, value]) => typeof value === 'number' && labels[key] && value !== 0)
@@ -8032,7 +8473,7 @@
         id: key,
         label: `${prefix}${labels[key]}`,
         value,
-        mode: key === 'qiRate' || key === 'qiBonus' || key === 'breakthrough' || key === 'herbRate' || key === 'alchemySpeed' || key === 'critChance' ? 'percent' : key === 'dangerReduction' ? 'reduction' : 'flat',
+        mode: key === 'qiRate' || key === 'qiBonus' || key === 'breakthrough' || key === 'herbRate' || key === 'alchemySpeed' || key === 'critChance' || key === 'dismantleBonus' || key === 'lootRarity' || key === 'bloodEssenceBonus' || key === 'beastTraining' ? 'percent' : key === 'dangerReduction' ? 'reduction' : 'flat',
       }));
   }
 
@@ -8147,7 +8588,7 @@
       });
       trainAssignedDisciples(state, commissionId, seconds);
     });
-    ['spiritStones', 'herbs', 'beastCores', 'artifacts', 'forgingEssence'].forEach((resource) => {
+    ['spiritStones', 'herbs', 'beastCores', 'artifacts', 'forgingEssence', 'bloodEssence'].forEach((resource) => {
       const gained = Math.floor(state.sectCarry[resource] || 0);
       if (gained > 0) {
         state[resource] = (state[resource] || 0) + gained;
@@ -8182,10 +8623,10 @@
     const roster = normalizeSectRoster(state.sectRoster, state.sectDisciples || 0);
     const assigned = roster.filter((disciple) => disciple.job === commissionId);
     if (!assigned.length) {
-      return 1 + getSectLevel(state).commissionBonus;
+      return 1 + getSectLevel(state).commissionBonus + getSectSkillBonus(state, 'commissionBonus');
     }
     const discipleBonus = assigned.reduce((total, disciple) => total + getDiscipleJobMultiplier(disciple), 0) / assigned.length;
-    return 1 + getSectLevel(state).commissionBonus + discipleBonus;
+    return 1 + getSectLevel(state).commissionBonus + getSectSkillBonus(state, 'commissionBonus') + discipleBonus;
   }
 
   function getDiscipleJobMultiplier(disciple) {
@@ -8272,13 +8713,14 @@
 
   function applyMissionEvent(state, mission, event, now) {
     applyResources(state, event.reward || {});
-    const item = event.equipment ? addLootEquipment(state, event.equipment) : null;
+    const item = event.equipment ? addLootEquipment(state, event.equipment, { mapId: getMissionMapId(mission), missionId: mission.id, state }) : null;
     state.lastMissionEvent = {
       id: event.id,
       name: event.name,
       missionId: mission.id,
       reward: event.reward || {},
       equipmentName: item?.name || null,
+      item,
       time: now,
     };
 
@@ -8288,7 +8730,7 @@
     return { event, item };
   }
 
-  function addLootEquipment(state, templateId) {
+  function addLootEquipment(state, templateId, context = null) {
     const template = lootEquipment[templateId];
     if (!template) {
       return null;
@@ -8296,15 +8738,15 @@
     state.lootEquipment ||= [];
     state.lootDropSerial = Math.max(Math.floor(Number(state.lootDropSerial) || 0), state.lootEquipment.length) + 1;
     const uid = `${template.id}-${state.lootDropSerial}`;
-    const item = createLootItem(template.id, uid);
+    const item = createLootItem(template.id, uid, 0, null, context);
     state.lootEquipment.unshift(item);
     state.lootEquipment = state.lootEquipment.slice(0, 40);
     return item;
   }
 
-  function createLootItem(templateId, uid, level = 0, savedVariant = null) {
+  function createLootItem(templateId, uid, level = 0, savedVariant = null, context = null) {
     const template = lootEquipment[templateId];
-    const variant = createLootVariant(template, uid, savedVariant);
+    const variant = createLootVariant(template, uid, savedVariant, context);
     const quality = clampInteger((template.quality || 0) + (variant.qualityBonus || 0), 0, rarityTiers.length - 1);
     return {
       uid,
@@ -8319,7 +8761,7 @@
     };
   }
 
-  function createLootVariant(template, uid, savedVariant = null) {
+  function createLootVariant(template, uid, savedVariant = null, context = null) {
     if (savedVariant && typeof savedVariant === 'object') {
       const rarity = getSavedLootRarity(savedVariant);
       const affixes = selectLootAffixes(template.slot, hashString(`${template.id}:${uid}:saved`), rarity.affixCount, savedVariant.affixIds || [savedVariant.affixId].filter(Boolean));
@@ -8327,7 +8769,7 @@
       return buildLootVariant(template, rarity, affixes, element, savedVariant.name);
     }
     const seed = hashString(`${template.id}:${uid}`);
-    const rarity = rollLootRarity(seed, uid);
+    const rarity = rollLootRarity(seed, uid, context);
     const affixes = selectLootAffixes(template.slot, seed, rarity.affixCount);
     const elementIds = Object.keys(combatElements);
     const element = elementIds[Math.floor(seed / 13) % elementIds.length] || template.element;
@@ -8339,19 +8781,28 @@
     return getRarityTier(savedVariant.rarityId || legacyGradeMap[savedVariant.gradeId] || savedVariant.gradeId || 'common');
   }
 
-  function rollLootRarity(seed, uid = '') {
+  function rollLootRarity(seed, uid = '', context = null) {
     const serial = Number(String(uid).match(/-(\d+)$/)?.[1]) || 0;
+    const profile = getMapLootProfile(context?.mapId);
     if (serial > 0) {
-      if (serial % 60 === 0) return getRarityTier('heavenWork');
-      if (serial % 30 === 0) return getRarityTier('earthFiend');
-      if (serial % 12 === 0) return getRarityTier('mystic');
-      if (serial % 5 === 0) return getRarityTier('spirit');
+      const daoInterval = Math.max(120, Math.floor((profile.daoInterval || 500) / (1 + getSectSkillBonus(context?.state || {}, 'lootRarity'))));
+      if (serial % daoInterval === 0) return getRarityTier('dao');
+      if (serial % Math.max(70, Math.floor(daoInterval / 4)) === 0) return getRarityTier('heavenWork');
+      if (serial % Math.max(28, Math.floor(daoInterval / 12)) === 0) return getRarityTier('earthFiend');
+      if (serial % Math.max(10, Math.floor(daoInterval / 36)) === 0) return getRarityTier('mystic');
+      if (serial % Math.max(4, Math.floor(daoInterval / 120)) === 0) return getRarityTier('spirit');
     }
-    const totalWeight = rarityTiers.reduce((total, tier) => total + tier.weight, 0);
+    const tierShift = profile.tier || 0;
+    const adjustedWeights = rarityTiers.map((tier, index) => {
+      if (index === 0) return { ...tier, weight: Math.max(220, tier.weight - tierShift * 28) };
+      if (tier.id === 'dao') return { ...tier, weight: Math.max(1, tierShift + 1) };
+      return { ...tier, weight: tier.weight + tierShift * (index + 2) };
+    });
+    const totalWeight = adjustedWeights.reduce((total, tier) => total + tier.weight, 0);
     let roll = seed % totalWeight;
-    for (const tier of rarityTiers) {
+    for (const tier of adjustedWeights) {
       if (roll < tier.weight) {
-        return tier;
+        return getRarityTier(tier.id);
       }
       roll -= tier.weight;
     }
@@ -8433,6 +8884,26 @@
     return { ok: true, item, locked };
   }
 
+  function lockRareLootEquipment(state, minRarityId = 'mystic', now = Date.now()) {
+    const minIndex = getRarityIndex(minRarityId);
+    const items = (state.lootEquipment || []).filter((item) => {
+      if (state.equippedLoot?.[item.slot] === item.uid || state.lockedLoot?.[item.uid]) {
+        return false;
+      }
+      return getRarityIndex(getLootRarity(item).id) >= minIndex;
+    });
+    if (!items.length) {
+      addLog(state, now, '整理战利品，没有新的高品器物需要锁定。');
+      return { ok: true, locked: 0, items: [] };
+    }
+    state.lockedLoot ||= {};
+    items.forEach((item) => {
+      state.lockedLoot[item.uid] = true;
+    });
+    addLog(state, now, `已锁定 ${items.length} 件玄纹以上战利品，批量整理时会保留。`);
+    return { ok: true, locked: items.length, items };
+  }
+
   function disassembleLootEquipment(state, uid, now = Date.now()) {
     const itemIndex = state.lootEquipment?.findIndex((candidate) => candidate.uid === uid) ?? -1;
     if (itemIndex < 0) {
@@ -8450,7 +8921,12 @@
       delete state.lockedLoot[item.uid];
     }
     const dismantleMultiplier = getLootDismantleMultiplier(state, item);
-    const reward = { forgingEssence: Math.floor(2 * dismantleMultiplier), artifacts: 1 };
+    const rarityIndex = getRarityIndex(getLootRarity(item).id);
+    const reward = filterCost({
+      forgingEssence: Math.floor(2 * dismantleMultiplier),
+      artifacts: 1,
+      bloodEssence: rarityIndex >= 2 ? Math.max(1, Math.floor((rarityIndex - 1) * dismantleMultiplier)) : 0,
+    });
     applyResources(state, reward);
     addLog(state, now, `分解${item.name}，获得${formatReward(reward)}。`);
     return { ok: true, reward, item };
@@ -8484,10 +8960,11 @@
       return { ok: true, removed: 0, reward: {}, items: [] };
     }
 
-    const reward = removedItems.reduce((total, item) => ({
+    const reward = filterCost(removedItems.reduce((total, item) => ({
       forgingEssence: total.forgingEssence + Math.floor(2 * getLootDismantleMultiplier(state, item)),
       artifacts: total.artifacts + 1,
-    }), { forgingEssence: 0, artifacts: 0 });
+      bloodEssence: total.bloodEssence + (getRarityIndex(getLootRarity(item).id) >= 2 ? Math.max(1, Math.floor((getRarityIndex(getLootRarity(item).id) - 1) * getLootDismantleMultiplier(state, item))) : 0),
+    }), { forgingEssence: 0, artifacts: 0, bloodEssence: 0 }));
     state.lootEquipment = items.filter((item) => keepUids.has(item.uid));
     if (state.lockedLoot) {
       Object.keys(state.lockedLoot).forEach((uid) => {
@@ -8501,10 +8978,10 @@
     return { ok: true, removed: removedItems.length, reward, items: removedItems };
   }
 
-  function getOrganizableLootCount(state) {
+  function getOrganizableLootItems(state) {
     const items = state.lootEquipment || [];
     if (!items.length) {
-      return 0;
+      return [];
     }
     const keepUids = new Set(Object.values(state.equippedLoot || {}).filter(Boolean));
     Object.entries(state.lockedLoot || {}).forEach(([uid, locked]) => {
@@ -8520,7 +8997,27 @@
         keepUids.add(candidate.uid);
       }
     });
-    return items.filter((item) => !keepUids.has(item.uid)).length;
+    return items.filter((item) => !keepUids.has(item.uid));
+  }
+
+  function getOrganizableLootSummary(state) {
+    const items = getOrganizableLootItems(state);
+    const reward = filterCost(items.reduce((total, item) => ({
+      forgingEssence: total.forgingEssence + Math.floor(2 * getLootDismantleMultiplier(state, item)),
+      artifacts: total.artifacts + 1,
+      bloodEssence: total.bloodEssence + (getRarityIndex(getLootRarity(item).id) >= 2 ? Math.max(1, Math.floor((getRarityIndex(getLootRarity(item).id) - 1) * getLootDismantleMultiplier(state, item))) : 0),
+    }), { forgingEssence: 0, artifacts: 0, bloodEssence: 0 }));
+    return { count: items.length, items, reward };
+  }
+
+  function getLockableRareLootCount(state) {
+    return (state.lootEquipment || []).filter((item) => state.equippedLoot?.[item.slot] !== item.uid
+      && !state.lockedLoot?.[item.uid]
+      && getRarityIndex(getLootRarity(item).id) >= getRarityIndex('mystic')).length;
+  }
+
+  function getOrganizableLootCount(state) {
+    return getOrganizableLootItems(state).length;
   }
 
   function empowerLootEquipment(state, uid, now = Date.now()) {
@@ -8774,7 +9271,7 @@
       return `道威永久 +${amount}`;
     }
 
-    const names = { qi: '灵气', herbs: '灵草', spiritStones: '灵石', pills: '聚气丹', gatherQiPill: '聚气丹', clearHeartPill: '清心丹', meridianPill: '护脉丹', beastCores: '妖核', artifacts: '法器', arrayFlags: '阵旗', forgingEssence: '炼器精魄', heartDemon: '心魔', insight: '悟道' };
+    const names = { qi: '灵气', herbs: '灵草', spiritStones: '灵石', pills: '聚气丹', gatherQiPill: '聚气丹', clearHeartPill: '清心丹', meridianPill: '护脉丹', beastCores: '妖核', artifacts: '法器', arrayFlags: '阵旗', forgingEssence: '炼器精魄', bloodEssence: '血脉精魄', heartDemon: '心魔', insight: '悟道' };
     return `${amount} ${names[key] || key}`;
   }
 
