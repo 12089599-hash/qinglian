@@ -1236,7 +1236,7 @@
     missions: '历练',
     log: '日志',
   };
-  const gearSections = ['wear', 'loot', 'treasures'];
+  const gearSections = ['wear', 'loot', 'treasures', 'beasts'];
   const isMobileLayout = () => typeof window !== 'undefined' && window.matchMedia?.('(max-width: 760px)').matches;
   const storedActiveTab = localStorage.getItem('idle-xianxia-active-tab');
   let activeTab = isMobileLayout() ? 'overview' : (storedActiveTab === 'overview' ? 'goals' : storedActiveTab || 'goals');
@@ -1491,7 +1491,7 @@
     if (!button) return;
     const result = trainSpiritBeast(state, button.dataset.trainBeast);
     if (result.ok) {
-      showToast('灵兽培养', `${spiritBeasts[button.dataset.trainBeast].name}升至 ${result.level} 级。`);
+      showToast('灵兽培养', `${spiritBeasts[button.dataset.trainBeast].name}升至 ${result.level} 级${result.autoDeployed ? '，已自动出战。' : '。'}`);
     }
     saveState();
     render(true);
@@ -3969,6 +3969,10 @@
         tab: 'sect',
       };
     }
+    const beastGuidance = getSpiritBeastGuidance(state);
+    if (beastGuidance) {
+      return beastGuidance;
+    }
     const readyBoss = getMapStatuses(state).find((map) => map.boss.status === 'ready' && calculatePower(state) >= map.boss.power);
     if (readyBoss) {
       return { title: `挑战${readyBoss.boss.name}`, detail: `${readyBoss.name}探索已足，镇压首领可获得永久成长和炼器精魄。`, tab: 'missions', targetId: readyBoss.id };
@@ -4004,6 +4008,32 @@
       return { title: `补足${primary.label}`, detail: `${primary.demandText}，${primary.route.detail}${commissionText}。`, tab: primary.route.unlocked ? 'missions' : 'market' };
     }
     return { title: '继续积累底蕴', detail: '刷地图声望、强化战利品、提升洞府和阵法，准备下一轮突破。', tab: 'missions' };
+  }
+
+  function getSpiritBeastGuidance(state) {
+    const activeId = normalizeActiveSpiritBeast(state.activeSpiritBeast, state.spiritBeasts);
+    if (!activeId) {
+      const ownedId = Object.keys(spiritBeasts).find((beastId) => (state.spiritBeasts?.[beastId] || 0) > 0);
+      if (ownedId) {
+        const beast = spiritBeasts[ownedId];
+        return {
+          title: `派灵兽${beast.name}出战`,
+          detail: '灵兽已培养，派它随行后会提供出战属性，并在秘境与首领斗法中协战。',
+          tab: 'gear',
+          targetId: 'beasts',
+        };
+      }
+      const affordable = Object.values(spiritBeasts).find((beast) => canAfford(state, beast.cost(1)));
+      if (affordable) {
+        return {
+          title: `培养灵兽${affordable.name}`,
+          detail: '灵兽同时带来收集底蕴和出战协战，可补上秘境、首领前的一段气机差。',
+          tab: 'gear',
+          targetId: 'beasts',
+        };
+      }
+    }
+    return null;
   }
 
   function getObjectivePreparationGuidance(state, objective) {
@@ -4260,6 +4290,7 @@
     const busy = Boolean(state.activeMission);
     const depthAdvice = getMapCombatAdvice(map, depth?.nextLayer >= 8 ? 'dark' : map.boss.element);
     const bossAdvice = getMapCombatAdvice(map, map.boss.element);
+    const activeBeastBrief = formatActiveSpiritBeastBrief(state);
     const routeText = primaryStatus?.unlocked
       ? `${primaryStatus.approach.name} · ${formatDuration(getMissionDuration(primaryMission, primaryStatus.approach.id))} · ${primaryStatus.omen.label}${primaryStatus.omen.name}`
       : `${realms[primaryStatus?.unlockRealmIndex]?.name || '更高境界'}解锁`;
@@ -4273,6 +4304,7 @@
           </div>
           <em>${map.readiness.label} ${map.readiness.name}</em>
         </header>
+        <small class="active-beast-status">${activeBeastBrief}</small>
         <div class="map-action-grid">
           <button data-start-depth="${map.id}" ${!depth?.unlocked || depth?.maxed || busy ? 'disabled' : ''}>
             <strong>${depth?.maxed ? '秘境圆满' : `秘境第 ${depth?.nextLayer || 1} 层`}</strong>
@@ -4300,6 +4332,16 @@
   function getPrimaryMissionForMap(map) {
     const routes = (map.routes || []).map((id) => missions[id]).filter(Boolean);
     return routes.find((mission) => getMissionStatus(state, mission.id).unlocked) || routes[0] || null;
+  }
+
+  function formatActiveSpiritBeastBrief(state) {
+    const beast = getActiveSpiritBeast(state);
+    if (!beast) {
+      return '灵兽未出战，库藏中培养后可协战。';
+    }
+    const level = state.spiritBeasts?.[beast.id] || 0;
+    const elementName = formatElementName(combatElements[beast.combat?.element]);
+    return `出战灵兽：${beast.name} ${level}/${beast.maxLevel} · ${elementName}协战`;
   }
 
   function renderOpportunity(force = false) {
@@ -5040,9 +5082,11 @@
     }
     payResources(state, cost);
     state.spiritBeasts[beastId] = nextLevel;
+    const previousActive = state.activeSpiritBeast;
     state.activeSpiritBeast = normalizeActiveSpiritBeast(state.activeSpiritBeast, state.spiritBeasts);
-    addLog(state, now, `${beast.name}培养至 ${nextLevel} 级。`);
-    return { ok: true, level: nextLevel };
+    const autoDeployed = !previousActive && state.activeSpiritBeast === beastId;
+    addLog(state, now, `${beast.name}培养至 ${nextLevel} 级${autoDeployed ? '，并已随行出战' : ''}。`);
+    return { ok: true, level: nextLevel, autoDeployed };
   }
 
   function deploySpiritBeast(state, beastId, now = Date.now()) {
@@ -7193,6 +7237,7 @@
       title = '血元不足';
       advice = '提升护符、血元词条或阴阳照影续战，再回来收尾。';
     }
+    advice = `${advice} 仍差一线时，可服清心丹/护脉丹，培养出战灵兽，或补剑阵与护山阵。`;
 
     return {
       outcome,
@@ -8082,8 +8127,8 @@
       activeMissionMapId = targetId;
       localStorage.setItem('idle-xianxia-mission-map', activeMissionMapId);
     }
-    if (tab === 'gear' && (targetId === 'loot' || targetId === 'wear')) {
-      activeGearSection = targetId === 'loot' ? 'loot' : 'wear';
+    if (tab === 'gear' && ['loot', 'wear', 'treasures', 'beasts'].includes(targetId)) {
+      activeGearSection = targetId;
       localStorage.setItem('idle-xianxia-gear-section', activeGearSection);
     }
   }

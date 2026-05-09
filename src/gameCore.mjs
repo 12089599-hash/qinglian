@@ -2920,6 +2920,11 @@ export function getNextGuidance(state) {
     };
   }
 
+  const beastGuidance = getSpiritBeastGuidance(state);
+  if (beastGuidance) {
+    return beastGuidance;
+  }
+
   const readyBoss = getMapStatuses(state).find((map) => map.boss.status === 'ready' && calculatePower(state) >= map.boss.power);
   if (readyBoss) {
     return {
@@ -2985,6 +2990,32 @@ export function getNextGuidance(state) {
     detail: '刷地图声望、强化战利品、提升洞府和阵法，准备下一轮突破。',
     tab: 'missions',
   };
+}
+
+function getSpiritBeastGuidance(state) {
+  const activeId = normalizeActiveSpiritBeast(state.activeSpiritBeast, state.spiritBeasts);
+  if (!activeId) {
+    const ownedId = Object.keys(SPIRIT_BEASTS).find((beastId) => (state.spiritBeasts?.[beastId] ?? 0) > 0);
+    if (ownedId) {
+      const beast = SPIRIT_BEASTS[ownedId];
+      return {
+        title: `派灵兽${beast.name}出战`,
+        detail: '灵兽已培养，派它随行后会提供出战属性，并在秘境与首领斗法中协战。',
+        tab: 'gear',
+        targetId: 'beasts',
+      };
+    }
+    const affordable = Object.values(SPIRIT_BEASTS).find((beast) => canAfford(state, beast.cost(1)));
+    if (affordable) {
+      return {
+        title: `培养灵兽${affordable.name}`,
+        detail: '灵兽同时带来收集底蕴和出战协战，可补上秘境、首领前的一段气机差。',
+        tab: 'gear',
+        targetId: 'beasts',
+      };
+    }
+  }
+  return null;
 }
 
 function getObjectivePreparationGuidance(state, objective) {
@@ -3283,9 +3314,11 @@ export function trainSpiritBeast(state, beastId, now = Date.now()) {
 
   payResources(state, cost);
   state.spiritBeasts[beastId] = nextLevel;
+  const previousActive = state.activeSpiritBeast;
   state.activeSpiritBeast = normalizeActiveSpiritBeast(state.activeSpiritBeast, state.spiritBeasts);
-  addLog(state, now, `${beast.name}培养至 ${nextLevel} 级。`);
-  return { ok: true, level: nextLevel };
+  const autoDeployed = !previousActive && state.activeSpiritBeast === beastId;
+  addLog(state, now, `${beast.name}培养至 ${nextLevel} 级${autoDeployed ? '，并已随行出战' : ''}。`);
+  return { ok: true, level: nextLevel, autoDeployed };
 }
 
 export function deploySpiritBeast(state, beastId, now = Date.now()) {
@@ -5529,6 +5562,7 @@ function createBattleDiagnosis(player, enemy, rounds, playerHp, enemyHp, outcome
     title = '血元不足';
     advice = '提升护符、血元词条或阴阳照影续战，再回来收尾。';
   }
+  advice = `${advice} 仍差一线时，可服清心丹/护脉丹，培养出战灵兽，或补剑阵与护山阵。`;
 
   return {
     outcome,

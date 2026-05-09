@@ -1098,6 +1098,7 @@ test('failed boss battles explain the most useful preparation lever', () => {
   assert.equal(battle.diagnosis.outcome, 'defeat');
   assert.equal(['锋芒不足', '护体不足', '血元不足', '灵根受制'].includes(battle.diagnosis.title), true);
   assert.equal(battle.diagnosis.advice.length > 0, true);
+  assert.match(battle.diagnosis.advice, /灵兽|丹药|阵法/);
   assert.equal(typeof battle.diagnosis.playerDamage, 'number');
   assert.equal(typeof battle.diagnosis.enemyRemainingHp, 'number');
 });
@@ -1155,6 +1156,25 @@ test('next guidance explains sect and major breakthrough preparation', () => {
   const gateGuidance = getNextGuidance(gateState);
   assert.equal(gateGuidance.title, '叩关前先稳根基');
   assert.equal(gateGuidance.action, 'stabilize');
+});
+
+test('next guidance pulls spirit beasts into the preparation loop', () => {
+  const state = createGameState(1000);
+  state.realmIndex = realmIndexByName('筑基一层');
+  state.spiritStones = 400;
+  state.herbs = 60;
+  state.beastCores = 4;
+  state.sectDisciples = 1;
+  state.claimedChapterRewards.qinglanStart = true;
+  state.claimedGoals.foundationRealm = true;
+  state.claimedGoals.firstPath = true;
+  state.claimedGoals.firstArmament = true;
+
+  const guidance = getNextGuidance(state);
+
+  assert.match(guidance.title, /灵兽/);
+  assert.equal(guidance.tab, 'gear');
+  assert.equal(guidance.targetId, 'beasts');
 });
 
 test('next guidance does not send newly founded players into a doomed map', () => {
@@ -1751,6 +1771,19 @@ test('spirit beasts separate collection effects from deployed battle effects', (
   assert.equal(fox.collectionEffects.some((effect) => effect.id === 'qiRate'), true);
   assert.equal(tiger.battleEffects.some((effect) => effect.id === 'attack'), true);
   assert.equal(combat.attack.sources.some((source) => source.label === '出战灵兽'), true);
+});
+
+test('training the first spirit beast reports automatic deployment', () => {
+  const state = createGameState(1000);
+  state.spiritStones = 500;
+  state.herbs = 100;
+  state.beastCores = 8;
+
+  const result = trainSpiritBeast(state, 'cloudFox', 2000);
+
+  assert.equal(result.ok, true);
+  assert.equal(result.autoDeployed, true);
+  assert.equal(state.activeSpiritBeast, 'cloudFox');
 });
 
 test('deployed spirit beasts join turn battles as their own actor', () => {
