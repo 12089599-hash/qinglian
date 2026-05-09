@@ -261,6 +261,8 @@ assert.match(source, /button\.disabled = false/);
 assert.match(html, /class="loot-toolbar-actions"/);
 assert.match(html, /data-organize-loot type="button"/);
 assert.match(styles, /\.loot-toolbar-actions/);
+assert.match(styles, /grid-template-areas:\s*"filters filters"\s*"options actions"/);
+assert.match(styles, /\.gear-subtabs\s*\{[\s\S]*?flex-wrap: nowrap/);
 assert.match(source, /data-toggle-loot-lock/);
 assert.match(source, /data-loot-filter/);
 assert.match(source, /function renderLootComparison/);
