@@ -1124,11 +1124,39 @@ test('next guidance points players toward the clearest progression step', () => 
   state.completedMissions.marketTrade = 2;
   state.gear.weapon = 2;
   state.claimedGoals.realmTwo = true;
+  state.sectDisciples = 1;
 
   assert.equal(getNextGuidance(state).title, '挑战青岚山魈');
 });
 
-test('next guidance does not send mainline players into a doomed map', () => {
+test('next guidance explains sect and major breakthrough preparation', () => {
+  const sectState = createGameState(1000);
+  sectState.realmIndex = 2;
+  sectState.completedMissions.cavePatrol = 1;
+  sectState.claimedGoals.firstPatrol = true;
+  sectState.claimedGoals.realmTwo = true;
+
+  const sectGuidance = getNextGuidance(sectState);
+  assert.equal(sectGuidance.title, '先备山门供给');
+  assert.equal(sectGuidance.targetId, 'herbGathering');
+
+  const gateState = createGameState(1000);
+  gateState.realmIndex = realmIndexByName('炼气九层');
+  gateState.qi = REALMS[gateState.realmIndex].requiredQi;
+  gateState.spiritStones = 35;
+  gateState.herbs = 8;
+  gateState.claimedGoals.firstPatrol = true;
+  gateState.claimedGoals.realmTwo = true;
+  gateState.claimedGoals.spiritField = true;
+  gateState.claimedGoals.firstPill = true;
+  gateState.claimedChapterRewards.qinglanStart = true;
+
+  const gateGuidance = getNextGuidance(gateState);
+  assert.equal(gateGuidance.title, '叩关前先稳根基');
+  assert.equal(gateGuidance.action, 'stabilize');
+});
+
+test('next guidance does not send newly founded players into a doomed map', () => {
   const state = createGameState(1000);
   state.realmIndex = realmIndexByName('筑基一层');
   state.claimedChapterRewards.qinglanStart = true;
@@ -1138,14 +1166,14 @@ test('next guidance does not send mainline players into a doomed map', () => {
   state.cultivationPaths.sword = 1;
   state.gear.weapon = 1;
   state.gear.robe = 1;
+  state.sectDisciples = 1;
 
   const guidance = getNextGuidance(state);
 
-  assert.equal(guidance.action, 'prepareMission');
-  assert.equal(guidance.targetId, 'ancientSwordTomb');
-  assert.equal(guidance.tab, 'gear');
-  assert.match(guidance.title, /整备/);
-  assert.match(guidance.detail, /武器|法袍|剑修|剑阵/);
+  assert.equal(guidance.targetId, 'mistyValley');
+  assert.equal(guidance.tab, 'missions');
+  assert.match(guidance.title, /筑基初稳/);
+  assert.match(guidance.detail, /古剑冢/);
 });
 
 test('next guidance routes early mainline objectives to their exact panels', () => {

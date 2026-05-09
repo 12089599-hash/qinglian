@@ -2850,6 +2850,26 @@ export function getNextGuidance(state) {
 
   const realm = getCurrentRealm(state);
   if ((state.qi ?? 0) >= realm.requiredQi && state.realmIndex < REALMS.length - 1) {
+    const preparation = getBreakthroughPreparation(state);
+    const majorGate = [8, 17, 26].includes(state.realmIndex ?? 0);
+    const shouldSettleFoundation = majorGate && preparation.readyScore < 0.55 && (state.foundationStability ?? 0) < 2;
+    if (shouldSettleFoundation) {
+      const foundationCost = { spiritStones: 35, herbs: 8 };
+      if (canAfford(state, foundationCost)) {
+        return {
+          title: '叩关前先稳根基',
+          detail: `天劫准备 ${Math.round(preparation.readyScore * 100)}%，先稳一轮根基，再破境更稳。`,
+          tab: 'overview',
+          action: 'stabilize',
+        };
+      }
+      return {
+        title: '备齐稳根基材料',
+        detail: `稳固根基需要 ${formatReward(foundationCost)}，先去青岚山寻药或看坊市货架。`,
+        tab: 'missions',
+        targetId: 'herbGathering',
+      };
+    }
     return {
       title: '可以破境',
       detail: `灵气已满，当前破境天机 ${Math.round(calculateBreakthroughChance(state) * 100)}%。`,
@@ -2866,6 +2886,23 @@ export function getNextGuidance(state) {
     };
   }
 
+  const sect = getSectStatus(state);
+  if (sect.unlocked && sect.disciples <= 0 && sect.recruitCost) {
+    if (!canAfford(state, sect.recruitCost)) {
+      return {
+        title: '先备山门供给',
+        detail: `首名弟子还需 ${formatReward(sect.recruitCost)}，青岚山寻药能补上早期灵草。`,
+        tab: 'missions',
+        targetId: 'herbGathering',
+      };
+    }
+    return {
+      title: '招收首名弟子',
+      detail: '山门已有余粮，招人后可派去采药、采矿，补上长期材料。',
+      tab: 'sect',
+    };
+  }
+
   const readyBoss = getMapStatuses(state).find((map) => map.boss.status === 'ready' && calculatePower(state) >= map.boss.power);
   if (readyBoss) {
     return {
@@ -2873,6 +2910,17 @@ export function getNextGuidance(state) {
       detail: `${readyBoss.name}探索已足，镇压首领可获得永久成长和炼器精魄。`,
       tab: 'missions',
       targetId: readyBoss.id,
+    };
+  }
+
+  const swordTombStatus = getMissionStatus(state, 'ancientSwordTomb');
+  const justFoundedFoundation = (state.realmIndex ?? 0) >= 9 && (state.realmIndex ?? 0) <= 11;
+  if (justFoundedFoundation && swordTombStatus.unlocked && ['大凶', '有险'].includes(swordTombStatus.omen.name)) {
+    return {
+      title: '筑基初稳，先养外功',
+      detail: '古剑冢劫象仍重，先刷灵草谷或雾隐秘境，补妖核、法器和洞府静室。',
+      tab: 'missions',
+      targetId: 'mistyValley',
     };
   }
 
@@ -2898,7 +2946,6 @@ export function getNextGuidance(state) {
     };
   }
 
-  const sect = getSectStatus(state);
   if (sect.unlocked && sect.idle > 0) {
     return {
       title: '分配宗门弟子',
@@ -4238,6 +4285,7 @@ function normalizeBattle(battle) {
       elementModifier: Number.isFinite(Number(round.elementModifier)) ? Number(round.elementModifier) : 1,
       elementText: String(round.elementText || ''),
       targetHp: Math.max(0, Math.round(Number(round.targetHp) || 0)),
+      targetMaxHp: Math.max(1, Math.round(Number(round.targetMaxHp) || Number(round.targetHp) || 1)),
     }));
   if (!rounds.length) {
     return null;
@@ -5446,6 +5494,7 @@ function createBattleRound(round, actor, attacker, defender, hit, targetHp) {
     elementModifier: hit.elementModifier,
     elementText: formatElementInteraction(attacker.element, defender.element, hit.elementModifier),
     targetHp,
+    targetMaxHp: defender.maxHp,
   };
 }
 

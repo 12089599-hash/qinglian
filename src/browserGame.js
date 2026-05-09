@@ -1419,9 +1419,9 @@
     const result = organizeLootEquipment(state);
     if (result.removed > 0) {
       result.items.forEach((item) => openLootDetails.delete(item.uid));
-      showToast('战利品整理', `分解 ${result.removed} 件闲置装备，获得${formatReward(result.reward)}。`);
+      showToast('战利品整理', `拆解 ${result.removed} 件闲置器物，沉淀${formatReward(result.reward)}，可继续强化穿戴装备。`);
     } else {
-      showToast('战利品整理', '没有可整理的闲置装备。');
+      showToast('战利品整理', '当前只保留穿戴、锁定和各部位最佳备件；单件仍可手动分解。');
     }
     saveState();
     render(true);
@@ -1761,6 +1761,10 @@
   refs.nextGuidance?.addEventListener('click', () => {
     if (refs.nextGuidance.dataset.guidanceAction === 'breakthrough') {
       document.querySelector('[data-breakthrough]')?.click();
+      return;
+    }
+    if (refs.nextGuidance.dataset.guidanceAction === 'stabilize') {
+      document.querySelector('[data-stabilize-foundation]')?.click();
       return;
     }
     if (refs.nextGuidance.dataset.guidanceAction === 'claimGoal' && claimGoalById(refs.nextGuidance.dataset.guidanceTarget)) {
@@ -3900,14 +3904,60 @@
     }
     const realm = getCurrentRealm(state);
     if ((state.qi || 0) >= realm.requiredQi && state.realmIndex < realms.length - 1) {
+      const preparation = getBreakthroughPreparation(state);
+      const majorGate = [8, 17, 26].includes(state.realmIndex || 0);
+      const shouldSettleFoundation = majorGate && preparation.readyScore < 0.55 && (state.foundationStability || 0) < 2;
+      if (shouldSettleFoundation) {
+        const foundationCost = { spiritStones: 35, herbs: 8 };
+        if (canAfford(state, foundationCost)) {
+          return {
+            title: '叩关前先稳根基',
+            detail: `天劫准备 ${Math.round(preparation.readyScore * 100)}%，先稳一轮根基，再破境更稳。`,
+            tab: 'overview',
+            action: 'stabilize',
+          };
+        }
+        return {
+          title: '备齐稳根基材料',
+          detail: `稳固根基需要 ${formatReward(foundationCost)}，先去青岚山寻药或看坊市货架。`,
+          tab: 'missions',
+          targetId: 'herbGathering',
+        };
+      }
       return { title: '可以破境', detail: `灵气已满，当前破境天机 ${Math.round(calculateBreakthroughChance(state) * 100)}%。`, tab: 'overview', action: 'breakthrough' };
     }
     if ((state.completedMissions.cavePatrol || 0) < 1 && (state.realmIndex || 0) <= 1) {
       return { title: '先巡守洞府', detail: '去行游完成一次巡守，带回第一笔灵气和灵石。', tab: 'missions', targetId: 'cavePatrol' };
     }
+    const sect = getSectStatus(state);
+    if (sect.unlocked && sect.disciples <= 0 && sect.recruitCost) {
+      if (!canAfford(state, sect.recruitCost)) {
+        return {
+          title: '先备山门供给',
+          detail: `首名弟子还需 ${formatReward(sect.recruitCost)}，青岚山寻药能补上早期灵草。`,
+          tab: 'missions',
+          targetId: 'herbGathering',
+        };
+      }
+      return {
+        title: '招收首名弟子',
+        detail: '山门已有余粮，招人后可派去采药、采矿，补上长期材料。',
+        tab: 'sect',
+      };
+    }
     const readyBoss = getMapStatuses(state).find((map) => map.boss.status === 'ready' && calculatePower(state) >= map.boss.power);
     if (readyBoss) {
       return { title: `挑战${readyBoss.boss.name}`, detail: `${readyBoss.name}探索已足，镇压首领可获得永久成长和炼器精魄。`, tab: 'missions', targetId: readyBoss.id };
+    }
+    const swordTombStatus = getMissionStatus(state, 'ancientSwordTomb');
+    const justFoundedFoundation = (state.realmIndex || 0) >= 9 && (state.realmIndex || 0) <= 11;
+    if (justFoundedFoundation && swordTombStatus.unlocked && ['大凶', '有险'].includes(swordTombStatus.omen.name)) {
+      return {
+        title: '筑基初稳，先养外功',
+        detail: '古剑冢劫象仍重，先刷灵草谷或雾隐秘境，补妖核、法器和洞府静室。',
+        tab: 'missions',
+        targetId: 'mistyValley',
+      };
     }
     const nextObjective = chapter?.objectives.find((objective) => !objective.completed);
     if (nextObjective) {
@@ -3920,7 +3970,6 @@
     if ((state.realmIndex || 0) <= 1) {
       return { title: '积攒灵气', detail: `距离下一次突破还差 ${Math.ceil(Math.max(0, realm.requiredQi - (state.qi || 0)))} 灵气。`, tab: 'goals' };
     }
-    const sect = getSectStatus(state);
     if (sect.unlocked && sect.idle > 0) {
       return { title: '分配宗门弟子', detail: '空闲弟子不会产出，把弟子派去采药、采矿或护山。', tab: 'sect' };
     }
@@ -4157,6 +4206,7 @@
       <div class="mission-map-layout">
         ${renderMapSelector(mapStatuses)}
         <div class="mission-map-detail">
+          ${activeMap ? renderMapActionPanel(activeMap) : ''}
           ${activeMap ? renderMapGroup(activeMap) : ''}
         </div>
       </div>
@@ -4171,6 +4221,61 @@
     activeMissionMapId = mapStatuses.find((map) => map.unlocked)?.id || mapStatuses[0]?.id || missionMapIds[0];
     localStorage.setItem('idle-xianxia-mission-map', activeMissionMapId);
     return activeMissionMapId;
+  }
+
+  function renderMapActionPanel(map) {
+    const depth = map.depth;
+    const primaryMission = getPrimaryMissionForMap(map);
+    const primaryStatus = primaryMission ? getMissionStatus(state, primaryMission.id) : null;
+    const bossStatusText = {
+      locked: '未解锁',
+      hidden: '先探地势',
+      ready: '镇压首领',
+      defeated: '已镇压',
+    }[map.boss.status] || '未发现';
+    const busy = Boolean(state.activeMission);
+    const depthAdvice = getMapCombatAdvice(map, depth?.nextLayer >= 8 ? 'dark' : map.boss.element);
+    const bossAdvice = getMapCombatAdvice(map, map.boss.element);
+    const routeText = primaryStatus?.unlocked
+      ? `${primaryStatus.approach.name} · ${formatDuration(getMissionDuration(primaryMission, primaryStatus.approach.id))} · ${primaryStatus.omen.label}${primaryStatus.omen.name}`
+      : `${realms[primaryStatus?.unlockRealmIndex]?.name || '更高境界'}解锁`;
+    return `
+      <section class="map-action-panel ${map.unlocked ? '' : 'locked'}">
+        <header>
+          <div>
+            <span>当前地图</span>
+            <strong>${map.icon} ${map.name}</strong>
+            <small>${map.mastery.name} · ${map.exploration.label} · 声望 ${Math.floor(map.reputation)}</small>
+          </div>
+          <em>${map.readiness.label} ${map.readiness.name}</em>
+        </header>
+        <div class="map-action-grid">
+          <button data-start-depth="${map.id}" ${!depth?.unlocked || depth?.maxed || busy ? 'disabled' : ''}>
+            <strong>${depth?.maxed ? '秘境圆满' : `秘境第 ${depth?.nextLayer || 1} 层`}</strong>
+            <span>${depth?.maxed ? '可转往更高地图' : `道行 ${calculatePower(state)} / 劫象 ${depth?.danger || 0}`}</span>
+            <small>${depthAdvice.label}</small>
+          </button>
+          <button data-challenge-boss="${map.id}" ${map.boss.status !== 'ready' || busy ? 'disabled' : ''}>
+            <strong>${bossStatusText}</strong>
+            <span>${map.boss.name} · 道行 ${calculatePower(state)} / ${map.boss.power}</span>
+            <small>${bossAdvice.label}</small>
+          </button>
+          ${primaryMission ? `
+            <button data-start-mission="${primaryMission.id}" ${busy || !primaryStatus?.unlocked ? 'disabled' : ''}>
+              <strong>${primaryMission.name}</strong>
+              <span>${routeText}</span>
+              <small>产出 ${formatReward(primaryStatus?.rewardPreview)}</small>
+            </button>
+          ` : ''}
+        </div>
+        <small class="combat-advice">${bossAdvice.detail}</small>
+      </section>
+    `;
+  }
+
+  function getPrimaryMissionForMap(map) {
+    const routes = (map.routes || []).map((id) => missions[id]).filter(Boolean);
+    return routes.find((mission) => getMissionStatus(state, mission.id).unlocked) || routes[0] || null;
   }
 
   function renderOpportunity(force = false) {
@@ -4235,11 +4340,11 @@
     };
     renderBattlePlayback(true);
     renderMissionReport(true);
-    queueBattlePlaybackStep(360);
+    queueBattlePlaybackStep(520);
     return true;
   }
 
-  function queueBattlePlaybackStep(delay = 680) {
+  function queueBattlePlaybackStep(delay = 1050) {
     clearBattlePlaybackTimer();
     if (!activeBattlePlayback) {
       return;
@@ -4265,8 +4370,9 @@
       activeBattlePlayback.visibleCount += 1;
       const latest = rounds[activeBattlePlayback.visibleCount - 1];
       renderBattlePlayback(true);
-      triggerBattleFeedback(latest?.critical ? 'victory' : latest?.actor === 'enemy' ? 'danger' : 'pulse');
-      queueBattlePlaybackStep(activeBattlePlayback.visibleCount >= rounds.length ? 880 : 680);
+      const hpLow = latest?.targetHp <= Math.max(1, Math.round((latest?.targetMaxHp || 1) * 0.28));
+      triggerBattleFeedback(latest?.critical ? 'victory' : latest?.actor === 'enemy' || hpLow ? 'danger' : 'pulse');
+      queueBattlePlaybackStep(activeBattlePlayback.visibleCount >= rounds.length ? 1350 : 1050);
       return;
     }
     finishBattlePlayback(false);
@@ -4309,6 +4415,8 @@
     const shownRounds = rounds.slice(0, visibleCount);
     const latest = shownRounds.at(-1) || null;
     const hp = getBattlePlaybackHp(battle, shownRounds);
+    const progressPercent = rounds.length ? Math.round((visibleCount / rounds.length) * 100) : 0;
+    const latestLowHp = latest?.targetHp <= Math.max(1, Math.round((latest?.targetMaxHp || 1) * 0.28));
     const signature = `${report.id}:${visibleCount}:${latest?.damage || 0}:${latest?.targetHp || ''}`;
     if (!force && renderCache.battlePlayback === signature) {
       return;
@@ -4324,15 +4432,16 @@
         </div>
         <button data-skip-battle-playback type="button">跳过</button>
       </header>
+      <div class="battle-flow" aria-hidden="true"><span style="width:${progressPercent}%"></span></div>
       <div class="battle-stage">
         ${renderCombatantCard('player', battle.player, hp.player, latest?.actor === 'player')}
-        <div class="clash-mark ${latest?.critical ? 'critical' : ''}">
+        <div class="clash-mark ${latest?.critical ? 'critical' : ''} ${latestLowHp ? 'lowhp' : ''}">
           <span>${latest ? latest.damage : '起势'}</span>
-          <small>${latest?.critical ? '会心' : latest?.elementText || '凝神'}</small>
+          <small>${latest?.critical ? '会心' : latestLowHp ? '气血将尽' : latest?.elementText || '凝神'}</small>
         </div>
         ${renderCombatantCard('enemy', battle.enemy, hp.enemy, latest?.actor === 'enemy')}
       </div>
-      <div class="battle-playback-event ${latest?.actor || ''} ${latest?.critical ? 'critical' : ''}">
+      <div class="battle-playback-event ${latest?.actor || ''} ${latest?.critical ? 'critical' : ''} ${latestLowHp ? 'lowhp' : ''}">
         <strong>${latest ? `${latest.actor === 'player' ? '我方' : '劫影'}出手${latest.critical ? ' · 会心' : ''}` : '剑气未发'}</strong>
         <span>${latest ? `${latest.elementText}，造成 ${latest.damage} 伤害，${latest.targetName}余 ${latest.targetHp} 血元。` : '双方气机相探，五行生克正在流转。'}</span>
       </div>
@@ -4378,6 +4487,25 @@
 
   function formatElementName(element) {
     return element?.name || '无相';
+  }
+
+  function getMapCombatAdvice(map, enemyElementId) {
+    const enemyElement = combatElements[enemyElementId] || combatElements[map?.boss?.element] || combatElements.earth;
+    const playerElement = getCombatProfile(state).element;
+    const modifier = getElementModifier(playerElement, enemyElement);
+    const counterElement = getCounterElement(enemyElement.id);
+    const posture = modifier > 1 ? '气机顺势' : modifier < 1 ? '气机受牵' : '气机平势';
+    const counterText = counterElement && counterElement.id !== playerElement.id
+      ? `可寻${counterElement.name}器纹破其气机`
+      : '当前器纹可顺势压阵';
+    return {
+      label: `${enemyElement.name} · ${posture}`,
+      detail: `${counterText}；我方${formatElementInteraction(playerElement, enemyElement, modifier)}。`,
+    };
+  }
+
+  function getCounterElement(elementId) {
+    return Object.values(combatElements).find((element) => element.restrains === elementId) || null;
   }
 
   function renderMissionReport(force = false) {
@@ -4536,6 +4664,7 @@
     if (!depth) {
       return '';
     }
+    const advice = getMapCombatAdvice(map, depth.nextLayer >= 8 ? 'dark' : map.boss.element);
     return `
       <div class="depth-card ${depth.maxed ? 'maxed' : ''}">
         <div>
@@ -4545,6 +4674,7 @@
             <div class="depth-stat-row">
               <small>斗法 回合演武</small>
               <small>道行 ${calculatePower(state)} / 劫象 ${depth.danger}</small>
+              <small>${advice.label}</small>
             </div>
             <small class="depth-reward-row">首通 ${formatReward(depth.reward)}</small>
           `}
@@ -4568,6 +4698,7 @@
     const bossElement = combatElements[map.boss.element] || combatElements.earth;
     const playerElement = getCombatProfile(state).element;
     const elementText = formatElementInteraction(playerElement, bossElement, getElementModifier(playerElement, bossElement));
+    const combatAdvice = getMapCombatAdvice(map, map.boss.element);
     const bossNextStep = explorationGap
       ? `先探山势 ${map.exploration.cappedCompleted} / ${map.exploration.target}`
       : powerGap
@@ -4590,6 +4721,7 @@
             <small>${powerGap ? `气机差 ${powerGap}` : '气机可镇'}</small>
           </div>
           <span class="boss-next-step">${bossNextStep}</span>
+          <span class="combat-advice">${combatAdvice.detail}</span>
           <span class="boss-counsel">${map.boss.omen.detail}</span>
           <span class="boss-counsel">${map.boss.omen.counsel}</span>
           <span>馈赠 ${formatReward(map.boss.reward)}</span>
@@ -5094,7 +5226,7 @@
     }
     const count = getOrganizableLootCount(state);
     button.disabled = count <= 0;
-    button.textContent = count > 0 ? `整理 ${count}` : '暂无可整理';
+    button.textContent = count > 0 ? `批量分解 ${count}` : '无可批量分解';
   }
 
   function renderLootComparison(comparison) {
@@ -5987,6 +6119,7 @@
         elementModifier: Number.isFinite(Number(round.elementModifier)) ? Number(round.elementModifier) : 1,
         elementText: String(round.elementText || ''),
         targetHp: Math.max(0, Math.round(Number(round.targetHp) || 0)),
+        targetMaxHp: Math.max(1, Math.round(Number(round.targetMaxHp) || Number(round.targetHp) || 1)),
       }));
     if (!rounds.length) {
       return null;
@@ -6974,6 +7107,7 @@
       elementModifier: hit.elementModifier,
       elementText: formatElementInteraction(attacker.element, defender.element, hit.elementModifier),
       targetHp,
+      targetMaxHp: defender.maxHp,
     };
   }
 
@@ -7792,6 +7926,10 @@
     }
     if (tab === 'missions' && missions[targetId]?.mapId) {
       activeMissionMapId = missions[targetId].mapId;
+      localStorage.setItem('idle-xianxia-mission-map', activeMissionMapId);
+    }
+    if (tab === 'missions' && missionMaps[targetId]) {
+      activeMissionMapId = targetId;
       localStorage.setItem('idle-xianxia-mission-map', activeMissionMapId);
     }
     if (tab === 'gear' && (targetId === 'loot' || targetId === 'wear')) {
