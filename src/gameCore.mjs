@@ -587,6 +587,7 @@ export const TREASURES = {
     id: 'lifeBoundSeal',
     name: '本命青印',
     detail: '护持经脉和神识，牵引破境天机，并提供少量道威。',
+    rarityId: 'mystic',
     maxLevel: 8,
     cost: (level) => ({ spiritStones: scaleCost(120, level), artifacts: level, forgingEssence: level * 2 }),
     bonuses: { breakthrough: 0.025, power: 10 },
@@ -595,6 +596,7 @@ export const TREASURES = {
     id: 'swordGourd',
     name: '养剑葫',
     detail: '温养剑气，凝练历练道威并平息行游劫象。',
+    rarityId: 'spirit',
     maxLevel: 8,
     cost: (level) => ({ spiritStones: scaleCost(140, level), beastCores: level, forgingEssence: level * 2 }),
     bonuses: { power: 24, dangerReduction: 4 },
@@ -603,6 +605,7 @@ export const TREASURES = {
     id: 'spiritLamp',
     name: '聚灵灯',
     detail: '牵引洞府灵机，提升长期灵息效率。',
+    rarityId: 'spirit',
     maxLevel: 8,
     cost: (level) => ({ spiritStones: scaleCost(110, level), arrayFlags: level, herbs: scaleCost(10, level) }),
     bonuses: { qiRate: 0.025 },
@@ -614,6 +617,7 @@ export const SPIRIT_BEASTS = {
     id: 'cloudFox',
     name: '云纹灵狐',
     detail: '亲近灵气，辅助周天灵息和灵田照料。',
+    rarityId: 'spirit',
     maxLevel: 8,
     cost: (level) => ({ spiritStones: scaleCost(90, level), herbs: scaleCost(18, level), beastCores: level }),
     bonuses: { qiRate: 0.04, herbRate: 0.015 },
@@ -625,6 +629,7 @@ export const SPIRIT_BEASTS = {
     id: 'thunderTiger',
     name: '雷纹幼虎',
     detail: '守山善战，凝练道威并护持外出行游。',
+    rarityId: 'mystic',
     maxLevel: 8,
     cost: (level) => ({ spiritStones: scaleCost(130, level), beastCores: level * 2 }),
     bonuses: { power: 22, dangerReduction: 5 },
@@ -747,6 +752,15 @@ export const LOOT_EQUIPMENT = {
     bonuses: { breakthrough: 0.04, qiRate: 0.03, vitality: 35, elementPower: 10 },
   },
 };
+
+export const RARITY_TIERS = [
+  { id: 'common', name: '凡品', weight: 420, qualityBonus: 0, bonusMultiplier: 1, maxLevelBonus: 0, affixCount: 1, dismantleMultiplier: 1 },
+  { id: 'spirit', name: '蕴灵', weight: 300, qualityBonus: 0, bonusMultiplier: 1.08, maxLevelBonus: 1, affixCount: 1, dismantleMultiplier: 1 },
+  { id: 'mystic', name: '玄纹', weight: 180, qualityBonus: 1, bonusMultiplier: 1.18, maxLevelBonus: 2, affixCount: 2, dismantleMultiplier: 1.25 },
+  { id: 'earthFiend', name: '地煞', weight: 70, qualityBonus: 2, bonusMultiplier: 1.32, maxLevelBonus: 3, affixCount: 2, dismantleMultiplier: 1.55 },
+  { id: 'heavenWork', name: '天工', weight: 25, qualityBonus: 3, bonusMultiplier: 1.5, maxLevelBonus: 4, affixCount: 3, dismantleMultiplier: 1.9 },
+  { id: 'dao', name: '道器', weight: 5, qualityBonus: 4, bonusMultiplier: 1.72, maxLevelBonus: 6, affixCount: 3, dismantleMultiplier: 2.4 },
+];
 
 export const COMBAT_ELEMENTS = {
   metal: { id: 'metal', name: '庚金', restrains: 'wood' },
@@ -1119,6 +1133,7 @@ export const FORMATIONS = {
   spiritGathering: {
     id: 'spiritGathering',
     name: '聚灵阵',
+    rarityId: 'common',
     maxLevel: 12,
     cost: (level) => ({ spiritStones: scaleCost(70, level), arrayFlags: scaleCost(1, level) }),
     qiBonusPerLevel: 0.1,
@@ -1126,6 +1141,7 @@ export const FORMATIONS = {
   mountainGuard: {
     id: 'mountainGuard',
     name: '护山阵',
+    rarityId: 'common',
     maxLevel: 12,
     cost: (level) => ({ spiritStones: scaleCost(75, level), arrayFlags: scaleCost(1, level) }),
     stabilityPerLevel: 0.03,
@@ -1133,6 +1149,7 @@ export const FORMATIONS = {
   swordArray: {
     id: 'swordArray',
     name: '剑阵',
+    rarityId: 'spirit',
     maxLevel: 12,
     cost: (level) => ({ spiritStones: scaleCost(80, level), beastCores: scaleCost(1, level), arrayFlags: scaleCost(1, level) }),
     powerPerLevel: 26,
@@ -1511,6 +1528,7 @@ export function createGameState(now = Date.now()) {
       robe: null,
     },
     lootEquipment: [],
+    lootDropSerial: 0,
     equippedLoot: {
       weapon: null,
       amulet: null,
@@ -1602,6 +1620,7 @@ export function reviveGameState(saved, now = Date.now()) {
   state.gearQuality = normalizeGearQuality(state.gearQuality);
   state.gearAffixes = normalizeGearAffixes(state.gearAffixes);
   state.lootEquipment = normalizeLootEquipment(state.lootEquipment);
+  state.lootDropSerial = Math.max(Math.floor(Number(state.lootDropSerial) || 0), state.lootEquipment.length);
   state.equippedLoot = normalizeEquippedLoot(state.equippedLoot, state.lootEquipment);
   state.lockedLoot = normalizeLockedLoot(state.lockedLoot, state.lootEquipment);
   state.treasures = normalizeLevels(state.treasures, TREASURES);
@@ -2527,12 +2546,18 @@ export function getGearQuality(state, gearId) {
   const qualityIndex = state.gearQuality?.[gearId] ?? 0;
   const affixId = state.gearAffixes?.[gearId] ?? null;
   const affix = affixId ? GEAR_AFFIXES[affixId] : null;
+  const rarity = getRarityTier(getGearQualityRarityId(qualityIndex));
   return {
     qualityIndex,
     qualityName: GEAR_QUALITIES[qualityIndex]?.name ?? GEAR_QUALITIES[0].name,
+    rarity,
     affixId,
     affixName: affix?.name ?? '无词条',
   };
+}
+
+export function getRarityTierForLevel(level = 0, baseRarityId = 'common') {
+  return getRarityTier(getGrowthRarityId(level, baseRarityId));
 }
 
 export function getGearSetStatus(state) {
@@ -2638,6 +2663,7 @@ export function getEquipmentDetails(state) {
         intent: getGearIntent(item.id),
         qualityIndex: quality.qualityIndex,
         qualityName: quality.qualityName,
+        rarity: quality.rarity,
         affix: affix ? { id: affix.id, name: affix.name, effects: effectsFromBonusObject(affix) } : { id: null, name: '无词条', effects: [] },
         effects: getGearEffects(item.id, level, quality.qualityIndex, affix),
         nextEffects: maxed ? [] : getGearEffects(item.id, nextLevel, quality.qualityIndex, affix),
@@ -2667,6 +2693,7 @@ export function getEquipmentDetails(state) {
       name: item.name,
       slot: item.slot,
       variant: item.variant ?? null,
+      rarity: getLootRarity(item),
       level: item.level ?? 0,
       maxLevel: getLootMaxLevel(item),
       tier: getUpgradeTier(Math.max(1, item.level ?? 1)),
@@ -2682,6 +2709,27 @@ export function getEquipmentDetails(state) {
         cost: (item.level ?? 0) >= getLootMaxLevel(item) ? null : getLootEmpowerCost((item.level ?? 0) + 1),
       },
     })),
+    formations: Object.values(FORMATIONS).map((formation) => {
+      const level = state.formations?.[formation.id] ?? 0;
+      const maxed = level >= formation.maxLevel;
+      const nextLevel = level + 1;
+      return {
+        id: formation.id,
+        name: formation.name,
+        detail: getFormationDetail(formation.id),
+        level,
+        maxLevel: formation.maxLevel,
+        rarity: getRarityTierForLevel(level, formation.rarityId ?? 'common'),
+        nextRarity: getNextRarityMilestone(level, formation.maxLevel, formation.rarityId ?? 'common'),
+        effects: getFormationEffects(formation, level),
+        nextEffects: maxed ? [] : getFormationEffects(formation, nextLevel),
+        upgrade: {
+          maxed,
+          nextLevel,
+          cost: maxed ? null : formation.cost(nextLevel),
+        },
+      };
+    }),
     treasures: Object.values(TREASURES).map((treasure) => {
       const level = state.treasures?.[treasure.id] ?? 0;
       return {
@@ -2690,6 +2738,8 @@ export function getEquipmentDetails(state) {
         detail: treasure.detail,
         level,
         maxLevel: treasure.maxLevel,
+        rarity: getRarityTierForLevel(level, treasure.rarityId ?? 'common'),
+        nextRarity: getNextRarityMilestone(level, treasure.maxLevel, treasure.rarityId ?? 'common'),
         effects: effectsFromBonusObject(scaleBonusObject(treasure.bonuses, level)),
         nextEffects: level < treasure.maxLevel ? effectsFromBonusObject(scaleBonusObject(treasure.bonuses, level + 1)) : [],
       };
@@ -2702,6 +2752,8 @@ export function getEquipmentDetails(state) {
         detail: beast.detail,
         level,
         maxLevel: beast.maxLevel,
+        rarity: getRarityTierForLevel(level, beast.rarityId ?? 'common'),
+        nextRarity: getNextRarityMilestone(level, beast.maxLevel, beast.rarityId ?? 'common'),
         deployed: state.activeSpiritBeast === beast.id,
         effects: effectsFromBonusObject(scaleBonusObject(beast.bonuses, level)),
         collectionEffects: effectsFromBonusObject(scaleBonusObject(beast.bonuses, level)),
@@ -2762,7 +2814,7 @@ export function disassembleLootEquipment(state, uid, now = Date.now()) {
   if (state.lockedLoot) {
     delete state.lockedLoot[item.uid];
   }
-  const dismantleMultiplier = 1 + (state.buildings?.forgingHall ?? 0) * BUILDINGS.forgingHall.dismantleBonusPerLevel;
+  const dismantleMultiplier = getLootDismantleMultiplier(state, item);
   const reward = {
     forgingEssence: Math.floor((2 + (item.level ?? 0)) * dismantleMultiplier),
     artifacts: 1,
@@ -2798,9 +2850,8 @@ export function organizeLootEquipment(state, now = Date.now()) {
     return { ok: true, removed: 0, reward: {}, items: [] };
   }
 
-  const dismantleMultiplier = 1 + (state.buildings?.forgingHall ?? 0) * BUILDINGS.forgingHall.dismantleBonusPerLevel;
   const reward = removedItems.reduce((total, item) => ({
-    forgingEssence: total.forgingEssence + Math.floor((2 + (item.level ?? 0)) * dismantleMultiplier),
+    forgingEssence: total.forgingEssence + Math.floor((2 + (item.level ?? 0)) * getLootDismantleMultiplier(state, item)),
     artifacts: total.artifacts + 1,
   }), { forgingEssence: 0, artifacts: 0 });
   state.lootEquipment = items.filter((item) => keepUids.has(item.uid));
@@ -5848,12 +5899,56 @@ function getLootScore(item) {
   }, 0) + (item?.level ?? 0) * 2 + (item?.quality ?? 0) * 4;
 }
 
+function getLootDismantleMultiplier(state, item) {
+  const forgeMultiplier = 1 + (state.buildings?.forgingHall ?? 0) * BUILDINGS.forgingHall.dismantleBonusPerLevel;
+  return forgeMultiplier * (getLootRarity(item).dismantleMultiplier ?? 1);
+}
+
 function formatEffectDelta(effect) {
   const sign = effect.value > 0 ? '+' : '';
   if (effect.mode === 'percent') {
     return `${effect.label} ${sign}${Math.round(effect.value * 100)}%`;
   }
   return `${effect.label} ${sign}${effect.value}`;
+}
+
+function getRarityTier(rarityId = 'common') {
+  return RARITY_TIERS.find((tier) => tier.id === rarityId) ?? RARITY_TIERS[0];
+}
+
+function getRarityIndex(rarityId = 'common') {
+  return Math.max(0, RARITY_TIERS.findIndex((tier) => tier.id === rarityId));
+}
+
+function getHigherRarityId(leftId = 'common', rightId = 'common') {
+  return getRarityIndex(leftId) >= getRarityIndex(rightId) ? leftId : rightId;
+}
+
+function getGearQualityRarityId(qualityIndex = 0) {
+  return ['common', 'spirit', 'mystic', 'earthFiend', 'heavenWork', 'dao'][qualityIndex] ?? 'common';
+}
+
+function getGrowthRarityId(level = 0, baseRarityId = 'common') {
+  const safeLevel = Math.max(0, Math.floor(Number(level) || 0));
+  let growthId = 'common';
+  if (safeLevel >= 10) {
+    growthId = 'heavenWork';
+  } else if (safeLevel >= 7) {
+    growthId = 'earthFiend';
+  } else if (safeLevel >= 4) {
+    growthId = 'mystic';
+  } else if (safeLevel >= 1) {
+    growthId = 'spirit';
+  }
+  return getHigherRarityId(baseRarityId, growthId);
+}
+
+function getNextRarityMilestone(level = 0, maxLevel = 0, baseRarityId = 'common') {
+  const currentIndex = getRarityIndex(getGrowthRarityId(level, baseRarityId));
+  return [1, 4, 7, 10]
+    .filter((threshold) => threshold > level && threshold <= maxLevel)
+    .map((threshold) => ({ level: threshold, ...getRarityTierForLevel(threshold, baseRarityId) }))
+    .find((candidate) => getRarityIndex(candidate.id) > currentIndex) ?? null;
 }
 
 function getTreasureBonus(state, key) {
@@ -5889,11 +5984,37 @@ function getDeployedSpiritBeastSources(state, key, mode = 'flat') {
   return value ? [{ label: '出战灵兽', value, mode }] : [];
 }
 
+function getLootRarity(item) {
+  return getRarityTier(item?.variant?.rarityId ?? item?.variant?.gradeId ?? getGearQualityRarityId(item?.quality ?? 0));
+}
+
 function getDaoHeartBonus(state, key) {
   return Object.entries(state.daoHearts ?? {}).reduce((total, [heartId, level]) => {
     const heart = DAO_HEARTS[heartId];
     return total + (heart?.bonuses?.[key] ?? 0) * (level ?? 0);
   }, 0);
+}
+
+function getFormationEffects(formation, level) {
+  const effects = [];
+  if (formation.qiBonusPerLevel) {
+    effects.push({ id: 'qiBonus', label: '灵息', value: getTieredLevelValue(level, formation.qiBonusPerLevel), mode: 'percent' });
+  }
+  if (formation.stabilityPerLevel) {
+    effects.push({ id: 'breakthrough', label: '破境天机', value: getTieredLevelValue(level, formation.stabilityPerLevel), mode: 'percent' });
+  }
+  if (formation.powerPerLevel) {
+    effects.push({ id: 'power', label: '道威', value: getTieredLevelValue(level, formation.powerPerLevel), mode: 'flat' });
+  }
+  return effects.filter((effect) => effect.value !== 0);
+}
+
+function getFormationDetail(id) {
+  return {
+    spiritGathering: '聚拢洞府灵机，提升长期吐纳。',
+    mountainGuard: '稳住山门气机，叩关时护持根基。',
+    swordArray: '铺开护山剑势，提升斗法道威。',
+  }[id] ?? '阵图运转后会改变长期修行气象。';
 }
 
 function getGearEffects(gearId, level, qualityIndex, affix) {
@@ -6232,7 +6353,8 @@ function addLootEquipment(state, templateId) {
     return null;
   }
   state.lootEquipment ??= [];
-  const uid = `${template.id}-${state.lootEquipment.length + 1}`;
+  state.lootDropSerial = Math.max(Math.floor(Number(state.lootDropSerial) || 0), state.lootEquipment.length) + 1;
+  const uid = `${template.id}-${state.lootDropSerial}`;
   const item = createLootItem(template.id, uid);
   state.lootEquipment.unshift(item);
   state.lootEquipment = state.lootEquipment.slice(0, 40);
@@ -6242,8 +6364,8 @@ function addLootEquipment(state, templateId) {
 function createLootItem(templateId, uid, level = 0, savedVariant = null) {
   const template = LOOT_EQUIPMENT[templateId];
   const variant = createLootVariant(template, uid, savedVariant);
-  const quality = clampInteger((template.quality ?? 0) + (variant.qualityBonus ?? 0), 0, 4);
-  const safeLevel = clampInteger(level, 0, getLootMaxLevel({ ...template, quality }));
+  const quality = clampInteger((template.quality ?? 0) + (variant.qualityBonus ?? 0), 0, RARITY_TIERS.length - 1);
+  const safeLevel = clampInteger(level, 0, getLootMaxLevel({ ...template, quality, variant }));
   return {
     uid,
     templateId,
@@ -6259,32 +6381,90 @@ function createLootItem(templateId, uid, level = 0, savedVariant = null) {
 
 function createLootVariant(template, uid, savedVariant = null) {
   if (savedVariant && typeof savedVariant === 'object') {
-    const grade = LOOT_VARIANT_GRADES.find((candidate) => candidate.id === savedVariant.gradeId) ?? LOOT_VARIANT_GRADES[0];
-    const affix = LOOT_VARIANT_AFFIXES[template.slot]?.find((candidate) => candidate.id === savedVariant.affixId) ?? LOOT_VARIANT_AFFIXES[template.slot]?.[0];
+    const rarity = getSavedLootRarity(savedVariant);
+    const affixes = selectLootAffixes(template.slot, hashString(`${template.id}:${uid}:saved`), rarity.affixCount, savedVariant.affixIds ?? [savedVariant.affixId].filter(Boolean));
     const element = COMBAT_ELEMENTS[savedVariant.element] ? savedVariant.element : template.element;
-    return {
-      gradeId: grade.id,
-      affixId: affix?.id ?? 'none',
-      name: savedVariant.name ?? `${COMBAT_ELEMENTS[element]?.name ?? ''}${affix?.name ?? grade.name}`,
-      qualityBonus: grade.qualityBonus,
-      element,
-      bonuses: affix?.bonuses ?? {},
-    };
+    return buildLootVariant(template, rarity, affixes, element, savedVariant.name);
   }
-  const pool = LOOT_VARIANT_AFFIXES[template.slot] ?? [];
   const seed = hashString(`${template.id}:${uid}`);
-  const grade = LOOT_VARIANT_GRADES[seed % LOOT_VARIANT_GRADES.length];
-  const affix = pool[Math.floor(seed / 7) % pool.length] ?? { id: 'none', name: grade.name, bonuses: {} };
+  const rarity = rollLootRarity(seed, uid);
+  const affixes = selectLootAffixes(template.slot, seed, rarity.affixCount);
   const elementIds = Object.keys(COMBAT_ELEMENTS);
   const element = elementIds[Math.floor(seed / 13) % elementIds.length] ?? template.element;
-  return {
-    gradeId: grade.id,
-    affixId: affix.id,
-    name: `${COMBAT_ELEMENTS[element]?.name ?? ''}${affix.name}`,
-    qualityBonus: grade.qualityBonus,
-    element,
-    bonuses: scaleBonusObject(affix.bonuses, grade.bonusMultiplier),
+  return buildLootVariant(template, rarity, affixes, element);
+}
+
+function getSavedLootRarity(savedVariant) {
+  const legacyGradeMap = {
+    steady: 'common',
+    bright: 'spirit',
+    hidden: 'mystic',
   };
+  return getRarityTier(savedVariant.rarityId ?? legacyGradeMap[savedVariant.gradeId] ?? savedVariant.gradeId ?? 'common');
+}
+
+function rollLootRarity(seed, uid = '') {
+  const serial = Number(String(uid).match(/-(\d+)$/)?.[1]) || 0;
+  if (serial > 0) {
+    if (serial % 60 === 0) return getRarityTier('heavenWork');
+    if (serial % 30 === 0) return getRarityTier('earthFiend');
+    if (serial % 12 === 0) return getRarityTier('mystic');
+    if (serial % 5 === 0) return getRarityTier('spirit');
+  }
+  const totalWeight = RARITY_TIERS.reduce((total, tier) => total + tier.weight, 0);
+  let roll = seed % totalWeight;
+  for (const tier of RARITY_TIERS) {
+    if (roll < tier.weight) {
+      return tier;
+    }
+    roll -= tier.weight;
+  }
+  return RARITY_TIERS[0];
+}
+
+function selectLootAffixes(slot, seed, count, preferredIds = []) {
+  const pool = LOOT_VARIANT_AFFIXES[slot] ?? [];
+  const selected = [];
+  const add = (affixId) => {
+    const affix = pool.find((candidate) => candidate.id === affixId);
+    if (affix && !selected.some((candidate) => candidate.id === affix.id)) {
+      selected.push(affix);
+    }
+  };
+  preferredIds.forEach(add);
+  for (let offset = 0; selected.length < Math.max(1, count) && offset < pool.length * 2; offset += 1) {
+    add(pool[Math.floor(seed / (7 + offset * 3)) % pool.length]?.id);
+  }
+  return selected.length ? selected.slice(0, count) : [{ id: 'none', name: '无纹', bonuses: {} }];
+}
+
+function buildLootVariant(template, rarity, affixes, element, savedName = null) {
+  const affixBonuses = affixes.reduce((total, affix) => mergeBonusObjects(total, affix.bonuses ?? {}), {});
+  const scaledBonuses = scaleBonusObject(affixBonuses, rarity.bonusMultiplier);
+  const affixNames = affixes.map((affix) => affix.name).join('·');
+  return {
+    gradeId: rarity.id,
+    rarityId: rarity.id,
+    rarity: { id: rarity.id, name: rarity.name },
+    affixId: affixes[0]?.id ?? 'none',
+    affixIds: affixes.map((affix) => affix.id),
+    affixes: affixes.map((affix) => ({ id: affix.id, name: affix.name, bonuses: scaleBonusObject(affix.bonuses ?? {}, rarity.bonusMultiplier) })),
+    name: savedName ?? `${rarity.name}${COMBAT_ELEMENTS[element]?.name ?? ''}${affixNames}`,
+    qualityBonus: rarity.qualityBonus,
+    bonusMultiplier: rarity.bonusMultiplier,
+    maxLevelBonus: rarity.maxLevelBonus,
+    dismantleMultiplier: rarity.dismantleMultiplier,
+    element,
+    bonuses: scaledBonuses,
+  };
+}
+
+function mergeBonusObjects(left, right) {
+  const merged = { ...left };
+  Object.entries(right ?? {}).forEach(([key, value]) => {
+    merged[key] = round((merged[key] ?? 0) + value);
+  });
+  return merged;
 }
 
 function createLootBonuses(templateId, level = 0, variant = null) {
@@ -6307,7 +6487,7 @@ function createLootBonuses(templateId, level = 0, variant = null) {
 }
 
 function getLootMaxLevel(itemOrTemplate) {
-  return Math.min(12, Math.max(3, 3 + (itemOrTemplate?.quality ?? 0) * 3));
+  return Math.min(24, Math.max(3, 3 + (itemOrTemplate?.quality ?? 0) * 3 + (itemOrTemplate?.variant?.maxLevelBonus ?? 0)));
 }
 
 function getResourceAmount(state, resource) {

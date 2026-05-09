@@ -19,6 +19,7 @@ import {
   MISSION_EVENTS,
   OPPORTUNITIES,
   REALMS,
+  RARITY_TIERS,
   SECT_COMMISSIONS,
   SECT_LEVELS,
   SPIRIT_BEASTS,
@@ -908,6 +909,60 @@ test('dropped loot carries deterministic variant stats beyond the template', () 
   assert.equal(Object.keys(item.bonuses).some((key) => item.bonuses[key] !== LOOT_EQUIPMENT.cloudthreadRobe.bonuses[key]), true);
 });
 
+test('loot rarity tiers deepen affix pools and strengthening ceilings', () => {
+  const state = reviveGameState({
+    lootEquipment: [
+      {
+        uid: 'common-sword',
+        templateId: 'qingfengSword',
+        level: 0,
+        variant: { rarityId: 'common', affixIds: ['edge'], element: 'metal' },
+      },
+      {
+        uid: 'dao-sword',
+        templateId: 'qingfengSword',
+        level: 0,
+        variant: { rarityId: 'dao', affixIds: ['edge', 'pierce', 'spark'], element: 'fire' },
+      },
+    ],
+  }, 1000);
+
+  const details = getEquipmentDetails(state).loot;
+  const common = details.find((item) => item.uid === 'common-sword');
+  const dao = details.find((item) => item.uid === 'dao-sword');
+
+  assert.equal(RARITY_TIERS.find((tier) => tier.id === 'dao').name, '道器');
+  assert.equal(common.rarity.name, '凡品');
+  assert.equal(dao.rarity.name, '道器');
+  assert.equal(common.variant.affixes.length, 1);
+  assert.equal(dao.variant.affixes.length, 3);
+  assert.equal(dao.maxLevel > common.maxLevel, true);
+  assert.equal(dao.effects.find((effect) => effect.id === 'attack').value > common.effects.find((effect) => effect.id === 'attack').value, true);
+});
+
+test('repeated loot drops advance the rarity pool instead of repeating one variant', () => {
+  const state = createGameState(1000);
+  state.realmIndex = realmIndexByName('筑基一层');
+  state.gear.weapon = 12;
+  state.gear.robe = 9;
+  state.cultivationPaths.sword = 6;
+  state.formations.swordArray = 6;
+  state.permanentBonuses.power = 900;
+
+  for (let index = 0; index < 36; index += 1) {
+    const startAt = 1000 + index * 150_000;
+    startMission(state, 'ancientSwordTomb', startAt, 'relicSearch');
+    updateGame(state, 140, startAt + 141_000);
+  }
+
+  const uids = new Set(state.lootEquipment.map((item) => item.uid));
+  const rarityIds = new Set(state.lootEquipment.map((item) => item.variant.rarityId));
+
+  assert.equal(uids.size, state.lootEquipment.length);
+  assert.equal(rarityIds.size > 1, true);
+  assert.equal([...rarityIds].some((id) => id !== 'common'), true);
+});
+
 test('mission completion records a readable settlement report', () => {
   const state = createGameState(1000);
   state.realmIndex = realmIndexByName('筑基一层');
@@ -1423,6 +1478,23 @@ test('equipment details expose cultivation intent and tiered growth preview', ()
   assert.equal(weapon.nextEffects.find((effect) => effect.id === 'power').value > weapon.effects.find((effect) => effect.id === 'power').value, true);
   assert.equal(weapon.refinement.nextQualityName, '下品');
   assert.equal(weapon.refinement.chance, 0.82);
+});
+
+test('formations treasures and spirit beasts expose rarity milestones', () => {
+  const state = createGameState(1000);
+  state.formations.swordArray = 7;
+  state.treasures.lifeBoundSeal = 4;
+  state.spiritBeasts.thunderTiger = 1;
+
+  const details = getEquipmentDetails(state);
+  const swordArray = details.formations.find((item) => item.id === 'swordArray');
+  const seal = details.treasures.find((item) => item.id === 'lifeBoundSeal');
+  const tiger = details.spiritBeasts.find((item) => item.id === 'thunderTiger');
+
+  assert.equal(swordArray.rarity.name, '地煞');
+  assert.equal(seal.rarity.name, '玄纹');
+  assert.equal(seal.nextRarity.name, '地煞');
+  assert.equal(tiger.rarity.name, '玄纹');
 });
 
 test('loot empowerment uses tiered materials and stronger cross-tier bonuses', () => {

@@ -1613,6 +1613,43 @@ small {
   font-weight: 900;
 }
 
+.rarity-badge {
+  display: inline-block;
+  width: fit-content;
+  margin-top: 6px;
+  border: 1px solid rgba(245, 238, 220, 0.16);
+  border-radius: 999px;
+  padding: 2px 8px;
+  color: var(--paper);
+  font-size: 0.72rem;
+  font-style: normal;
+  font-weight: 950;
+  letter-spacing: 0;
+  background: rgba(255, 255, 255, 0.055);
+}
+
+.rarity-spirit {
+  border-color: rgba(125, 211, 183, 0.34);
+  color: #9de8ca;
+}
+
+.rarity-mystic {
+  border-color: rgba(127, 200, 255, 0.36);
+  color: #a9d9ff;
+}
+
+.rarity-earthFiend {
+  border-color: rgba(232, 198, 106, 0.46);
+  color: var(--gold);
+}
+
+.rarity-heavenWork,
+.rarity-dao {
+  border-color: rgba(255, 184, 107, 0.55);
+  color: #ffd0a0;
+  background: linear-gradient(135deg, rgba(232, 198, 106, 0.14), rgba(125, 211, 183, 0.08));
+}
+
 .detail-row {
   display: block;
   align-items: start;
