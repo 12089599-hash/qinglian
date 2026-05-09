@@ -15,6 +15,7 @@ import {
   LOOT_EQUIPMENT,
   MAINLINE_CHAPTERS,
   MAP_SPECIAL_DROPS,
+  MISSIONS,
   MISSION_MAPS,
   MISSION_APPROACHES,
   MISSION_EVENTS,
@@ -656,6 +657,9 @@ test('two matching gear affixes activate set resonance bonuses', () => {
   assert.equal(active.total, 6);
   assert.equal(active.activeTier.pieces, 2);
   assert.equal(active.nextTier.pieces, 4);
+  assert.equal(active.tiers.find((tier) => tier.pieces === 2).active, true);
+  assert.equal(active.tiers.find((tier) => tier.pieces === 4).active, false);
+  assert.equal(active.missingAffixes.some((affix) => affix.slot === 'amulet'), true);
   assert.equal(calculatePower(state) > 170, true);
   assert.equal(calculateQiRate(state, 2000) > calculateQiRate(createGameState(1000), 2000), true);
   assert.equal(getMissionStatus(state, 'mistyValley').recommendedPower < 240, true);
@@ -1318,6 +1322,25 @@ test('boss battle simulation reacts to elemental gear and records rounds', () =>
   assert.equal(battle.summary.includes('回合'), true);
 });
 
+test('map bosses scale into multi-round checks after depth progress', () => {
+  const state = createGameState(1000);
+  state.realmIndex = realmIndexByName('筑基六层');
+  state.gear.weapon = 8;
+  state.gear.amulet = 5;
+  state.gear.robe = 6;
+  state.cultivationPaths.sword = 5;
+  state.formations.swordArray = 4;
+  state.permanentBonuses.power = 1200;
+
+  const first = simulateBossBattle(state, 'swordTomb', 2000, () => 0.5);
+  state.mapDepths.swordTomb = 6;
+  state.mapReputation.swordTomb = 72;
+  const deepened = simulateBossBattle(state, 'swordTomb', 3000, () => 0.5);
+
+  assert.equal(deepened.enemy.maxHp > first.enemy.maxHp, true);
+  assert.equal(deepened.rounds.some((round) => round.actor === 'enemy'), true);
+});
+
 test('turn battles convert defense into nonlinear mitigation instead of flat subtraction', () => {
   const exposed = createGameState(1000);
   exposed.realmIndex = realmIndexByName('筑基一层');
@@ -1898,6 +1921,45 @@ test('midgame mission pressure requires preparation beyond realm unlock', () => 
   const prepared = getMissionStatus(state, 'ancientSwordTomb');
   assert.equal(['有险', '平', '小吉'].includes(prepared.omen.name), true);
   assert.equal(prepared.recommendedPower < unlocked.recommendedPower, true);
+});
+
+test('prepared mission routes keep a residual omen after heavy safety stacking', () => {
+  const state = createGameState(1000);
+  state.realmIndex = realmIndexByName('金丹四转');
+  state.gear.weapon = 12;
+  state.gear.offhand = 12;
+  state.gear.amulet = 12;
+  state.gear.robe = 12;
+  state.gear.jade = 12;
+  state.gear.boots = 12;
+  state.gearAffixes.weapon = 'swordIntent';
+  state.gearAffixes.offhand = 'spiritBell';
+  state.gearAffixes.amulet = 'spiritVein';
+  state.gearAffixes.robe = 'cloudStep';
+  state.gearAffixes.jade = 'clearJade';
+  state.gearAffixes.boots = 'cloudTrace';
+  state.gearQuality.weapon = 3;
+  state.gearQuality.offhand = 3;
+  state.gearQuality.amulet = 3;
+  state.gearQuality.robe = 3;
+  state.gearQuality.jade = 3;
+  state.gearQuality.boots = 3;
+  state.cultivationPaths.sword = 12;
+  state.formations.swordArray = 12;
+  state.buildings.swordArray = 12;
+  state.completedMissions.ancientRuins = 30;
+  state.mapReputation.ancientRuins = 160;
+  state.permanentBonuses.power = 3000;
+  state.lootEquipment = [
+    { uid: 'warded-relic', templateId: 'cloudthreadRobe', name: '避劫旧袍', slot: 'robe', quality: 3, bonuses: { dangerReduction: 5000 } },
+  ];
+  state.equippedLoot.robe = 'warded-relic';
+
+  const route = getMissionStatus(state, 'ancientRuins');
+
+  assert.equal(route.unlocked, true);
+  assert.equal(route.recommendedPower >= Math.round(MISSIONS.ancientRuins.danger * 0.24), true);
+  assert.equal(['平', '小吉'].includes(route.omen.name), true);
 });
 
 test('ancient ruins unlocks at mid golden core instead of the first turn', () => {

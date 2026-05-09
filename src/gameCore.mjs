@@ -11,6 +11,7 @@ export const REALMS = createRealmTrack();
 
 export const CURRENT_BALANCE_VERSION = 6;
 export const MAP_DEPTH_MAX_LAYER = 30;
+const MISSION_RESIDUAL_DANGER_RATIO = 0.24;
 export const DEPTH_TRIBULATIONS = [
   { id: 'goldRain', name: '金刃雨', element: 'metal', detail: '细密剑雨压低回旋余地，劫影锋芒更盛。', pressureMultiplier: 1.06, attackMultiplier: 1.12, pierceBonus: 4 },
   { id: 'woodMiasma', name: '青瘴潮', element: 'wood', detail: '青瘴生息不绝，劫影血元更厚。', pressureMultiplier: 1.05, vitalityMultiplier: 1.16, defenseMultiplier: 1.04 },
@@ -2905,6 +2906,7 @@ export function getMapStatuses(state) {
     const ready = unlocked && completed >= target && depthGate.ready && !defeated;
     const mastery = getMapMastery(state, map.id);
     const readiness = getMapReadiness(state, map, routes);
+    const bossPower = getBossCombatPower(state, map);
     return {
       id: map.id,
       name: map.name,
@@ -2922,6 +2924,8 @@ export function getMapStatuses(state) {
       depth: getMapDepthStatus(state, map.id),
       boss: {
         ...map.boss,
+        basePower: map.boss.power,
+        power: bossPower,
         status: defeated ? 'defeated' : ready ? 'ready' : !unlocked ? 'locked' : completed >= target && !depthGate.ready ? 'depthLocked' : 'hidden',
         defeated,
         depthGate,
@@ -3100,7 +3104,7 @@ function getMapReadiness(state, map, routes = []) {
 function getBossOmen(state, map) {
   return buildOmen({
     power: calculatePower(state),
-    pressure: map.boss.power,
+    pressure: getBossCombatPower(state, map),
     demon: map.boss.failurePenalty?.heartDemon ?? 0,
     mapMastery: getMapMastery(state, map.id).level,
     unlocked: (state.realmIndex ?? 0) >= map.unlockRealmIndex,
@@ -3180,7 +3184,7 @@ export function challengeMapBoss(state, mapId, now = Date.now()) {
       now,
     }));
     addLog(state, now, `挑战${map.boss.name}失利，${battle.summary}`);
-    return { ok: false, reason: 'battleLost', requiredPower: map.boss.power, battle };
+    return { ok: false, reason: 'battleLost', requiredPower: getBossCombatPower(state, map), battle };
   }
 
   applyResources(state, map.boss.reward);
@@ -3353,7 +3357,7 @@ export function simulateBossBattle(state, mapId, now = Date.now(), random = null
   if (!map) {
     return { outcome: 'defeat', reason: 'unknownMap', rounds: [] };
   }
-  return runTurnBattle(getPlayerCombatant(state), getBossCombatant(map), {
+  return runTurnBattle(getPlayerCombatant(state), getBossCombatant(state, map), {
     type: 'boss',
     now,
     random,
@@ -3566,6 +3570,13 @@ export function getGearSetStatus(state) {
     const nextTier = getGearSetNextTier(set, matchedAffixes.length);
     const active = Boolean(activeTier);
     const bonuses = getGearSetMatchedBonuses(set, matchedAffixes.length);
+    const affixes = set.affixes.map((affixId) => ({
+      id: affixId,
+      name: GEAR_AFFIXES[affixId]?.name ?? affixId,
+      slot: GEAR_AFFIXES[affixId]?.slot ?? null,
+      slotName: GEAR[GEAR_AFFIXES[affixId]?.slot]?.name ?? '器物',
+      active: activeAffixes.has(affixId),
+    }));
     return {
       id: set.id,
       name: set.name,
@@ -3577,13 +3588,14 @@ export function getGearSetStatus(state) {
       nextTier,
       bonuses,
       effects: effectsFromBonusObject(bonuses),
-      affixes: set.affixes.map((affixId) => ({
-        id: affixId,
-        name: GEAR_AFFIXES[affixId]?.name ?? affixId,
-        slot: GEAR_AFFIXES[affixId]?.slot ?? null,
-        slotName: GEAR[GEAR_AFFIXES[affixId]?.slot]?.name ?? '器物',
-        active: activeAffixes.has(affixId),
+      tiers: getGearSetTiers(set).map((tier) => ({
+        ...tier,
+        active: matchedAffixes.length >= tier.pieces,
+        missing: Math.max(0, tier.pieces - matchedAffixes.length),
+        effects: effectsFromBonusObject(tier.bonuses ?? {}),
       })),
+      missingAffixes: affixes.filter((affix) => !affix.active),
+      affixes,
     };
   });
 }
@@ -5755,7 +5767,12 @@ function getMissionDanger(state, mission, approachId = null) {
   const approach = getSelectedMissionApproach(state, mission, approachId);
   const pressure = getMissionPressure(state, mission);
   const approachPressure = round(pressure * (approach.dangerMultiplier ?? 1));
-  return Math.max(0, approachPressure - getGearLevelBonus(state, 'dangerReductionPerLevel') - getGearAffixBonus(state, 'dangerReduction') - getGearSetBonus(state, 'dangerReduction') - getEquippedLootBonus(state, 'dangerReduction') - getMapMasteryBonus(state, 'dangerReduction') - getTreasureBonus(state, 'dangerReduction') - getSpiritBeastBonus(state, 'dangerReduction') - getBloodlineBonus(state, 'dangerReduction') - getSectSkillBonus(state, 'dangerReduction') - getDaoHeartBonus(state, 'dangerReduction') - (state.buildings?.swordArray ?? 0) * BUILDINGS.swordArray.dangerReductionPerLevel - (state.cultivationPaths?.sword ?? 0) * CULTIVATION_PATHS.sword.dangerReductionPerLevel);
+  if (approachPressure <= 0) {
+    return 0;
+  }
+  const mitigation = getGearLevelBonus(state, 'dangerReductionPerLevel') + getGearAffixBonus(state, 'dangerReduction') + getGearSetBonus(state, 'dangerReduction') + getEquippedLootBonus(state, 'dangerReduction') + getMapMasteryBonus(state, 'dangerReduction') + getTreasureBonus(state, 'dangerReduction') + getSpiritBeastBonus(state, 'dangerReduction') + getBloodlineBonus(state, 'dangerReduction') + getSectSkillBonus(state, 'dangerReduction') + getDaoHeartBonus(state, 'dangerReduction') + (state.buildings?.swordArray ?? 0) * BUILDINGS.swordArray.dangerReductionPerLevel + (state.cultivationPaths?.sword ?? 0) * CULTIVATION_PATHS.sword.dangerReductionPerLevel;
+  const residualPressure = Math.round(approachPressure * MISSION_RESIDUAL_DANGER_RATIO);
+  return Math.max(residualPressure, approachPressure - mitigation);
 }
 
 function getMissionPressure(state, mission) {
@@ -6968,18 +6985,34 @@ function getSpiritBeastCombatant(state) {
   };
 }
 
-function getBossCombatant(map) {
+function getBossPressureScale(state, map) {
+  const clearedDepth = clampInteger(state.mapDepths?.[map.id] ?? 0, 0, MAP_DEPTH_MAX_LAYER);
+  const masteryLevel = getMapMastery(state, map.id).level;
+  const depthScale = Math.min(0.5, clearedDepth * 0.045);
+  const masteryScale = Math.min(0.16, masteryLevel * 0.04);
+  return round(1 + depthScale + masteryScale);
+}
+
+function getBossCombatPower(state, map) {
+  return Math.round((map.boss.power ?? 120) * getBossPressureScale(state, map));
+}
+
+function getBossCombatant(state, map) {
   const power = map.boss.power ?? 120;
   const unlock = map.unlockRealmIndex ?? 0;
+  const scale = getBossPressureScale(state, map);
+  const attackFactor = 0.46 + Math.min(0.16, unlock * 0.005);
+  const defenseFactor = 0.2 + Math.min(0.1, unlock * 0.003);
+  const vitalityFactor = 1.25 + Math.min(0.9, unlock * 0.05);
   return {
     name: map.boss.name,
     element: COMBAT_ELEMENTS[map.boss.element] ?? COMBAT_ELEMENTS.earth,
-    attack: Math.round(power * 0.46 + unlock * 2),
-    defense: Math.round(power * 0.2 + unlock),
-    vitality: Math.round(power * 1.18 + unlock * 14),
+    attack: Math.round((power * attackFactor + unlock * 2) * scale),
+    defense: Math.round((power * defenseFactor + unlock) * scale),
+    vitality: Math.round((power * vitalityFactor + unlock * 14) * scale),
     speed: 10 + Math.floor(unlock / 3),
     critChance: Math.min(0.18, 0.04 + unlock * 0.003),
-    pierce: Math.round(unlock * 1.4),
+    pierce: Math.round(unlock * 1.4 * scale),
   };
 }
 

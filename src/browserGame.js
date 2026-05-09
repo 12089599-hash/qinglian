@@ -11,6 +11,7 @@
 
   const currentBalanceVersion = 6;
   const mapDepthMaxLayer = 30;
+  const missionResidualDangerRatio = 0.24;
   const DEPTH_TRIBULATIONS = [
     { id: 'goldRain', name: '金刃雨', element: 'metal', detail: '细密剑雨压低回旋余地，劫影锋芒更盛。', pressureMultiplier: 1.06, attackMultiplier: 1.12, pierceBonus: 4 },
     { id: 'woodMiasma', name: '青瘴潮', element: 'wood', detail: '青瘴生息不绝，劫影血元更厚。', pressureMultiplier: 1.05, vitalityMultiplier: 1.16, defenseMultiplier: 1.04 },
@@ -3605,7 +3606,12 @@ const spiritBeastQualities = {
     const approach = getSelectedMissionApproach(state, mission, approachId);
     const pressure = getMissionPressure(state, mission);
     const approachPressure = round(pressure * (approach.dangerMultiplier || 1));
-    return Math.max(0, approachPressure - getGearLevelBonus(state, 'dangerReductionPerLevel') - getGearAffixBonus(state, 'dangerReduction') - getGearSetBonus(state, 'dangerReduction') - getEquippedLootBonus(state, 'dangerReduction') - getMapMasteryBonus(state, 'dangerReduction') - getTreasureBonus(state, 'dangerReduction') - getSpiritBeastBonus(state, 'dangerReduction') - getBloodlineBonus(state, 'dangerReduction') - getSectSkillBonus(state, 'dangerReduction') - getDaoHeartBonus(state, 'dangerReduction') - (state.buildings.swordArray || 0) * buildings.swordArray.dangerReductionPerLevel - (state.cultivationPaths.sword || 0) * cultivationPaths.sword.dangerReductionPerLevel);
+    if (approachPressure <= 0) {
+      return 0;
+    }
+    const mitigation = getGearLevelBonus(state, 'dangerReductionPerLevel') + getGearAffixBonus(state, 'dangerReduction') + getGearSetBonus(state, 'dangerReduction') + getEquippedLootBonus(state, 'dangerReduction') + getMapMasteryBonus(state, 'dangerReduction') + getTreasureBonus(state, 'dangerReduction') + getSpiritBeastBonus(state, 'dangerReduction') + getBloodlineBonus(state, 'dangerReduction') + getSectSkillBonus(state, 'dangerReduction') + getDaoHeartBonus(state, 'dangerReduction') + (state.buildings.swordArray || 0) * buildings.swordArray.dangerReductionPerLevel + (state.cultivationPaths.sword || 0) * cultivationPaths.sword.dangerReductionPerLevel;
+    const residualPressure = Math.round(approachPressure * missionResidualDangerRatio);
+    return Math.max(residualPressure, approachPressure - mitigation);
   }
 
   function getMissionPressure(state, mission) {
@@ -4432,6 +4438,7 @@ const spiritBeastQualities = {
       const defeated = Boolean(state.defeatedBosses[map.id]);
       const depthGate = getBossDepthGate(state, map);
       const ready = unlocked && completed >= map.explorationTarget && depthGate.ready && !defeated;
+      const bossPower = getBossCombatPower(state, map);
       return {
         ...map,
         unlocked,
@@ -4445,6 +4452,8 @@ const spiritBeastQualities = {
         depth: getMapDepthStatus(state, map.id),
         boss: {
           ...map.boss,
+          basePower: map.boss.power,
+          power: bossPower,
           status: defeated ? 'defeated' : ready ? 'ready' : !unlocked ? 'locked' : completed >= map.explorationTarget && !depthGate.ready ? 'depthLocked' : 'hidden',
           defeated,
           depthGate,
@@ -4603,7 +4612,7 @@ const spiritBeastQualities = {
   function getBossOmen(state, map) {
     return buildOmen({
       power: calculatePower(state),
-      pressure: map.boss.power,
+      pressure: getBossCombatPower(state, map),
       demon: map.boss.failurePenalty?.heartDemon || 0,
       mapMastery: getMapMastery(state, map.id).level,
       unlocked: state.realmIndex >= map.unlockRealmIndex,
@@ -4665,7 +4674,7 @@ const spiritBeastQualities = {
         now,
       }));
       addLog(state, now, `挑战${map.boss.name}失利，${battle.summary}`);
-      return { ok: false, reason: 'battleLost', requiredPower: map.boss.power, battle };
+      return { ok: false, reason: 'battleLost', requiredPower: getBossCombatPower(state, map), battle };
     }
     applyResources(state, map.boss.reward);
     addMapReputation(state, map.id, map.boss.reputation || 0);
@@ -4704,6 +4713,13 @@ const spiritBeastQualities = {
       const nextTier = getGearSetNextTier(set, matchedAffixes.length);
       const active = Boolean(activeTier);
       const bonuses = getGearSetMatchedBonuses(set, matchedAffixes.length);
+      const affixes = set.affixes.map((affixId) => ({
+        id: affixId,
+        name: gearAffixes[affixId]?.name || affixId,
+        slot: gearAffixes[affixId]?.slot || null,
+        slotName: gear[gearAffixes[affixId]?.slot]?.name || '器物',
+        active: activeAffixes.has(affixId),
+      }));
       return {
         id: set.id,
         name: set.name,
@@ -4715,13 +4731,14 @@ const spiritBeastQualities = {
         nextTier,
         bonuses,
         effects: effectsFromBonusObject(bonuses),
-        affixes: set.affixes.map((affixId) => ({
-          id: affixId,
-          name: gearAffixes[affixId]?.name || affixId,
-          slot: gearAffixes[affixId]?.slot || null,
-          slotName: gear[gearAffixes[affixId]?.slot]?.name || '器物',
-          active: activeAffixes.has(affixId),
+        tiers: getGearSetTiers(set).map((tier) => ({
+          ...tier,
+          active: matchedAffixes.length >= tier.pieces,
+          missing: Math.max(0, tier.pieces - matchedAffixes.length),
+          effects: effectsFromBonusObject(tier.bonuses || {}),
         })),
+        missingAffixes: affixes.filter((affix) => !affix.active),
+        affixes,
       };
     });
   }
@@ -7317,6 +7334,17 @@ const spiritBeastQualities = {
     if (!sets?.length) {
       return '';
     }
+    const getMissingHint = (set) => {
+      if (!set.nextTier) {
+        return '器象已圆满';
+      }
+      const missing = (set.missingAffixes || [])
+        .slice(0, 3)
+        .map((affix) => `${affix.slotName}·${affix.name}`)
+        .join('、');
+      const needed = Math.max(1, set.nextTier.pieces - set.matched);
+      return `${set.nextTier.name}还差 ${needed} 件${missing ? `：${missing}` : ''}`;
+    };
     const activeSets = sets.filter((set) => set.active);
     const compactText = activeSets.length
       ? activeSets.map((set) => `${set.name}${set.activeTier ? `·${set.activeTier.name}` : ''}`).join('、')
@@ -7335,7 +7363,16 @@ const spiritBeastQualities = {
             <article class="${set.active ? 'active' : ''}">
               <span>${set.name} <small>${set.matched} / ${set.total}${set.activeTier ? ` · ${set.activeTier.name}` : ''}</small></span>
               <em>${formatEffects(set.effects)}</em>
-              <small>${set.nextTier ? `下段 ${set.nextTier.name} · 需 ${set.nextTier.pieces} 件` : '器象已圆满'}</small>
+              <div class="gear-set-tier-track">
+                ${(set.tiers || []).map((tier) => `
+                  <b class="${tier.active ? 'active' : ''}">
+                    ${tier.pieces}件
+                    <small>${tier.name}</small>
+                    <i>${formatEffects(tier.effects)}</i>
+                  </b>
+                `).join('')}
+              </div>
+              <small class="gear-set-missing">${getMissingHint(set)}</small>
               <ul>
                 ${set.affixes.map((affix) => `<li class="${affix.active ? 'active' : ''}">${affix.name}<small>${affix.slotName} · ${affix.active ? '已成' : '待洗'}</small></li>`).join('')}
               </ul>
@@ -7847,7 +7884,7 @@ const spiritBeastQualities = {
     if (!map) {
       return { outcome: 'defeat', reason: 'unknownMap', rounds: [] };
     }
-    return runTurnBattle(getPlayerCombatant(state), getBossCombatant(map), {
+    return runTurnBattle(getPlayerCombatant(state), getBossCombatant(state, map), {
       type: 'boss',
       now,
       random,
@@ -8925,18 +8962,34 @@ const spiritBeastQualities = {
     };
   }
 
-  function getBossCombatant(map) {
+  function getBossPressureScale(state, map) {
+    const clearedDepth = clampInteger(state.mapDepths?.[map.id] || 0, 0, mapDepthMaxLayer);
+    const masteryLevel = getMapMastery(state, map.id).level;
+    const depthScale = Math.min(0.5, clearedDepth * 0.045);
+    const masteryScale = Math.min(0.16, masteryLevel * 0.04);
+    return round(1 + depthScale + masteryScale);
+  }
+
+  function getBossCombatPower(state, map) {
+    return Math.round((map.boss.power || 120) * getBossPressureScale(state, map));
+  }
+
+  function getBossCombatant(state, map) {
     const power = map.boss.power || 120;
     const unlock = map.unlockRealmIndex || 0;
+    const scale = getBossPressureScale(state, map);
+    const attackFactor = 0.46 + Math.min(0.16, unlock * 0.005);
+    const defenseFactor = 0.2 + Math.min(0.1, unlock * 0.003);
+    const vitalityFactor = 1.25 + Math.min(0.9, unlock * 0.05);
     return {
       name: map.boss.name,
       element: combatElements[map.boss.element] || combatElements.earth,
-      attack: Math.round(power * 0.46 + unlock * 2),
-      defense: Math.round(power * 0.2 + unlock),
-      vitality: Math.round(power * 1.18 + unlock * 14),
+      attack: Math.round((power * attackFactor + unlock * 2) * scale),
+      defense: Math.round((power * defenseFactor + unlock) * scale),
+      vitality: Math.round((power * vitalityFactor + unlock * 14) * scale),
       speed: 10 + Math.floor(unlock / 3),
       critChance: Math.min(0.18, 0.04 + unlock * 0.003),
-      pierce: Math.round(unlock * 1.4),
+      pierce: Math.round(unlock * 1.4 * scale),
     };
   }
 

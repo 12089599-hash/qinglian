@@ -1594,6 +1594,55 @@ small {
   font-weight: 900;
 }
 
+.gear-set-tier-track {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.gear-set-tier-track b {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  border: 1px solid rgba(245, 238, 220, 0.08);
+  border-radius: 8px;
+  padding: 6px;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 900;
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.gear-set-tier-track b.active {
+  border-color: rgba(125, 211, 183, 0.44);
+  color: var(--jade);
+  background: rgba(125, 211, 183, 0.1);
+}
+
+.gear-set-tier-track small,
+.gear-set-tier-track i {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  color: inherit;
+  font-size: 0.66rem;
+  font-style: normal;
+  font-weight: 800;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gear-set-tier-track i {
+  color: var(--faded);
+}
+
+.gear-set-missing {
+  margin-top: 7px;
+  color: var(--gold);
+}
+
 .gear-set-names em {
   display: inline-flex;
   margin-top: 0;
@@ -3296,19 +3345,19 @@ small {
   }
 
   .section-tabs {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     position: fixed;
     top: auto;
     right: 0;
     bottom: 0;
     left: 0;
     gap: 6px;
-    overflow-x: auto;
+    overflow: hidden;
     margin: 0;
-    padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
+    padding: 8px 8px calc(8px + env(safe-area-inset-bottom));
     border-top: 1px solid var(--line);
     background: rgba(14, 19, 23, 0.97);
-    scrollbar-width: none;
   }
 
   .sub-tabs {
@@ -3326,10 +3375,10 @@ small {
   }
 
   .section-tabs button {
-    flex: 1 0 82px;
+    min-width: 0;
     min-height: 46px;
-    padding: 0 8px;
-    font-size: 0.88rem;
+    padding: 0 4px;
+    font-size: 0.84rem;
   }
 
   body {
@@ -3373,7 +3422,7 @@ small {
   .map-action-panel {
     gap: 8px;
     margin-bottom: 8px;
-    padding: 10px;
+    padding: 8px;
   }
 
   .map-action-panel header {
@@ -3390,13 +3439,17 @@ small {
     gap: 6px;
   }
 
+  .active-beast-status {
+    display: none;
+  }
+
   .map-action-panel em {
     text-align: left;
   }
 
   .map-action-grid button {
-    min-height: 68px;
-    padding: 8px 6px;
+    min-height: 54px;
+    padding: 7px 5px;
   }
 
   .map-action-grid button span {
@@ -3404,10 +3457,7 @@ small {
   }
 
   .combat-advice {
-    display: -webkit-box;
-    overflow: hidden;
-    -webkit-line-clamp: 1;
-    -webkit-box-orient: vertical;
+    display: none;
   }
 
   [data-mission-list],
@@ -3592,28 +3642,15 @@ small {
   }
 
   .progress-plan-grid {
-    display: flex;
-    grid-template-columns: none;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 6px;
-    margin-inline: -2px;
-    overflow-x: auto;
-    overscroll-behavior-x: contain;
-    padding: 0 2px 2px;
-    scroll-snap-type: x proximity;
-    scrollbar-width: none;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .progress-plan-grid::-webkit-scrollbar {
-    display: none;
   }
 
   .progress-plan-grid button {
     align-content: center;
-    flex: 0 0 86px;
-    min-height: 48px;
-    padding: 6px 7px;
-    scroll-snap-align: start;
+    min-height: 46px;
+    padding: 6px 5px;
   }
 
   .progress-plan-actions {
@@ -3622,10 +3659,11 @@ small {
 
   .progress-plan-grid button strong {
     max-width: 100%;
-    font-size: 0.82rem;
+    font-size: 0.78rem;
     line-height: 1.25;
     overflow: hidden;
     text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .progress-plan header span,
