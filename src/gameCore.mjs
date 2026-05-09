@@ -1632,6 +1632,7 @@ export function reviveGameState(saved, now = Date.now()) {
   state.pills = state.inventoryPills.gatherQiPill;
   state.log = Array.isArray(state.log) ? state.log.slice(0, 20) : [];
   state.activeMission = normalizeMission(state.activeMission);
+  ensureActiveDepthBattle(state, now);
   state.lastUpdatedAt = Number.isFinite(state.lastUpdatedAt) ? state.lastUpdatedAt : now;
   return state;
 }
@@ -3410,6 +3411,8 @@ export function startMapDepthTrial(state, mapId, now = Date.now()) {
     return { ok: false, reason: 'maxLayer' };
   }
 
+  const map = MISSION_MAPS[mapId];
+  const battle = simulateDepthBattle(state, map, status.nextLayer, now);
   state.activeMission = {
     type: 'mapDepth',
     id: `depth:${mapId}:${status.nextLayer}`,
@@ -3417,9 +3420,10 @@ export function startMapDepthTrial(state, mapId, now = Date.now()) {
     layer: status.nextLayer,
     startedAt: now,
     endsAt: now + status.duration * 1000,
+    battle,
   };
   addLog(state, now, `深入${status.mapName}秘境第 ${status.nextLayer} 层。`);
-  return { ok: true, status };
+  return { ok: true, status, battle };
 }
 
 export function setMissionApproach(state, mapId, approachId, now = Date.now()) {
@@ -3831,7 +3835,7 @@ function completeMapDepthTrial(state, active, now) {
     return;
   }
   const layer = clampInteger(active.layer ?? 1, 1, MAP_DEPTH_MAX_LAYER);
-  const battle = simulateDepthBattle(state, map, layer, now);
+  const battle = normalizeBattle(active.battle) ?? simulateDepthBattle(state, map, layer, active.startedAt ?? now);
   if (battle.outcome !== 'victory') {
     const penalty = {
       qi: -Math.max(25, Math.round(layer * 12 + (map.unlockRealmIndex ?? 0) * 6)),
@@ -4187,6 +4191,7 @@ function normalizeMission(mission) {
       layer,
       startedAt: Number(mission.startedAt) || Date.now(),
       endsAt: Number(mission.endsAt) || Date.now(),
+      battle: normalizeBattle(mission.battle),
     };
   }
   if (!MISSIONS[mission.id]) {
@@ -4198,6 +4203,69 @@ function normalizeMission(mission) {
     startedAt: Number(mission.startedAt) || Date.now(),
     endsAt: Number(mission.endsAt) || Date.now(),
   };
+}
+
+function ensureActiveDepthBattle(state, now = Date.now()) {
+  const active = state.activeMission;
+  if (active?.type !== 'mapDepth') {
+    return;
+  }
+  const map = MISSION_MAPS[active.mapId];
+  if (!map) {
+    state.activeMission = null;
+    return;
+  }
+  active.battle = normalizeBattle(active.battle)
+    ?? simulateDepthBattle(state, map, active.layer ?? 1, Number(active.startedAt) || now);
+}
+
+function normalizeBattle(battle) {
+  if (!battle || typeof battle !== 'object' || !Array.isArray(battle.rounds)) {
+    return null;
+  }
+  const rounds = battle.rounds
+    .filter((round) => round && typeof round === 'object')
+    .map((round) => ({
+      round: Math.max(1, Math.floor(Number(round.round) || 1)),
+      actor: round.actor === 'enemy' ? 'enemy' : 'player',
+      actorName: String(round.actorName || ''),
+      targetName: String(round.targetName || ''),
+      damage: Math.max(0, Math.round(Number(round.damage) || 0)),
+      critical: Boolean(round.critical),
+      element: normalizeBattleElement(round.element),
+      targetElement: normalizeBattleElement(round.targetElement),
+      elementModifier: Number.isFinite(Number(round.elementModifier)) ? Number(round.elementModifier) : 1,
+      elementText: String(round.elementText || ''),
+      targetHp: Math.max(0, Math.round(Number(round.targetHp) || 0)),
+    }));
+  if (!rounds.length) {
+    return null;
+  }
+  return {
+    type: battle.type === 'boss' ? 'boss' : 'depth',
+    outcome: battle.outcome === 'victory' ? 'victory' : 'defeat',
+    player: normalizeBattleCombatant(battle.player, '修士'),
+    enemy: normalizeBattleCombatant(battle.enemy, '劫影'),
+    rounds,
+    diagnosis: battle.diagnosis && typeof battle.diagnosis === 'object' ? { ...battle.diagnosis } : null,
+    summary: typeof battle.summary === 'string' ? battle.summary : '',
+  };
+}
+
+function normalizeBattleCombatant(combatant, fallbackName) {
+  return {
+    name: String(combatant?.name || fallbackName),
+    element: normalizeBattleElement(combatant?.element),
+    maxHp: Math.max(1, Math.round(Number(combatant?.maxHp) || Number(combatant?.vitality) || 1)),
+    hp: Math.max(0, Math.round(Number(combatant?.hp) || 0)),
+  };
+}
+
+function normalizeBattleElement(element) {
+  if (element?.id && COMBAT_ELEMENTS[element.id]) {
+    return COMBAT_ELEMENTS[element.id];
+  }
+  return element && typeof element === 'object' ? { ...element } : COMBAT_ELEMENTS.earth;
 }
 
 function migrateLegacyRealmIndex(realmIndex) {
@@ -4506,12 +4574,13 @@ function normalizeMissionReport(report) {
     rareReward,
     rareRewardText: rareReward ? formatReward(rareReward) : '',
     reputationGained: Math.max(0, Number(report.reputationGained) || 0),
-    completedCount: Math.max(0, Number(report.completedCount) || 0),
-    event,
-    summary: typeof report.summary === 'string' && report.summary ? report.summary : `${mission.name}结算已记录。`,
-    time: Number(report.time) || Date.now(),
-  };
-}
+      completedCount: Math.max(0, Number(report.completedCount) || 0),
+      event,
+      battle: normalizeBattle(report.battle),
+      summary: typeof report.summary === 'string' && report.summary ? report.summary : `${mission.name}结算已记录。`,
+      time: Number(report.time) || Date.now(),
+    };
+  }
 
 function normalizeMissionReportHistory(history, lastReport = null) {
   const reports = Array.isArray(history) ? history.map((report) => normalizeMissionReport(report)).filter(Boolean) : [];

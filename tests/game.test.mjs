@@ -1901,6 +1901,23 @@ test('map depth trials scale difficulty and grant first-clear rewards', () => {
   assert.equal(state.spiritStones > 0, true);
 });
 
+test('map depth trials create live battle data as soon as they start', () => {
+  const state = createGameState(1000);
+  state.permanentBonuses.power = 500;
+  const firstDepth = getMapDepthStatus(state, 'qinglanMountain');
+
+  const started = startMapDepthTrial(state, 'qinglanMountain', 1000);
+  const liveBattle = state.activeMission?.battle;
+  const revived = reviveGameState(JSON.parse(JSON.stringify(state)), 1500);
+
+  assert.equal(started.ok, true);
+  assert.equal(liveBattle?.rounds.length > 0, true);
+  assert.equal(revived.activeMission?.battle?.rounds.length, liveBattle.rounds.length);
+
+  updateGame(state, firstDepth.duration + 1, 1000 + (firstDepth.duration + 1) * 1000);
+  assert.deepEqual(state.lastMissionReport.battle.rounds, liveBattle.rounds);
+});
+
 test('map depth trials remain threatening compared with same-map routes', () => {
   const state = createGameState(1000);
   state.realmIndex = realmIndexByName('金丹一转');
