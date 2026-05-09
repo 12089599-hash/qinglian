@@ -1521,9 +1521,9 @@ small {
 
 .loot-toolbar {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(220px, auto) auto auto;
+  grid-template-columns: minmax(0, 1fr) auto auto;
   gap: 10px;
-  align-items: center;
+  align-items: start;
 }
 
 .loot-toolbar > button {
@@ -1535,6 +1535,7 @@ small {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  grid-column: 1 / -1;
   min-width: 0;
 }
 
@@ -1555,6 +1556,7 @@ small {
   flex-wrap: wrap;
   gap: 6px;
   align-items: center;
+  align-self: start;
   min-width: 0;
 }
 
