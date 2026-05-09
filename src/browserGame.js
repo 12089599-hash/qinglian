@@ -306,10 +306,10 @@
     herbs: { label: '灵草', priority: 1, mapIds: ['herbValley', 'qinglanMountain'], missionId: 'herbValley', approachId: 'herbSeeking', commissionId: 'herbGarden', detail: '炼丹、灵田和丹修成长都需要稳定灵草。' },
     beastCores: { label: '妖核', priority: 1.25, mapIds: ['demonRift', 'mistyValley', 'qinglanMountain'], missionId: 'mistyValley', approachId: 'monsterHunt', commissionId: 'patrol', detail: '武器、法袍、剑阵和护脉丹容易被妖核卡住。' },
     artifacts: { label: '法器', priority: 1.2, mapIds: ['swordTomb', 'mistyValley', 'qinglanMountain'], missionId: 'ancientSwordTomb', approachId: 'relicSearch', commissionId: 'forge', detail: '法器可用于淬炼、分解和炼器阁营建。' },
-    arrayFlags: { label: '阵旗', priority: 1.15, mapIds: ['ancientRuins', 'demonRift', 'swordTomb', 'qinglanMountain'], missionId: 'demonRift', approachId: 'relicSearch', commissionId: null, marketItemId: 'arrayFlagPack', detail: '阵法、静室高阶和藏经阁会持续消耗阵旗。' },
+    arrayFlags: { label: '阵旗', priority: 1.15, mapIds: ['ancientRuins', 'demonRift', 'swordTomb'], missionId: 'demonRift', approachId: 'relicSearch', commissionId: null, marketItemId: 'arrayManual', detail: '阵法、静室高阶和藏经阁会持续消耗阵旗。' },
     forgingEssence: { label: '炼器精魄', priority: 1.35, mapIds: ['swordTomb', 'mistyValley', 'qinglanMountain'], missionId: 'ancientSwordTomb', approachId: 'relicSearch', commissionId: 'forge', marketItemId: 'forgingAsh', detail: '战利品强化、法宝和炼器阁中后期都需要炼器精魄。' },
     insight: { label: '悟道', priority: 1.05, mapIds: ['ancientRuins', 'demonRift', 'swordTomb', 'qinglanMountain'], missionId: 'ancientRuins', approachId: 'daoInquiry', commissionId: null, marketItemId: 'insightScroll', detail: '悟道支撑藏经阁高阶和后续功法沉淀。' },
-    qi: { label: '灵气', priority: 0.55, mapIds: ['swordTomb', 'herbValley', 'qinglanMountain'], missionId: 'cavePatrol', approachId: 'daoInquiry', commissionId: null, detail: '灵气不足时，问道路线、丹药和长期吐纳更重要。' },
+    qi: { label: '灵气', priority: 0.55, mapIds: ['ancientRuins', 'demonRift', 'swordTomb', 'herbValley', 'qinglanMountain'], missionId: 'ancientRuins', approachId: 'daoInquiry', commissionId: null, detail: '灵气不足时，问道路线、丹药和长期吐纳更重要。' },
   };
 
   const sectLevels = [
@@ -326,7 +326,7 @@
       name: '剑冢回响',
       detail: '剑冢残念回应你的神识，可以趁势淬炼本命剑意。',
       choices: [
-        { id: 'temperSword', title: '以法器淬锋', detail: '消耗一件法器，换取稳定的道威底蕴和炼器精魄。', cost: { artifacts: 1 }, reward: { powerBonus: 18, forgingEssence: 2 }, successChance: 1 },
+        { id: 'temperSword', title: '以法器淬锋', detail: '消耗一件法器，换取稳定的道威底蕴和炼器精魄。', cost: { artifacts: 1 }, reward: { powerBonus: 18, forgingEssence: 2 }, repeatReward: { forgingEssence: 4, spiritStones: 45 }, successChance: 1 },
         { id: 'listenDao', title: '静听剑鸣', detail: '不消耗材料，获得悟道灵感和一段灵气。', cost: {}, reward: { insight: 1, qi: 120 }, successChance: 1 },
       ],
     },
@@ -335,7 +335,7 @@
       name: '灵泉分流',
       detail: '山脉灵泉短暂涌动，可引入洞府或当场吐纳。',
       choices: [
-        { id: 'leadToCave', title: '引泉入府', detail: '布下简易阵纹，永久提升少量灵息效率。', cost: { arrayFlags: 1 }, reward: { qiRateBonus: 0.015 }, successChance: 1 },
+        { id: 'leadToCave', title: '引泉入府', detail: '布下简易阵纹，永久提升少量灵息效率。', cost: { arrayFlags: 1 }, reward: { qiRateBonus: 0.015 }, repeatReward: { qi: 180, herbs: 4 }, successChance: 1 },
         { id: 'cultivateNow', title: '当场吐纳', detail: '不消耗材料，立刻获得一段灵气。', cost: {}, reward: { qi: 160 }, successChance: 1 },
       ],
     },
@@ -464,6 +464,30 @@
     fire: { id: 'fire', name: '离火', restrains: 'metal' },
     dark: { id: 'dark', name: '玄阴', restrains: 'light' },
     light: { id: 'light', name: '曜阳', restrains: 'dark' },
+  };
+
+  const lootVariantGrades = [
+    { id: 'steady', name: '稳息', qualityBonus: 0, bonusMultiplier: 1 },
+    { id: 'bright', name: '明纹', qualityBonus: 0, bonusMultiplier: 1.18 },
+    { id: 'hidden', name: '藏锋', qualityBonus: 1, bonusMultiplier: 0.92 },
+  ];
+
+  const lootVariantAffixes = {
+    weapon: [
+      { id: 'edge', name: '锋芒', bonuses: { attack: 14 } },
+      { id: 'pierce', name: '破势', bonuses: { pierce: 12 } },
+      { id: 'spark', name: '会心', bonuses: { critChance: 0.02 } },
+    ],
+    amulet: [
+      { id: 'life', name: '养命', bonuses: { vitality: 28 } },
+      { id: 'gate', name: '护关', bonuses: { breakthrough: 0.018 } },
+      { id: 'breath', name: '纳息', bonuses: { qiRate: 0.018 } },
+    ],
+    robe: [
+      { id: 'guard', name: '护体', bonuses: { defense: 16 } },
+      { id: 'step', name: '轻身', bonuses: { speed: 5 } },
+      { id: 'ward', name: '避劫', bonuses: { dangerReduction: 8 } },
+    ],
   };
 
   const buildings = {
@@ -2550,7 +2574,7 @@
     if (unlockStage < 3) {
       return baseDanger;
     }
-    const stageMultiplier = 1.6 + Math.max(0, unlockStage - 3) * 0.25;
+    const stageMultiplier = 1.08 + Math.max(0, unlockStage - 3) * 0.045;
     const rareEvery = Math.max(2, mission.rareEvery || 4);
     const completed = state.completedMissions?.[mission.id] || 0;
     const deepeningMultiplier = Math.min(0.28, Math.floor(completed / rareEvery) * 0.04);
@@ -3718,6 +3742,7 @@
         uid: item.uid,
         name: item.name,
         slot: item.slot,
+        variant: item.variant || null,
         level: item.level || 0,
         maxLevel: getLootMaxLevel(item),
         tier: getUpgradeTier(Math.max(1, item.level || 1)),
@@ -3726,7 +3751,7 @@
         locked: Boolean(state.lockedLoot?.[item.uid]),
         effects: effectsFromBonusObject(item.bonuses || {}),
         comparison: compareLootEquipment(state, item),
-        nextEffects: (item.level || 0) >= getLootMaxLevel(item) ? [] : effectsFromBonusObject(createLootBonuses(item.templateId, (item.level || 0) + 1)),
+        nextEffects: (item.level || 0) >= getLootMaxLevel(item) ? [] : effectsFromBonusObject(createLootBonuses(item.templateId, (item.level || 0) + 1, item.variant)),
         empower: {
           maxed: (item.level || 0) >= getLootMaxLevel(item),
           nextLevel: (item.level || 0) + 1,
@@ -3856,6 +3881,10 @@
     }
     const nextObjective = chapter?.objectives.find((objective) => !objective.completed);
     if (nextObjective) {
+      const preparation = getObjectivePreparationGuidance(state, nextObjective);
+      if (preparation) {
+        return preparation;
+      }
       return { title: nextObjective.title, detail: nextObjective.detail, tab: getGuidanceTabForObjective(nextObjective.id), targetId: getGuidanceTargetForObjective(nextObjective.id) };
     }
     if ((state.realmIndex || 0) <= 1) {
@@ -3872,6 +3901,29 @@
       return { title: `补足${primary.label}`, detail: `${primary.demandText}，${primary.route.detail}${commissionText}。`, tab: primary.route.unlocked ? 'missions' : 'market' };
     }
     return { title: '继续积累底蕴', detail: '刷地图声望、强化战利品、提升洞府和阵法，准备下一轮突破。', tab: 'missions' };
+  }
+
+  function getObjectivePreparationGuidance(state, objective) {
+    const targetMissions = {
+      swordTombTrial: 'ancientSwordTomb',
+      demonRiftTrial: 'demonRift',
+    };
+    const missionId = targetMissions[objective.id];
+    if (!missionId) {
+      return null;
+    }
+    const status = getMissionStatus(state, missionId);
+    const power = calculatePower(state);
+    if (!status.unlocked || status.recommendedPower <= 0 || power >= status.recommendedPower || !['大凶', '有险'].includes(status.omen.name)) {
+      return null;
+    }
+    return {
+      title: `整备${status.map}`,
+      detail: `当前道行 ${power} / ${status.recommendedPower}，先提升武器、法袍、剑修、剑阵，或回低阶秘境积累材料。`,
+      tab: 'gear',
+      action: 'prepareMission',
+      targetId: missionId,
+    };
   }
 
   function getGuidanceTabForObjective(objectiveId) {
@@ -4182,6 +4234,13 @@
         <div class="battle-report">
           <span>斗法回合</span>
           <strong>${report.battle.summary}</strong>
+          ${report.battle.diagnosis ? `
+            <div class="battle-diagnosis">
+              <b>${report.battle.diagnosis.title}</b>
+              <span>${report.battle.diagnosis.detail}</span>
+              <small>${report.battle.diagnosis.advice}</small>
+            </div>
+          ` : ''}
           <div class="battle-round-list">
             ${report.battle.rounds.slice(0, 6).map((round) => `
               <small class="${round.actor}">
@@ -4561,16 +4620,18 @@
     if (random() > chance) {
       applyResources(state, choice.failurePenalty || {});
       state.activeOpportunity = null;
-      addResolvedOpportunity(state, opportunity.id);
+      addResolvedOpportunity(state, opportunity.id, choice.id);
       addLog(state, now, `机缘「${opportunity.name}」处理失手，承受${formatReward(choice.failurePenalty || {}) || '些许反噬'}。`);
       return { ok: false, reason: 'failed', chance, opportunity, choice };
     }
 
-    applyResources(state, choice.reward || {});
+    const repeat = getResolvedOpportunityChoiceCount(state, opportunity.id, choice.id) > 0;
+    const reward = repeat && choice.repeatReward ? choice.repeatReward : choice.reward || {};
+    applyResources(state, reward);
     state.activeOpportunity = null;
-    addResolvedOpportunity(state, opportunity.id);
-    addLog(state, now, `机缘「${opportunity.name}」选择「${choice.title}」，获得${formatReward(choice.reward || {})}。`);
-    return { ok: true, reward: choice.reward || {}, opportunity, choice };
+    addResolvedOpportunity(state, opportunity.id, choice.id);
+    addLog(state, now, `机缘「${opportunity.name}」选择「${choice.title}」，${repeat ? '余韵已淡，' : ''}获得${formatReward(reward)}。`);
+    return { ok: true, reward, repeat, opportunity, choice };
   }
 
   function upgradeTreasure(state, treasureId, now = Date.now()) {
@@ -4794,10 +4855,12 @@
           <details class="equipment-detail-card detail-row" data-loot-detail="${item.uid}" ${openLootDetails.has(item.uid) ? 'open' : ''}>
             <summary>
               <strong>${item.locked ? '锁 ' : ''}${item.name} <small>${item.intent.name} · ${getSlotName(item.slot)} · ${item.tier.name} · +${item.level || 0}</small></strong>
+              ${item.variant ? `<em class="loot-variant">${item.variant.name}</em>` : ''}
               <span>${formatEffects(item.effects) || '尚未激活'}${item.equipped ? ' · 已穿戴' : ''}</span>
               <small>${item.comparison.summary} · 展开查看器象、对比和下阶变化</small>
             </summary>
             <div class="detail-stack">
+              ${item.variant ? `<small>器纹：${item.variant.name} · ${combatElements[item.variant.element]?.name || '无相'} · ${item.variant.gradeId === 'hidden' ? '藏锋品相' : item.variant.gradeId === 'bright' ? '明纹品相' : '稳息品相'}</small>` : ''}
               <small>当前：${formatEffects(item.effects) || '尚未激活'}</small>
               <small>下阶：${maxed ? '已至圆满' : formatEffects(item.nextEffects)}</small>
               <details class="nested-detail">
@@ -5733,7 +5796,22 @@
     return Object.fromEntries(
       Object.entries(resolved)
         .filter(([id]) => opportunities[id])
-        .map(([id, value]) => [id, Math.max(0, Number(value) || 0)]),
+        .map(([id, value]) => {
+          if (value && typeof value === 'object') {
+            const choices = Object.fromEntries(
+              Object.entries(value.choices || {})
+                .filter(([choiceId]) => opportunities[id].choices.some((choice) => choice.id === choiceId))
+                .map(([choiceId, count]) => [choiceId, Math.max(0, Math.floor(Number(count) || 0))]),
+            );
+            const total = Math.max(
+              Math.floor(Number(value.total) || 0),
+              Object.values(choices).reduce((sum, count) => sum + count, 0),
+            );
+            return [id, { total, choices }];
+          }
+          const total = Math.max(0, Math.floor(Number(value) || 0));
+          return [id, { total, choices: {} }];
+        }),
     );
   }
 
@@ -5805,7 +5883,7 @@
         if (!template) {
           return null;
         }
-        return createLootItem(template.id, item.uid || `${template.id}-${index + 1}`, clampInteger(item.level || 0, 0, getLootMaxLevel(template)));
+        return createLootItem(template.id, item.uid || `${template.id}-${index + 1}`, clampInteger(item.level || 0, 0, getLootMaxLevel(item || template)), item.variant);
       })
       .filter(Boolean)
       .slice(0, 40);
@@ -6525,6 +6603,7 @@
       }
     }
     const outcome = enemyHp <= 0 ? 'victory' : 'defeat';
+    const diagnosis = createBattleDiagnosis(player, enemy, rounds, playerHp, enemyHp, outcome);
     return {
       type,
       outcome,
@@ -6541,9 +6620,65 @@
         hp: enemyHp,
       },
       rounds,
+      diagnosis,
       summary: outcome === 'victory'
         ? `${rounds.at(-1)?.round || 0} 回合压住${enemy.name}。`
         : `${rounds.at(-1)?.round || 0} 回合后退守，${enemy.name}仍有余势。`,
+    };
+  }
+
+  function createBattleDiagnosis(player, enemy, rounds, playerHp, enemyHp, outcome) {
+    const playerRounds = rounds.filter((round) => round.actor === 'player');
+    const enemyRounds = rounds.filter((round) => round.actor === 'enemy');
+    const playerDamage = playerRounds.reduce((total, round) => total + round.damage, 0);
+    const enemyDamage = enemyRounds.reduce((total, round) => total + round.damage, 0);
+    const playerModifier = playerRounds[0]?.elementModifier ?? getElementModifier(player.element, enemy.element);
+    const enemyModifier = enemyRounds[0]?.elementModifier ?? getElementModifier(enemy.element, player.element);
+    const enemyRemainingHp = Math.max(0, enemyHp);
+    const playerRemainingHp = Math.max(0, playerHp);
+    const elementText = formatElementInteraction(player.element, enemy.element, playerModifier);
+
+    if (outcome === 'victory') {
+      return {
+        outcome,
+        title: '压制成功',
+        detail: `${elementText}，我方余 ${playerRemainingHp} 血元。`,
+        advice: '可继续推进同地图秘境，或尝试更高地图。',
+        playerDamage,
+        enemyDamage,
+        playerRemainingHp,
+        enemyRemainingHp,
+        playerElementModifier: playerModifier,
+        enemyElementModifier: enemyModifier,
+        elementText,
+      };
+    }
+
+    let title = '锋芒不足';
+    let advice = '提升武器、剑修、剑阵，或换成克制首领的灵根词条。';
+    if (playerModifier < 1) {
+      title = '灵根受制';
+      advice = '洗练克制词条或更换具名战利品，先把灵根从受制调到平势或克制。';
+    } else if (playerHp <= 0 && enemyDamage >= player.vitality * 0.85) {
+      title = '护体不足';
+      advice = '提升法袍、护符、厚土或玄水词条，先把承伤压下来。';
+    } else if (playerHp <= 0 && enemyHp <= enemy.vitality * 0.28) {
+      title = '血元不足';
+      advice = '提升护符、血元词条或阴阳照影续战，再回来收尾。';
+    }
+
+    return {
+      outcome,
+      title,
+      detail: `${elementText}，敌方仍余 ${enemyRemainingHp} 血元，我方累计造成 ${playerDamage} 伤害。`,
+      advice,
+      playerDamage,
+      enemyDamage,
+      playerRemainingHp,
+      enemyRemainingHp,
+      playerElementModifier: playerModifier,
+      enemyElementModifier: enemyModifier,
+      elementText,
     };
   }
 
@@ -6996,9 +7131,34 @@
     addLog(state, now, `发现机缘「${opportunities[opportunityId].name}」，可在历练中抉择。`);
   }
 
-  function addResolvedOpportunity(state, opportunityId) {
+  function addResolvedOpportunity(state, opportunityId, choiceId = null) {
     state.resolvedOpportunities ||= {};
-    state.resolvedOpportunities[opportunityId] = (state.resolvedOpportunities[opportunityId] || 0) + 1;
+    const entry = normalizeResolvedOpportunityEntry(state.resolvedOpportunities[opportunityId]);
+    entry.total += 1;
+    if (choiceId) {
+      entry.choices[choiceId] = (entry.choices[choiceId] || 0) + 1;
+    }
+    state.resolvedOpportunities[opportunityId] = entry;
+  }
+
+  function getResolvedOpportunityChoiceCount(state, opportunityId, choiceId) {
+    const entry = normalizeResolvedOpportunityEntry(state.resolvedOpportunities?.[opportunityId]);
+    return entry.choices[choiceId] || 0;
+  }
+
+  function normalizeResolvedOpportunityEntry(entry) {
+    if (entry && typeof entry === 'object') {
+      return {
+        total: Math.max(0, Math.floor(Number(entry.total) || 0)),
+        choices: Object.fromEntries(
+          Object.entries(entry.choices || {}).map(([choiceId, count]) => [choiceId, Math.max(0, Math.floor(Number(count) || 0))]),
+        ),
+      };
+    }
+    return {
+      total: Math.max(0, Math.floor(Number(entry) || 0)),
+      choices: {},
+    };
   }
 
   function applyMissionEvent(state, mission, event, now) {
@@ -7032,18 +7192,51 @@
     return item;
   }
 
-  function createLootItem(templateId, uid, level = 0) {
+  function createLootItem(templateId, uid, level = 0, savedVariant = null) {
     const template = lootEquipment[templateId];
-    const safeLevel = clampInteger(level, 0, getLootMaxLevel(template));
+    const variant = createLootVariant(template, uid, savedVariant);
+    const quality = clampInteger((template.quality || 0) + (variant.qualityBonus || 0), 0, 4);
+    const safeLevel = clampInteger(level, 0, getLootMaxLevel({ ...template, quality }));
     return {
       uid,
       templateId,
       name: template.name,
       slot: template.slot,
-      quality: template.quality,
-      element: template.element || null,
+      quality,
+      element: variant.element || template.element || null,
+      variant,
       level: safeLevel,
-      bonuses: createLootBonuses(templateId, safeLevel),
+      bonuses: createLootBonuses(templateId, safeLevel, variant),
+    };
+  }
+
+  function createLootVariant(template, uid, savedVariant = null) {
+    if (savedVariant && typeof savedVariant === 'object') {
+      const grade = lootVariantGrades.find((candidate) => candidate.id === savedVariant.gradeId) || lootVariantGrades[0];
+      const affix = lootVariantAffixes[template.slot]?.find((candidate) => candidate.id === savedVariant.affixId) || lootVariantAffixes[template.slot]?.[0];
+      const element = combatElements[savedVariant.element] ? savedVariant.element : template.element;
+      return {
+        gradeId: grade.id,
+        affixId: affix?.id || 'none',
+        name: savedVariant.name || `${combatElements[element]?.name || ''}${affix?.name || grade.name}`,
+        qualityBonus: grade.qualityBonus,
+        element,
+        bonuses: affix?.bonuses || {},
+      };
+    }
+    const pool = lootVariantAffixes[template.slot] || [];
+    const seed = hashString(`${template.id}:${uid}`);
+    const grade = lootVariantGrades[seed % lootVariantGrades.length];
+    const affix = pool[Math.floor(seed / 7) % pool.length] || { id: 'none', name: grade.name, bonuses: {} };
+    const elementIds = Object.keys(combatElements);
+    const element = elementIds[Math.floor(seed / 13) % elementIds.length] || template.element;
+    return {
+      gradeId: grade.id,
+      affixId: affix.id,
+      name: `${combatElements[element]?.name || ''}${affix.name}`,
+      qualityBonus: grade.qualityBonus,
+      element,
+      bonuses: scaleBonusObject(affix.bonuses, grade.bonusMultiplier),
     };
   }
 
@@ -7185,7 +7378,7 @@
     }
     payResources(state, cost);
     item.level = level + 1;
-    item.bonuses = createLootBonuses(item.templateId, item.level);
+    item.bonuses = createLootBonuses(item.templateId, item.level, item.variant);
     addLog(state, now, `${item.name}强化至 ${item.level} 级。`);
     return { ok: true, item, level: item.level };
   }
@@ -7201,13 +7394,23 @@
     return cost;
   }
 
-  function createLootBonuses(templateId, level = 0) {
+  function createLootBonuses(templateId, level = 0, variant = null) {
     const template = lootEquipment[templateId];
     const multiplier = 1 + getTieredLootBonus(level);
     const percentBonus = getTieredPercentBonus(level);
-    return Object.fromEntries(
+    const bonuses = Object.fromEntries(
       Object.entries(template.bonuses).map(([key, value]) => [key, key === 'breakthrough' || key === 'qiRate' || key === 'critChance' ? round(value + percentBonus) : Math.round(value * multiplier)]),
     );
+    Object.entries(variant?.bonuses || {}).forEach(([key, value]) => {
+      const scaled = key === 'breakthrough' || key === 'qiRate' || key === 'critChance'
+        ? round(value + percentBonus * 0.5)
+        : Math.round(value * (1 + getTieredLootBonus(level) * 0.6));
+      bonuses[key] = round((bonuses[key] || 0) + scaled);
+    });
+    if (variant?.element && combatElements[variant.element]) {
+      bonuses.elementPower = round((bonuses.elementPower || 0) + 8 + (variant.qualityBonus || 0) * 4);
+    }
+    return bonuses;
   }
 
   function getLootMaxLevel(itemOrTemplate) {

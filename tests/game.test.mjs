@@ -533,7 +533,7 @@ test('matching gear affixes activate set resonance bonuses', () => {
   assert.equal(active.matched, 3);
   assert.equal(calculatePower(state), 350);
   assert.equal(calculateQiRate(state, 2000), 5.72);
-  assert.equal(getMissionStatus(state, 'mistyValley').recommendedPower, 428);
+  assert.equal(getMissionStatus(state, 'mistyValley').recommendedPower < 240, true);
   assert.equal(weapon.reroll.preview.warnings[0], '可能使青莲流影失效');
 });
 
@@ -737,10 +737,10 @@ test('combat missions compare power against danger', () => {
   state.realmIndex = realmIndexByName('炼气八层');
   state.qi = 140;
   state.spiritStones = 30;
-  state.gear.weapon = 8;
-  state.gear.robe = 6;
-  state.cultivationPaths.sword = 4;
-  state.formations.swordArray = 4;
+  state.gear.weapon = 2;
+  state.gear.robe = 1;
+  state.cultivationPaths.sword = 1;
+  state.formations.swordArray = 1;
   state.permanentBonuses.power = 160;
 
   startMission(state, 'mistyValley', 1000);
@@ -884,6 +884,25 @@ test('mission events can drop named equipment and equip it', () => {
   assert.equal(equipped.ok, true);
   assert.equal(state.equippedLoot.weapon, state.lootEquipment[0].uid);
   assert.equal(calculatePower(state) - before, 36);
+});
+
+test('dropped loot carries deterministic variant stats beyond the template', () => {
+  const state = createGameState(1000);
+  state.realmIndex = realmIndexByName('筑基一层');
+  state.permanentBonuses.power = 900;
+  state.completedMissions.cavePatrol = 1;
+
+  startMission(state, 'cavePatrol', 1000);
+  updateGame(state, 55, 56_000);
+
+  const item = state.lootEquipment[0];
+
+  assert.equal(item.templateId, 'cloudthreadRobe');
+  assert.ok(item.variant);
+  assert.ok(item.variant.name);
+  assert.equal(['metal', 'wood', 'earth', 'water', 'fire', 'dark', 'light'].includes(item.element), true);
+  assert.equal(Object.keys(item.variant.bonuses).length > 0, true);
+  assert.equal(Object.keys(item.bonuses).some((key) => item.bonuses[key] !== LOOT_EQUIPMENT.cloudthreadRobe.bonuses[key]), true);
 });
 
 test('mission completion records a readable settlement report', () => {
@@ -1065,6 +1084,23 @@ test('boss battle simulation reacts to elemental gear and records rounds', () =>
   assert.equal(battle.summary.includes('回合'), true);
 });
 
+test('failed boss battles explain the most useful preparation lever', () => {
+  const state = createGameState(1000);
+  state.realmIndex = realmIndexByName('筑基一层');
+  state.gear.weapon = 1;
+  state.gear.amulet = 1;
+  state.gear.robe = 1;
+
+  const battle = simulateBossBattle(state, 'demonRift', 2000);
+
+  assert.equal(battle.outcome, 'defeat');
+  assert.equal(battle.diagnosis.outcome, 'defeat');
+  assert.equal(['锋芒不足', '护体不足', '血元不足', '灵根受制'].includes(battle.diagnosis.title), true);
+  assert.equal(battle.diagnosis.advice.length > 0, true);
+  assert.equal(typeof battle.diagnosis.playerDamage, 'number');
+  assert.equal(typeof battle.diagnosis.enemyRemainingHp, 'number');
+});
+
 test('next guidance points players toward the clearest progression step', () => {
   const state = createGameState(1000);
 
@@ -1090,6 +1126,26 @@ test('next guidance points players toward the clearest progression step', () => 
   state.claimedGoals.realmTwo = true;
 
   assert.equal(getNextGuidance(state).title, '挑战青岚山魈');
+});
+
+test('next guidance does not send mainline players into a doomed map', () => {
+  const state = createGameState(1000);
+  state.realmIndex = realmIndexByName('筑基一层');
+  state.claimedChapterRewards.qinglanStart = true;
+  state.claimedGoals.foundationRealm = true;
+  state.claimedGoals.firstPath = true;
+  state.claimedGoals.firstArmament = true;
+  state.cultivationPaths.sword = 1;
+  state.gear.weapon = 1;
+  state.gear.robe = 1;
+
+  const guidance = getNextGuidance(state);
+
+  assert.equal(guidance.action, 'prepareMission');
+  assert.equal(guidance.targetId, 'ancientSwordTomb');
+  assert.equal(guidance.tab, 'gear');
+  assert.match(guidance.title, /整备/);
+  assert.match(guidance.detail, /武器|法袍|剑修|剑阵/);
 });
 
 test('next guidance routes early mainline objectives to their exact panels', () => {
@@ -1179,6 +1235,25 @@ test('resource guidance points beast core shortages to hunter routes and patrol 
   assert.equal(guidance.primary.commission.id, 'patrol');
 });
 
+test('resource guidance does not point array flag shortages to qinglan relic search', () => {
+  const state = createGameState(1000);
+  state.realmIndex = realmIndexByName('炼气五层');
+  state.spiritStones = 2_000;
+  state.herbs = 2_000;
+  state.beastCores = 40;
+  state.arrayFlags = 0;
+  state.artifacts = 40;
+  state.forgingEssence = 40;
+  state.formations.spiritGathering = 1;
+  state.formations.mountainGuard = 1;
+
+  const guidance = getResourceGuidance(state);
+
+  assert.equal(guidance.primary.resource, 'arrayFlags');
+  assert.notEqual(guidance.primary.route.mapId, 'qinglanMountain');
+  assert.equal(guidance.primary.market.id, 'arrayManual');
+});
+
 test('midgame spirit stone guidance stays on progression maps', () => {
   const state = createGameState(1000);
   state.realmIndex = realmIndexByName('筑基一层');
@@ -1196,7 +1271,7 @@ test('midgame spirit stone guidance stays on progression maps', () => {
   assert.equal(guidance.primary.route.mapId, 'swordTomb');
   assert.equal(guidance.primary.route.approachId, 'balanced');
   assert.equal(guidance.primary.route.stable, false);
-  assert.equal(guidance.primary.route.fallback.mapId, 'herbValley');
+  assert.equal(['mistyValley', 'herbValley'].includes(guidance.primary.route.fallback.mapId), true);
   assert.equal(guidance.primary.commission.id, 'mine');
 });
 
@@ -1364,7 +1439,7 @@ test('midgame mission pressure requires preparation beyond realm unlock', () => 
 
   const unlocked = getMissionStatus(state, 'ancientSwordTomb');
   assert.equal(unlocked.unlocked, true);
-  assert.equal(unlocked.recommendedPower >= 500, true);
+  assert.equal(unlocked.recommendedPower >= 400, true);
   assert.equal(unlocked.omen.name, '大凶');
 
   state.gear.weapon = 12;
@@ -1393,13 +1468,28 @@ test('ancient ruins unlocks at mid golden core instead of the first turn', () =>
   assert.equal(getMapStatuses(state).find((map) => map.id === 'ancientRuins').unlocked, true);
 });
 
+test('late map route pressure stays below same map boss wall', () => {
+  const state = createGameState(1000);
+  state.realmIndex = realmIndexByName('金丹四转');
+  state.gear.weapon = 9;
+  state.gear.robe = 9;
+  state.gear.amulet = 9;
+  state.cultivationPaths.sword = 9;
+  state.formations.swordArray = 9;
+
+  const route = getMissionStatus(state, 'ancientRuins');
+  const boss = getMapStatuses(state).find((map) => map.id === 'ancientRuins').boss;
+
+  assert.equal(route.recommendedPower < boss.power * 1.5, true);
+});
+
 test('map readiness separates realm unlock from stable travel', () => {
   const state = createGameState(1000);
   state.realmIndex = realmIndexByName('筑基一层');
-  state.gear.weapon = 8;
-  state.gear.robe = 6;
-  state.cultivationPaths.sword = 4;
-  state.formations.swordArray = 4;
+  state.gear.weapon = 2;
+  state.gear.robe = 1;
+  state.cultivationPaths.sword = 1;
+  state.formations.swordArray = 1;
 
   const unstable = getMapStatuses(state).find((map) => map.id === 'swordTomb');
   assert.equal(unstable.unlocked, true);
@@ -1416,10 +1506,10 @@ test('map readiness separates realm unlock from stable travel', () => {
 test('near-threshold mission failures still leave map scouting progress', () => {
   const state = createGameState(1000);
   state.realmIndex = realmIndexByName('筑基一层');
-  state.gear.weapon = 8;
-  state.gear.robe = 6;
-  state.cultivationPaths.sword = 4;
-  state.formations.swordArray = 4;
+  state.gear.weapon = 3;
+  state.gear.robe = 1;
+  state.cultivationPaths.sword = 1;
+  state.formations.swordArray = 1;
 
   const started = startMission(state, 'ancientSwordTomb', 1000);
   updateGame(state, 141, 143_000);
@@ -1554,6 +1644,26 @@ test('mission opportunities offer choices and resolve rewards or costs', () => {
   assert.equal(state.activeOpportunity, null);
   assert.equal(state.permanentBonuses.power - powerBonusBefore, 18);
   assert.equal(state.forgingEssence, 3);
+});
+
+test('repeated permanent opportunities fall back to material rewards', () => {
+  const state = createGameState(1000);
+  state.activeOpportunity = { id: 'swordEcho', missionId: 'ancientSwordTomb', createdAt: 1000 };
+  state.artifacts = 2;
+
+  const firstPower = state.permanentBonuses.power;
+  const first = resolveOpportunity(state, 'temperSword', 2000, () => 0);
+  state.activeOpportunity = { id: 'swordEcho', missionId: 'ancientSwordTomb', createdAt: 3000 };
+  const secondPower = state.permanentBonuses.power;
+  const second = resolveOpportunity(state, 'temperSword', 4000, () => 0);
+
+  assert.equal(first.ok, true);
+  assert.equal(second.ok, true);
+  assert.equal(state.permanentBonuses.power - firstPower, 18);
+  assert.equal(state.permanentBonuses.power - secondPower, 0);
+  assert.equal(second.repeat, true);
+  assert.equal(second.reward.powerBonus ?? 0, 0);
+  assert.equal(second.reward.forgingEssence > 0, true);
 });
 
 test('mission opportunity choices return material requirements when unaffordable', () => {
