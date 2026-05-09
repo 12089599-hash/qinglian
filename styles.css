@@ -1909,6 +1909,13 @@ small {
     rgba(255, 255, 255, 0.035);
 }
 
+.beast-row.locked {
+  border-color: rgba(232, 198, 106, 0.22);
+  background:
+    linear-gradient(135deg, rgba(232, 198, 106, 0.07), rgba(255, 255, 255, 0.025)),
+    rgba(255, 255, 255, 0.02);
+}
+
 .equipment-detail-card {
   display: block;
   min-height: 68px;

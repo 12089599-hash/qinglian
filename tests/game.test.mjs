@@ -633,16 +633,12 @@ test('batch dismantle can be limited by selected rarity tiers', () => {
   assert.equal(state.lootEquipment.some((item) => item.uid === 'spare-mystic'), false);
 });
 
-test('matching gear affixes activate set resonance bonuses', () => {
+test('two matching gear affixes activate set resonance bonuses', () => {
   const state = createGameState(1000);
   state.realmIndex = realmIndexByName('炼气八层');
   const loadout = {
     weapon: 'swordIntent',
     offhand: 'spiritBell',
-    amulet: 'spiritVein',
-    robe: 'cloudStep',
-    jade: 'clearJade',
-    boots: 'cloudTrace',
   };
   Object.entries(loadout).forEach(([slot, affix]) => {
     state.gear[slot] = 1;
@@ -656,12 +652,50 @@ test('matching gear affixes activate set resonance bonuses', () => {
 
   assert.equal(GEAR_AFFIX_SETS.greenLotusFlow.name, '青莲流影');
   assert.equal(active.active, true);
-  assert.equal(active.matched, 6);
+  assert.equal(active.matched, 2);
   assert.equal(active.total, 6);
-  assert.equal(calculatePower(state) > 400, true);
-  assert.equal(calculateQiRate(state, 2000) > 7.5, true);
+  assert.equal(active.activeTier.pieces, 2);
+  assert.equal(active.nextTier.pieces, 4);
+  assert.equal(calculatePower(state) > 170, true);
+  assert.equal(calculateQiRate(state, 2000) > calculateQiRate(createGameState(1000), 2000), true);
   assert.equal(getMissionStatus(state, 'mistyValley').recommendedPower < 240, true);
   assert.equal(weapon.reroll.preview.warnings[0], '可能使青莲流影失效');
+});
+
+test('gear set resonance strengthens at later matching thresholds', () => {
+  const twoPiece = createGameState(1000);
+  twoPiece.realmIndex = realmIndexByName('炼气八层');
+  twoPiece.gear.weapon = 1;
+  twoPiece.gear.offhand = 1;
+  twoPiece.gearQuality.weapon = 1;
+  twoPiece.gearQuality.offhand = 1;
+  twoPiece.gearAffixes.weapon = 'swordIntent';
+  twoPiece.gearAffixes.offhand = 'spiritBell';
+
+  const sixPiece = createGameState(1000);
+  sixPiece.realmIndex = realmIndexByName('炼气八层');
+  const loadout = {
+    weapon: 'swordIntent',
+    offhand: 'spiritBell',
+    amulet: 'spiritVein',
+    robe: 'cloudStep',
+    jade: 'clearJade',
+    boots: 'cloudTrace',
+  };
+  Object.entries(loadout).forEach(([slot, affix]) => {
+    sixPiece.gear[slot] = 1;
+    sixPiece.gearQuality[slot] = 1;
+    sixPiece.gearAffixes[slot] = affix;
+  });
+
+  const twoSet = getGearSetStatus(twoPiece).find((set) => set.id === 'greenLotusFlow');
+  const sixSet = getGearSetStatus(sixPiece).find((set) => set.id === 'greenLotusFlow');
+
+  assert.equal(twoSet.activeTier.pieces, 2);
+  assert.equal(sixSet.activeTier.pieces, 6);
+  assert.equal(sixSet.effects.length > twoSet.effects.length, true);
+  assert.equal(calculatePower(sixPiece) > calculatePower(twoPiece), true);
+  assert.equal(calculateQiRate(sixPiece, 2000) > calculateQiRate(twoPiece, 2000), true);
 });
 
 test('gear affix sets align one matching affix with every equipment slot', () => {
@@ -690,10 +724,6 @@ test('gear affix reroll reports attribute and set impact', () => {
   const loadout = {
     weapon: 'swordIntent',
     offhand: 'spiritBell',
-    amulet: 'spiritVein',
-    robe: 'cloudStep',
-    jade: 'clearJade',
-    boots: 'cloudTrace',
   };
   Object.entries(loadout).forEach(([slot, affix]) => {
     state.gear[slot] = 1;
@@ -707,8 +737,8 @@ test('gear affix reroll reports attribute and set impact', () => {
   assert.equal(rerolled.affix, 'breakerEdge');
   assert.equal(rerolled.impact.powerDelta < 0, true);
   assert.equal(rerolled.impact.setChanges[0].name, '青莲流影');
-  assert.equal(rerolled.impact.setChanges[0].beforeMatched, 6);
-  assert.equal(rerolled.impact.setChanges[0].afterMatched, 5);
+  assert.equal(rerolled.impact.setChanges[0].beforeMatched, 2);
+  assert.equal(rerolled.impact.setChanges[0].afterMatched, 1);
   assert.equal(rerolled.impact.setChanges[0].status, 'lost');
 });
 
@@ -1286,6 +1316,34 @@ test('boss battle simulation reacts to elemental gear and records rounds', () =>
   assert.equal(battle.rounds[0].actor, 'player');
   assert.equal(typeof battle.rounds[0].damage, 'number');
   assert.equal(battle.summary.includes('回合'), true);
+});
+
+test('turn battles convert defense into nonlinear mitigation instead of flat subtraction', () => {
+  const exposed = createGameState(1000);
+  exposed.realmIndex = realmIndexByName('筑基一层');
+
+  const guarded = createGameState(1000);
+  guarded.realmIndex = realmIndexByName('筑基一层');
+  guarded.gear.robe = 8;
+  guarded.gear.amulet = 6;
+  guarded.gearQuality.robe = 2;
+  guarded.gearAffixes.robe = 'guardedBody';
+  guarded.lootEquipment = [
+    { uid: 'guard-robe', templateId: 'cloudthreadRobe', name: '玄守法袍', slot: 'robe', quality: 2, level: 3, element: 'earth', bonuses: { defense: 180, vitality: 80 } },
+  ];
+  guarded.equippedLoot.robe = 'guard-robe';
+
+  const exposedBattle = simulateBossBattle(exposed, 'swordTomb', 2000, () => 0.5);
+  const guardedBattle = simulateBossBattle(guarded, 'swordTomb', 2000, () => 0.5);
+  const exposedHit = exposedBattle.rounds.find((round) => round.actor === 'enemy');
+  const guardedHit = guardedBattle.rounds.find((round) => round.actor === 'enemy');
+
+  assert.equal(Boolean(exposedHit), true);
+  assert.equal(Boolean(guardedHit), true);
+  assert.equal(guardedHit.damage < exposedHit.damage, true);
+  assert.equal(guardedHit.defenseMitigation > exposedHit.defenseMitigation, true);
+  assert.equal(guardedHit.mitigated > 0, true);
+  assert.equal(guardedHit.damage > 1, true);
 });
 
 test('winning boss battles settle without failure diagnosis', () => {
@@ -2120,6 +2178,8 @@ test('magic treasures and spirit beasts add long term stat bonuses', () => {
 
 test('spirit beasts separate collection effects from deployed battle effects', () => {
   const state = createGameState(1000);
+  state.realmIndex = realmIndexByName('炼气八层');
+  state.mapDepths.mistyValley = 2;
   state.spiritStones = 2_000;
   state.herbs = 800;
   state.beastCores = 80;
@@ -2138,6 +2198,37 @@ test('spirit beasts separate collection effects from deployed battle effects', (
   assert.equal(fox.collectionEffects.some((effect) => effect.id === 'qiRate'), true);
   assert.equal(tiger.battleEffects.some((effect) => effect.id === 'attack'), true);
   assert.equal(combat.attack.sources.some((source) => source.label === '出战灵兽'), true);
+});
+
+test('rare spirit beasts are visible but locked behind realm and exploration clues', () => {
+  const state = createGameState(1000);
+  state.realmIndex = realmIndexByName('筑基一层');
+  state.spiritStones = 20_000;
+  state.herbs = 20_000;
+  state.beastCores = 500;
+  state.bloodEssence = 200;
+  state.forgingEssence = 200;
+  state.insight = 80;
+
+  const details = getEquipmentDetails(state).spiritBeasts;
+  const dragon = details.find((beast) => beast.id === 'floodDragon');
+  const locked = trainSpiritBeast(state, 'floodDragon', 2000);
+
+  assert.equal(Boolean(dragon), true);
+  assert.equal(dragon.unlock.unlocked, false);
+  assert.equal(dragon.unlock.requirements.length > 0, true);
+  assert.equal(locked.ok, false);
+  assert.equal(locked.reason, 'locked');
+
+  state.realmIndex = realmIndexByName('元婴一变');
+  state.mapDepths.ancientRuins = 6;
+  state.defeatedBosses.ancientRuins = true;
+  const unlocked = getEquipmentDetails(state).spiritBeasts.find((beast) => beast.id === 'floodDragon');
+  const trained = trainSpiritBeast(state, 'floodDragon', 3000);
+
+  assert.equal(unlocked.unlock.unlocked, true);
+  assert.equal(trained.ok, true);
+  assert.equal(state.spiritBeasts.floodDragon, 1);
 });
 
 test('spirit beasts expose bloodline quality and differentiated growth', () => {

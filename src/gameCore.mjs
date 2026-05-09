@@ -676,6 +676,7 @@ export const SPIRIT_BEASTS = {
     detail: '山岩间常见的小兽，善寻矿脉，适合作为最早的御灵伙伴。',
     rarityId: 'common',
     qualityId: 'wild',
+    unlock: { realmIndex: 0 },
     maxLevel: 6,
     cost: (level) => ({ spiritStones: scaleCost(48, level), beastCores: Math.max(1, Math.ceil(level / 2)) }),
     bonuses: { power: 9, defense: 5 },
@@ -689,6 +690,7 @@ export const SPIRIT_BEASTS = {
     detail: '亲近灵气，辅助周天灵息和灵田照料。',
     rarityId: 'spirit',
     qualityId: 'spirit',
+    unlock: { realmIndex: 0 },
     maxLevel: 8,
     cost: (level) => ({ spiritStones: scaleCost(90, level), herbs: scaleCost(18, level), beastCores: level }),
     bonuses: { qiRate: 0.04, herbRate: 0.015 },
@@ -702,6 +704,7 @@ export const SPIRIT_BEASTS = {
     detail: '性情清正，能梳理气机，适合破境前长期培养。',
     rarityId: 'spirit',
     qualityId: 'spirit',
+    unlock: { realmIndex: 2 },
     maxLevel: 8,
     cost: (level) => ({ spiritStones: scaleCost(95, level), herbs: scaleCost(22, level), beastCores: level }),
     bonuses: { breakthrough: 0.012, speed: 2 },
@@ -715,6 +718,7 @@ export const SPIRIT_BEASTS = {
     detail: '守山善战，凝练道威并护持外出行游。',
     rarityId: 'mystic',
     qualityId: 'mystic',
+    unlock: { realmIndex: 7, mapId: 'mistyValley', depthLayer: 2 },
     maxLevel: 8,
     cost: (level) => ({ spiritStones: scaleCost(130, level), beastCores: level * 2 }),
     bonuses: { power: 22, dangerReduction: 5 },
@@ -728,6 +732,7 @@ export const SPIRIT_BEASTS = {
     detail: '喜食火脉残晶，出战时能补足离火杀伤。',
     rarityId: 'mystic',
     qualityId: 'mystic',
+    unlock: { realmIndex: 7, bossId: 'qinglanMountain' },
     maxLevel: 8,
     cost: (level) => ({ spiritStones: scaleCost(128, level), beastCores: level * 2, herbs: scaleCost(10, level) }),
     bonuses: { power: 18, alchemySpeed: 0.012 },
@@ -741,6 +746,7 @@ export const SPIRIT_BEASTS = {
     detail: '踏雪无声，能安定识海，适合心魔压力较高的阶段。',
     rarityId: 'mystic',
     qualityId: 'mystic',
+    unlock: { realmIndex: 8, mapId: 'herbValley', depthLayer: 3 },
     maxLevel: 8,
     cost: (level) => ({ spiritStones: scaleCost(132, level), herbs: scaleCost(26, level), beastCores: level }),
     bonuses: { breakthrough: 0.014, dangerReduction: 4 },
@@ -754,6 +760,7 @@ export const SPIRIT_BEASTS = {
     detail: '背负玄甲地脉，能显著提升续战和守御。',
     rarityId: 'earthFiend',
     qualityId: 'earth',
+    unlock: { realmIndex: 12, mapId: 'swordTomb', depthLayer: 2 },
     maxLevel: 10,
     cost: (level) => ({ spiritStones: scaleCost(180, level), beastCores: level * 3, bloodEssence: Math.max(1, Math.ceil(level / 2)) }),
     bonuses: { defense: 18, vitality: 58, dangerReduction: 4 },
@@ -767,6 +774,7 @@ export const SPIRIT_BEASTS = {
     detail: '金瞳善破虚妄，斗法时更容易打穿敌方护势。',
     rarityId: 'earthFiend',
     qualityId: 'earth',
+    unlock: { realmIndex: 14, bossId: 'swordTomb' },
     maxLevel: 10,
     cost: (level) => ({ spiritStones: scaleCost(190, level), beastCores: level * 3, forgingEssence: Math.max(1, Math.ceil(level / 2)) }),
     bonuses: { power: 26, pierce: 5 },
@@ -780,6 +788,7 @@ export const SPIRIT_BEASTS = {
     detail: '潜行月影之间，适合高速斗法与玄阴流派。',
     rarityId: 'earthFiend',
     qualityId: 'earth',
+    unlock: { realmIndex: 14, mapId: 'demonRift', depthLayer: 2 },
     maxLevel: 10,
     cost: (level) => ({ spiritStones: scaleCost(196, level), beastCores: level * 3, bloodEssence: Math.max(1, Math.ceil(level / 2)) }),
     bonuses: { speed: 4, dangerReduction: 5 },
@@ -793,6 +802,7 @@ export const SPIRIT_BEASTS = {
     detail: '吞吐星砂灵机，能提升长线吐纳和资源沉淀。',
     rarityId: 'heavenWork',
     qualityId: 'heaven',
+    unlock: { realmIndex: 18, mapId: 'swordTomb', depthLayer: 8, insight: 2 },
     maxLevel: 12,
     cost: (level) => ({ spiritStones: scaleCost(260, level), herbs: scaleCost(45, level), beastCores: level * 4, insight: Math.max(1, Math.ceil(level / 3)) }),
     bonuses: { qiRate: 0.052, herbRate: 0.02, bloodEssenceBonus: 0.018 },
@@ -806,6 +816,7 @@ export const SPIRIT_BEASTS = {
     detail: '翎羽含曜阳残火，斗法爆发极强。',
     rarityId: 'heavenWork',
     qualityId: 'heaven',
+    unlock: { realmIndex: 20, mapId: 'demonRift', depthLayer: 6, forgingEssence: 12 },
     maxLevel: 12,
     cost: (level) => ({ spiritStones: scaleCost(280, level), beastCores: level * 4, forgingEssence: level, insight: Math.max(1, Math.ceil(level / 3)) }),
     bonuses: { power: 40, critChance: 0.01 },
@@ -819,6 +830,7 @@ export const SPIRIT_BEASTS = {
     detail: '古狐血脉未显锋芒，却能深度牵引周天与识海。',
     rarityId: 'dao',
     qualityId: 'ancient',
+    unlock: { realmIndex: 24, mapId: 'ancientRuins', depthLayer: 4, bloodEssence: 8 },
     maxLevel: 14,
     cost: (level) => ({ spiritStones: scaleCost(420, level), herbs: scaleCost(70, level), beastCores: level * 5, bloodEssence: Math.max(2, Math.ceil(level / 2)), insight: Math.max(1, Math.ceil(level / 3)) }),
     bonuses: { qiRate: 0.07, breakthrough: 0.018, herbRate: 0.024 },
@@ -832,6 +844,7 @@ export const SPIRIT_BEASTS = {
     detail: '蛟龙古血初醒，收集与出战成长都极高。',
     rarityId: 'dao',
     qualityId: 'ancient',
+    unlock: { realmIndex: 24, mapId: 'ancientRuins', depthLayer: 6, bossId: 'ancientRuins', bloodEssence: 10 },
     maxLevel: 14,
     cost: (level) => ({ spiritStones: scaleCost(460, level), beastCores: level * 6, bloodEssence: Math.max(2, Math.ceil(level / 2)), forgingEssence: level, insight: Math.max(1, Math.ceil(level / 3)) }),
     bonuses: { power: 56, qiRate: 0.032, dangerReduction: 8, elementPower: 8 },
@@ -1887,28 +1900,44 @@ export const GEAR_AFFIX_SETS = {
     name: '青莲流影',
     detail: '剑意、灵钟、灵脉、云步、澄玉与云踪相互牵引，行游与吐纳都更顺畅。',
     affixes: ['swordIntent', 'spiritBell', 'spiritVein', 'cloudStep', 'clearJade', 'cloudTrace'],
-    bonuses: { powerBonus: 70, qiBonus: 0.08, dangerReduction: 14, speed: 5 },
+    tiers: [
+      { pieces: 2, name: '两器相生', bonuses: { powerBonus: 24, qiBonus: 0.03 } },
+      { pieces: 4, name: '四象成势', bonuses: { dangerReduction: 8, speed: 3 } },
+      { pieces: 6, name: '六器同流', bonuses: { powerBonus: 46, qiBonus: 0.05, dangerReduction: 6, speed: 2 } },
+    ],
   },
   xuanGateGuard: {
     id: 'xuanGateGuard',
     name: '玄门守心',
     detail: '破阵、星轮、凝神、护体、玉根与镇步相互成势，叩关和历练更稳。',
     affixes: ['breakerEdge', 'starWheel', 'calmMind', 'guardedBody', 'jadeRoot', 'earthStep'],
-    bonuses: { powerBonus: 34, breakthrough: 0.055, dangerReduction: 20, defense: 24 },
+    tiers: [
+      { pieces: 2, name: '两器守心', bonuses: { breakthrough: 0.025, defense: 10 } },
+      { pieces: 4, name: '四门镇气', bonuses: { powerBonus: 16, dangerReduction: 10 } },
+      { pieces: 6, name: '玄门成阵', bonuses: { powerBonus: 18, breakthrough: 0.03, dangerReduction: 10, defense: 14 } },
+    ],
   },
   fivePhaseTemper: {
     id: 'fivePhaseTemper',
     name: '离火炼形',
     detail: '离火、日轮、曜阳、厚土、曜玉与风行相济，斗法时攻守更有层次。',
     affixes: ['flameEdge', 'sunWheel', 'sunSigil', 'earthWard', 'brightJade', 'windStep'],
-    bonuses: { attack: 36, defense: 26, elementPower: 24, critChance: 0.018 },
+    tiers: [
+      { pieces: 2, name: '离火初燃', bonuses: { attack: 14, elementPower: 8 } },
+      { pieces: 4, name: '四相炼骨', bonuses: { defense: 12, critChance: 0.008 } },
+      { pieces: 6, name: '六火炼形', bonuses: { attack: 22, defense: 14, elementPower: 16, critChance: 0.01 } },
+    ],
   },
   eclipseMirror: {
     id: 'eclipseMirror',
     name: '阴月照影',
     detail: '玄阴锋、月轮、月印、玄水镜、玄玉与影步交错，破邪和续战更强。',
     affixes: ['shadowPierce', 'moonWheel', 'moonSeal', 'waterMirror', 'darkJade', 'shadowStep'],
-    bonuses: { pierce: 24, vitality: 50, critChance: 0.035, speed: 6 },
+    tiers: [
+      { pieces: 2, name: '阴月初照', bonuses: { pierce: 10, vitality: 20 } },
+      { pieces: 4, name: '四影相映', bonuses: { critChance: 0.015, speed: 3 } },
+      { pieces: 6, name: '六镜照影', bonuses: { pierce: 14, vitality: 30, critChance: 0.02, speed: 3 } },
+    ],
   },
 };
 
@@ -3486,7 +3515,44 @@ function getSpiritBeastGuidanceUnlockRealm(beast) {
     heaven: 18,
     ancient: 24,
   };
-  return beast?.unlockRealmIndex ?? qualityUnlocks[beast?.qualityId] ?? 0;
+  return beast?.unlock?.realmIndex ?? beast?.unlockRealmIndex ?? qualityUnlocks[beast?.qualityId] ?? 0;
+}
+
+function getSpiritBeastUnlockStatus(state, beast) {
+  if (!beast) {
+    return { unlocked: false, requirements: ['未知灵兽'], hint: '未知灵兽' };
+  }
+  const owned = (state.spiritBeasts?.[beast.id] ?? 0) > 0;
+  if (owned) {
+    return { unlocked: true, requirements: [], hint: '已结契，可继续培养' };
+  }
+  const unlock = beast.unlock ?? { realmIndex: getSpiritBeastGuidanceUnlockRealm(beast) };
+  const requirements = [];
+  if ((state.realmIndex ?? 0) < (unlock.realmIndex ?? 0)) {
+    requirements.push(`境界至${REALMS[unlock.realmIndex]?.name ?? '更高境界'}`);
+  }
+  if (unlock.mapId && (state.mapDepths?.[unlock.mapId] ?? 0) < (unlock.depthLayer ?? 1)) {
+    const map = MISSION_MAPS[unlock.mapId];
+    requirements.push(`${map?.name ?? '对应秘境'}第 ${unlock.depthLayer ?? 1} 层`);
+  }
+  if (unlock.bossId && !state.defeatedBosses?.[unlock.bossId]) {
+    const map = MISSION_MAPS[unlock.bossId];
+    requirements.push(`镇压${map?.boss?.name ?? map?.name ?? '对应首领'}`);
+  }
+  if (unlock.bloodEssence && (state.bloodEssence ?? 0) < unlock.bloodEssence) {
+    requirements.push(`血脉精魄 ${Math.floor(state.bloodEssence ?? 0)} / ${unlock.bloodEssence}`);
+  }
+  if (unlock.forgingEssence && (state.forgingEssence ?? 0) < unlock.forgingEssence) {
+    requirements.push(`精魄 ${Math.floor(state.forgingEssence ?? 0)} / ${unlock.forgingEssence}`);
+  }
+  if (unlock.insight && (state.insight ?? 0) < unlock.insight) {
+    requirements.push(`悟道 ${Math.floor(state.insight ?? 0)} / ${unlock.insight}`);
+  }
+  return {
+    unlocked: requirements.length === 0,
+    requirements,
+    hint: requirements.length ? requirements.join('、') : '线索已齐，可尝试结契',
+  };
 }
 
 export function getGearSetStatus(state) {
@@ -3496,7 +3562,10 @@ export function getGearSetStatus(state) {
 
   return Object.values(GEAR_AFFIX_SETS).map((set) => {
     const matchedAffixes = set.affixes.filter((affixId) => activeAffixes.has(affixId));
-    const active = matchedAffixes.length >= set.affixes.length;
+    const activeTier = getGearSetActiveTier(set, matchedAffixes.length);
+    const nextTier = getGearSetNextTier(set, matchedAffixes.length);
+    const active = Boolean(activeTier);
+    const bonuses = getGearSetMatchedBonuses(set, matchedAffixes.length);
     return {
       id: set.id,
       name: set.name,
@@ -3504,7 +3573,10 @@ export function getGearSetStatus(state) {
       matched: matchedAffixes.length,
       total: set.affixes.length,
       active,
-      effects: effectsFromBonusObject(set.bonuses),
+      activeTier,
+      nextTier,
+      bonuses,
+      effects: effectsFromBonusObject(bonuses),
       affixes: set.affixes.map((affixId) => ({
         id: affixId,
         name: GEAR_AFFIXES[affixId]?.name ?? affixId,
@@ -3514,6 +3586,35 @@ export function getGearSetStatus(state) {
       })),
     };
   });
+}
+
+function getGearSetTiers(set) {
+  if (Array.isArray(set?.tiers) && set.tiers.length) {
+    return [...set.tiers].sort((a, b) => a.pieces - b.pieces);
+  }
+  return [{ pieces: set?.affixes?.length ?? 0, name: '同调', bonuses: set?.bonuses ?? {} }];
+}
+
+function getGearSetActiveTier(set, matched) {
+  return getGearSetTiers(set).filter((tier) => matched >= tier.pieces).at(-1) ?? null;
+}
+
+function getGearSetNextTier(set, matched) {
+  return getGearSetTiers(set).find((tier) => matched < tier.pieces) ?? null;
+}
+
+function getGearSetMatchedBonuses(set, matched) {
+  return getGearSetTiers(set)
+    .filter((tier) => matched >= tier.pieces)
+    .reduce((bonuses, tier) => addBonusObjects(bonuses, tier.bonuses ?? {}), {});
+}
+
+function addBonusObjects(left = {}, right = {}) {
+  const result = { ...left };
+  Object.entries(right).forEach(([key, value]) => {
+    result[key] = round((result[key] ?? 0) + value);
+  });
+  return result;
 }
 
 export function getLootResonanceStatus(state) {
@@ -3697,11 +3798,13 @@ export function getEquipmentDetails(state) {
       const level = state.spiritBeasts?.[beast.id] ?? 0;
       const quality = getSpiritBeastQuality(beast);
       const growthMultiplier = getSpiritBeastGrowthMultiplier(beast);
+      const unlock = getSpiritBeastUnlockStatus(state, beast);
       return {
         id: beast.id,
         name: beast.name,
         detail: beast.detail,
         quality,
+        unlock,
         growthMultiplier,
         level,
         maxLevel: beast.maxLevel,
@@ -4312,7 +4415,8 @@ function getSpiritBeastGuidance(state) {
         targetId: 'beasts',
       };
     }
-    const affordable = Object.values(SPIRIT_BEASTS).find((beast) => canAfford(state, beast.cost(1)));
+    const affordable = Object.values(SPIRIT_BEASTS)
+      .find((beast) => getSpiritBeastUnlockStatus(state, beast).unlocked && canAfford(state, beast.cost(1)));
     if (affordable) {
       return {
         title: `培养灵兽${affordable.name}`,
@@ -4636,6 +4740,11 @@ export function trainSpiritBeast(state, beastId, now = Date.now()) {
   const currentLevel = state.spiritBeasts[beastId] ?? 0;
   if (currentLevel >= beast.maxLevel) {
     return { ok: false, reason: 'maxLevel' };
+  }
+  const unlock = getSpiritBeastUnlockStatus(state, beast);
+  if (!unlock.unlocked) {
+    addLog(state, now, `${beast.name}尚未现踪：${unlock.hint}。`);
+    return { ok: false, reason: 'locked', unlock };
   }
   const nextLevel = currentLevel + 1;
   const cost = beast.cost(nextLevel);
@@ -5735,6 +5844,10 @@ function normalizeBattle(battle) {
       element: normalizeBattleElement(round.element),
       targetElement: normalizeBattleElement(round.targetElement),
       elementModifier: Number.isFinite(Number(round.elementModifier)) ? Number(round.elementModifier) : 1,
+      defenseMitigation: Number.isFinite(Number(round.defenseMitigation)) ? Number(round.defenseMitigation) : 0,
+      mitigated: Math.max(0, Math.round(Number(round.mitigated) || 0)),
+      rawDamage: Math.max(0, round(Number(round.rawDamage) || Number(round.damage) || 0)),
+      effectiveDefense: Math.max(0, round(Number(round.effectiveDefense) || 0)),
       elementText: String(round.elementText || ''),
       targetHp: Math.max(0, Math.round(Number(round.targetHp) || 0)),
       targetMaxHp: Math.max(1, Math.round(Number(round.targetMaxHp) || Number(round.targetHp) || 1)),
@@ -6519,7 +6632,7 @@ function collectResourceNeeds(state) {
 
   Object.values(SPIRIT_BEASTS).forEach((beast) => {
     const level = state.spiritBeasts?.[beast.id] ?? 0;
-    if (level < beast.maxLevel && (level > 0 || state.realmIndex >= getSpiritBeastGuidanceUnlockRealm(beast))) {
+    if (level < beast.maxLevel && getSpiritBeastUnlockStatus(state, beast).unlocked) {
       addCost(`灵兽·${beast.name}`, beast.cost(level + 1), 0.9);
     }
   });
@@ -6710,10 +6823,7 @@ function getGearAffixBonus(state, key) {
 
 function getGearSetBonus(state, key) {
   return getGearSetStatus(state).reduce((total, set) => {
-    if (!set.active) {
-      return total;
-    }
-    return total + (GEAR_AFFIX_SETS[set.id]?.bonuses?.[key] ?? 0);
+    return total + (set.bonuses?.[key] ?? 0);
   }, 0);
 }
 
@@ -6729,10 +6839,10 @@ function getGearAffixSources(state, key, mode = 'flat') {
 
 function getGearSetSources(state, key, mode = 'flat') {
   return getGearSetStatus(state)
-    .filter((set) => set.active && GEAR_AFFIX_SETS[set.id]?.bonuses?.[key])
+    .filter((set) => set.bonuses?.[key])
     .map((set) => ({
       label: `同调·${set.name}`,
-      value: GEAR_AFFIX_SETS[set.id].bonuses[key],
+      value: set.bonuses[key],
       mode,
     }));
 }
@@ -6792,7 +6902,7 @@ function getCombatElementScores(state) {
   getGearSetStatus(state).forEach((set) => {
     if (set.active) {
       const elementId = set.affixes.map((affix) => GEAR_AFFIXES[affix.id]?.element).find((id) => id && COMBAT_ELEMENTS[id]);
-      add(elementId, GEAR_AFFIX_SETS[set.id]?.bonuses?.elementPower ?? 0, `同调${set.name}`);
+      add(elementId, set.bonuses?.elementPower ?? 0, `同调${set.name}`);
     }
   });
 
@@ -7022,11 +7132,19 @@ function resolveCombatHit(attacker, defender, round, isPlayer, now, random, tech
     ? random()
     : seededCombatRoll(now, round, isPlayer ? 13 : 71);
   const critical = roll < Math.min(0.75, attacker.critChance + (technique?.critBonus ?? 0));
-  const raw = attacker.attack * (technique?.multiplier ?? 1) * elementModifier * (critical ? 1.45 : 1)
-    + attacker.pierce
-    - defender.defense * 0.42;
+  const techniqueMultiplier = technique?.multiplier ?? 1;
+  const critMultiplier = critical ? 1.45 : 1;
+  const variance = 0.94 + roll * 0.12;
+  const effectiveDefense = Math.max(0, defender.defense - attacker.pierce * 0.65);
+  const defenseMitigation = clampNumber(effectiveDefense / (effectiveDefense + attacker.attack * 1.65 + 30), 0, 0.72);
+  const raw = attacker.attack * techniqueMultiplier * elementModifier * critMultiplier * variance + attacker.pierce * 0.35;
+  const damage = Math.max(1, Math.round(raw * (1 - defenseMitigation)));
   return {
-    damage: Math.max(1, Math.round(raw)),
+    damage,
+    rawDamage: Math.round(raw * 100) / 100,
+    mitigated: Math.max(0, Math.round(raw - damage)),
+    defenseMitigation: Math.round(defenseMitigation * 100) / 100,
+    effectiveDefense: Math.round(effectiveDefense * 100) / 100,
     critical,
     elementModifier,
   };
@@ -7044,6 +7162,10 @@ function createBattleRound(round, actor, attacker, defender, hit, targetHp, skil
     element: attacker.element,
     targetElement: defender.element,
     elementModifier: hit.elementModifier,
+    defenseMitigation: hit.defenseMitigation,
+    mitigated: hit.mitigated,
+    rawDamage: hit.rawDamage,
+    effectiveDefense: hit.effectiveDefense,
     elementText: formatElementInteraction(attacker.element, defender.element, hit.elementModifier),
     targetHp,
     targetMaxHp: defender.maxHp ?? defender.vitality,
@@ -7990,6 +8112,10 @@ function hashString(value) {
 
 function round(value) {
   return Math.round(value * 100) / 100;
+}
+
+function clampNumber(value, min, max) {
+  return Math.min(max, Math.max(min, Number.isFinite(value) ? value : min));
 }
 
 function getDateKey(now = Date.now()) {
