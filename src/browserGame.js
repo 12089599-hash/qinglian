@@ -1198,6 +1198,7 @@
     dailyStatus: document.querySelector('[data-daily-status]'),
     marketList: document.querySelector('[data-market-list]'),
     opportunity: document.querySelector('[data-opportunity]'),
+    battlePlayback: document.querySelector('[data-battle-playback]'),
     missionReport: document.querySelector('[data-mission-report]'),
     resourceGuidance: document.querySelector('[data-resource-guidance]'),
     missionList: document.querySelector('[data-mission-list]'),
@@ -1213,6 +1214,8 @@
   const ctx = refs.canvas.getContext('2d');
   const renderCache = {};
   const openLootDetails = new Set();
+  let activeBattlePlayback = null;
+  let battlePlaybackTimer = null;
   const panelTabs = ['overview', 'goals', 'daily', 'market', 'alchemy', 'gear', 'cultivation', 'sect', 'cave', 'missions', 'log'];
   const tabGroups = {
     practice: { label: '修行', tabs: ['overview', 'goals', 'daily', 'cultivation'] },
@@ -1454,6 +1457,14 @@
     renderMissionReport(true);
   });
 
+  refs.battlePlayback?.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-skip-battle-playback]');
+    if (!button) {
+      return;
+    }
+    finishBattlePlayback(true);
+  });
+
   refs.treasureList?.addEventListener('click', (event) => {
     const button = event.target.closest('[data-upgrade-treasure]');
     if (!button) return;
@@ -1575,11 +1586,19 @@
     if (bossButton) {
       const result = challengeMapBoss(state, bossButton.dataset.challengeBoss);
       if (result.ok) {
-        showToast('首领镇压', `${result.battle?.summary || `击败${result.boss.name}`} 获得${formatReward(result.reward)}。`);
-        triggerBattleFeedback('victory');
+        if (startBattlePlayback(state.lastMissionReport, 'victory')) {
+          showToast('斗法展开', `${result.boss.name}入阵，正在演武。`);
+        } else {
+          showToast('首领镇压', `${result.battle?.summary || `击败${result.boss.name}`} 获得${formatReward(result.reward)}。`);
+          triggerBattleFeedback('victory');
+        }
       } else if (result.reason === 'battleLost') {
-        showToast('斗法失利', result.battle?.summary || '对方气机仍盛，需调整装备或继续修行。', 'warning');
-        triggerBattleFeedback('danger');
+        if (startBattlePlayback(state.lastMissionReport, 'danger')) {
+          showToast('斗法展开', '对方气机压来，正在演武。', 'warning');
+        } else {
+          showToast('斗法失利', result.battle?.summary || '对方气机仍盛，需调整装备或继续修行。', 'warning');
+          triggerBattleFeedback('danger');
+        }
       } else if (result.reason === 'powerLow') {
         showToast('道行不足', `需要道行 ${result.requiredPower}。`, 'warning');
         triggerBattleFeedback('danger');
@@ -2691,8 +2710,12 @@
         now,
       }));
       addLog(state, now, `${map.name}秘境第 ${layer} 层折返，劫象反噬。`);
-      showToast('秘境折返', battle.summary || `${map.name}第 ${layer} 层劫象过重。`, 'warning');
-      triggerBattleFeedback('shake');
+      if (startBattlePlayback(state.lastMissionReport, 'danger')) {
+        showToast('秘境斗法', `${map.name}第 ${layer} 层劫象压身，正在演武。`, 'warning');
+      } else {
+        showToast('秘境折返', battle.summary || `${map.name}第 ${layer} 层劫象过重。`, 'warning');
+        triggerBattleFeedback('danger');
+      }
       return;
     }
 
@@ -2712,8 +2735,12 @@
       now,
     }));
     addLog(state, now, `打通${map.name}秘境第 ${layer} 层，获得${formatReward(reward)}。`);
-    showToast('秘境突破', `${battle.summary} 收获${formatReward(reward)}。`);
-    triggerBattleFeedback('pulse');
+    if (startBattlePlayback(state.lastMissionReport, 'victory')) {
+      showToast('秘境斗法', `${map.name}第 ${layer} 层劫象已现，正在演武。`);
+    } else {
+      showToast('秘境突破', `${battle.summary} 收获${formatReward(reward)}。`);
+      triggerBattleFeedback('pulse');
+    }
   }
 
   function createDepthReport(state, map, layer, { outcome, reward, reputationGained = 0, battle = null, now = Date.now() }) {
@@ -2938,6 +2965,7 @@
     renderCave(forceLists);
     renderSect(forceLists);
     renderOpportunity(forceLists);
+    renderBattlePlayback(forceLists);
     renderMissionReport(forceLists);
     renderResourceGuidance(forceLists);
     renderMissions(forceLists);
@@ -4191,6 +4219,165 @@
     return [...keys].sort().map((key) => `${key}:${state[key] || 0}`).join('|');
   }
 
+  function startBattlePlayback(report, tone = 'pulse') {
+    if (!refs.battlePlayback || !report?.battle?.rounds?.length) {
+      return false;
+    }
+    clearBattlePlaybackTimer();
+    activeBattlePlayback = {
+      reportId: report.id,
+      report,
+      battle: report.battle,
+      visibleCount: 0,
+      tone,
+    };
+    renderBattlePlayback(true);
+    renderMissionReport(true);
+    queueBattlePlaybackStep(360);
+    return true;
+  }
+
+  function queueBattlePlaybackStep(delay = 680) {
+    clearBattlePlaybackTimer();
+    if (!activeBattlePlayback) {
+      return;
+    }
+    battlePlaybackTimer = setTimeout(() => {
+      advanceBattlePlayback();
+    }, delay);
+  }
+
+  function clearBattlePlaybackTimer() {
+    if (battlePlaybackTimer) {
+      clearTimeout(battlePlaybackTimer);
+      battlePlaybackTimer = null;
+    }
+  }
+
+  function advanceBattlePlayback() {
+    if (!activeBattlePlayback) {
+      return;
+    }
+    const rounds = activeBattlePlayback.battle.rounds || [];
+    if (activeBattlePlayback.visibleCount < rounds.length) {
+      activeBattlePlayback.visibleCount += 1;
+      const latest = rounds[activeBattlePlayback.visibleCount - 1];
+      renderBattlePlayback(true);
+      triggerBattleFeedback(latest?.critical ? 'victory' : latest?.actor === 'enemy' ? 'danger' : 'pulse');
+      queueBattlePlaybackStep(activeBattlePlayback.visibleCount >= rounds.length ? 880 : 680);
+      return;
+    }
+    finishBattlePlayback(false);
+  }
+
+  function finishBattlePlayback(skipped = false) {
+    if (!activeBattlePlayback) {
+      return;
+    }
+    const playback = activeBattlePlayback;
+    clearBattlePlaybackTimer();
+    activeBattlePlayback = null;
+    renderBattlePlayback(true);
+    renderMissionReport(true);
+    showBattlePlaybackResult(playback.report, skipped);
+    triggerBattleFeedback(playback.tone === 'danger' || playback.report.outcome === 'failure' ? 'danger' : 'victory');
+    if (isMobileLayout() && activeTab === 'missions' && refs.missionReport) {
+      requestAnimationFrame(() => refs.missionReport.scrollIntoView({ behavior: skipped ? 'auto' : 'smooth', block: 'start' }));
+    }
+  }
+
+  function showBattlePlaybackResult(report, skipped) {
+    const title = report.outcome === 'success' ? '斗法已定' : '斗法失利';
+    const summary = skipped ? `已跳过演武。${report.summary}` : report.summary;
+    showToast(title, summary, report.outcome === 'success' ? '' : 'warning');
+  }
+
+  function renderBattlePlayback(force = false) {
+    if (!refs.battlePlayback) {
+      return;
+    }
+    if (!activeBattlePlayback) {
+      refs.battlePlayback.hidden = true;
+      refs.battlePlayback.innerHTML = '';
+      renderCache.battlePlayback = 'none';
+      return;
+    }
+    const { report, battle, visibleCount } = activeBattlePlayback;
+    const rounds = battle.rounds || [];
+    const shownRounds = rounds.slice(0, visibleCount);
+    const latest = shownRounds.at(-1) || null;
+    const hp = getBattlePlaybackHp(battle, shownRounds);
+    const signature = `${report.id}:${visibleCount}:${latest?.damage || 0}:${latest?.targetHp || ''}`;
+    if (!force && renderCache.battlePlayback === signature) {
+      return;
+    }
+    refs.battlePlayback.hidden = false;
+    refs.battlePlayback.classList.toggle('failure', report.outcome === 'failure');
+    refs.battlePlayback.innerHTML = `
+      <header class="battle-playback-head">
+        <div>
+          <span>斗法演武</span>
+          <strong>${report.missionName}</strong>
+          <small>${visibleCount ? `第 ${latest?.round || 1} 回合 · ${visibleCount} / ${rounds.length}` : '气机入阵，斗法将起'}</small>
+        </div>
+        <button data-skip-battle-playback type="button">跳过</button>
+      </header>
+      <div class="battle-stage">
+        ${renderCombatantCard('player', battle.player, hp.player, latest?.actor === 'player')}
+        <div class="clash-mark ${latest?.critical ? 'critical' : ''}">
+          <span>${latest ? latest.damage : '起势'}</span>
+          <small>${latest?.critical ? '会心' : latest?.elementText || '凝神'}</small>
+        </div>
+        ${renderCombatantCard('enemy', battle.enemy, hp.enemy, latest?.actor === 'enemy')}
+      </div>
+      <div class="battle-playback-event ${latest?.actor || ''} ${latest?.critical ? 'critical' : ''}">
+        <strong>${latest ? `${latest.actor === 'player' ? '我方' : '劫影'}出手${latest.critical ? ' · 会心' : ''}` : '剑气未发'}</strong>
+        <span>${latest ? `${latest.elementText}，造成 ${latest.damage} 伤害，${latest.targetName}余 ${latest.targetHp} 血元。` : '双方气机相探，五行生克正在流转。'}</span>
+      </div>
+      <ol class="battle-playback-log">
+        ${shownRounds.slice(-6).map((round) => `
+          <li class="${round.actor} ${round.critical ? 'critical' : ''}">
+            <span>${round.round}</span>
+            <strong>${round.actor === 'player' ? '我方' : '劫影'} · ${round.elementText}</strong>
+            <em>${round.critical ? '会心 · ' : ''}${round.damage}</em>
+          </li>
+        `).join('') || '<li class="muted"><span>0</span><strong>起势</strong><em>待发</em></li>'}
+      </ol>
+    `;
+    renderCache.battlePlayback = signature;
+  }
+
+  function renderCombatantCard(side, combatant, hp, active) {
+    const maxHp = Math.max(1, combatant?.maxHp || 1);
+    const currentHp = Math.max(0, Math.round(hp));
+    const percent = Math.max(0, Math.min(100, Math.round((currentHp / maxHp) * 100)));
+    return `
+      <article class="combatant-card ${side} ${active ? 'active' : ''}">
+        <span>${side === 'player' ? '我方' : '劫影'}</span>
+        <strong>${combatant?.name || (side === 'player' ? '修士' : '劫影')}</strong>
+        <small>${formatElementName(combatant?.element)} · 血元 ${currentHp} / ${maxHp}</small>
+        <i><b style="width:${percent}%"></b></i>
+      </article>
+    `;
+  }
+
+  function getBattlePlaybackHp(battle, shownRounds) {
+    let player = battle.player?.maxHp || 0;
+    let enemy = battle.enemy?.maxHp || 0;
+    shownRounds.forEach((round) => {
+      if (round.actor === 'player') {
+        enemy = round.targetHp;
+      } else {
+        player = round.targetHp;
+      }
+    });
+    return { player, enemy };
+  }
+
+  function formatElementName(element) {
+    return element?.name || '无相';
+  }
+
   function renderMissionReport(force = false) {
     if (!refs.missionReport) {
       return;
@@ -4198,6 +4385,12 @@
     const report = state.lastMissionReport;
     const battleSignature = report?.battle ? `${report.battle.outcome}:${report.battle.summary}:${report.battle.rounds?.map((round) => `${round.actor}-${round.damage}-${round.targetHp}`).join(',')}` : '';
     const signature = report ? `${report.id}:${report.outcome}:${report.rewardText}:${report.approach?.id || ''}:${report.approachRewardText || ''}:${report.specialDropText || ''}:${report.rareRewardText}:${report.event?.id || ''}:${battleSignature}` : 'none';
+    if (activeBattlePlayback && activeBattlePlayback.reportId === report?.id) {
+      refs.missionReport.hidden = true;
+      refs.missionReport.innerHTML = '';
+      renderCache.missionReport = `playback:${report.id}:${activeBattlePlayback.visibleCount}`;
+      return;
+    }
     if (!force && renderCache.missionReport === signature) {
       return;
     }
