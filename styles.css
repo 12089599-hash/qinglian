@@ -3226,6 +3226,10 @@ small {
     gap: 8px;
   }
 
+  .gear-section-stack [data-gear-section-panel].active {
+    padding-bottom: calc(96px + env(safe-area-inset-bottom));
+  }
+
   .loot-filters {
     flex-wrap: wrap;
     overflow: visible;

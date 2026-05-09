@@ -1776,8 +1776,8 @@
       localStorage.setItem('idle-xianxia-loot-filter', activeLootFilter);
       renderGearSections();
       renderLoot(true);
-      refs.lootList?.scrollIntoView({ block: 'start', behavior: 'smooth' });
-      showToast('血脉材料', '玄纹以上战利品分解后可得血脉精魄。');
+      document.querySelector('[data-gear-section-panel="loot"]')?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+      showToast('血脉材料', '已转到战利品，玄纹以上分解可得血脉精魄。');
       return;
     }
     const button = event.target.closest('[data-awaken-bloodline]');
@@ -6515,6 +6515,8 @@
       spiritStones: '灵石',
       beastCores: '妖核',
       artifacts: '法器',
+      forgingEssence: '炼器精魄',
+      bloodEssence: '血脉精魄',
       reputation: '声望',
     };
     return Object.entries(rates)
