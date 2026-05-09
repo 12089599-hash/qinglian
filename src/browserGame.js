@@ -1687,11 +1687,11 @@
   });
 
   document.querySelector('[data-lock-rare-loot]')?.addEventListener('click', () => {
-    const result = lockRareLootEquipment(state);
+    const result = lockRareLootEquipment(state, 'heavenWork');
     if (result.locked > 0) {
-      showToast('高品已锁', `已保留 ${result.locked} 件玄纹以上战利品。`);
+      showToast('珍品已锁', `已保留 ${result.locked} 件天工以上战利品。`);
     } else {
-      showToast('无需锁定', '当前没有新的玄纹以上闲置战利品。');
+      showToast('无需锁定', '当前没有新的天工以上闲置战利品。');
     }
     saveState();
     render(true);
@@ -5937,7 +5937,9 @@
     }
     const summary = getOrganizableLootSummary(state);
     button.disabled = summary.count <= 0;
-    button.textContent = summary.count > 0 ? `批量分解 ${summary.count}` : '无可整理';
+    button.textContent = summary.count > 0
+      ? `分解 ${summary.count}${summary.reward.bloodEssence ? ` · 血脉+${summary.reward.bloodEssence}` : ''}`
+      : '无可整理';
     button.title = summary.count > 0 ? `预计获得 ${formatReward(summary.reward)}` : '没有会被批量分解的闲置战利品';
   }
 
@@ -5946,9 +5948,9 @@
     if (!button) {
       return;
     }
-    const count = getLockableRareLootCount(state);
+    const count = getLockableRareLootCount(state, 'heavenWork');
     button.disabled = count <= 0;
-    button.textContent = count > 0 ? `锁高品 ${count}` : '高品已锁';
+    button.textContent = count > 0 ? `锁珍品 ${count}` : '珍品已锁';
   }
 
   function sortLootForDisplay(left, right) {
@@ -9010,10 +9012,11 @@
     return { count: items.length, items, reward };
   }
 
-  function getLockableRareLootCount(state) {
+  function getLockableRareLootCount(state, minRarityId = 'mystic') {
+    const minIndex = getRarityIndex(minRarityId);
     return (state.lootEquipment || []).filter((item) => state.equippedLoot?.[item.slot] !== item.uid
       && !state.lockedLoot?.[item.uid]
-      && getRarityIndex(getLootRarity(item).id) >= getRarityIndex('mystic')).length;
+      && getRarityIndex(getLootRarity(item).id) >= minIndex).length;
   }
 
   function getOrganizableLootCount(state) {
