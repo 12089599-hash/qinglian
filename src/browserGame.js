@@ -1708,7 +1708,7 @@
     }
     event.preventDefault();
     handleOrganizeLootClick();
-  });
+  }, { capture: true });
 
   document.querySelectorAll('[data-loot-rarity-toggle]').forEach((input) => {
     input.addEventListener('change', () => {

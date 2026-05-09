@@ -1566,7 +1566,7 @@ small {
 
 .loot-toolbar {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 8px;
   align-items: start;
   border: 1px solid rgba(245, 238, 220, 0.09);
@@ -1575,9 +1575,19 @@ small {
   background: rgba(0, 0, 0, 0.12);
 }
 
-.loot-toolbar > button {
+.loot-toolbar-actions {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  grid-column: 2;
+  gap: 8px;
+  justify-self: end;
+}
+
+.loot-toolbar-actions button {
   min-height: 36px;
   padding: 0 12px;
+  white-space: nowrap;
 }
 
 .loot-filters {
@@ -1611,10 +1621,12 @@ small {
 .loot-dismantle-options {
   display: flex;
   flex-wrap: nowrap;
+  grid-column: 1;
   gap: 6px;
   align-items: center;
   align-self: start;
   min-width: 0;
+  max-width: 100%;
   overflow-x: auto;
   padding-bottom: 2px;
   scrollbar-width: none;
@@ -1659,9 +1671,11 @@ small {
 }
 
 .loot-dismantle-options button {
+  flex: 0 0 auto;
   min-height: 30px;
   padding: 0 9px;
   font-size: 0.78rem;
+  white-space: nowrap;
 }
 
 .resonance-card {
@@ -3474,7 +3488,15 @@ small {
     padding: 0 6px;
   }
 
-  .loot-toolbar > button {
+  .loot-toolbar-actions {
+    display: grid;
+    grid-column: 1 / -1;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 7px;
+    justify-self: stretch;
+  }
+
+  .loot-toolbar-actions button {
     width: 100%;
     min-height: 34px;
     padding: 0 10px;
