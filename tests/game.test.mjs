@@ -1847,9 +1847,7 @@ test('midgame daily depth task rewards pushing a secret realm layer', () => {
   const dateKey = '1970-01-01';
 
   const before = getDailyTasks(state, dateKey).find((task) => task.id === 'dailyDepth');
-  const depth = getMapDepthStatus(state, 'qinglanMountain');
   startMapDepthTrial(state, 'qinglanMountain', 1000);
-  updateGame(state, depth.duration + 1, 1000 + (depth.duration + 1) * 1000);
   const after = getDailyTasks(state, dateKey).find((task) => task.id === 'dailyDepth');
   const claimed = claimDailyTask(state, 'dailyDepth', dateKey, 200_000);
 
@@ -1885,7 +1883,6 @@ test('map depth trials scale difficulty and grant first-clear rewards', () => {
   const firstDepth = getMapDepthStatus(state, 'qinglanMountain');
 
   const started = startMapDepthTrial(state, 'qinglanMountain', 1000);
-  updateGame(state, firstDepth.duration + 1, 1000 + (firstDepth.duration + 1) * 1000);
   const secondDepth = getMapDepthStatus(state, 'qinglanMountain');
 
   assert.equal(firstDepth.nextLayer, 1);
@@ -1901,21 +1898,19 @@ test('map depth trials scale difficulty and grant first-clear rewards', () => {
   assert.equal(state.spiritStones > 0, true);
 });
 
-test('map depth trials create live battle data as soon as they start', () => {
+test('map depth trials settle immediately after creating battle data', () => {
   const state = createGameState(1000);
   state.permanentBonuses.power = 500;
-  const firstDepth = getMapDepthStatus(state, 'qinglanMountain');
 
   const started = startMapDepthTrial(state, 'qinglanMountain', 1000);
-  const liveBattle = state.activeMission?.battle;
   const revived = reviveGameState(JSON.parse(JSON.stringify(state)), 1500);
 
   assert.equal(started.ok, true);
-  assert.equal(liveBattle?.rounds.length > 0, true);
-  assert.equal(revived.activeMission?.battle?.rounds.length, liveBattle.rounds.length);
-
-  updateGame(state, firstDepth.duration + 1, 1000 + (firstDepth.duration + 1) * 1000);
-  assert.deepEqual(state.lastMissionReport.battle.rounds, liveBattle.rounds);
+  assert.equal(started.battle?.rounds.length > 0, true);
+  assert.equal(state.activeMission, null);
+  assert.equal(revived.activeMission, null);
+  assert.equal(state.mapDepths.qinglanMountain, 1);
+  assert.deepEqual(state.lastMissionReport.battle.rounds, started.battle.rounds);
 });
 
 test('map depth trials remain threatening compared with same-map routes', () => {

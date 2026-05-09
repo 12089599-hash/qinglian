@@ -1839,10 +1839,6 @@ small {
     linear-gradient(135deg, rgba(238, 181, 164, 0.1), rgba(18, 24, 30, 0.94));
 }
 
-.battle-playback.holding {
-  box-shadow: inset 0 0 0 1px rgba(232, 198, 106, 0.1);
-}
-
 .battle-playback-head {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -1871,17 +1867,6 @@ small {
 .battle-playback-head small {
   margin-top: 4px;
   color: var(--gold);
-}
-
-.battle-playback-state {
-  align-self: start;
-  border: 1px solid rgba(125, 211, 183, 0.28);
-  border-radius: 999px;
-  padding: 7px 10px;
-  color: var(--jade);
-  background: rgba(125, 211, 183, 0.08);
-  font-size: 0.74rem;
-  font-weight: 900;
 }
 
 .battle-stage {

@@ -3412,18 +3412,11 @@ export function startMapDepthTrial(state, mapId, now = Date.now()) {
   }
 
   const map = MISSION_MAPS[mapId];
-  const battle = simulateDepthBattle(state, map, status.nextLayer, now);
-  state.activeMission = {
-    type: 'mapDepth',
-    id: `depth:${mapId}:${status.nextLayer}`,
-    mapId,
-    layer: status.nextLayer,
-    startedAt: now,
-    endsAt: now + status.duration * 1000,
-    battle,
-  };
-  addLog(state, now, `深入${status.mapName}秘境第 ${status.nextLayer} 层。`);
-  return { ok: true, status, battle };
+  const layer = status.nextLayer;
+  const battle = simulateDepthBattle(state, map, layer, now);
+  addLog(state, now, `深入${status.mapName}秘境第 ${layer} 层。`);
+  const result = settleMapDepthTrial(state, map, layer, battle, now);
+  return { ok: true, status, battle, report: result.report, outcome: result.outcome };
 }
 
 export function setMissionApproach(state, mapId, approachId, now = Date.now()) {
@@ -3836,6 +3829,10 @@ function completeMapDepthTrial(state, active, now) {
   }
   const layer = clampInteger(active.layer ?? 1, 1, MAP_DEPTH_MAX_LAYER);
   const battle = normalizeBattle(active.battle) ?? simulateDepthBattle(state, map, layer, active.startedAt ?? now);
+  settleMapDepthTrial(state, map, layer, battle, now);
+}
+
+function settleMapDepthTrial(state, map, layer, battle, now) {
   if (battle.outcome !== 'victory') {
     const penalty = {
       qi: -Math.max(25, Math.round(layer * 12 + (map.unlockRealmIndex ?? 0) * 6)),
@@ -3851,7 +3848,7 @@ function completeMapDepthTrial(state, active, now) {
       now,
     }));
     addLog(state, now, `${map.name}秘境第 ${layer} 层折返，劫象反噬。`);
-    return;
+    return { outcome: 'failure', battle, report: state.lastMissionReport, reward: penalty };
   }
 
   const reward = getDepthReward(map, layer);
@@ -3870,6 +3867,7 @@ function completeMapDepthTrial(state, active, now) {
   }));
   addDailyProgress(state, 'depthTrials', 1, now);
   addLog(state, now, `打通${map.name}秘境第 ${layer} 层，获得${formatReward(reward)}。`);
+  return { outcome: 'success', battle, report: state.lastMissionReport, reward };
 }
 
 function createDepthReport(state, map, layer, { outcome, reward, reputationGained = 0, battle = null, now = Date.now() }) {

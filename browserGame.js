@@ -1462,7 +1462,7 @@
     if (!button) {
       return;
     }
-    skipBattlePlayback();
+    finishBattlePlayback(true);
   });
 
   refs.treasureList?.addEventListener('click', (event) => {
@@ -1574,14 +1574,11 @@
     if (depthButton) {
       const result = startMapDepthTrial(state, depthButton.dataset.startDepth);
       if (result.ok) {
-        if (startBattlePlayback(createActiveDepthBattleReport(state.activeMission), result.battle?.outcome === 'victory' ? 'pulse' : 'danger', {
-          activeMissionId: state.activeMission?.id,
-          holdUntilMissionEnd: true,
-          resultToast: false,
-        })) {
-          showToast('秘境演武', `${result.status.mapName}第 ${result.status.nextLayer} 层劫象入阵。`);
+        const tone = result.outcome === 'success' ? 'victory' : 'danger';
+        if (startBattlePlayback(result.report, tone)) {
+          showToast('秘境斗法', `${result.status.mapName}第 ${result.status.nextLayer} 层劫象入阵。`, result.outcome === 'success' ? '' : 'warning');
         } else {
-          showToast('秘境深入', `${result.status.mapName}第 ${result.status.nextLayer} 层。`);
+          showToast(result.outcome === 'success' ? '秘境突破' : '秘境折返', result.report?.summary || `${result.status.mapName}第 ${result.status.nextLayer} 层。`, result.outcome === 'success' ? '' : 'warning');
         }
       } else if (result.reason === 'busy') {
         showToast('正在行动', '当前行动结束后再深入秘境。', 'warning');
@@ -2123,18 +2120,11 @@
     }
 
     const map = missionMaps[mapId];
-    const battle = simulateDepthBattle(state, map, status.nextLayer, now);
-    state.activeMission = {
-      type: 'mapDepth',
-      id: `depth:${mapId}:${status.nextLayer}`,
-      mapId,
-      layer: status.nextLayer,
-      startedAt: now,
-      endsAt: now + status.duration * 1000,
-      battle,
-    };
-    addLog(state, now, `深入${status.mapName}秘境第 ${status.nextLayer} 层。`);
-    return { ok: true, status, battle };
+    const layer = status.nextLayer;
+    const battle = simulateDepthBattle(state, map, layer, now);
+    addLog(state, now, `深入${status.mapName}秘境第 ${layer} 层。`);
+    const result = settleMapDepthTrial(state, map, layer, battle, now);
+    return { ok: true, status, battle, report: result.report, outcome: result.outcome };
   }
 
   function setMissionApproach(state, mapId, approachId, now = Date.now()) {
@@ -2707,7 +2697,16 @@
     }
     const layer = clampInteger(active.layer || 1, 1, mapDepthMaxLayer);
     const battle = normalizeBattle(active.battle) || simulateDepthBattle(state, map, layer, active.startedAt || now);
-    const hadLivePlayback = clearActiveDepthPlayback(active);
+    const result = settleMapDepthTrial(state, map, layer, battle, now);
+    if (startBattlePlayback(result.report, result.outcome === 'success' ? 'victory' : 'danger')) {
+      showToast('秘境斗法', `${map.name}第 ${layer} 层劫象入阵。`, result.outcome === 'success' ? '' : 'warning');
+    } else {
+      showToast(result.outcome === 'success' ? '秘境突破' : '秘境折返', result.report?.summary || battle.summary, result.outcome === 'success' ? '' : 'warning');
+      triggerBattleFeedback(result.outcome === 'success' ? 'pulse' : 'danger');
+    }
+  }
+
+  function settleMapDepthTrial(state, map, layer, battle, now) {
     if (battle.outcome !== 'victory') {
       const penalty = {
         qi: -Math.max(25, Math.round(layer * 12 + (map.unlockRealmIndex || 0) * 6)),
@@ -2723,16 +2722,7 @@
         now,
       }));
       addLog(state, now, `${map.name}秘境第 ${layer} 层折返，劫象反噬。`);
-      if (hadLivePlayback) {
-        showToast('秘境折返', battle.summary || `${map.name}第 ${layer} 层劫象过重。`, 'warning');
-        triggerBattleFeedback('danger');
-      } else if (startBattlePlayback(state.lastMissionReport, 'danger')) {
-        showToast('秘境斗法', `${map.name}第 ${layer} 层劫象压身，正在演武。`, 'warning');
-      } else {
-        showToast('秘境折返', battle.summary || `${map.name}第 ${layer} 层劫象过重。`, 'warning');
-        triggerBattleFeedback('danger');
-      }
-      return;
+      return { outcome: 'failure', battle, report: state.lastMissionReport, reward: penalty };
     }
 
     const reward = getDepthReward(map, layer);
@@ -2751,15 +2741,7 @@
       now,
     }));
     addLog(state, now, `打通${map.name}秘境第 ${layer} 层，获得${formatReward(reward)}。`);
-    if (hadLivePlayback) {
-      showToast('秘境突破', `${battle.summary} 收获${formatReward(reward)}。`);
-      triggerBattleFeedback('victory');
-    } else if (startBattlePlayback(state.lastMissionReport, 'victory')) {
-      showToast('秘境斗法', `${map.name}第 ${layer} 层劫象已现，正在演武。`);
-    } else {
-      showToast('秘境突破', `${battle.summary} 收获${formatReward(reward)}。`);
-      triggerBattleFeedback('pulse');
-    }
+    return { outcome: 'success', battle, report: state.lastMissionReport, reward };
   }
 
   function createDepthReport(state, map, layer, { outcome, reward, reputationGained = 0, battle = null, now = Date.now() }) {
@@ -2984,7 +2966,6 @@
     renderCave(forceLists);
     renderSect(forceLists);
     renderOpportunity(forceLists);
-    ensureActiveDepthPlayback();
     renderBattlePlayback(forceLists);
     renderMissionReport(forceLists);
     renderResourceGuidance(forceLists);
@@ -4239,83 +4220,21 @@
     return [...keys].sort().map((key) => `${key}:${state[key] || 0}`).join('|');
   }
 
-  function ensureActiveDepthPlayback() {
-    const active = state.activeMission;
-    if (active?.type !== 'mapDepth' || !active.battle?.rounds?.length) {
-      return;
-    }
-    if (activeBattlePlayback?.activeMissionId === active.id) {
-      return;
-    }
-    if (activeBattlePlayback && !activeBattlePlayback.holdUntilMissionEnd) {
-      return;
-    }
-    const total = Math.max(1, (Number(active.endsAt) - Number(active.startedAt)) / 1000);
-    const elapsed = Math.max(0, (Date.now() - Number(active.startedAt)) / 1000);
-    const initialVisibleCount = Math.min(active.battle.rounds.length, Math.floor((elapsed / total) * active.battle.rounds.length));
-    startBattlePlayback(createActiveDepthBattleReport(active), active.battle.outcome === 'victory' ? 'pulse' : 'danger', {
-      activeMissionId: active.id,
-      holdUntilMissionEnd: true,
-      resultToast: false,
-      initialVisibleCount,
-    });
-  }
-
-  function createActiveDepthBattleReport(active) {
-    if (active?.type !== 'mapDepth') {
-      return null;
-    }
-    const map = missionMaps[active.mapId];
-    if (!map || !active.battle) {
-      return null;
-    }
-    const layer = clampInteger(active.layer || 1, 1, mapDepthMaxLayer);
-    const outcome = active.battle.outcome === 'victory' ? 'success' : 'failure';
-    return {
-      id: `active-depth-${map.id}-${layer}-${Number(active.startedAt) || Date.now()}`,
-      missionId: `depth:${map.id}`,
-      missionName: `${map.name}秘境第 ${layer} 层`,
-      mapId: map.id,
-      mapName: map.name,
-      outcome,
-      reward: {},
-      rewardText: '',
-      rareReward: null,
-      rareRewardText: '',
-      reputationGained: 0,
-      completedCount: state.mapDepths?.[map.id] || 0,
-      event: null,
-      battle: active.battle,
-      summary: outcome === 'success'
-        ? `${active.battle.summary} 正在收束秘境气机。`
-        : `${active.battle.summary} 正在折返洞府。`,
-      time: Number(active.startedAt) || Date.now(),
-      preview: true,
-    };
-  }
-
-  function startBattlePlayback(report, tone = 'pulse', options = {}) {
+  function startBattlePlayback(report, tone = 'pulse') {
     if (!refs.battlePlayback || !report?.battle?.rounds?.length) {
       return false;
     }
     clearBattlePlaybackTimer();
-    const visibleCount = Math.min(report.battle.rounds.length, Math.max(0, Math.floor(Number(options.initialVisibleCount) || 0)));
     activeBattlePlayback = {
       reportId: report.id,
       report,
       battle: report.battle,
-      visibleCount,
+      visibleCount: 0,
       tone,
-      activeMissionId: options.activeMissionId || null,
-      holdUntilMissionEnd: Boolean(options.holdUntilMissionEnd),
-      resultToast: options.resultToast !== false,
-      completed: visibleCount >= report.battle.rounds.length,
     };
     renderBattlePlayback(true);
     renderMissionReport(true);
-    if (!activeBattlePlayback.completed) {
-      queueBattlePlaybackStep(360);
-    }
+    queueBattlePlaybackStep(360);
     return true;
   }
 
@@ -4344,51 +4263,12 @@
     if (activeBattlePlayback.visibleCount < rounds.length) {
       activeBattlePlayback.visibleCount += 1;
       const latest = rounds[activeBattlePlayback.visibleCount - 1];
-      if (activeBattlePlayback.visibleCount >= rounds.length && activeBattlePlayback.holdUntilMissionEnd) {
-        activeBattlePlayback.completed = true;
-        clearBattlePlaybackTimer();
-      }
       renderBattlePlayback(true);
       triggerBattleFeedback(latest?.critical ? 'victory' : latest?.actor === 'enemy' ? 'danger' : 'pulse');
-      if (activeBattlePlayback.completed) {
-        return;
-      }
       queueBattlePlaybackStep(activeBattlePlayback.visibleCount >= rounds.length ? 880 : 680);
       return;
     }
-    if (activeBattlePlayback.holdUntilMissionEnd) {
-      activeBattlePlayback.completed = true;
-      renderBattlePlayback(true);
-      return;
-    }
     finishBattlePlayback(false);
-  }
-
-  function skipBattlePlayback() {
-    if (!activeBattlePlayback) {
-      return;
-    }
-    if (activeBattlePlayback.holdUntilMissionEnd) {
-      const rounds = activeBattlePlayback.battle.rounds || [];
-      activeBattlePlayback.visibleCount = rounds.length;
-      activeBattlePlayback.completed = true;
-      clearBattlePlaybackTimer();
-      renderBattlePlayback(true);
-      triggerBattleFeedback(activeBattlePlayback.tone === 'danger' ? 'danger' : 'pulse');
-      return;
-    }
-    finishBattlePlayback(true);
-  }
-
-  function clearActiveDepthPlayback(active) {
-    if (!activeBattlePlayback || activeBattlePlayback.activeMissionId !== active?.id) {
-      return false;
-    }
-    clearBattlePlaybackTimer();
-    activeBattlePlayback = null;
-    renderBattlePlayback(true);
-    renderMissionReport(true);
-    return true;
   }
 
   function finishBattlePlayback(skipped = false) {
@@ -4400,9 +4280,7 @@
     activeBattlePlayback = null;
     renderBattlePlayback(true);
     renderMissionReport(true);
-    if (playback.resultToast) {
-      showBattlePlaybackResult(playback.report, skipped);
-    }
+    showBattlePlaybackResult(playback.report, skipped);
     triggerBattleFeedback(playback.tone === 'danger' || playback.report.outcome === 'failure' ? 'danger' : 'victory');
     if (isMobileLayout() && activeTab === 'missions' && refs.missionReport) {
       requestAnimationFrame(() => refs.missionReport.scrollIntoView({ behavior: skipped ? 'auto' : 'smooth', block: 'start' }));
@@ -4425,35 +4303,25 @@
       renderCache.battlePlayback = 'none';
       return;
     }
-    const { report, battle, visibleCount, holdUntilMissionEnd, completed, activeMissionId } = activeBattlePlayback;
+    const { report, battle, visibleCount } = activeBattlePlayback;
     const rounds = battle.rounds || [];
     const shownRounds = rounds.slice(0, visibleCount);
     const latest = shownRounds.at(-1) || null;
     const hp = getBattlePlaybackHp(battle, shownRounds);
-    const active = holdUntilMissionEnd && state.activeMission?.id === activeMissionId ? state.activeMission : null;
-    const remaining = active ? Math.max(0, Math.ceil((active.endsAt - Date.now()) / 1000)) : 0;
-    const signature = `${report.id}:${visibleCount}:${latest?.damage || 0}:${latest?.targetHp || ''}:${completed}:${remaining}`;
+    const signature = `${report.id}:${visibleCount}:${latest?.damage || 0}:${latest?.targetHp || ''}`;
     if (!force && renderCache.battlePlayback === signature) {
       return;
     }
     refs.battlePlayback.hidden = false;
     refs.battlePlayback.classList.toggle('failure', report.outcome === 'failure');
-    refs.battlePlayback.classList.toggle('holding', Boolean(holdUntilMissionEnd));
-    const statusText = holdUntilMissionEnd && completed
-      ? `演武已定 · 收束 ${formatDuration(remaining)}`
-      : visibleCount
-        ? `第 ${latest?.round || 1} 回合 · ${visibleCount} / ${rounds.length}`
-        : '气机入阵，斗法将起';
     refs.battlePlayback.innerHTML = `
       <header class="battle-playback-head">
         <div>
           <span>斗法演武</span>
           <strong>${report.missionName}</strong>
-          <small>${statusText}</small>
+          <small>${visibleCount ? `第 ${latest?.round || 1} 回合 · ${visibleCount} / ${rounds.length}` : '气机入阵，斗法将起'}</small>
         </div>
-        ${holdUntilMissionEnd && completed
-          ? '<span class="battle-playback-state">候结算</span>'
-          : '<button data-skip-battle-playback type="button">跳过</button>'}
+        <button data-skip-battle-playback type="button">跳过</button>
       </header>
       <div class="battle-stage">
         ${renderCombatantCard('player', battle.player, hp.player, latest?.actor === 'player')}
@@ -4674,7 +4542,7 @@
           <span>${depth.maxed ? '此地秘境已尽数打通。' : `${depth.omen.label} ${depth.omen.name} · 第 ${depth.nextLayer} 层`}</span>
           ${depth.maxed ? '<small class="depth-reward-row">可转往更高地图继续推进。</small>' : `
             <div class="depth-stat-row">
-              <small>用时 ${formatDuration(depth.duration)}</small>
+              <small>斗法 回合演武</small>
               <small>道行 ${calculatePower(state)} / 劫象 ${depth.danger}</small>
             </div>
             <small class="depth-reward-row">首通 ${formatReward(depth.reward)}</small>
