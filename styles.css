@@ -3216,22 +3216,15 @@ small {
   }
 
   .loot-filters {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    padding-bottom: 2px;
-    scroll-snap-type: x proximity;
-    scrollbar-width: none;
-  }
-
-  .loot-filters::-webkit-scrollbar {
-    display: none;
+    flex-wrap: wrap;
+    overflow: visible;
+    padding-bottom: 0;
   }
 
   .loot-filters button {
-    flex: 0 0 auto;
+    flex: 1 0 calc(25% - 6px);
     min-height: 32px;
     padding: 0 10px;
-    scroll-snap-align: start;
   }
 
   .loot-toolbar > button {

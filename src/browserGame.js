@@ -5667,7 +5667,7 @@
     }
     const count = getOrganizableLootCount(state);
     button.disabled = count <= 0;
-    button.textContent = count > 0 ? `批量分解 ${count}` : '无可批量分解';
+    button.textContent = count > 0 ? `批量分解 ${count}` : '无可整理';
   }
 
   function renderLootComparison(comparison) {
