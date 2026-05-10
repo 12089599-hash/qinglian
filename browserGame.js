@@ -1102,31 +1102,37 @@ const spiritBeastQualities = {
       { id: 'edge', name: '锋芒', bonuses: { attack: 14 } },
       { id: 'pierce', name: '破势', bonuses: { pierce: 12 } },
       { id: 'spark', name: '会心', bonuses: { critChance: 0.02 } },
+      { id: 'trueEdge', name: '真锋', minRarity: 'earthFiend', bonuses: { attackPct: 0.035 } },
     ],
     offhand: [
       { id: 'wheel', name: '轮影', bonuses: { attack: 10, pierce: 6 } },
       { id: 'bell', name: '清音', bonuses: { qiRate: 0.014, defense: 8 } },
       { id: 'flare', name: '曜纹', bonuses: { critChance: 0.018, elementPower: 8 } },
+      { id: 'deepRift', name: '裂隙', minRarity: 'earthFiend', bonuses: { piercePct: 0.04 } },
     ],
     amulet: [
       { id: 'life', name: '养命', bonuses: { vitality: 28 } },
       { id: 'gate', name: '护关', bonuses: { breakthrough: 0.018 } },
       { id: 'breath', name: '纳息', bonuses: { qiRate: 0.018 } },
+      { id: 'lifeRoot', name: '命根', minRarity: 'earthFiend', bonuses: { vitalityPct: 0.05 } },
     ],
     robe: [
       { id: 'guard', name: '护体', bonuses: { defense: 16 } },
       { id: 'step', name: '轻身', bonuses: { speed: 5 } },
       { id: 'ward', name: '避劫', bonuses: { dangerReduction: 8 } },
+      { id: 'wardVein', name: '玄护', minRarity: 'earthFiend', bonuses: { defensePct: 0.045 } },
     ],
     jade: [
       { id: 'root', name: '地脉', bonuses: { vitality: 22, defense: 8 } },
       { id: 'clear', name: '澄息', bonuses: { qiRate: 0.016 } },
       { id: 'pulse', name: '玉振', bonuses: { elementPower: 10, breakthrough: 0.012 } },
+      { id: 'spiritCircle', name: '灵周', minRarity: 'heavenWork', bonuses: { vitalityPct: 0.04, defensePct: 0.025 } },
     ],
     boots: [
       { id: 'cloud', name: '云痕', bonuses: { speed: 6 } },
       { id: 'shadow', name: '掠影', bonuses: { dangerReduction: 6, critChance: 0.012 } },
       { id: 'tread', name: '踏水', bonuses: { defense: 8, elementPower: 8 } },
+      { id: 'windStep', name: '风骨', minRarity: 'earthFiend', bonuses: { speedPct: 0.045 } },
     ],
   };
 
@@ -1257,7 +1263,7 @@ const spiritBeastQualities = {
       maxLevel: 12,
       cost: (level) => ({ spiritStones: tieredLinearCost(80, level), beastCores: tieredMaterialCost(1, level) }),
       powerPerLevel: 35,
-      attackPerLevel: 16,
+      attackPerLevel: 15,
     },
     offhand: {
       id: 'offhand',
@@ -1274,7 +1280,7 @@ const spiritBeastQualities = {
       maxLevel: 12,
       cost: (level) => ({ spiritStones: tieredLinearCost(70, level), beastCores: tieredMaterialCost(1, level) }),
       breakthroughPerLevel: 0.03,
-      vitalityPerLevel: 26,
+      vitalityPerLevel: 38,
     },
     robe: {
       id: 'robe',
@@ -1282,7 +1288,7 @@ const spiritBeastQualities = {
       maxLevel: 12,
       cost: (level) => ({ spiritStones: tieredLinearCost(60, level), beastCores: tieredMaterialCost(1, level) }),
       dangerReductionPerLevel: 10,
-      defensePerLevel: 18,
+      defensePerLevel: 22,
     },
     jade: {
       id: 'jade',
@@ -1290,8 +1296,8 @@ const spiritBeastQualities = {
       maxLevel: 12,
       cost: (level) => ({ spiritStones: tieredLinearCost(68, level), artifacts: tieredMaterialCost(1, level) }),
       qiBonusPerLevel: 0.012,
-      vitalityPerLevel: 16,
-      defensePerLevel: 8,
+      vitalityPerLevel: 26,
+      defensePerLevel: 10,
     },
     boots: {
       id: 'boots',
@@ -1299,7 +1305,7 @@ const spiritBeastQualities = {
       maxLevel: 12,
       cost: (level) => ({ spiritStones: tieredLinearCost(58, level), beastCores: tieredMaterialCost(1, level) }),
       dangerReductionPerLevel: 6,
-      speedPerLevel: 3,
+      speedPerLevel: 4,
     },
   };
 
@@ -6544,7 +6550,11 @@ const spiritBeastQualities = {
       return '';
     }
     const pct = Math.round((round.defenseMitigation || 0) * 100);
-    return `，护体化去 ${round.mitigated}${pct ? `（${pct}%）` : ''}`;
+    const speedPct = Math.round((round.speedMitigation || 0) * 100);
+    const parts = [];
+    if (pct) parts.push(`护体 ${pct}%`);
+    if (speedPct) parts.push(`化影 ${speedPct}%`);
+    return `，化去 ${round.mitigated}${parts.length ? `（${parts.join('，')}）` : ''}`;
   }
 
   function getMapCombatAdvice(map, enemyElementId) {
@@ -8485,7 +8495,7 @@ const spiritBeastQualities = {
   function getCombatProfile(state) {
     const power = calculatePower(state);
     const attackSources = compactSources([
-      { label: '道行底蕴', value: Math.floor(power * 0.62) },
+      { label: '道行底蕴', value: Math.floor(power * 0.52) },
       { label: '器位锋芒', value: getGearLevelBonus(state, 'attackPerLevel') },
       ...getGearAffixSources(state, 'attack'),
       ...getGearSetSources(state, 'attack'),
@@ -8494,9 +8504,10 @@ const spiritBeastQualities = {
       ...getBloodlineSources(state, 'attack'),
       ...getSectSkillSources(state, 'attack'),
       ...getDeployedSpiritBeastSources(state, 'attack'),
+      ...getCombatPercentSources(state, 'attackPct'),
     ]);
     const defenseSources = compactSources([
-      { label: '道体根基', value: Math.floor(power * 0.18) },
+      { label: '道体根基', value: Math.floor(power * 0.22) },
       { label: '器位护体', value: getGearLevelBonus(state, 'defensePerLevel') },
       ...getGearAffixSources(state, 'defense'),
       ...getGearSetSources(state, 'defense'),
@@ -8505,9 +8516,11 @@ const spiritBeastQualities = {
       ...getBloodlineSources(state, 'defense'),
       ...getSectSkillSources(state, 'defense'),
       ...getDeployedSpiritBeastSources(state, 'defense'),
+      ...getCombatPercentSources(state, 'defensePct'),
     ]);
     const vitalitySources = compactSources([
-      { label: '境界血元', value: 260 + (state.realmIndex || 0) * 36 },
+      { label: '境界血元', value: 520 + (state.realmIndex || 0) * 76 },
+      { label: '道行养命', value: Math.floor(power * 0.36) },
       { label: '器位养命', value: getGearLevelBonus(state, 'vitalityPerLevel') },
       ...getGearAffixSources(state, 'vitality'),
       ...getGearSetSources(state, 'vitality'),
@@ -8516,6 +8529,7 @@ const spiritBeastQualities = {
       ...getBloodlineSources(state, 'vitality'),
       ...getSectSkillSources(state, 'vitality'),
       ...getDeployedSpiritBeastSources(state, 'vitality'),
+      ...getCombatPercentSources(state, 'vitalityPct'),
     ]);
     const speedSources = compactSources([
       { label: '身法根基', value: 12 + Math.floor((state.realmIndex || 0) / 2) },
@@ -8525,6 +8539,7 @@ const spiritBeastQualities = {
       ...getEquippedLootSources(state, 'speed'),
       ...getBloodlineSources(state, 'speed'),
       ...getDeployedSpiritBeastSources(state, 'speed'),
+      ...getCombatPercentSources(state, 'speedPct'),
     ]);
     const critSources = compactSources([
       { label: '本命灵觉', value: 0.05, mode: 'percent' },
@@ -8541,6 +8556,7 @@ const spiritBeastQualities = {
       ...getEquippedLootSources(state, 'pierce'),
       ...getBloodlineSources(state, 'pierce'),
       ...getDeployedSpiritBeastSources(state, 'pierce'),
+      ...getCombatPercentSources(state, 'piercePct'),
     ]);
     const elementScores = getCombatElementScores(state);
     const element = getDominantCombatElement(elementScores);
@@ -8771,6 +8787,11 @@ const spiritBeastQualities = {
         targetElement: normalizeBattleElement(round.targetElement),
         elementModifier: Number.isFinite(Number(round.elementModifier)) ? Number(round.elementModifier) : 1,
         defenseMitigation: Number.isFinite(Number(round.defenseMitigation)) ? Number(round.defenseMitigation) : 0,
+        speedMitigation: Number.isFinite(Number(round.speedMitigation)) ? Number(round.speedMitigation) : 0,
+        combinedMitigation: Number.isFinite(Number(round.combinedMitigation)) ? Number(round.combinedMitigation) : 0,
+        initiativeBonus: Number.isFinite(Number(round.initiativeBonus)) ? Number(round.initiativeBonus) : 0,
+        critGuard: Number.isFinite(Number(round.critGuard)) ? Number(round.critGuard) : 0,
+        critMultiplier: Number.isFinite(Number(round.critMultiplier)) ? Number(round.critMultiplier) : 1,
         mitigated: Math.max(0, Math.round(Number(round.mitigated) || 0)),
         rawDamage: Math.max(0, round(Number(round.rawDamage) || Number(round.damage) || 0)),
         effectiveDefense: Math.max(0, round(Number(round.effectiveDefense) || 0)),
@@ -9614,13 +9635,46 @@ const spiritBeastQualities = {
     return value ? [{ label: '战利共鸣', value, mode }] : [];
   }
 
+  function getCombatPercentSources(state, key) {
+    return compactSources([
+      ...getGearAffixSources(state, key, 'percent'),
+      ...getGearSetSources(state, key, 'percent'),
+      ...getEquippedLootSources(state, key, 'percent'),
+      ...getLootResonanceSources(state, key, 'percent'),
+      ...getBloodlineSources(state, key, 'percent'),
+      ...getSectSkillSources(state, key, 'percent'),
+      ...getDeployedSpiritBeastSources(state, key, 'percent'),
+    ]);
+  }
+
   function createCombatStat(label, sources, mode = 'flat') {
+    const flatSources = mode === 'percent' ? sources : sources.filter((source) => source.mode !== 'percent');
+    const baseValue = round(flatSources.reduce((total, source) => total + source.value, 0));
+    const rawPercent = mode === 'percent' ? 0 : sources
+      .filter((source) => source.mode === 'percent')
+      .reduce((total, source) => total + source.value, 0);
+    const percentBonus = mode === 'percent' ? 0 : softCapCombatPercent(rawPercent);
     return {
       label,
-      value: round(sources.reduce((total, source) => total + source.value, 0)),
+      value: mode === 'percent'
+        ? round(sources.reduce((total, source) => total + source.value, 0))
+        : round(baseValue * (1 + percentBonus)),
+      baseValue,
+      percentBonus,
       mode,
       sources,
     };
+  }
+
+  function softCapCombatPercent(value) {
+    const raw = Math.max(0, Number(value) || 0);
+    const knee = 0.2;
+    const tail = 0.35;
+    if (raw <= knee) {
+      return round(raw);
+    }
+    const extra = raw - knee;
+    return round(knee + (extra * tail) / (extra + tail));
   }
 
   function getCombatElementScores(state) {
@@ -9680,6 +9734,7 @@ const spiritBeastQualities = {
     return {
       name: '修士',
       element: profile.element,
+      elementPower: Math.max(0, profile.elementPower.value),
       attack: Math.max(1, profile.attack.value),
       defense: Math.max(0, profile.defense.value),
       vitality: Math.max(1, profile.vitality.value),
@@ -9700,6 +9755,7 @@ const spiritBeastQualities = {
     return {
       name: beast.name,
       element: combatElements[combat.element] || combatElements.wood,
+      elementPower: Math.max(0, Math.round((combat.elementPower || combat.attack || 0) * level * growthMultiplier * 0.45)),
       attack: Math.max(1, Math.round((combat.attack || 16) * level * growthMultiplier)),
       defense: Math.max(0, Math.round((combat.defense || 4) * level * growthMultiplier)),
       vitality: Math.max(1, Math.round((combat.vitality || 40) + level * 18 * growthMultiplier)),
@@ -9733,6 +9789,7 @@ const spiritBeastQualities = {
     return {
       name: map.boss.name,
       element: combatElements[map.boss.element] || combatElements.earth,
+      elementPower: Math.round((power * 0.08 + unlock * 2) * scale),
       attack: Math.round((power * attackFactor + unlock * 2) * scale),
       defense: Math.round((power * defenseFactor + unlock) * scale),
       vitality: Math.round((power * vitalityFactor + unlock * 14) * scale),
@@ -9752,6 +9809,7 @@ const spiritBeastQualities = {
     return {
       name: `${tribulation.name}·${map.name}第 ${layer} 层劫影`,
       element: combatElements[elementId] || combatElements.earth,
+      elementPower: Math.round((danger * 0.07 + layer * 3) * intensity),
       attack,
       defense,
       vitality,
@@ -9777,12 +9835,13 @@ const spiritBeastQualities = {
     let enemyHp = enemy.vitality;
     const rounds = [];
     const maxRounds = type === 'depth' ? 8 : 10;
-    for (let round = 1; round <= maxRounds; round += 1) {
+    const playerHasInitiative = player.speed >= enemy.speed;
+    const playerSideTurn = (round) => {
       const playerHit = resolveCombatHit(player, enemy, round, true, now, random);
       enemyHp = Math.max(0, enemyHp - playerHit.damage);
       rounds.push(createBattleRound(round, 'player', player, enemy, playerHit, enemyHp));
       if (enemyHp <= 0) {
-        break;
+        return;
       }
 
       if (beast) {
@@ -9790,16 +9849,32 @@ const spiritBeastQualities = {
         const beastHit = resolveCombatHit(beast, enemy, round, true, now, random, skill);
         enemyHp = Math.max(0, enemyHp - beastHit.damage);
         rounds.push(createBattleRound(round, 'beast', beast, enemy, beastHit, enemyHp, skill?.name || null));
-        if (enemyHp <= 0) {
-          break;
-        }
       }
-
+    };
+    const enemyTurn = (round) => {
       const enemyHit = resolveCombatHit(enemy, player, round, false, now, random);
       playerHp = Math.max(0, playerHp - enemyHit.damage);
       rounds.push(createBattleRound(round, 'enemy', enemy, player, enemyHit, playerHp));
-      if (playerHp <= 0) {
-        break;
+    };
+    for (let round = 1; round <= maxRounds; round += 1) {
+      if (playerHasInitiative) {
+        playerSideTurn(round);
+        if (enemyHp <= 0) {
+          break;
+        }
+        enemyTurn(round);
+        if (playerHp <= 0) {
+          break;
+        }
+      } else {
+        enemyTurn(round);
+        if (playerHp <= 0) {
+          break;
+        }
+        playerSideTurn(round);
+        if (enemyHp <= 0) {
+          break;
+        }
       }
     }
     const outcome = enemyHp <= 0 ? 'victory' : 'defeat';
@@ -9886,23 +9961,35 @@ const spiritBeastQualities = {
   }
 
   function resolveCombatHit(attacker, defender, round, isPlayer, now, random, technique = null) {
-    const elementModifier = getElementModifier(attacker.element, defender.element);
+    const elementModifier = getElementModifier(attacker, defender);
     const roll = typeof random === 'function'
       ? random()
       : seededCombatRoll(now, round, isPlayer ? 13 : 71);
     const critical = roll < Math.min(0.75, attacker.critChance + (technique?.critBonus || 0));
     const techniqueMultiplier = technique?.multiplier || 1;
-    const critMultiplier = critical ? 1.45 : 1;
     const variance = 0.94 + roll * 0.12;
-    const effectiveDefense = Math.max(0, defender.defense - attacker.pierce * 0.65);
-    const defenseMitigation = clampNumber(effectiveDefense / (effectiveDefense + attacker.attack * 1.65 + 30), 0, 0.72);
-    const raw = attacker.attack * techniqueMultiplier * elementModifier * critMultiplier * variance + attacker.pierce * 0.35;
-    const damage = Math.max(1, Math.round(raw * (1 - defenseMitigation)));
+    const effectiveDefense = Math.max(0, defender.defense - attacker.pierce * 0.75);
+    const defenseMitigation = clampNumber(effectiveDefense / (effectiveDefense + attacker.attack * 1.42 + 26), 0, 0.78);
+    const speedGap = (defender.speed || 0) - (attacker.speed || 0);
+    const speedMitigation = clampNumber(speedGap > 0 ? speedGap / (speedGap + 70) : 0, 0, 0.3);
+    const initiativeBonus = clampNumber(-speedGap > 0 ? (-speedGap) / ((-speedGap) + 120) : 0, 0, 0.12);
+    const critGuard = critical
+      ? clampNumber(effectiveDefense / (effectiveDefense + attacker.attack * 1.1 + 80), 0, 0.38)
+      : 0;
+    const critMultiplier = critical ? Math.round((1.45 - critGuard * 0.55) * 100) / 100 : 1;
+    const raw = (attacker.attack * techniqueMultiplier * elementModifier * critMultiplier * variance * (1 + initiativeBonus)) + attacker.pierce * 0.4;
+    const combinedMitigation = 1 - (1 - defenseMitigation) * (1 - speedMitigation);
+    const damage = Math.max(1, Math.round(raw * (1 - combinedMitigation)));
     return {
       damage,
       rawDamage: Math.round(raw * 100) / 100,
       mitigated: Math.max(0, Math.round(raw - damage)),
       defenseMitigation: Math.round(defenseMitigation * 100) / 100,
+      speedMitigation: Math.round(speedMitigation * 100) / 100,
+      combinedMitigation: Math.round(combinedMitigation * 100) / 100,
+      initiativeBonus: Math.round(initiativeBonus * 100) / 100,
+      critGuard: Math.round(critGuard * 100) / 100,
+      critMultiplier,
       effectiveDefense: Math.round(effectiveDefense * 100) / 100,
       critical,
       elementModifier,
@@ -9922,6 +10009,11 @@ const spiritBeastQualities = {
       targetElement: defender.element,
       elementModifier: hit.elementModifier,
       defenseMitigation: hit.defenseMitigation,
+      speedMitigation: hit.speedMitigation,
+      combinedMitigation: hit.combinedMitigation,
+      initiativeBonus: hit.initiativeBonus,
+      critGuard: hit.critGuard,
+      critMultiplier: hit.critMultiplier,
       mitigated: hit.mitigated,
       rawDamage: hit.rawDamage,
       effectiveDefense: hit.effectiveDefense,
@@ -9937,14 +10029,20 @@ const spiritBeastQualities = {
   }
 
   function getElementModifier(attacker, defender) {
-    if (!attacker || !defender) {
+    const attackerElement = attacker?.element || attacker;
+    const defenderElement = defender?.element || defender;
+    if (!attackerElement || !defenderElement) {
       return 1;
     }
-    if (attacker.restrains === defender.id) {
-      return 1.16;
+    const attackerRoot = Math.max(0, attacker?.elementPower || 0);
+    const defenderRoot = Math.max(0, defender?.elementPower || 0);
+    const attackerRootBonus = attackerRoot / (attackerRoot + 260);
+    const defenderRootBonus = defenderRoot / (defenderRoot + 300);
+    if (attackerElement.restrains === defenderElement.id) {
+      return round(clampNumber(1.13 + attackerRootBonus * 0.13 - defenderRootBonus * 0.05, 1.1, 1.28));
     }
-    if (defender.restrains === attacker.id) {
-      return 0.9;
+    if (defenderElement.restrains === attackerElement.id) {
+      return round(clampNumber(0.92 - defenderRootBonus * 0.08 + attackerRootBonus * 0.05, 0.82, 0.98));
     }
     return 1;
   }
@@ -10041,7 +10139,7 @@ const spiritBeastQualities = {
 
   function getLootScore(item) {
     return Object.entries(item?.bonuses || {}).reduce((total, [key, value]) => {
-      const weight = key === 'qiRate' || key === 'breakthrough' || key === 'herbRate' ? 1000 : 1;
+      const weight = isPercentBonusKey(key) ? 1000 : 1;
       return total + value * weight;
     }, 0) + (item?.quality || 0) * 4;
   }
@@ -10308,11 +10406,16 @@ const spiritBeastQualities = {
       breakthrough: '破境天机',
       dangerReduction: '劫象消解',
       attack: '锋芒',
+      attackPct: '锋芒',
       defense: '护体',
+      defensePct: '护体',
       vitality: '血元',
+      vitalityPct: '血元',
       speed: '身法',
+      speedPct: '身法',
       critChance: '会心',
       pierce: '破势',
+      piercePct: '破势',
       elementPower: '灵根',
       herbRate: '灵草生长',
       alchemySpeed: '丹火缩时',
@@ -10327,8 +10430,22 @@ const spiritBeastQualities = {
         id: key,
         label: `${prefix}${labels[key]}`,
         value,
-        mode: key === 'qiRate' || key === 'qiBonus' || key === 'breakthrough' || key === 'herbRate' || key === 'alchemySpeed' || key === 'critChance' || key === 'dismantleBonus' || key === 'lootRarity' || key === 'bloodEssenceBonus' || key === 'beastTraining' ? 'percent' : key === 'dangerReduction' ? 'reduction' : 'flat',
+        mode: isPercentBonusKey(key) ? 'percent' : key === 'dangerReduction' ? 'reduction' : 'flat',
       }));
+  }
+
+  function isPercentBonusKey(key) {
+    return key === 'qiRate'
+      || key === 'qiBonus'
+      || key === 'breakthrough'
+      || key === 'herbRate'
+      || key === 'alchemySpeed'
+      || key === 'critChance'
+      || key === 'dismantleBonus'
+      || key === 'lootRarity'
+      || key === 'bloodEssenceBonus'
+      || key === 'beastTraining'
+      || key.endsWith('Pct');
   }
 
   function scaleBonusObject(bonuses, level) {
@@ -10618,13 +10735,13 @@ const spiritBeastQualities = {
   function createLootVariant(template, uid, savedVariant = null, context = null) {
     if (savedVariant && typeof savedVariant === 'object') {
       const rarity = getSavedLootRarity(savedVariant);
-      const affixes = selectLootAffixes(template.slot, hashString(`${template.id}:${uid}:saved`), rarity.affixCount, savedVariant.affixIds || [savedVariant.affixId].filter(Boolean));
+      const affixes = selectLootAffixes(template.slot, hashString(`${template.id}:${uid}:saved`), rarity.affixCount, savedVariant.affixIds || [savedVariant.affixId].filter(Boolean), rarity.id);
       const element = combatElements[savedVariant.element] ? savedVariant.element : template.element;
       return buildLootVariant(template, rarity, affixes, element, savedVariant.name);
     }
     const seed = hashString(`${template.id}:${uid}`);
     const rarity = rollLootRarity(seed, uid, context);
-    const affixes = selectLootAffixes(template.slot, seed, rarity.affixCount);
+    const affixes = selectLootAffixes(template.slot, seed, rarity.affixCount, [], rarity.id);
     const elementIds = Object.keys(combatElements);
     const element = elementIds[Math.floor(seed / 13) % elementIds.length] || template.element;
     return buildLootVariant(template, rarity, affixes, element);
@@ -10663,8 +10780,10 @@ const spiritBeastQualities = {
     return rarityTiers[0];
   }
 
-  function selectLootAffixes(slot, seed, count, preferredIds = []) {
+  function selectLootAffixes(slot, seed, count, preferredIds = [], rarityId = 'common') {
     const pool = lootVariantAffixes[slot] || [];
+    const rarityIndex = getRarityIndex(rarityId);
+    const availablePool = pool.filter((affix) => !affix.minRarity || getRarityIndex(affix.minRarity) <= rarityIndex);
     const selected = [];
     const add = (affixId) => {
       const affix = pool.find((candidate) => candidate.id === affixId);
@@ -10673,8 +10792,8 @@ const spiritBeastQualities = {
       }
     };
     preferredIds.forEach(add);
-    for (let offset = 0; selected.length < Math.max(1, count) && offset < pool.length * 2; offset += 1) {
-      add(pool[Math.floor(seed / (7 + offset * 3)) % pool.length]?.id);
+    for (let offset = 0; selected.length < Math.max(1, count) && offset < availablePool.length * 2; offset += 1) {
+      add(availablePool[Math.floor(seed / (7 + offset * 3)) % availablePool.length]?.id);
     }
     return selected.length ? selected.slice(0, count) : [{ id: 'none', name: '无纹', bonuses: {} }];
   }
@@ -10723,7 +10842,7 @@ const spiritBeastQualities = {
       .map((school) => {
         const statScore = school.stats.reduce((score, stat) => {
           const value = Math.abs(Number(bonuses[stat]) || 0);
-          return score + (value > 0 ? (stat === 'critChance' || stat.endsWith('Bonus') || stat === 'qiRate' || stat === 'breakthrough' ? value * 900 : value) : 0);
+          return score + (value > 0 ? (isPercentBonusKey(stat) || stat.endsWith('Bonus') ? value * 900 : value) : 0);
         }, 0);
         const affixScore = school.affixes.reduce((score, affixId) => score + (affixIds.has(affixId) ? 24 : 0), 0);
         const elementScore = school.elements.includes(item?.element || item?.variant?.element) ? 18 : 0;
@@ -10986,7 +11105,7 @@ const spiritBeastQualities = {
     const template = lootEquipment[templateId];
     const multiplier = 1;
     const bonuses = Object.fromEntries(
-      Object.entries(template.bonuses).map(([key, value]) => [key, key === 'breakthrough' || key === 'qiRate' || key === 'critChance' ? round(value) : Math.round(value * multiplier)]),
+      Object.entries(template.bonuses).map(([key, value]) => [key, isPercentBonusKey(key) ? round(value) : Math.round(value * multiplier)]),
     );
     Object.entries(variant?.bonuses || {}).forEach(([key, value]) => {
       bonuses[key] = round((bonuses[key] || 0) + value);

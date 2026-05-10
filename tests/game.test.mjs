@@ -1507,6 +1507,80 @@ test('turn battles convert defense into nonlinear mitigation instead of flat sub
   assert.equal(guardedHit.damage > 1, true);
 });
 
+test('combat profile makes blood essence a real endurance pool', () => {
+  const state = createGameState(1000);
+  state.realmIndex = realmIndexByName('筑基一层');
+  state.permanentBonuses.power = 1000;
+
+  const profile = getCombatProfile(state);
+
+  assert.equal(profile.vitality.value > profile.attack.value * 2, true);
+  assert.equal(profile.vitality.sources.some((source) => source.label === '道行养命'), true);
+});
+
+test('speed changes initiative and softens incoming hits', () => {
+  const slow = createGameState(1000);
+  slow.realmIndex = realmIndexByName('炼气一层');
+  slow.permanentBonuses.power = 1500;
+
+  const fast = createGameState(1000);
+  fast.realmIndex = realmIndexByName('炼气一层');
+  fast.permanentBonuses.power = 1500;
+  fast.gear.boots = 12;
+
+  const slowBattle = simulateBossBattle(slow, 'ancientRuins', 2000, () => 0.5);
+  const fastBattle = simulateBossBattle(fast, 'ancientRuins', 2000, () => 0.5);
+  const slowEnemyHit = slowBattle.rounds.find((round) => round.actor === 'enemy');
+  const fastEnemyHit = fastBattle.rounds.find((round) => round.actor === 'enemy');
+
+  assert.equal(slowBattle.rounds[0].actor, 'enemy');
+  assert.equal(fastBattle.rounds[0].actor, 'player');
+  assert.equal(fastEnemyHit.speedMitigation > slowEnemyHit.speedMitigation, true);
+  assert.equal(fastEnemyHit.damage < slowEnemyHit.damage, true);
+});
+
+test('guarded body dampens critical spikes', () => {
+  const exposed = createGameState(1000);
+  exposed.realmIndex = realmIndexByName('筑基一层');
+
+  const guarded = createGameState(1000);
+  guarded.realmIndex = realmIndexByName('筑基一层');
+  guarded.gear.robe = 10;
+  guarded.gear.amulet = 6;
+  guarded.lootEquipment = [
+    { uid: 'ward-robe', templateId: 'cloudthreadRobe', name: '镇岳法袍', slot: 'robe', quality: 3, level: 4, element: 'earth', bonuses: { defense: 260, vitality: 120 } },
+  ];
+  guarded.equippedLoot.robe = 'ward-robe';
+
+  const exposedBattle = simulateBossBattle(exposed, 'swordTomb', 2000, () => 0);
+  const guardedBattle = simulateBossBattle(guarded, 'swordTomb', 2000, () => 0);
+  const exposedHit = exposedBattle.rounds.find((round) => round.actor === 'enemy');
+  const guardedHit = guardedBattle.rounds.find((round) => round.actor === 'enemy');
+
+  assert.equal(exposedHit.critical, true);
+  assert.equal(guardedHit.critical, true);
+  assert.equal(guardedHit.critMultiplier < exposedHit.critMultiplier, true);
+  assert.equal(guardedHit.damage < exposedHit.damage, true);
+});
+
+test('rare percent combat bonuses use a soft cap', () => {
+  const state = createGameState(1000);
+  state.realmIndex = realmIndexByName('金丹一转');
+  state.lootEquipment = [
+    { uid: 'rare-blade', templateId: 'qingfengSword', name: '道器青锋', slot: 'weapon', quality: 5, level: 0, element: 'metal', bonuses: { attack: 120, attackPct: 1.2, elementPower: 80 } },
+    { uid: 'rare-robe', templateId: 'cloudthreadRobe', name: '道器法袍', slot: 'robe', quality: 5, level: 0, element: 'earth', bonuses: { defense: 100, defensePct: 0.9, vitality: 180, vitalityPct: 1.1 } },
+  ];
+  state.equippedLoot.weapon = 'rare-blade';
+  state.equippedLoot.robe = 'rare-robe';
+
+  const profile = getCombatProfile(state);
+
+  assert.equal(profile.attack.percentBonus > 0.2, true);
+  assert.equal(profile.attack.percentBonus <= 0.56, true);
+  assert.equal(profile.vitality.percentBonus <= 0.56, true);
+  assert.equal(profile.attack.value < profile.attack.baseValue * 1.7, true);
+});
+
 test('winning boss battles settle without failure diagnosis', () => {
   const state = createGameState(1000);
   state.realmIndex = realmIndexByName('筑基一层');
