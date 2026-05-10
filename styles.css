@@ -1,16 +1,16 @@
 :root {
   color-scheme: dark;
-  --ink: #060707;
-  --ink-soft: #101111;
-  --paper: #eeece1;
-  --muted: #929083;
-  --line: rgba(238, 236, 225, 0.2);
-  --jade: #d8d5c8;
-  --jade-strong: #a8a59a;
-  --gold: #f2f0e5;
+  --ink: #081015;
+  --ink-soft: #0d1b1d;
+  --paper: #f6eedc;
+  --muted: #9fb0aa;
+  --line: rgba(132, 214, 187, 0.18);
+  --jade: #84d6bb;
+  --jade-strong: #2aa77d;
+  --gold: #f0cf72;
   --clay: #9c1f1b;
   --seal-dark: #5c1210;
-  --panel: rgba(12, 13, 12, 0.92);
+  --panel: rgba(12, 23, 25, 0.9);
 }
 
 * {
@@ -22,9 +22,9 @@ body {
   min-height: 100vh;
   font-family: "Songti SC", "STSong", "Noto Serif SC", "PingFang SC", serif;
   background:
-    radial-gradient(ellipse at 18% 4%, rgba(238, 236, 225, 0.1), transparent 28%),
-    radial-gradient(ellipse at 86% 98%, rgba(238, 236, 225, 0.08), transparent 32%),
-    linear-gradient(180deg, #050606, #0b0c0b 45%, #050606);
+    radial-gradient(ellipse at 18% 4%, rgba(125, 211, 252, 0.11), transparent 28%),
+    radial-gradient(ellipse at 86% 98%, rgba(132, 214, 187, 0.12), transparent 34%),
+    linear-gradient(180deg, #071016, #0a1516 45%, #050807);
   color: var(--paper);
 }
 
@@ -34,8 +34,8 @@ body::before {
   inset: 0;
   pointer-events: none;
   background:
-    linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
-    linear-gradient(rgba(255, 255, 255, 0.018) 1px, transparent 1px);
+    linear-gradient(90deg, rgba(132, 214, 187, 0.032) 1px, transparent 1px),
+    linear-gradient(rgba(240, 207, 114, 0.018) 1px, transparent 1px);
   background-size: 28px 28px;
   mask-image: radial-gradient(circle at center, #000 0 60%, transparent 86%);
   opacity: 0.55;
@@ -44,20 +44,20 @@ body::before {
 button {
   min-height: 42px;
   border: 1px solid var(--line);
-  border-radius: 5px;
+  border-radius: 7px;
   padding: 0 14px;
   font: inherit;
   font-weight: 700;
   color: var(--paper);
   background:
-    linear-gradient(180deg, rgba(238, 236, 225, 0.08), rgba(0, 0, 0, 0.12)),
-    rgba(238, 236, 225, 0.045);
+    linear-gradient(180deg, rgba(132, 214, 187, 0.12), rgba(0, 0, 0, 0.14)),
+    rgba(15, 32, 34, 0.78);
   cursor: pointer;
 }
 
 button:hover:not(:disabled) {
-  border-color: rgba(238, 236, 225, 0.54);
-  background: rgba(238, 236, 225, 0.12);
+  border-color: rgba(132, 214, 187, 0.64);
+  background: rgba(38, 73, 66, 0.84);
 }
 
 button:disabled {
@@ -76,15 +76,15 @@ button:disabled {
   isolation: isolate;
   min-height: 300px;
   overflow: hidden;
-  border: 1px solid rgba(238, 236, 225, 0.46);
+  border: 1px solid rgba(132, 214, 187, 0.32);
   border-radius: 10px;
   background:
-    radial-gradient(circle at 74% 20%, rgba(238, 236, 225, 0.18) 0 5%, transparent 6%),
-    linear-gradient(180deg, rgba(238, 236, 225, 0.04), rgba(0, 0, 0, 0.88)),
+    radial-gradient(circle at 86% 18%, rgba(240, 207, 114, 0.2) 0 5%, transparent 8%),
+    linear-gradient(180deg, rgba(132, 214, 187, 0.06), rgba(0, 0, 0, 0.34)),
     var(--ink);
   box-shadow:
-    0 24px 80px rgba(0, 0, 0, 0.52),
-    inset 0 0 0 1px rgba(0, 0, 0, 0.7);
+    0 24px 80px rgba(0, 0, 0, 0.48),
+    inset 0 0 0 1px rgba(240, 207, 114, 0.08);
 }
 
 .hero::before,
@@ -116,13 +116,14 @@ body[data-active-group="practice"] .hero::before {
     url("assets/ink-ascetic-hero.svg") center center / cover no-repeat;
   filter: none;
   mix-blend-mode: screen;
-  opacity: 0.12;
+  opacity: 0.1;
 }
 
 body[data-active-group="practice"] .hero::after {
   background:
-    linear-gradient(90deg, rgba(6, 7, 7, 0.12) 0%, rgba(6, 7, 7, 0.1) 42%, rgba(6, 7, 7, 0.04) 70%),
-    linear-gradient(180deg, rgba(6, 7, 7, 0.02), rgba(6, 7, 7, 0.1));
+    radial-gradient(ellipse at 50% 72%, rgba(240, 207, 114, 0.08), transparent 32%),
+    linear-gradient(90deg, rgba(6, 13, 16, 0.16) 0%, rgba(6, 13, 16, 0.08) 48%, rgba(6, 13, 16, 0.04) 70%),
+    linear-gradient(180deg, rgba(6, 13, 16, 0.02), rgba(6, 13, 16, 0.12));
 }
 
 body[data-active-group="practice"] .hero canvas {
@@ -212,7 +213,7 @@ h2 {
   width: 0;
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, #f2f0e5, #7d7a70);
+  background: linear-gradient(90deg, var(--jade), var(--gold));
   transition: width 180ms linear;
 }
 
@@ -273,9 +274,10 @@ h2 {
 }
 
 .section-tabs button.active {
-  border-color: rgba(238, 236, 225, 0.75);
-  color: #080909;
-  background: linear-gradient(180deg, #f2f0e5, #bbb7a9);
+  border-color: rgba(240, 207, 114, 0.82);
+  color: #1b1609;
+  background: linear-gradient(180deg, #f4d77a, #c89d39);
+  box-shadow: 0 10px 24px rgba(240, 207, 114, 0.12);
 }
 
 .sub-tabs {
@@ -300,9 +302,9 @@ h2 {
 }
 
 .sub-tabs button.active {
-  border-color: rgba(238, 236, 225, 0.54);
-  color: var(--paper);
-  background: rgba(238, 236, 225, 0.1);
+  border-color: rgba(132, 214, 187, 0.68);
+  color: #eafff7;
+  background: rgba(37, 86, 73, 0.76);
 }
 
 [data-panel] {
@@ -319,9 +321,11 @@ h2 {
   border-radius: 8px;
   padding: 16px;
   background:
-    linear-gradient(135deg, rgba(238, 236, 225, 0.07), transparent 44%),
+    linear-gradient(135deg, rgba(132, 214, 187, 0.1), transparent 46%),
+    linear-gradient(180deg, rgba(17, 39, 38, 0.86), rgba(7, 10, 9, 0.9)),
     var(--panel);
   position: relative;
+  box-shadow: inset 0 1px 0 rgba(240, 207, 114, 0.06);
 }
 
 .panel::before,
@@ -331,7 +335,7 @@ h2 {
   width: 22px;
   height: 22px;
   pointer-events: none;
-  border-color: rgba(238, 236, 225, 0.44);
+  border-color: rgba(132, 214, 187, 0.42);
   border-style: solid;
 }
 
@@ -356,7 +360,7 @@ h2 {
 }
 
 .primary-button {
-  border-color: rgba(255, 225, 220, 0.68);
+  border-color: rgba(255, 225, 220, 0.7);
   min-height: 34px;
   border-radius: 4px;
   padding: 0 12px;
@@ -391,16 +395,16 @@ h2 {
 .vital-card,
 .stats-grid div {
   min-height: 68px;
-  border: 1px solid rgba(238, 236, 225, 0.13);
-  border-radius: 5px;
+  border: 1px solid rgba(132, 214, 187, 0.16);
+  border-radius: 7px;
   padding: 10px;
-  background: rgba(238, 236, 225, 0.04);
+  background: rgba(20, 35, 35, 0.7);
 }
 
 .vital-card {
   background:
-    linear-gradient(135deg, rgba(238, 236, 225, 0.08), transparent 48%),
-    rgba(238, 236, 225, 0.035);
+    linear-gradient(135deg, rgba(132, 214, 187, 0.11), rgba(240, 207, 114, 0.04) 58%, transparent),
+    rgba(18, 38, 37, 0.76);
 }
 
 .vital-card-wide {
@@ -409,10 +413,10 @@ h2 {
 
 .resource-drawer {
   margin-top: 10px;
-  border: 1px solid rgba(238, 236, 225, 0.12);
-  border-radius: 6px;
+  border: 1px solid rgba(132, 214, 187, 0.15);
+  border-radius: 7px;
   padding: 10px;
-  background: rgba(0, 0, 0, 0.14);
+  background: rgba(3, 11, 11, 0.26);
 }
 
 .resource-drawer summary {
@@ -481,23 +485,23 @@ dd {
 
 .attribute-card {
   margin-top: 14px;
-  border: 1px solid rgba(238, 236, 225, 0.18);
-  border-radius: 6px;
+  border: 1px solid rgba(132, 214, 187, 0.2);
+  border-radius: 7px;
   padding: 12px;
   background:
-    linear-gradient(135deg, rgba(238, 236, 225, 0.07), transparent 48%),
-    rgba(255, 255, 255, 0.03);
+    linear-gradient(135deg, rgba(132, 214, 187, 0.1), transparent 50%),
+    rgba(10, 24, 23, 0.74);
 }
 
 .dao-heart-card,
 .tribulation-card {
   margin-top: 12px;
-  border: 1px solid rgba(238, 236, 225, 0.18);
-  border-radius: 6px;
+  border: 1px solid rgba(132, 214, 187, 0.2);
+  border-radius: 7px;
   padding: 12px;
   background:
-    linear-gradient(135deg, rgba(238, 236, 225, 0.07), transparent 48%),
-    rgba(255, 255, 255, 0.03);
+    linear-gradient(135deg, rgba(132, 214, 187, 0.1), transparent 50%),
+    rgba(10, 24, 23, 0.74);
 }
 
 .attribute-card summary {
@@ -3124,12 +3128,12 @@ small {
   gap: 14px;
   align-items: center;
   margin-bottom: 12px;
-  border: 1px solid rgba(238, 236, 225, 0.28);
+  border: 1px solid rgba(132, 214, 187, 0.28);
   border-radius: 8px;
   padding: 14px;
   background:
-    linear-gradient(135deg, rgba(238, 236, 225, 0.14), rgba(238, 236, 225, 0.11)),
-    rgba(255, 255, 255, 0.035);
+    linear-gradient(135deg, rgba(132, 214, 187, 0.16), rgba(240, 207, 114, 0.08)),
+    rgba(13, 34, 32, 0.72);
 }
 
 .chapter-banner span,
@@ -3173,12 +3177,12 @@ small {
   gap: 10px;
   align-items: start;
   min-height: 58px;
-  border: 1px solid rgba(245, 238, 220, 0.12);
+  border: 1px solid rgba(132, 214, 187, 0.14);
   border-radius: 8px;
   padding: 11px;
   background:
-    linear-gradient(90deg, rgba(245, 238, 220, 0.045), transparent 56%),
-    rgba(255, 255, 255, 0.035);
+    linear-gradient(90deg, rgba(132, 214, 187, 0.075), transparent 58%),
+    rgba(12, 23, 25, 0.72);
 }
 
 .goal-list li > span {
@@ -3198,11 +3202,11 @@ small {
 }
 
 .goal-list li.claimed {
-  border-color: rgba(238, 236, 225, 0.24);
+  border-color: rgba(132, 214, 187, 0.28);
 }
 
 .goal-list li.claimed > span {
-  border-color: rgba(238, 236, 225, 0.75);
+  border-color: rgba(132, 214, 187, 0.75);
   color: #10231c;
   background: var(--jade);
   font-size: 0.74rem;

@@ -4250,7 +4250,7 @@ const spiritBeastQualities = {
 
     drawMoon(width - 92, 76, 32 + pulse * 1.5);
     drawMountains(width, height);
-    drawPlatform(width, height);
+    drawPlatform(width, height, pulse);
     drawCultivator(width / 2, height - 105, pulse);
     drawQiStreams(width, height);
   }
@@ -4282,39 +4282,111 @@ const spiritBeastQualities = {
     });
   }
 
-  function drawPlatform(width, height) {
-    ctx.fillStyle = 'rgba(52, 42, 28, 0.92)';
+  function drawPlatform(width, height, pulse) {
+    const x = width / 2;
+    const y = height - 66;
+    ctx.save();
+    ctx.fillStyle = 'rgba(33, 27, 21, 0.54)';
     ctx.beginPath();
-    ctx.ellipse(width / 2, height - 62, 150, 28, 0, 0, Math.PI * 2);
+    ctx.ellipse(x, y + 11, 170, 27, 0, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = 'rgba(173, 134, 54, 0.96)';
+
+    ctx.fillStyle = 'rgba(184, 145, 58, 0.95)';
     ctx.beginPath();
-    ctx.ellipse(width / 2, height - 69, 120, 18, 0, 0, Math.PI * 2);
+    ctx.ellipse(x, y, 128, 18, 0, 0, Math.PI * 2);
     ctx.fill();
+
+    ctx.fillStyle = 'rgba(236, 202, 104, 0.48)';
+    ctx.beginPath();
+    ctx.ellipse(x, y - 3, 104 + pulse * 3, 10, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = 'rgba(132, 214, 187, 0.18)';
+    ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    ctx.ellipse(x, y - 3, 112, 15, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
   }
 
   function drawCultivator(x, y, pulse) {
     ctx.save();
     ctx.translate(x, y + pulse * 2);
 
-    ctx.strokeStyle = 'rgba(124, 211, 183, 0.62)';
-    ctx.lineWidth = 3;
-    for (let i = 0; i < 3; i += 1) {
+    ctx.shadowColor = 'rgba(132, 214, 187, 0.24)';
+    ctx.shadowBlur = 18;
+    ctx.strokeStyle = 'rgba(132, 214, 187, 0.58)';
+    ctx.lineWidth = 2.4;
+    for (let i = 0; i < 4; i += 1) {
       ctx.beginPath();
-      ctx.ellipse(0, 8, 34 + i * 20 + pulse * 3, 15 + i * 9, 0, 0, Math.PI * 2);
+      ctx.ellipse(0, 9, 32 + i * 17 + pulse * 2.6, 13 + i * 7, 0, 0, Math.PI * 2);
       ctx.stroke();
     }
+    ctx.shadowBlur = 0;
 
-    ctx.fillStyle = '#111827';
+    const robe = ctx.createLinearGradient(0, -24, 0, 50);
+    robe.addColorStop(0, '#5f9583');
+    robe.addColorStop(0.55, '#345f54');
+    robe.addColorStop(1, '#203a35');
+
+    ctx.fillStyle = 'rgba(4, 10, 19, 0.98)';
     ctx.beginPath();
-    ctx.arc(0, -28, 13, 0, Math.PI * 2);
+    ctx.ellipse(0, -31, 13, 10, 0, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = '#355f54';
     ctx.beginPath();
-    ctx.moveTo(-24, 14);
-    ctx.quadraticCurveTo(0, -24, 24, 14);
-    ctx.lineTo(15, 36);
-    ctx.lineTo(-15, 36);
+    ctx.arc(0, -43, 7, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = 'rgba(246, 238, 220, 0.2)';
+    ctx.lineWidth = 1.1;
+    ctx.beginPath();
+    ctx.moveTo(-10, -22);
+    ctx.quadraticCurveTo(-24, 0, -37, 22);
+    ctx.moveTo(10, -22);
+    ctx.quadraticCurveTo(24, 0, 37, 22);
+    ctx.stroke();
+
+    ctx.fillStyle = 'rgba(8, 19, 19, 0.68)';
+    ctx.beginPath();
+    ctx.ellipse(0, 42, 64, 13, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = robe;
+    ctx.beginPath();
+    ctx.moveTo(0, -18);
+    ctx.bezierCurveTo(-18, -14, -34, 6, -39, 31);
+    ctx.bezierCurveTo(-54, 34, -65, 40, -76, 49);
+    ctx.bezierCurveTo(-42, 54, -20, 48, -8, 36);
+    ctx.bezierCurveTo(-4, 43, 4, 43, 8, 36);
+    ctx.bezierCurveTo(20, 48, 42, 54, 76, 49);
+    ctx.bezierCurveTo(65, 40, 54, 34, 39, 31);
+    ctx.bezierCurveTo(34, 6, 18, -14, 0, -18);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.strokeStyle = 'rgba(246, 238, 220, 0.16)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(-35, 25);
+    ctx.quadraticCurveTo(-12, 30, -2, 39);
+    ctx.moveTo(35, 25);
+    ctx.quadraticCurveTo(12, 30, 2, 39);
+    ctx.stroke();
+
+    ctx.fillStyle = 'rgba(132, 214, 187, 0.36)';
+    ctx.beginPath();
+    ctx.moveTo(-30, 43);
+    ctx.quadraticCurveTo(0, 60, 30, 43);
+    ctx.quadraticCurveTo(10, 50, 0, 50);
+    ctx.quadraticCurveTo(-10, 50, -30, 43);
+    ctx.fill();
+
+    ctx.fillStyle = 'rgba(246, 238, 220, 0.08)';
+    ctx.beginPath();
+    ctx.moveTo(-4, -12);
+    ctx.lineTo(5, -12);
+    ctx.lineTo(2, 36);
+    ctx.lineTo(-2, 36);
     ctx.closePath();
     ctx.fill();
 
