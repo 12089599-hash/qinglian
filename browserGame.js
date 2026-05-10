@@ -2237,8 +2237,18 @@ const spiritBeastQualities = {
   });
 
   refs.gearList?.addEventListener('click', (event) => {
+    const detailButton = event.target.closest('[data-toggle-gear-detail]');
+    if (detailButton) {
+      event.preventDefault();
+      const card = detailButton.closest('details');
+      if (card) {
+        card.open = !card.open;
+      }
+      return;
+    }
     const upgradeButton = event.target.closest('[data-upgrade-gear]');
     if (upgradeButton) {
+      event.preventDefault();
       upgradeGear(state, upgradeButton.dataset.upgradeGear);
       saveState();
       render(true);
@@ -2246,6 +2256,7 @@ const spiritBeastQualities = {
     }
     const refineButton = event.target.closest('[data-refine-gear]');
     if (!refineButton) return;
+    event.preventDefault();
     const result = refineGear(state, refineButton.dataset.refineGear);
     if (result.ok) {
       showToast('淬炼成功', `${gear[refineButton.dataset.refineGear].name}火候提升为${gearQualities[result.quality].name}。`);
@@ -2258,6 +2269,7 @@ const spiritBeastQualities = {
   refs.gearList?.addEventListener('click', (event) => {
     const rerollButton = event.target.closest('[data-reroll-gear]');
     if (!rerollButton) return;
+    event.preventDefault();
     const result = rerollGearAffix(state, rerollButton.dataset.rerollGear);
     if (result.ok) {
       showToast('词条洗练', `${gear[rerollButton.dataset.rerollGear].name}：${gearAffixes[result.previousAffix].name} → ${gearAffixes[result.affix].name}。${formatAffixRerollImpact(result.impact)}`);
@@ -7725,32 +7737,35 @@ const spiritBeastQualities = {
     const equippedText = item.equippedLoot
       ? `穿戴：${item.equippedLoot.name} · ${item.equippedLoot.rarity?.name || '凡品'} · 战力 ${Math.round(item.equippedLoot.score || 0)}`
       : '穿戴：未装备战利品';
+    const stageText = `${item.intent.name} · ${item.tier.name} ${level} / ${item.maxLevel} · ${item.qualityName}`;
     return `
       <details class="equipment-detail-card detail-row">
-        <summary>
-          <strong>${item.name} <small>${item.intent.name} · ${item.tier.name} ${level} / ${item.maxLevel} · ${item.qualityName}</small></strong>
-          <em class="rarity-badge rarity-${item.rarity?.id || 'common'}">${item.rarity?.name || '凡品'}</em>
-          <span>${equippedText}</span>
-          <small>展开查看器象、词条和下阶变化</small>
+        <summary class="gear-card-brief">
+          <span class="gear-brief-main">
+            <strong>${item.name}</strong>
+            <small>${stageText}</small>
+            <span class="gear-quick-line">${equippedText}</span>
+          </span>
+          <span class="gear-main-actions">
+            <button data-upgrade-gear="${item.id}" ${maxed || realmLocked ? 'disabled' : ''}>升级</button>
+            <button data-refine-gear="${item.id}" ${qualityMaxed || level <= 0 ? 'disabled' : ''}>淬炼</button>
+            <button data-reroll-gear="${item.id}" ${item.reroll?.available ? '' : 'disabled'}>洗练</button>
+            <button data-toggle-gear-detail="${item.id}" type="button">详情</button>
+          </span>
         </summary>
-        <div class="detail-stack">
-          <small>${equippedText}</small>
-          <small>当前：${formatEffects(item.effects) || '尚未激活'}</small>
-          <small>下阶：${maxed ? '已至圆满' : formatEffects(item.nextEffects)}</small>
-          <details class="nested-detail">
-            <summary>器象、词条与成本</summary>
-            <small>器象：${item.intent.detail}</small>
-            <small>${item.affix.id ? `词条：${item.affix.name}（${formatEffects(item.affix.effects)}）` : '词条：无'}</small>
-            <small>${maxed ? '已达上限' : realmLocked ? `${getUpgradeTier(nextLevel).name}需更高境界` : `升级需 ${formatReward(upgradeCost)}`}</small>
-            <small>${qualityMaxed ? '火候已满' : level <= 0 ? '先升级后可淬炼' : `淬炼 ${gearQualities[nextQuality]?.name || ''} · 成火 ${Math.round((item.refinement?.chance ?? gearQualities[item.qualityIndex]?.refineChance ?? 0) * 100)}% · ${formatReward(refineCost)}`}</small>
-            <small>${item.reroll?.available ? `洗练词条 · ${formatReward(rerollCost)}` : '淬炼后可洗练词条'}</small>
-            ${item.reroll?.preview?.warnings?.length ? `<small class="reroll-warning">洗练风险：${item.reroll.preview.warnings.join('、')}</small>` : ''}
-          </details>
-        </div>
-        <div class="row-actions">
-          <button data-upgrade-gear="${item.id}" ${maxed || realmLocked ? 'disabled' : ''}>升级</button>
-          <button data-refine-gear="${item.id}" ${qualityMaxed || level <= 0 ? 'disabled' : ''}>淬炼</button>
-          <button data-reroll-gear="${item.id}" ${item.reroll?.available ? '' : 'disabled'}>洗练</button>
+        <div class="detail-stack gear-detail-panel">
+          <div class="gear-detail-grid">
+            <span><b>器位</b><small>${stageText}</small></span>
+            <span><b>穿戴</b><small>${equippedText.replace('穿戴：', '')}</small></span>
+            <span><b>当前</b><small>${formatEffects(item.effects) || '尚未激活'}</small></span>
+            <span><b>下阶</b><small>${maxed ? '已至圆满' : formatEffects(item.nextEffects)}</small></span>
+            <span><b>器象</b><small>${item.intent.detail}</small></span>
+            <span><b>词条</b><small>${item.affix.id ? `${item.affix.name}（${formatEffects(item.affix.effects)}）` : '无'}</small></span>
+            <span><b>升级</b><small>${maxed ? '已达上限' : realmLocked ? `${getUpgradeTier(nextLevel).name}需更高境界` : formatReward(upgradeCost)}</small></span>
+            <span><b>淬炼</b><small>${qualityMaxed ? '火候已满' : level <= 0 ? '先升级后可淬炼' : `${gearQualities[nextQuality]?.name || ''} · 成火 ${Math.round((item.refinement?.chance ?? gearQualities[item.qualityIndex]?.refineChance ?? 0) * 100)}% · ${formatReward(refineCost)}`}</small></span>
+            <span><b>洗练</b><small>${item.reroll?.available ? formatReward(rerollCost) : '淬炼后可洗练词条'}</small></span>
+          </div>
+          ${item.reroll?.preview?.warnings?.length ? `<small class="reroll-warning">洗练风险：${item.reroll.preview.warnings.join('、')}</small>` : ''}
         </div>
       </details>
     `;

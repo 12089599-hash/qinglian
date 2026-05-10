@@ -2016,6 +2016,82 @@ small {
   color: var(--gold);
 }
 
+.gear-card-brief {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  cursor: pointer;
+}
+
+.gear-card-brief::-webkit-details-marker {
+  display: none;
+}
+
+.gear-card-brief::marker {
+  content: "";
+}
+
+.gear-brief-main {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.equipment-detail-card .gear-quick-line {
+  margin-top: 2px;
+  color: #d4d8c9;
+  font-size: 0.88rem;
+  font-weight: 800;
+}
+
+.gear-main-actions {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(54px, auto));
+  gap: 6px;
+  align-items: center;
+}
+
+.gear-main-actions button {
+  min-height: 34px;
+  padding: 0 10px;
+  white-space: nowrap;
+}
+
+.gear-detail-panel {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(245, 238, 220, 0.1);
+}
+
+.gear-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.gear-detail-grid span {
+  display: grid;
+  gap: 4px;
+  min-height: 54px;
+  margin-top: 0;
+  border: 1px solid rgba(245, 238, 220, 0.08);
+  border-radius: 7px;
+  padding: 8px;
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.gear-detail-grid b {
+  color: #f2d26f;
+  font-size: 0.78rem;
+}
+
+.gear-detail-grid small {
+  margin-top: 0;
+  color: #c9d0c2;
+  font-weight: 800;
+}
+
 .loot-variant {
   margin-top: 6px;
   color: #89e5c5;
@@ -3692,6 +3768,26 @@ small {
   .equipment-detail-card,
   .gear-set-panel {
     scroll-margin-bottom: calc(184px + env(safe-area-inset-bottom));
+  }
+
+  .gear-card-brief {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .gear-main-actions {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    width: 100%;
+  }
+
+  .gear-main-actions button {
+    min-height: 32px;
+    padding: 0 6px;
+    font-size: 0.78rem;
+  }
+
+  .gear-detail-grid {
+    grid-template-columns: 1fr;
   }
 
   .map-group > .map-heading,
