@@ -1581,6 +1581,48 @@ test('rare percent combat bonuses use a soft cap', () => {
   assert.equal(profile.attack.value < profile.attack.baseValue * 1.7, true);
 });
 
+test('ordinary prepared boss fights sit in the three to five round band', () => {
+  const state = createGameState(1000);
+  state.realmIndex = realmIndexByName('金丹一转');
+  state.permanentBonuses.power = 2000;
+  state.gear.weapon = 6;
+  state.gear.robe = 4;
+  state.gear.amulet = 4;
+
+  const battle = simulateBossBattle(state, 'demonRift', 2000, () => 0.5);
+
+  assert.equal(battle.outcome, 'victory');
+  assert.equal(battle.rounds.at(-1).round >= 3, true);
+  assert.equal(battle.rounds.at(-1).round <= 5, true);
+});
+
+test('excellent gear beast and bloodline can still end a boss fight immediately', () => {
+  const state = createGameState(1000);
+  state.realmIndex = realmIndexByName('金丹一转');
+  state.permanentBonuses.power = 4200;
+  state.gear.weapon = 12;
+  state.gear.offhand = 10;
+  state.gear.robe = 8;
+  state.gear.amulet = 8;
+  state.lootEquipment = [
+    { uid: 'blade', templateId: 'qingfengSword', name: '道器青锋', slot: 'weapon', quality: 5, level: 0, element: 'fire', bonuses: { attack: 260, attackPct: 0.35, pierce: 80, critChance: 0.08, elementPower: 160 } },
+    { uid: 'wheel', templateId: 'xuanmingWheel', name: '道器法轮', slot: 'offhand', quality: 5, level: 0, element: 'fire', bonuses: { attack: 160, pierce: 130, piercePct: 0.25, elementPower: 120 } },
+    { uid: 'boots', templateId: 'cloudstepBoots', name: '道器云履', slot: 'boots', quality: 5, level: 0, element: 'fire', bonuses: { speed: 80, speedPct: 0.18, critChance: 0.04, elementPower: 80 } },
+  ];
+  state.equippedLoot.weapon = 'blade';
+  state.equippedLoot.offhand = 'wheel';
+  state.equippedLoot.boots = 'boots';
+  state.spiritBeasts.thunderTiger = 8;
+  deploySpiritBeast(state, 'thunderTiger', 1000);
+  state.bloodlines.whiteTigerBlood = 5;
+
+  const battle = simulateBossBattle(state, 'demonRift', 2000, () => 0.5);
+
+  assert.equal(battle.outcome, 'victory');
+  assert.equal(battle.rounds.at(-1).round, 1);
+  assert.equal(battle.rounds.some((round) => round.actor === 'enemy'), false);
+});
+
 test('winning boss battles settle without failure diagnosis', () => {
   const state = createGameState(1000);
   state.realmIndex = realmIndexByName('筑基一层');

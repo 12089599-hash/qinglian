@@ -9785,7 +9785,7 @@ const spiritBeastQualities = {
     const scale = getBossPressureScale(state, map);
     const attackFactor = 0.46 + Math.min(0.16, unlock * 0.005);
     const defenseFactor = 0.2 + Math.min(0.1, unlock * 0.003);
-    const vitalityFactor = 1.25 + Math.min(0.9, unlock * 0.05);
+    const vitalityFactor = 1.35 + Math.min(1.25, unlock * 0.09) + Math.min(0.6, unlock * 0.025);
     return {
       name: map.boss.name,
       element: combatElements[map.boss.element] || combatElements.earth,
@@ -9805,7 +9805,7 @@ const spiritBeastQualities = {
     const intensity = tribulation.intensity || 1;
     const attack = Math.round((danger * 0.42 + layer * 3) * (tribulation.attackMultiplier || 1) * (1 + (intensity - 1) * 0.04));
     const defense = Math.round((danger * 0.18 + layer * 2) * (tribulation.defenseMultiplier || 1) * (1 + (intensity - 1) * 0.035));
-    const vitality = Math.round((danger * 1.05 + layer * 24) * (tribulation.vitalityMultiplier || 1) * (1 + (intensity - 1) * 0.04));
+    const vitality = Math.round((danger * 1.18 + layer * 30) * (tribulation.vitalityMultiplier || 1) * (1 + (intensity - 1) * 0.045));
     return {
       name: `${tribulation.name}·${map.name}第 ${layer} 层劫影`,
       element: combatElements[elementId] || combatElements.earth,
