@@ -6077,30 +6077,37 @@ const spiritBeastQualities = {
       return;
     }
     refs.progressPlan.innerHTML = `
-      <header>
-        <div>
-          <span>当前路线</span>
-          <strong>${plan.actions[0]?.title || '继续修行'}</strong>
+      <details>
+        <summary>
+          <header>
+            <div>
+              <span>当前路线</span>
+              <strong>${plan.actions[0]?.title || '继续修行'}</strong>
+            </div>
+            <span class="progress-plan-meta">
+              <em>${plan.primaryBuild?.name || '未成流派'}</em>
+              <b aria-hidden="true"></b>
+            </span>
+          </header>
+        </summary>
+        <div class="progress-plan-grid">
+          ${plan.cards.map((card) => `
+            <button data-progress-go="${card.tab}" data-progress-action="${card.action || ''}" data-progress-target="${card.targetId || ''}" type="button">
+              <span>${card.title}</span>
+              <strong>${card.value}</strong>
+              <small>${card.detail}</small>
+            </button>
+          `).join('')}
         </div>
-        <em>${plan.primaryBuild?.name || '未成流派'}</em>
-      </header>
-      <div class="progress-plan-grid">
-        ${plan.cards.map((card) => `
-          <button data-progress-go="${card.tab}" data-progress-action="${card.action || ''}" data-progress-target="${card.targetId || ''}" type="button">
-            <span>${card.title}</span>
-            <strong>${card.value}</strong>
-            <small>${card.detail}</small>
-          </button>
-        `).join('')}
-      </div>
-      <div class="progress-plan-actions">
-        ${plan.actions.slice(0, 3).map((action) => `
-          <button data-progress-go="${action.tab}" data-progress-action="${action.action || ''}" data-progress-target="${action.targetId || ''}" type="button">
-            <strong>${action.title}</strong>
-            <span>${action.detail}</span>
-          </button>
-        `).join('')}
-      </div>
+        <div class="progress-plan-actions">
+          ${plan.actions.slice(0, 3).map((action) => `
+            <button data-progress-go="${action.tab}" data-progress-action="${action.action || ''}" data-progress-target="${action.targetId || ''}" type="button">
+              <strong>${action.title}</strong>
+              <span>${action.detail}</span>
+            </button>
+          `).join('')}
+        </div>
+      </details>
     `;
     renderCache.progressPlan = signature;
   }

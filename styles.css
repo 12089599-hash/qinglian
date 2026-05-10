@@ -792,15 +792,34 @@ small {
 }
 
 .progress-plan {
-  display: grid;
-  gap: 10px;
-  margin-top: 12px;
-  border: 1px solid rgba(238, 236, 225, 0.24);
+  display: block;
+  overflow: hidden;
+  margin: 0 0 12px;
+  border: 1px solid rgba(132, 214, 187, 0.24);
   border-radius: 8px;
-  padding: 12px;
+  padding: 0;
   background:
-    linear-gradient(135deg, rgba(238, 236, 225, 0.11), rgba(238, 236, 225, 0.07)),
-    rgba(255, 255, 255, 0.03);
+    linear-gradient(135deg, rgba(132, 214, 187, 0.12), rgba(240, 207, 114, 0.04)),
+    rgba(8, 21, 20, 0.76);
+}
+
+.progress-plan details {
+  display: block;
+}
+
+.progress-plan summary {
+  display: block;
+  list-style: none;
+  cursor: pointer;
+  padding: 9px 10px;
+}
+
+.progress-plan summary::-webkit-details-marker {
+  display: none;
+}
+
+.progress-plan details[open] summary {
+  border-bottom: 1px solid rgba(132, 214, 187, 0.16);
 }
 
 .progress-plan header,
@@ -813,9 +832,10 @@ small {
 .progress-plan header {
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
+  align-content: center;
 }
 
-.progress-plan header span,
+.progress-plan header > div > span,
 .progress-plan button span {
   color: var(--muted);
   font-size: 0.76rem;
@@ -829,8 +849,16 @@ small {
   font-size: 0.95rem;
 }
 
+.progress-plan-meta {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
 .progress-plan header em {
-  border: 1px solid rgba(238, 236, 225, 0.28);
+  border: 1px solid rgba(132, 214, 187, 0.28);
   border-radius: 999px;
   padding: 3px 8px;
   color: var(--jade);
@@ -838,11 +866,33 @@ small {
   font-style: normal;
   font-weight: 900;
   white-space: nowrap;
-  background: rgba(238, 236, 225, 0.08);
+  background: rgba(132, 214, 187, 0.08);
+}
+
+.progress-plan-meta b {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  border: 1px solid rgba(245, 238, 220, 0.16);
+  border-radius: 999px;
+  padding: 0 8px;
+  color: #d9e7d3;
+  font-size: 0.72rem;
+  font-weight: 900;
+  background: rgba(0, 0, 0, 0.16);
+}
+
+.progress-plan-meta b::before {
+  content: "展开";
+}
+
+.progress-plan details[open] .progress-plan-meta b::before {
+  content: "收起";
 }
 
 .progress-plan-grid {
   grid-template-columns: repeat(4, minmax(0, 1fr));
+  padding: 9px;
 }
 
 .progress-plan-grid button,
@@ -850,9 +900,9 @@ small {
   display: grid;
   gap: 3px;
   min-width: 0;
-  min-height: 70px;
+  min-height: 54px;
   justify-items: start;
-  padding: 9px;
+  padding: 7px 8px;
   text-align: left;
 }
 
@@ -864,7 +914,7 @@ small {
 }
 
 .progress-plan-actions {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  display: none;
 }
 
 .resource-guidance-card strong {
@@ -4031,8 +4081,11 @@ small {
   }
 
   .progress-plan {
-    margin-top: 10px;
-    gap: 6px;
+    margin: 0 0 10px;
+    padding: 0;
+  }
+
+  .progress-plan summary {
     padding: 7px;
   }
 
@@ -4053,10 +4106,21 @@ small {
     padding: 2px 7px;
   }
 
+  .progress-plan-meta {
+    gap: 4px;
+  }
+
+  .progress-plan-meta b {
+    min-height: 22px;
+    padding: 0 7px;
+    font-size: 0.68rem;
+  }
+
   .progress-plan-grid {
     display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 6px;
+    padding: 7px;
   }
 
   .progress-plan-grid button {
@@ -4078,7 +4142,7 @@ small {
     white-space: nowrap;
   }
 
-  .progress-plan header span,
+  .progress-plan header > div > span,
   .progress-plan button span {
     font-size: 0.68rem;
   }
