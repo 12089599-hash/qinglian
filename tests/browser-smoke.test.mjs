@@ -12,7 +12,7 @@ assert.match(source, /detail-row/);
 assert.match(source, /卦象/);
 assert.match(styles, /\.detail-row\s*\{\s*display: block;/);
 assert.doesNotMatch(source, /<details class="system-row detail-row">/);
-assert.match(source, /<details class="equipment-detail-card detail-row">/);
+assert.match(source, /<details class="equipment-detail-card detail-row" data-gear-detail-card/);
 assert.match(source, /class="nested-detail"/);
 assert.match(styles, /\.equipment-detail-card\s*\{/);
 assert.match(styles, /\.nested-detail\s*\{/);
@@ -278,6 +278,8 @@ assert.match(html, /data-loot-rarity-toggle="common"/);
 assert.match(html, /data-loot-keep-strategy="bestPerSlot"/);
 assert.match(source, /activeLootKeepStrategy/);
 assert.match(html, /data-reset-dismantle-defaults/);
+assert.match(html, /data-gear-detail-dialog/);
+assert.match(source, /function openGearDetailDialog/);
 assert.match(source, /activeLootDismantleRarities/);
 assert.match(source, /function getSelectedLootDismantleRarities/);
 assert.match(source, /function handleOrganizeLootClick/);
@@ -372,7 +374,7 @@ assert.match(source, /function getSectRecommendation/);
 assert.match(source, /委托建议/);
 assert.doesNotMatch(source, /active \? `\$\{active\.id\}:\$\{state\.spiritStones\}:\$\{state\.artifacts\}:\$\{state\.arrayFlags\}:\$\{state\.qi\}` : 'none'/);
 
-function element() {
+function element(overrides = {}) {
   return {
     addEventListener() {},
     appendChild() {},
@@ -402,6 +404,7 @@ function element() {
     remove() {},
     style: {},
     textContent: '',
+    ...overrides,
   };
 }
 
@@ -427,7 +430,9 @@ function documentWithoutOptionalPanels() {
     ['[data-breakthrough]', element()],
     ['[data-craft-pill]', element()],
     ['[data-consume-pill]', element()],
-    ['[data-reset]', element()],
+    ['[data-gear-detail-dialog]', element({ showModal() {}, close() {} })],
+    ['[data-gear-detail-title]', element()],
+    ['[data-gear-detail-body]', element()],
   ]);
 
   return {

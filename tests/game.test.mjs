@@ -1004,6 +1004,21 @@ test('stabilizing foundation raises chance and softens breakthrough failure', ()
   assert.equal(state.heartDemon, 0);
 });
 
+test('stabilizing foundation stops at max without wasting resources', () => {
+  const state = createGameState(1000);
+  state.spiritStones = 200;
+  state.herbs = 50;
+  state.foundationStability = 3;
+
+  const result = stabilizeFoundation(state, 1000);
+
+  assert.equal(result.ok, false);
+  assert.equal(result.reason, 'maxFoundation');
+  assert.equal(state.spiritStones, 200);
+  assert.equal(state.herbs, 50);
+  assert.equal(state.foundationStability, 3);
+});
+
 test('combat missions compare power against danger', () => {
   const state = createGameState(1000);
   state.realmIndex = realmIndexByName('炼气八层');

@@ -5539,9 +5539,13 @@ export function rerollGearAffix(state, gearId, now = Date.now(), random = Math.r
 
 export function stabilizeFoundation(state, now = Date.now()) {
   const cost = { spiritStones: 35, herbs: 8 };
+  if ((state.foundationStability ?? 0) >= 3) {
+    addLog(state, now, '根基已稳，暂不需要继续闭关固本。');
+    return { ok: false, reason: 'maxFoundation', cost };
+  }
   if (!canAfford(state, cost)) {
     addLog(state, now, `稳固根基需要${formatReward(cost)}。`);
-    return { ok: false, reason: 'notEnoughResources' };
+    return { ok: false, reason: 'notEnoughResources', cost };
   }
   payResources(state, cost);
   state.foundationStability = Math.min(3, (state.foundationStability ?? 0) + 1);

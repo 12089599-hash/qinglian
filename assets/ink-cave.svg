@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 520" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <radialGradient id="mist" cx="56%" cy="38%" r="62%">
+      <stop offset="0" stop-color="#f3f1e8" stop-opacity=".30"/>
+      <stop offset=".42" stop-color="#f3f1e8" stop-opacity=".08"/>
+      <stop offset="1" stop-color="#050606" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="wash" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#f3f1e8" stop-opacity=".22"/>
+      <stop offset=".45" stop-color="#f3f1e8" stop-opacity=".05"/>
+      <stop offset="1" stop-color="#050606" stop-opacity=".72"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="520" fill="#080909"/>
+  <rect width="1200" height="520" fill="url(#mist)"/>
+  <path d="M-70 438 C90 240 210 184 352 224 C468 256 520 92 646 128 C780 166 824 64 1010 112 C1126 142 1194 232 1270 430 L1270 560 L-70 560 Z" fill="#eeeeee" opacity=".13"/>
+  <path d="M-80 500 C60 312 196 242 330 276 C458 310 522 162 662 184 C808 208 862 146 1016 192 C1136 230 1214 326 1280 514 L1280 560 L-80 560 Z" fill="#eeeeee" opacity=".18"/>
+  <path d="M116 398 C250 350 364 380 486 346 C634 304 736 354 914 306 C1042 272 1118 318 1190 292" fill="none" stroke="#f3f1e8" stroke-width="5" stroke-linecap="round" opacity=".24"/>
+  <path d="M148 322 C292 286 382 318 506 282 C646 240 760 286 882 242 C994 202 1084 226 1160 188" fill="none" stroke="#f3f1e8" stroke-width="3" stroke-linecap="round" opacity=".22"/>
+  <path d="M640 142 C606 218 594 286 608 360 C628 416 688 416 710 360 C730 290 704 214 640 142 Z" fill="#050606" opacity=".76"/>
+  <path d="M622 212 C646 186 676 186 700 212" fill="none" stroke="#f3f1e8" stroke-width="3" opacity=".25"/>
+  <path d="M512 420 C592 390 690 388 784 420 C710 444 590 446 512 420 Z" fill="#f3f1e8" opacity=".10"/>
+  <path d="M0 176 C124 132 254 170 384 130 C544 80 692 120 856 82 C992 50 1102 72 1200 48" fill="none" stroke="#f3f1e8" stroke-width="7" stroke-linecap="round" opacity=".12"/>
+  <path d="M18 510 C174 466 298 502 446 472 C592 444 728 486 880 454 C1028 424 1124 452 1206 426" fill="none" stroke="#f3f1e8" stroke-width="4" stroke-linecap="round" opacity=".22"/>
+  <rect width="1200" height="520" fill="url(#wash)"/>
+</svg>

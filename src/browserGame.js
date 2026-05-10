@@ -2045,6 +2045,7 @@ const spiritBeastQualities = {
     heartDemon: document.querySelector('[data-heart-demon]'),
     power: document.querySelector('[data-power]'),
     breakthroughChance: document.querySelector('[data-breakthrough-chance]'),
+    stabilizeButton: document.querySelector('[data-stabilize-foundation]'),
     dominantPath: document.querySelector('[data-dominant-path]'),
     upgradeLimit: document.querySelector('[data-upgrade-limit]'),
     progress: document.querySelector('[data-progress]'),
@@ -2087,6 +2088,9 @@ const spiritBeastQualities = {
     missionList: document.querySelector('[data-mission-list]'),
     subTabs: document.querySelector('[data-sub-tabs]'),
     gearSubTabs: document.querySelector('[data-gear-subtabs]'),
+    gearDetailDialog: document.querySelector('[data-gear-detail-dialog]'),
+    gearDetailTitle: document.querySelector('[data-gear-detail-title]'),
+    gearDetailBody: document.querySelector('[data-gear-detail-body]'),
     offlineDialog: document.querySelector('[data-offline-dialog]'),
     offlineSummary: document.querySelector('[data-offline-summary]'),
     toastStack: document.querySelector('[data-toast-stack]'),
@@ -2194,6 +2198,10 @@ const spiritBeastQualities = {
     const result = stabilizeFoundation(state);
     if (result.ok) {
       showToast('稳固根基', `根基稳固 ${result.level} 层。`);
+    } else if (result.reason === 'maxFoundation') {
+      showToast('根基已稳', '当前根基已经稳固到上限，破境后会自然消耗一层。');
+    } else if (result.reason === 'notEnoughResources') {
+      showToast('材料不足', `稳固根基需要${formatReward(result.cost)}。`, 'warning');
     }
     saveState();
     render(true);
@@ -2240,10 +2248,19 @@ const spiritBeastQualities = {
     const detailButton = event.target.closest('[data-toggle-gear-detail]');
     if (detailButton) {
       event.preventDefault();
+      if (isMobileLayout()) {
+        openGearDetailDialog(detailButton.dataset.toggleGearDetail);
+        return;
+      }
       const card = detailButton.closest('details');
       if (card) {
         card.open = !card.open;
       }
+      return;
+    }
+    const gearSummary = event.target.closest('.gear-card-brief');
+    if (gearSummary && !event.target.closest('button')) {
+      event.preventDefault();
       return;
     }
     const upgradeButton = event.target.closest('[data-upgrade-gear]');
@@ -2848,14 +2865,6 @@ const spiritBeastQualities = {
       return;
     }
     openGuidanceTarget(button.dataset.progressGo, button.dataset.progressTarget || '');
-  });
-
-  document.querySelector('[data-reset]').addEventListener('click', () => {
-    localStorage.removeItem(saveKey);
-    openLootDetails.clear();
-    state = createGameState();
-    saveState();
-    render(true);
   });
 
   render();
@@ -3528,9 +3537,13 @@ const spiritBeastQualities = {
 
   function stabilizeFoundation(state, now = Date.now()) {
     const cost = { spiritStones: 35, herbs: 8 };
+    if ((state.foundationStability || 0) >= 3) {
+      addLog(state, now, '根基已稳，暂不需要继续闭关固本。');
+      return { ok: false, reason: 'maxFoundation', cost };
+    }
     if (!canAfford(state, cost)) {
       addLog(state, now, `稳固根基需要${formatReward(cost)}。`);
-      return { ok: false, reason: 'notEnoughResources' };
+      return { ok: false, reason: 'notEnoughResources', cost };
     }
     payResources(state, cost);
     state.foundationStability = Math.min(3, (state.foundationStability || 0) + 1);
@@ -4154,6 +4167,12 @@ const spiritBeastQualities = {
     }
     if (refs.foundation) {
       refs.foundation.textContent = `${state.foundationStability || 0} / 3`;
+    }
+    if (refs.stabilizeButton) {
+      const foundation = state.foundationStability || 0;
+      refs.stabilizeButton.textContent = foundation >= 3 ? '根基已稳' : `稳固根基 ${foundation}/3`;
+      refs.stabilizeButton.disabled = foundation >= 3;
+      refs.stabilizeButton.title = foundation >= 3 ? '破境后会消耗一层根基' : '消耗 35 灵石、8 灵草，提升破境把握并降低心魔';
     }
     if (refs.dominantPath) {
       const path = getDominantPath(state);
@@ -7711,7 +7730,7 @@ const spiritBeastQualities = {
       : '穿戴：未装备战利品';
     const stageText = `${item.intent.name} · ${item.tier.name} ${level} / ${item.maxLevel} · ${item.qualityName}`;
     return `
-      <details class="equipment-detail-card detail-row">
+      <details class="equipment-detail-card detail-row" data-gear-detail-card="${item.id}">
         <summary class="gear-card-brief">
           <span class="gear-brief-main">
             <strong>${item.name}</strong>
@@ -7725,22 +7744,58 @@ const spiritBeastQualities = {
             <button data-toggle-gear-detail="${item.id}" type="button">详情</button>
           </span>
         </summary>
-        <div class="detail-stack gear-detail-panel">
-          <div class="gear-detail-grid">
-            <span><b>器位</b><small>${stageText}</small></span>
-            <span><b>穿戴</b><small>${equippedText.replace('穿戴：', '')}</small></span>
-            <span><b>当前</b><small>${formatEffects(item.effects) || '尚未激活'}</small></span>
-            <span><b>下阶</b><small>${maxed ? '已至圆满' : formatEffects(item.nextEffects)}</small></span>
-            <span><b>器象</b><small>${item.intent.detail}</small></span>
-            <span><b>词条</b><small>${item.affix.id ? `${item.affix.name}（${formatEffects(item.affix.effects)}）` : '无'}</small></span>
-            <span><b>升级</b><small>${maxed ? '已达上限' : realmLocked ? `${getUpgradeTier(nextLevel).name}需更高境界` : formatReward(upgradeCost)}</small></span>
-            <span><b>淬炼</b><small>${qualityMaxed ? '火候已满' : level <= 0 ? '先升级后可淬炼' : `${gearQualities[nextQuality]?.name || ''} · 成火 ${Math.round((item.refinement?.chance ?? gearQualities[item.qualityIndex]?.refineChance ?? 0) * 100)}% · ${formatReward(refineCost)}`}</small></span>
-            <span><b>洗练</b><small>${item.reroll?.available ? formatReward(rerollCost) : '淬炼后可洗练词条'}</small></span>
-          </div>
-          ${item.reroll?.preview?.warnings?.length ? `<small class="reroll-warning">洗练风险：${item.reroll.preview.warnings.join('、')}</small>` : ''}
-        </div>
+        ${renderGearDetailPanel(item)}
       </details>
     `;
+  }
+
+  function renderGearDetailPanel(item, mode = 'inline') {
+    const definition = gear[item.id];
+    const level = item.level;
+    const maxed = level >= definition.maxLevel;
+    const nextLevel = level + 1;
+    const realmLocked = nextLevel > getRealmUpgradeLimit(state);
+    const nextQuality = item.qualityIndex + 1;
+    const qualityMaxed = item.qualityIndex >= gearQualities.length - 1;
+    const upgradeCost = maxed || realmLocked ? null : definition.cost(nextLevel);
+    const refineCost = qualityMaxed || level <= 0 ? null : getRefineCost(nextQuality);
+    const rerollCost = item.reroll?.cost;
+    const equippedText = item.equippedLoot
+      ? `${item.equippedLoot.name} · ${item.equippedLoot.rarity?.name || '凡品'} · 战力 ${Math.round(item.equippedLoot.score || 0)}`
+      : '未装备战利品';
+    const stageText = `${item.intent.name} · ${item.tier.name} ${level} / ${item.maxLevel} · ${item.qualityName}`;
+    return `
+      <div class="detail-stack gear-detail-panel ${mode === 'dialog' ? 'gear-detail-panel-dialog' : ''}">
+        <div class="gear-detail-grid">
+          <span><b>器位</b><small>${stageText}</small></span>
+          <span><b>穿戴</b><small>${equippedText}</small></span>
+          <span><b>当前</b><small>${formatEffects(item.effects) || '尚未激活'}</small></span>
+          <span><b>下阶</b><small>${maxed ? '已至圆满' : formatEffects(item.nextEffects)}</small></span>
+          <span><b>器象</b><small>${item.intent.detail}</small></span>
+          <span><b>词条</b><small>${item.affix.id ? `${item.affix.name}（${formatEffects(item.affix.effects)}）` : '无'}</small></span>
+          <span><b>升级</b><small>${maxed ? '已达上限' : realmLocked ? `${getUpgradeTier(nextLevel).name}需更高境界` : formatReward(upgradeCost)}</small></span>
+          <span><b>淬炼</b><small>${qualityMaxed ? '火候已满' : level <= 0 ? '先升级后可淬炼' : `${gearQualities[nextQuality]?.name || ''} · 成火 ${Math.round((item.refinement?.chance ?? gearQualities[item.qualityIndex]?.refineChance ?? 0) * 100)}% · ${formatReward(refineCost)}`}</small></span>
+          <span><b>洗练</b><small>${item.reroll?.available ? formatReward(rerollCost) : '淬炼后可洗练词条'}</small></span>
+        </div>
+        ${item.reroll?.preview?.warnings?.length ? `<small class="reroll-warning">洗练风险：${item.reroll.preview.warnings.join('、')}</small>` : ''}
+      </div>
+    `;
+  }
+
+  function openGearDetailDialog(gearId) {
+    const item = getEquipmentDetails(state).gear.find((entry) => entry.id === gearId);
+    if (!item || !refs.gearDetailDialog || !refs.gearDetailBody) {
+      return;
+    }
+    if (refs.gearDetailTitle) {
+      refs.gearDetailTitle.textContent = item.name;
+    }
+    refs.gearDetailBody.innerHTML = renderGearDetailPanel(item, 'dialog');
+    if (typeof refs.gearDetailDialog.showModal === 'function') {
+      refs.gearDetailDialog.showModal();
+    } else {
+      refs.gearDetailDialog.setAttribute('open', '');
+    }
   }
 
   function renderFormationRow(item) {

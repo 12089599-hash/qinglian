@@ -96,9 +96,9 @@ button:disabled {
 .hero::before {
   inset: 0;
   background:
-    url("assets/daoist-immortal-lu-dongbin.jpg") 84% 42% / auto 180% no-repeat;
-  filter: grayscale(1) contrast(1.16) brightness(0.78);
-  opacity: 0.62;
+    url("assets/ink-cave.svg") center center / cover no-repeat;
+  filter: grayscale(1) contrast(1.08) brightness(0.78);
+  opacity: 0.58;
 }
 
 .hero::after {
@@ -106,6 +106,31 @@ button:disabled {
   background:
     linear-gradient(90deg, rgba(6, 7, 7, 0.96) 0%, rgba(6, 7, 7, 0.72) 38%, rgba(6, 7, 7, 0.12) 72%),
     linear-gradient(180deg, rgba(6, 7, 7, 0.08), rgba(6, 7, 7, 0.88));
+}
+
+body[data-active-group="practice"] .hero::before {
+  background:
+    url("assets/ink-meditator-v2.png") right 8% center / auto 132% no-repeat;
+  filter: grayscale(1) contrast(1.05) brightness(1.08);
+  mix-blend-mode: normal;
+  opacity: 0.46;
+}
+
+body[data-active-group="practice"] .hero::after {
+  background:
+    linear-gradient(90deg, rgba(6, 7, 7, 0.94) 0%, rgba(6, 7, 7, 0.62) 42%, rgba(6, 7, 7, 0.12) 78%),
+    linear-gradient(180deg, rgba(6, 7, 7, 0.02), rgba(6, 7, 7, 0.58));
+}
+
+body[data-active-group="practice"] .hero canvas {
+  opacity: 0.12;
+}
+
+body[data-active-tab="cave"] .hero::before {
+  background:
+    url("assets/ink-cave.svg") center center / cover no-repeat;
+  filter: grayscale(1) contrast(1.08) brightness(0.78);
+  opacity: 0.68;
 }
 
 .hero canvas {
@@ -192,16 +217,16 @@ h2 {
 }
 
 .next-guidance {
-  display: grid;
-  justify-items: start;
-  gap: 4px;
-  width: min(100%, 420px);
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  width: min(100%, 360px);
   min-height: 0;
   margin-top: 12px;
-  padding: 10px 12px;
+  padding: 8px 10px;
   text-align: left;
   background: rgba(16, 20, 25, 0.72);
-  border-color: rgba(238, 236, 225, 0.38);
+  border-color: rgba(238, 236, 225, 0.28);
 }
 
 .next-guidance strong,
@@ -210,14 +235,19 @@ h2 {
 }
 
 .next-guidance strong {
-  color: var(--gold);
-  font-size: 0.92rem;
+  flex: 0 0 auto;
+  color: var(--paper);
+  font-size: 0.86rem;
 }
 
 .next-guidance span {
+  min-width: 0;
   color: #d9e7d3;
-  font-size: 0.82rem;
+  font-size: 0.76rem;
   line-height: 1.35;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .dashboard {
@@ -323,12 +353,14 @@ h2 {
 
 .primary-button {
   border-color: rgba(255, 225, 220, 0.68);
+  min-height: 34px;
+  border-radius: 4px;
+  padding: 0 12px;
   color: #fff3ee;
   background:
     linear-gradient(135deg, rgba(255, 255, 255, 0.14), transparent 38%),
     var(--clay);
   box-shadow: 0 12px 28px rgba(92, 18, 16, 0.22);
-  transform: rotate(-2deg);
 }
 
 .primary-button:hover:not(:disabled) {
@@ -2105,7 +2137,7 @@ small {
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 10px;
   align-items: center;
-  cursor: pointer;
+  cursor: default;
 }
 
 .gear-card-brief::-webkit-details-marker {
@@ -2146,6 +2178,67 @@ small {
   margin-top: 10px;
   padding-top: 10px;
   border-top: 1px solid rgba(245, 238, 220, 0.1);
+}
+
+.gear-detail-dialog {
+  width: min(620px, calc(100vw - 24px));
+  max-height: min(78vh, 760px);
+  border: 1px solid rgba(238, 236, 225, 0.46);
+  border-radius: 8px;
+  padding: 0;
+  color: var(--paper);
+  background:
+    linear-gradient(135deg, rgba(238, 236, 225, 0.08), transparent 42%),
+    #080909;
+  box-shadow: 0 26px 70px rgba(0, 0, 0, 0.56);
+}
+
+.gear-detail-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.68);
+}
+
+.gear-detail-dialog form {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 16px;
+}
+
+.gear-detail-dialog header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px 12px;
+  align-items: center;
+  border-bottom: 1px solid rgba(238, 236, 225, 0.14);
+  padding-bottom: 10px;
+}
+
+.gear-detail-dialog header .eyebrow {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: 0.72rem;
+}
+
+.gear-detail-dialog h2 {
+  font-size: 1.15rem;
+}
+
+.gear-detail-dialog header button {
+  width: 34px;
+  min-width: 34px;
+  min-height: 34px;
+  padding: 0;
+  border-color: rgba(255, 225, 220, 0.5);
+  color: #fff3ee;
+  background: var(--clay);
+  font-family: "PingFang SC", sans-serif;
+  font-size: 1.1rem;
+}
+
+.gear-detail-panel-dialog {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
 }
 
 .gear-detail-grid {
@@ -3375,9 +3468,22 @@ small {
   }
 
   .hero::before {
-    background-position: 88% 38%;
-    background-size: auto 220%;
-    opacity: 0.68;
+    opacity: 0.62;
+  }
+
+  body[data-active-group="practice"] .hero::before {
+    background-position: right 12px center;
+    background-size: auto 145%;
+    opacity: 0.5;
+  }
+
+  body[data-active-tab="overview"] .next-guidance {
+    width: min(100%, 360px);
+    margin-top: 8px;
+  }
+
+  body[data-active-tab="overview"] .next-guidance span {
+    display: none;
   }
 
   body[data-active-tab="overview"] .hero canvas {

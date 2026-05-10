@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>青岚洞府</title>
-    <link rel="stylesheet" href="styles.css?v=202605101301" />
+    <link rel="stylesheet" href="styles.css?v=202605101338" />
   </head>
   <body>
     <main class="shell">
@@ -167,7 +167,6 @@
             <button data-craft-pill>炼丹</button>
             <button data-consume-pill>服丹</button>
             <button data-stabilize-foundation>稳固根基</button>
-            <button data-reset class="ghost-button">重开</button>
           </div>
         </article>
 
@@ -325,8 +324,19 @@
       </form>
     </dialog>
 
+    <dialog data-gear-detail-dialog class="gear-detail-dialog">
+      <form method="dialog">
+        <header>
+          <p class="eyebrow">器位详录</p>
+          <h2 data-gear-detail-title>装备详情</h2>
+          <button value="close" type="submit" aria-label="关闭">×</button>
+        </header>
+        <div data-gear-detail-body></div>
+      </form>
+    </dialog>
+
     <div data-toast-stack class="toast-stack" aria-live="polite"></div>
 
-    <script src="browserGame.js?v=202605101301"></script>
+    <script src="browserGame.js?v=202605101338"></script>
   </body>
 </html>
