@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>青岚洞府</title>
-    <link rel="stylesheet" href="styles.css?v=202605102131" />
+    <link rel="stylesheet" href="styles.css?v=202605102211" />
   </head>
   <body>
     <main class="shell">
@@ -336,8 +336,32 @@
       </form>
     </dialog>
 
+    <dialog data-mobile-panel-dialog class="mobile-panel-dialog">
+      <div class="mobile-panel-frame">
+        <header>
+          <div>
+            <p class="eyebrow" data-mobile-panel-eyebrow>青岚</p>
+            <h2 data-mobile-panel-title>详情</h2>
+          </div>
+          <button data-mobile-panel-close type="button" aria-label="关闭">×</button>
+        </header>
+        <nav data-mobile-panel-tabs class="mobile-panel-tabs" aria-label="面板切换"></nav>
+        <div data-mobile-panel-body class="mobile-panel-body"></div>
+      </div>
+    </dialog>
+
+    <dialog data-mobile-detail-dialog class="mobile-detail-dialog">
+      <div class="mobile-detail-frame">
+        <header>
+          <h2 data-mobile-detail-title>详情</h2>
+          <button data-mobile-detail-close type="button" aria-label="关闭">×</button>
+        </header>
+        <div data-mobile-detail-body class="mobile-detail-body"></div>
+      </div>
+    </dialog>
+
     <div data-toast-stack class="toast-stack" aria-live="polite"></div>
 
-    <script src="browserGame.js?v=202605102131"></script>
+    <script src="browserGame.js?v=202605102211"></script>
   </body>
 </html>

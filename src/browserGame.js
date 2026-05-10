@@ -2092,6 +2092,14 @@ const spiritBeastQualities = {
     gearDetailDialog: document.querySelector('[data-gear-detail-dialog]'),
     gearDetailTitle: document.querySelector('[data-gear-detail-title]'),
     gearDetailBody: document.querySelector('[data-gear-detail-body]'),
+    mobilePanelDialog: document.querySelector('[data-mobile-panel-dialog]'),
+    mobilePanelEyebrow: document.querySelector('[data-mobile-panel-eyebrow]'),
+    mobilePanelTitle: document.querySelector('[data-mobile-panel-title]'),
+    mobilePanelTabs: document.querySelector('[data-mobile-panel-tabs]'),
+    mobilePanelBody: document.querySelector('[data-mobile-panel-body]'),
+    mobileDetailDialog: document.querySelector('[data-mobile-detail-dialog]'),
+    mobileDetailTitle: document.querySelector('[data-mobile-detail-title]'),
+    mobileDetailBody: document.querySelector('[data-mobile-detail-body]'),
     offlineDialog: document.querySelector('[data-offline-dialog]'),
     offlineSummary: document.querySelector('[data-offline-summary]'),
     toastStack: document.querySelector('[data-toast-stack]'),
@@ -2102,6 +2110,12 @@ const spiritBeastQualities = {
   const ctx = refs.canvas.getContext('2d');
   const renderCache = {};
   const openLootDetails = new Set();
+  const panelAnchors = new Map();
+  document.querySelectorAll('.dashboard > [data-panel]').forEach((panel) => {
+    const marker = document.createComment(`panel:${panel.dataset.panel}`);
+    panel.before(marker);
+    panelAnchors.set(panel.dataset.panel, marker);
+  });
   let activeBattlePlayback = null;
   let battlePlaybackTimer = null;
   const panelTabs = ['overview', 'goals', 'daily', 'market', 'alchemy', 'gear', 'cultivation', 'sect', 'cave', 'missions', 'log'];
@@ -2801,6 +2815,7 @@ const spiritBeastQualities = {
         return;
       }
       if (button.dataset.tabGroup === 'practice' && isMobileLayout()) {
+        closeMobilePanelDialog({ resetTab: false });
         activeTab = 'overview';
         localStorage.setItem('idle-xianxia-active-tab', activeTab);
         localStorage.setItem('idle-xianxia-practice-tab', activeTab);
@@ -2812,7 +2827,9 @@ const spiritBeastQualities = {
       activeTab = group.tabs.includes(remembered) ? remembered : group.tabs[0];
       localStorage.setItem('idle-xianxia-active-tab', activeTab);
       renderTabs();
-      window.scrollTo?.({ top: 0, behavior: 'smooth' });
+      if (!openMobilePanelDialog(activeTab)) {
+        window.scrollTo?.({ top: 0, behavior: 'smooth' });
+      }
     });
   });
 
@@ -2825,7 +2842,69 @@ const spiritBeastQualities = {
     localStorage.setItem('idle-xianxia-active-tab', activeTab);
     localStorage.setItem(`idle-xianxia-${getTabGroup(activeTab)}-tab`, activeTab);
     renderTabs();
-    window.scrollTo?.({ top: 0, behavior: 'smooth' });
+    if (!openMobilePanelDialog(activeTab)) {
+      window.scrollTo?.({ top: 0, behavior: 'smooth' });
+    }
+  });
+
+  refs.mobilePanelTabs?.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-mobile-panel-tab]');
+    if (!button || !panelTabs.includes(button.dataset.mobilePanelTab)) {
+      return;
+    }
+    activeTab = button.dataset.mobilePanelTab;
+    localStorage.setItem('idle-xianxia-active-tab', activeTab);
+    localStorage.setItem(`idle-xianxia-${getTabGroup(activeTab)}-tab`, activeTab);
+    renderTabs();
+    openMobilePanelDialog(activeTab);
+  });
+
+  refs.mobilePanelDialog?.addEventListener('close', () => {
+    restoreMobilePanel();
+    delete document.body.dataset.mobilePanelOpen;
+    if (isMobileLayout() && activeTab !== 'overview') {
+      activeTab = 'overview';
+      localStorage.setItem('idle-xianxia-active-tab', activeTab);
+      localStorage.setItem('idle-xianxia-practice-tab', activeTab);
+      renderTabs();
+      window.scrollTo?.({ top: 0, behavior: 'auto' });
+    }
+  });
+
+  refs.mobilePanelDialog?.addEventListener('click', (event) => {
+    if (event.target === refs.mobilePanelDialog) {
+      refs.mobilePanelDialog.close();
+    }
+  });
+
+  document.querySelector('[data-mobile-panel-close]')?.addEventListener('click', () => {
+    refs.mobilePanelDialog?.close();
+  });
+
+  document.addEventListener('click', (event) => {
+    if (!isMobileLayout()) {
+      return;
+    }
+    const summary = event.target.closest('details > summary');
+    if (!summary) {
+      return;
+    }
+    const detail = summary.parentElement;
+    if (!shouldOpenMobileDetailDialog(detail)) {
+      return;
+    }
+    event.preventDefault();
+    openMobileDetailDialog(detail);
+  });
+
+  refs.mobileDetailDialog?.addEventListener('click', (event) => {
+    if (event.target === refs.mobileDetailDialog) {
+      refs.mobileDetailDialog.close();
+    }
+  });
+
+  document.querySelector('[data-mobile-detail-close]')?.addEventListener('click', () => {
+    refs.mobileDetailDialog?.close();
   });
 
   refs.gearSubTabs?.addEventListener('click', (event) => {
@@ -11015,6 +11094,129 @@ const spiritBeastQualities = {
     renderGearSections();
   }
 
+  function openMobilePanelDialog(tab = activeTab) {
+    if (!isMobileLayout() || tab === 'overview' || !refs.mobilePanelDialog || !refs.mobilePanelBody) {
+      return false;
+    }
+    const panel = document.querySelector(`[data-panel="${tab}"]`);
+    if (!panel) {
+      return false;
+    }
+    if (!refs.mobilePanelBody.contains(panel)) {
+      restoreMobilePanel();
+      refs.mobilePanelBody.append(panel);
+    }
+    if (refs.mobilePanelTitle) {
+      refs.mobilePanelTitle.textContent = tabLabels[tab] || '详情';
+    }
+    if (refs.mobilePanelEyebrow) {
+      refs.mobilePanelEyebrow.textContent = tabGroups[getTabGroup(tab)]?.label || '青岚';
+    }
+    renderMobilePanelTabs(getTabGroup(tab));
+    document.body.dataset.mobilePanelOpen = tab;
+    if (typeof refs.mobilePanelDialog.showModal === 'function') {
+      if (!refs.mobilePanelDialog.open) {
+        refs.mobilePanelDialog.showModal();
+      }
+    } else {
+      refs.mobilePanelDialog.setAttribute('open', '');
+    }
+    return true;
+  }
+
+  function closeMobilePanelDialog({ resetTab = true } = {}) {
+    if (!refs.mobilePanelDialog) {
+      return;
+    }
+    restoreMobilePanel();
+    delete document.body.dataset.mobilePanelOpen;
+    if (refs.mobilePanelDialog.open && typeof refs.mobilePanelDialog.close === 'function') {
+      refs.mobilePanelDialog.close();
+    } else {
+      refs.mobilePanelDialog.removeAttribute('open');
+    }
+    if (resetTab && isMobileLayout() && activeTab !== 'overview') {
+      activeTab = 'overview';
+      localStorage.setItem('idle-xianxia-active-tab', activeTab);
+      localStorage.setItem('idle-xianxia-practice-tab', activeTab);
+      renderTabs();
+    }
+  }
+
+  function restoreMobilePanel() {
+    if (!refs.mobilePanelBody) {
+      return;
+    }
+    const panel = refs.mobilePanelBody.querySelector('[data-panel]');
+    if (!panel) {
+      return;
+    }
+    const marker = panelAnchors.get(panel.dataset.panel);
+    if (marker?.parentNode) {
+      marker.after(panel);
+    }
+  }
+
+  function renderMobilePanelTabs(groupId = getTabGroup(activeTab)) {
+    if (!refs.mobilePanelTabs) {
+      return;
+    }
+    const group = tabGroups[groupId] || tabGroups.practice;
+    refs.mobilePanelTabs.innerHTML = group.tabs
+      .map((tabId) => `<button data-mobile-panel-tab="${tabId}" class="${tabId === activeTab ? 'active' : ''}" type="button">${tabLabels[tabId]}</button>`)
+      .join('');
+  }
+
+  function shouldOpenMobileDetailDialog(detail) {
+    if (!detail || detail.open && detail.matches('.dao-heart-card.choice-active')) {
+      return false;
+    }
+    return detail.matches([
+      '.cultivation-drawer',
+      '.resource-drawer',
+      '.attribute-card',
+      '.tribulation-card',
+      '.chapter-track-compact',
+      '.gear-set-panel',
+      '.beast-locked-group',
+      '.resource-guidance-detail',
+      '.mission-card-details',
+      '.nested-detail',
+    ].join(','));
+  }
+
+  function openMobileDetailDialog(detail) {
+    if (!refs.mobileDetailDialog || !refs.mobileDetailBody || !refs.mobileDetailTitle) {
+      return false;
+    }
+    refs.mobileDetailTitle.textContent = getMobileDetailTitle(detail);
+    refs.mobileDetailBody.innerHTML = getMobileDetailContent(detail);
+    if (typeof refs.mobileDetailDialog.showModal === 'function') {
+      if (!refs.mobileDetailDialog.open) {
+        refs.mobileDetailDialog.showModal();
+      }
+    } else {
+      refs.mobileDetailDialog.setAttribute('open', '');
+    }
+    return true;
+  }
+
+  function getMobileDetailTitle(detail) {
+    const summary = detail.querySelector(':scope > summary');
+    return summary?.querySelector('h3, strong')?.textContent?.trim()
+      || summary?.textContent?.trim().replace(/\s+/g, ' ').slice(0, 16)
+      || detail.getAttribute('aria-label')
+      || '详情';
+  }
+
+  function getMobileDetailContent(detail) {
+    const nodes = [...detail.children].filter((child) => child.tagName !== 'SUMMARY');
+    if (!nodes.length) {
+      return '<p class="section-note">暂无可展开内容。</p>';
+    }
+    return nodes.map((node) => node.outerHTML).join('');
+  }
+
   function openGuidanceTarget(tab, targetId = '') {
     if (!panelTabs.includes(tab)) {
       return;
@@ -11024,7 +11226,9 @@ const spiritBeastQualities = {
     localStorage.setItem('idle-xianxia-active-tab', activeTab);
     localStorage.setItem(`idle-xianxia-${getTabGroup(activeTab)}-tab`, activeTab);
     render(true);
-    window.scrollTo?.({ top: 0, behavior: 'smooth' });
+    if (!openMobilePanelDialog(activeTab)) {
+      window.scrollTo?.({ top: 0, behavior: 'smooth' });
+    }
   }
 
   function focusGuidanceTarget(tab, targetId = '') {
