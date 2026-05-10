@@ -3582,7 +3582,7 @@ small {
   }
 
   body[data-active-tab="overview"] .hero {
-    min-height: 216px;
+    min-height: 188px;
   }
 
   .hero::before {
@@ -3605,8 +3605,8 @@ small {
   }
 
   body[data-active-tab="overview"] .hero canvas {
-    height: 216px;
-    min-height: 216px;
+    height: 188px;
+    min-height: 188px;
   }
 
   body[data-active-tab="overview"] .hero-panel .eyebrow,
