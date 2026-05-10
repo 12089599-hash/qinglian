@@ -3778,8 +3778,11 @@ small {
   }
 
   .building-grid {
-    display: flex;
-    gap: 10px;
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(128px, 40vw);
+    grid-template-rows: repeat(2, minmax(76px, auto));
+    gap: 8px;
     overflow-x: auto;
     padding-bottom: 2px;
     scroll-snap-type: x proximity;
@@ -3787,9 +3790,27 @@ small {
   }
 
   .building-card {
-    flex: 0 0 158px;
-    min-height: 94px;
+    min-height: 76px;
+    padding: 8px;
     scroll-snap-align: start;
+  }
+
+  .building-card span {
+    font-size: 0.66rem;
+  }
+
+  .building-card strong {
+    font-size: 0.9rem;
+  }
+
+  .building-card small,
+  .building-card em {
+    display: -webkit-box;
+    overflow: hidden;
+    font-size: 0.68rem;
+    line-height: 1.25;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
   }
 
   .sect-skill-grid,

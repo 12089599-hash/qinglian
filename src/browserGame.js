@@ -1229,6 +1229,20 @@ const spiritBeastQualities = {
       unlockLevel: 2,
       cost: { herbs: 14, spiritStones: 28, beastCores: 1 },
     },
+    bodyTemperPill: {
+      id: 'bodyTemperPill',
+      name: '淬体丹',
+      duration: 75,
+      unlockLevel: 3,
+      cost: { herbs: 18, spiritStones: 45, beastCores: 1 },
+    },
+    spiritRootPill: {
+      id: 'spiritRootPill',
+      name: '培元丹',
+      duration: 90,
+      unlockLevel: 5,
+      cost: { herbs: 26, spiritStones: 80, clearHeartPill: 1 },
+    },
   };
 
   const gear = {
@@ -1711,7 +1725,7 @@ const spiritBeastQualities = {
       name: '灵草包',
       type: '材料',
       unlockRealmIndex: 0,
-      limit: 1,
+      limit: 99,
       cost: { spiritStones: 40 },
       reward: { herbs: 12 },
     },
@@ -1720,34 +1734,61 @@ const spiritBeastQualities = {
       name: '妖核碎片',
       type: '材料',
       unlockRealmIndex: 0,
-      limit: 1,
+      limit: 30,
       cost: { spiritStones: 75 },
       reward: { beastCores: 1 },
+    },
+    gatherQiBottle: {
+      id: 'gatherQiBottle',
+      name: '聚气丹瓶',
+      type: '丹药',
+      unlockRealmIndex: 0,
+      limit: 20,
+      cost: { spiritStones: 60, herbs: 4 },
+      reward: { gatherQiPill: 1 },
     },
     spiritSword: {
       id: 'spiritSword',
       name: '下品灵剑',
       type: '装备',
       unlockRealmIndex: 0,
-      limit: 1,
+      limit: 20,
       cost: { spiritStones: 80 },
       reward: { artifacts: 1 },
+    },
+    spiritDust: {
+      id: 'spiritDust',
+      name: '炼器灵砂',
+      type: '炼器',
+      unlockRealmIndex: 0,
+      limit: 10,
+      cost: { spiritStones: 95, artifacts: 1 },
+      reward: { forgingEssence: 2 },
     },
     arrayManual: {
       id: 'arrayManual',
       name: '小周天阵旗',
       type: '阵法',
       unlockRealmIndex: 0,
-      limit: 1,
+      limit: 30,
       cost: { spiritStones: 90, beastCores: 1 },
       reward: { arrayFlags: 1 },
+    },
+    beastBoneBundle: {
+      id: 'beastBoneBundle',
+      name: '兽骨袋',
+      type: '材料',
+      unlockRealmIndex: 2,
+      limit: 15,
+      cost: { spiritStones: 130 },
+      reward: { beastCores: 2 },
     },
     clearHeartBottle: {
       id: 'clearHeartBottle',
       name: '清心丹匣',
       type: '丹药',
       unlockRealmIndex: 4,
-      limit: 1,
+      limit: 10,
       cost: { spiritStones: 120, herbs: 6 },
       reward: { clearHeartPill: 1 },
     },
@@ -1756,7 +1797,7 @@ const spiritBeastQualities = {
       name: '炉底精魄',
       type: '炼器',
       unlockRealmIndex: 7,
-      limit: 1,
+      limit: 20,
       cost: { spiritStones: 150, artifacts: 1 },
       reward: { forgingEssence: 4 },
     },
@@ -1765,7 +1806,7 @@ const spiritBeastQualities = {
       name: '护脉丹匣',
       type: '丹药',
       unlockRealmIndex: 9,
-      limit: 1,
+      limit: 8,
       cost: { spiritStones: 220, beastCores: 1 },
       reward: { meridianPill: 1 },
     },
@@ -1774,7 +1815,7 @@ const spiritBeastQualities = {
       name: '残阵旗包',
       type: '阵法',
       unlockRealmIndex: 9,
-      limit: 1,
+      limit: 12,
       cost: { spiritStones: 180, beastCores: 2 },
       reward: { arrayFlags: 2 },
     },
@@ -1783,7 +1824,7 @@ const spiritBeastQualities = {
       name: '悟道残页',
       type: '奇物',
       unlockRealmIndex: 14,
-      limit: 1,
+      limit: 6,
       cost: { spiritStones: 360, arrayFlags: 1 },
       reward: { insight: 1 },
     },
@@ -1792,7 +1833,7 @@ const spiritBeastQualities = {
       name: '玄铁灵砂',
       type: '炼器',
       unlockRealmIndex: 18,
-      limit: 1,
+      limit: 10,
       cost: { spiritStones: 460, beastCores: 2, artifacts: 1 },
       reward: { forgingEssence: 8, artifacts: 1 },
     },
@@ -2286,15 +2327,14 @@ const spiritBeastQualities = {
     render(true);
   }
 
-  document.addEventListener('click', (event) => {
-    const target = event.target instanceof Element ? event.target : event.target?.parentElement;
-    const organizeButton = target?.closest?.('[data-organize-loot]');
+  document.querySelector('.loot-toolbar')?.addEventListener('click', (event) => {
+    const organizeButton = event.target.closest('[data-organize-loot]');
     if (!organizeButton) {
       return;
     }
     event.preventDefault();
     handleOrganizeLootClick();
-  }, { capture: true });
+  });
 
   document.querySelectorAll('[data-loot-rarity-toggle]').forEach((input) => {
     input.addEventListener('change', () => {
@@ -3410,6 +3450,14 @@ const spiritBeastQualities = {
     } else if (recipeId === 'meridianPill') {
       state.breakthroughBoostUntil = Math.max(state.breakthroughBoostUntil || 0, now) + 180 * 1000;
       addLog(state, now, '服下一枚护脉丹，破境天机暂时明朗。');
+    } else if (recipeId === 'bodyTemperPill') {
+      state.permanentBonuses ||= { qiRate: 0, power: 0 };
+      state.permanentBonuses.power = round((state.permanentBonuses.power || 0) + 12);
+      addLog(state, now, '服下一枚淬体丹，肉身道威沉入根骨。');
+    } else if (recipeId === 'spiritRootPill') {
+      state.permanentBonuses ||= { qiRate: 0, power: 0 };
+      state.permanentBonuses.qiRate = round((state.permanentBonuses.qiRate || 0) + 0.01);
+      addLog(state, now, '服下一枚培元丹，灵根吐纳更绵长。');
     }
     return { ok: true };
   }
@@ -7469,6 +7517,8 @@ const spiritBeastQualities = {
       gatherQiPill: '立即补充灵气，并提升灵息 2 分钟',
       clearHeartPill: '降低 1 点心魔',
       meridianPill: '提高破境天机 3 分钟',
+      bodyTemperPill: '永久沉淀 12 道威',
+      spiritRootPill: '永久提升 1% 灵息',
     };
     return effects[recipeId] || '丹药效果';
   }
@@ -8478,6 +8528,11 @@ const spiritBeastQualities = {
     );
   }
 
+  function getMarketShelfSize(state, poolLength) {
+    const realmIndex = state.realmIndex || 0;
+    return Math.min(poolLength, realmIndex >= 18 ? 10 : realmIndex >= 9 ? 9 : 8);
+  }
+
   function normalizeMarketStock(stock, state, fallbackDateKey = getDateKey()) {
     if (!stock || typeof stock !== 'object' || !Array.isArray(stock.items)) {
       return createMarketStock(state, fallbackDateKey, state.marketRefreshes?.[fallbackDateKey] || 0);
@@ -8488,10 +8543,17 @@ const spiritBeastQualities = {
     if (!validItems.length) {
       return createMarketStock(state, dateKey, refreshIndex);
     }
+    const availableCount = Object.values(marketItems)
+      .filter((item) => (state.realmIndex || 0) >= (item.unlockRealmIndex || 0))
+      .length;
+    const shelfSize = getMarketShelfSize(state, availableCount);
+    const replenishedItems = validItems.length >= shelfSize
+      ? validItems
+      : [...validItems, ...createMarketStock(state, dateKey, refreshIndex).items];
     return {
       dateKey,
       refreshIndex,
-      items: [...new Set(validItems)].slice(0, 6),
+      items: [...new Set(replenishedItems)].slice(0, shelfSize),
     };
   }
 
@@ -8532,7 +8594,7 @@ const spiritBeastQualities = {
     const realmIndex = state.realmIndex || 0;
     const pool = Object.values(marketItems)
       .filter((item) => realmIndex >= (item.unlockRealmIndex || 0));
-    const guaranteed = ['herbBundle', 'beastCoreShard', 'spiritSword', 'arrayManual']
+    const guaranteed = ['herbBundle', 'beastCoreShard', 'gatherQiBottle', 'spiritSword', 'spiritDust', 'arrayManual']
       .filter((itemId) => pool.some((item) => item.id === itemId));
     const rotating = pool
       .filter((item) => !guaranteed.includes(item.id))
@@ -8542,10 +8604,11 @@ const spiritBeastQualities = {
       .map((itemId, index) => ({ itemId, rank: hashString(`${dateKey}:${refreshIndex}:base:${index}:${itemId}`) }))
       .sort((a, b) => a.rank - b.rank)
       .map((entry) => entry.itemId);
+    const shelfSize = getMarketShelfSize(state, pool.length);
     return {
       dateKey,
       refreshIndex,
-      items: [...shiftedGuaranteed, ...rotating].slice(0, Math.min(6, pool.length)),
+      items: [...shiftedGuaranteed, ...rotating].slice(0, shelfSize),
     };
   }
 
@@ -10457,7 +10520,7 @@ const spiritBeastQualities = {
       return `道威永久 +${amount}`;
     }
 
-    const names = { qi: '灵气', herbs: '灵草', spiritStones: '灵石', pills: '聚气丹', gatherQiPill: '聚气丹', clearHeartPill: '清心丹', meridianPill: '护脉丹', beastCores: '妖核', artifacts: '法器', arrayFlags: '阵旗', forgingEssence: '炼器精魄', bloodEssence: '血脉精魄', heartDemon: '心魔', insight: '悟道' };
+    const names = { qi: '灵气', herbs: '灵草', spiritStones: '灵石', pills: '聚气丹', gatherQiPill: '聚气丹', clearHeartPill: '清心丹', meridianPill: '护脉丹', bodyTemperPill: '淬体丹', spiritRootPill: '培元丹', beastCores: '妖核', artifacts: '法器', arrayFlags: '阵旗', forgingEssence: '炼器精魄', bloodEssence: '血脉精魄', heartDemon: '心魔', insight: '悟道' };
     return `${amount} ${names[key] || key}`;
   }
 

@@ -15,11 +15,13 @@ import {
   LOOT_EQUIPMENT,
   MAINLINE_CHAPTERS,
   MAP_SPECIAL_DROPS,
+  MARKET_ITEMS,
   MISSIONS,
   MISSION_MAPS,
   MISSION_APPROACHES,
   MISSION_EVENTS,
   OPPORTUNITIES,
+  PILL_RECIPES,
   REALMS,
   RARITY_TIERS,
   SECT_COMMISSIONS,
@@ -426,6 +428,25 @@ test('alchemy furnace unlocks recipes and shortens crafting time', () => {
 
   updateGame(state, 43, 45_000);
   assert.equal(state.inventoryPills.clearHeartPill, 1);
+});
+
+test('attribute pills grant permanent cultivation attributes', () => {
+  const state = createGameState(1000);
+  state.inventoryPills.bodyTemperPill = 1;
+  state.inventoryPills.spiritRootPill = 1;
+  const powerBefore = calculatePower(state);
+  const rateBefore = calculateQiRate(state);
+
+  const body = consumePill(state, 'bodyTemperPill', 1000);
+  const root = consumePill(state, 'spiritRootPill', 2000);
+
+  assert.equal(PILL_RECIPES.bodyTemperPill.name, '淬体丹');
+  assert.equal(body.ok, true);
+  assert.equal(root.ok, true);
+  assert.equal(state.permanentBonuses.power, 12);
+  assert.equal(state.permanentBonuses.qiRate, 0.01);
+  assert.equal(calculatePower(state) > powerBefore, true);
+  assert.equal(calculateQiRate(state) > rateBefore, true);
 });
 
 test('consumed pills grant a temporary cultivation speed boost', () => {
@@ -1729,6 +1750,23 @@ test('loot organize strategy can preserve best item per slot while cleaning sele
   assert.equal(state.lootEquipment.some((item) => item.uid === 'weak-sword'), false);
 });
 
+test('loot batch dismantle remains repeatable after new eligible drops', () => {
+  const state = createGameState(1000);
+  state.lootEquipment = [
+    { uid: 'equipped-sword', templateId: 'qingfengSword', name: '旧青锋剑', slot: 'weapon', quality: 1, variant: { rarityId: 'spirit' }, bonuses: { power: 36 } },
+    { uid: 'weak-sword', templateId: 'bloodCopperBlade', name: '残赤铜刀', slot: 'weapon', quality: 0, variant: { rarityId: 'common' }, bonuses: { power: 20 } },
+  ];
+  state.equippedLoot.weapon = 'equipped-sword';
+
+  const first = organizeLootEquipment(state, 2000, { rarityIds: ['common'], keepStrategy: 'equippedOnly' });
+  state.lootEquipment.push({ uid: 'weak-boots', templateId: 'windtraceBoots', name: '残云履', slot: 'boots', quality: 0, variant: { rarityId: 'common' }, bonuses: { speed: 2 } });
+  const second = organizeLootEquipment(state, 3000, { rarityIds: ['common'], keepStrategy: 'equippedOnly' });
+
+  assert.equal(first.removed, 1);
+  assert.equal(second.removed, 1);
+  assert.equal(state.lootEquipment.some((item) => item.uid === 'weak-boots'), false);
+});
+
 test('equipment details expose build school tags for loot decisions', () => {
   const state = reviveGameState({
     lootEquipment: [
@@ -2548,6 +2586,29 @@ test('market sells materials equipment and formations', () => {
   assert.equal(calculatePower(state), 22);
 });
 
+test('market shelf is wider and ordinary materials use tiered daily limits', () => {
+  const state = createGameState(1000);
+  state.realmIndex = realmIndexByName('金丹一转');
+  const stock = getMarketStock(state, '2026-05-10');
+  const revived = reviveGameState(JSON.parse(JSON.stringify(state)), 1000);
+  const revivedStock = getMarketStock(revived, '2026-05-10');
+  const legacy = reviveGameState({
+    ...JSON.parse(JSON.stringify(state)),
+    marketStock: {
+      ...stock,
+      items: stock.items.slice(0, 6),
+    },
+  }, 1000);
+  const legacyStock = getMarketStock(legacy, '2026-05-10');
+
+  assert.equal(MARKET_ITEMS.herbBundle.limit, 99);
+  assert.equal(MARKET_ITEMS.arrayManual.limit, 30);
+  assert.equal(MARKET_ITEMS.treasureOre.limit, 10);
+  assert.equal(stock.items.length >= 8, true);
+  assert.equal(revivedStock.items.length >= 8, true);
+  assert.equal(legacyStock.items.length >= 8, true);
+});
+
 test('map depth trials scale difficulty and grant first-clear rewards', () => {
   const state = createGameState(1000);
   state.permanentBonuses.power = 500;
@@ -2633,19 +2694,24 @@ test('map depth trials remain threatening compared with same-map routes', () => 
 
 test('market stock refreshes by day and enforces item limits', () => {
   const state = createGameState(1000);
-  state.spiritStones = 1_000;
-  state.realmIndex = realmIndexByName('筑基一层');
+  state.spiritStones = 100_000;
+  state.beastCores = 100;
+  state.marketStock = { dateKey: '2026-05-08', refreshIndex: 0, items: ['herbBundle', 'arrayManual', 'beastCoreShard'] };
 
   const firstStock = getMarketStock(state, '2026-05-08');
-  const bought = buyMarketItem(state, firstStock.items[0].id, '2026-05-08', 1000);
-  const repeated = buyMarketItem(state, firstStock.items[0].id, '2026-05-08', 1000);
+  const bought = buyMarketItem(state, 'herbBundle', '2026-05-08', 1000);
+  const repeated = buyMarketItem(state, 'herbBundle', '2026-05-08', 1000);
+  for (let index = 0; index < MARKET_ITEMS.herbBundle.limit - 2; index += 1) {
+    buyMarketItem(state, 'herbBundle', '2026-05-08', 1100 + index);
+  }
+  const soldOut = buyMarketItem(state, 'herbBundle', '2026-05-08', 3000);
   const refreshed = refreshMarketStock(state, '2026-05-08', 2000);
   const secondStock = getMarketStock(state, '2026-05-08');
 
-  assert.equal(firstStock.items.length >= 4, true);
+  assert.equal(firstStock.items.find((item) => item.id === 'herbBundle').remaining, MARKET_ITEMS.herbBundle.limit);
   assert.equal(bought.ok, true);
-  assert.equal(repeated.ok, false);
-  assert.equal(repeated.reason, 'soldOut');
+  assert.equal(repeated.ok, true);
+  assert.equal(soldOut.reason, 'soldOut');
   assert.equal(refreshed.ok, true);
   assert.notDeepEqual(secondStock.items.map((item) => item.id), firstStock.items.map((item) => item.id));
   assert.equal(secondStock.refreshCost.spiritStones > firstStock.refreshCost.spiritStones, true);

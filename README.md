@@ -56,3 +56,29 @@
 - 功能面板使用标签页切换，手机端使用底部导航，洞府建筑和历练地图采用横向选择以压缩页面长度
 - 手机端非修行页会把场景压缩为更短状态条，路线说明保留一行摘要，装备详情使用二级展开降低长卡片拥挤
 
+## 本地打开
+
+直接用浏览器打开 `index.html`。
+
+## 发布到 GitHub Pages
+
+1. 在 GitHub 新建一个公开仓库，例如 `qinglan-dongfu`。
+2. 如果用 GitHub 网页上传，覆盖根目录的 `index.html`、`styles.css`、`browserGame.js`、`README.md`。
+3. 进入仓库 `Settings` -> `Pages`。
+4. `Build and deployment` 选择 `Deploy from a branch`。
+5. `Branch` 选择 `main`，目录选择 `/root`，保存。
+6. 等待部署完成后，GitHub 会给出一个可分享的网址。
+
+## 发布到 Netlify 或 Vercel
+
+把整个文件夹拖到 Netlify，或导入到 Vercel。构建命令留空，发布目录选择项目根目录。
+
+## 文件说明
+
+- `index.html`: 游戏入口页面
+- `styles.css`: 页面样式
+- `browserGame.js`: GitHub Pages 直接运行的游戏脚本
+- `src/browserGame.js`: 浏览器直接运行的游戏版本
+- `src/gameCore.mjs`: 可测试的核心规则
+- `tests/game.test.mjs`: 核心规则测试
+- `tests/core-parity.test.mjs`: 检查浏览器脚本和核心规则表是否同步
