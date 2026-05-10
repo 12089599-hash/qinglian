@@ -1583,6 +1583,11 @@ export const PILL_RECIPES = {
   },
 };
 
+export const ATTRIBUTE_PILL_CAPS = {
+  bodyTemperPill: 30,
+  spiritRootPill: 20,
+};
+
 export const GEAR = {
   weapon: {
     id: 'weapon',
@@ -2408,7 +2413,10 @@ export function createGameState(now = Date.now()) {
       gatherQiPill: 0,
       clearHeartPill: 0,
       meridianPill: 0,
+      bodyTemperPill: 0,
+      spiritRootPill: 0,
     },
+    consumedAttributePills: Object.fromEntries(Object.keys(ATTRIBUTE_PILL_CAPS).map((id) => [id, 0])),
     craftedPills: 0,
     completedMissions: {},
     mapReputation: {},
@@ -2521,6 +2529,7 @@ export function reviveGameState(saved, now = Date.now()) {
   state.foundationStability = Math.max(0, Number(state.foundationStability) || 0);
   state.activeAlchemy = normalizeAlchemy(state.activeAlchemy);
   state.inventoryPills = normalizeInventoryPills(state.inventoryPills, state.pills);
+  state.consumedAttributePills = normalizeConsumedAttributePills(state.consumedAttributePills);
   state.buildings = normalizeBuildings(state.buildings);
   state.gear = normalizeLevels(state.gear, GEAR);
   state.gearQuality = normalizeGearQuality(state.gearQuality);
@@ -3859,6 +3868,7 @@ export function getEquipmentDetails(state) {
       const realmLocked = nextLevel > getRealmUpgradeLimit(state);
       const qualityMaxed = quality.qualityIndex >= GEAR_QUALITIES.length - 1;
       const nextQuality = quality.qualityIndex + 1;
+      const equippedLoot = getEquippedLoot(state, item.id);
       return {
         id: item.id,
         name: item.name,
@@ -3869,6 +3879,12 @@ export function getEquipmentDetails(state) {
         qualityIndex: quality.qualityIndex,
         qualityName: quality.qualityName,
         rarity: quality.rarity,
+        equippedLoot: equippedLoot ? {
+          uid: equippedLoot.uid,
+          name: equippedLoot.name,
+          rarity: getLootRarity(equippedLoot),
+          score: getLootScore(equippedLoot),
+        } : null,
         affix: affix ? { id: affix.id, name: affix.name, effects: effectsFromBonusObject(affix) } : { id: null, name: '无词条', effects: [] },
         effects: getGearEffects(item.id, level, quality.qualityIndex, affix),
         nextEffects: maxed ? [] : getGearEffects(item.id, nextLevel, quality.qualityIndex, affix),
@@ -4310,10 +4326,12 @@ export function getNextGuidance(state) {
       tab: 'missions',
     };
   }
-  if (state.activeAlchemy) {
-    const recipe = PILL_RECIPES[state.activeAlchemy.recipeId] ?? PILL_RECIPES.gatherQiPill;
+  const activeAlchemyJobs = getActiveAlchemyJobs(state);
+  if (activeAlchemyJobs.length) {
+    const firstJob = activeAlchemyJobs[0];
+    const recipe = PILL_RECIPES[firstJob.recipeId] ?? PILL_RECIPES.gatherQiPill;
     return {
-      title: `正在炼制${recipe.name}`,
+      title: activeAlchemyJobs.length > 1 ? `正在炼制${recipe.name}等 ${activeAlchemyJobs.length} 炉` : `正在炼制${recipe.name}`,
       detail: '丹成后服用或继续排下一炉，能明显提高突破准备效率。',
       tab: 'alchemy',
     };
@@ -5281,7 +5299,9 @@ export function craftPill(state, recipeId = 'gatherQiPill', now = Date.now()) {
     addLog(state, now, `${recipe.name}需要 ${recipe.unlockLevel} 级炼丹炉解锁。`);
     return { ok: false, reason: 'locked' };
   }
-  if (state.activeAlchemy) {
+  const jobs = getActiveAlchemyJobs(state);
+  const slots = getAlchemySlots(state);
+  if (jobs.length >= slots) {
     return { ok: false, reason: 'busy' };
   }
   if (!canAfford(state, recipe.cost)) {
@@ -5290,13 +5310,30 @@ export function craftPill(state, recipeId = 'gatherQiPill', now = Date.now()) {
   }
 
   payResources(state, recipe.cost);
-  state.activeAlchemy = {
+  setActiveAlchemyJobs(state, [...jobs, {
     recipeId: recipe.id,
     startedAt: now,
     endsAt: now + getAlchemyDuration(state, recipe) * 1000,
-  };
+  }]);
   addLog(state, now, `丹炉起火，开始炼制${recipe.name}。`);
-  return { ok: true };
+  return { ok: true, slots, active: jobs.length + 1 };
+}
+
+export function getAlchemySlots(state) {
+  const furnaceLevel = clampInteger(state.buildings?.alchemyFurnace ?? 0, 0, BUILDINGS.alchemyFurnace.maxLevel);
+  return Math.min(5, 1 + Math.floor(furnaceLevel / 5));
+}
+
+function getActiveAlchemyJobs(state) {
+  return Array.isArray(state.activeAlchemy)
+    ? state.activeAlchemy
+    : (state.activeAlchemy ? [state.activeAlchemy] : []);
+}
+
+function setActiveAlchemyJobs(state, jobs) {
+  const normalized = normalizeAlchemy(jobs);
+  state.activeAlchemy = normalized;
+  return normalized;
 }
 
 export function upgradeBuilding(state, buildingId, now = Date.now()) {
@@ -5526,27 +5563,37 @@ export function consumePill(state, recipeId = 'gatherQiPill', now = Date.now()) 
     addLog(state, now, '丹瓶已空。');
     return { ok: false };
   }
+  const attributeCap = ATTRIBUTE_PILL_CAPS[recipeId];
+  if (attributeCap !== undefined) {
+    state.consumedAttributePills = normalizeConsumedAttributePills(state.consumedAttributePills);
+    if ((state.consumedAttributePills[recipeId] ?? 0) >= attributeCap) {
+      addLog(state, now, `${recipe.name}药性已满，继续服用也难入根骨。`);
+      return { ok: false, reason: 'capReached', cap: attributeCap };
+    }
+  }
 
   state.inventoryPills[recipeId] -= 1;
   if (recipeId === 'gatherQiPill') {
     const alchemyBonus = 1 + (state.cultivationPaths?.alchemy ?? 0) * CULTIVATION_PATHS.alchemy.pillQiBonusPerLevel;
     state.qi = round(state.qi + (65 + state.realmIndex * 30) * alchemyBonus);
-    state.pillBoostUntil = Math.max(state.pillBoostUntil ?? 0, now) + 120 * 1000;
+    state.pillBoostUntil = Math.max(state.pillBoostUntil ?? 0, now) + 20 * 60 * 1000;
     state.pills = state.inventoryPills.gatherQiPill;
     addLog(state, now, '服下一枚聚气丹，灵息周天暂时加快。');
   } else if (recipeId === 'clearHeartPill') {
     state.heartDemon = Math.max(0, (state.heartDemon ?? 0) - 1);
     addLog(state, now, '服下一枚清心丹，心魔压力减轻。');
   } else if (recipeId === 'meridianPill') {
-    state.breakthroughBoostUntil = Math.max(state.breakthroughBoostUntil ?? 0, now) + 180 * 1000;
+    state.breakthroughBoostUntil = Math.max(state.breakthroughBoostUntil ?? 0, now) + 30 * 60 * 1000;
     addLog(state, now, '服下一枚护脉丹，破境天机暂时明朗。');
   } else if (recipeId === 'bodyTemperPill') {
     state.permanentBonuses ??= { qiRate: 0, power: 0 };
     state.permanentBonuses.power = round((state.permanentBonuses.power ?? 0) + 12);
+    state.consumedAttributePills[recipeId] = (state.consumedAttributePills[recipeId] ?? 0) + 1;
     addLog(state, now, '服下一枚淬体丹，肉身道威沉入根骨。');
   } else if (recipeId === 'spiritRootPill') {
     state.permanentBonuses ??= { qiRate: 0, power: 0 };
     state.permanentBonuses.qiRate = round((state.permanentBonuses.qiRate ?? 0) + 0.01);
+    state.consumedAttributePills[recipeId] = (state.consumedAttributePills[recipeId] ?? 0) + 1;
     addLog(state, now, '服下一枚培元丹，灵根吐纳更绵长。');
   }
   return { ok: true };
@@ -5746,16 +5793,24 @@ function recordMissionReport(state, report) {
 }
 
 function completeAlchemyIfReady(state, now) {
-  if (!state.activeAlchemy || now < state.activeAlchemy.endsAt) {
+  const jobs = getActiveAlchemyJobs(state);
+  if (!jobs.length) {
     return;
   }
+  const ready = jobs.filter((job) => now >= job.endsAt);
+  if (!ready.length) {
+    return;
+  }
+  const pending = jobs.filter((job) => now < job.endsAt);
 
-  const recipe = PILL_RECIPES[state.activeAlchemy.recipeId] ?? PILL_RECIPES.gatherQiPill;
-  state.activeAlchemy = null;
-  state.inventoryPills[recipe.id] = (state.inventoryPills[recipe.id] ?? 0) + 1;
+  ready.forEach((job) => {
+    const recipe = PILL_RECIPES[job.recipeId] ?? PILL_RECIPES.gatherQiPill;
+    state.inventoryPills[recipe.id] = (state.inventoryPills[recipe.id] ?? 0) + 1;
+    state.craftedPills = (state.craftedPills ?? 0) + 1;
+    addLog(state, now, `丹炉火候正好，炼成一枚${recipe.name}。`);
+  });
+  setActiveAlchemyJobs(state, pending);
   state.pills = state.inventoryPills.gatherQiPill;
-  state.craftedPills = (state.craftedPills ?? 0) + 1;
-  addLog(state, now, `丹炉火候正好，炼成一枚${recipe.name}。`);
 }
 
 export function getMissionApproachOptions(state, mapId) {
@@ -6111,11 +6166,17 @@ function normalizeAlchemy(alchemy) {
   if (!alchemy) {
     return null;
   }
-  return {
-    recipeId: PILL_RECIPES[alchemy.recipeId] ? alchemy.recipeId : 'gatherQiPill',
-    startedAt: Number(alchemy.startedAt) || Date.now(),
-    endsAt: Number(alchemy.endsAt) || Date.now(),
-  };
+  const jobs = Array.isArray(alchemy) ? alchemy : [alchemy];
+  const normalized = jobs
+    .map((job) => ({
+      recipeId: PILL_RECIPES[job?.recipeId] ? job.recipeId : 'gatherQiPill',
+      startedAt: Number(job?.startedAt) || Date.now(),
+      endsAt: Number(job?.endsAt) || Date.now(),
+    }))
+    .filter((job) => Number.isFinite(job.startedAt) && Number.isFinite(job.endsAt))
+    .sort((left, right) => left.endsAt - right.endsAt)
+    .slice(0, 5);
+  return normalized.length ? normalized : null;
 }
 
 function normalizeBuildings(buildings) {
@@ -6208,6 +6269,12 @@ function normalizeInventoryPills(inventoryPills, legacyPills = 0) {
     normalized.gatherQiPill = Math.max(0, Math.floor(Number(legacyPills) || 0));
   }
   return normalized;
+}
+
+function normalizeConsumedAttributePills(consumed) {
+  return Object.fromEntries(
+    Object.entries(ATTRIBUTE_PILL_CAPS).map(([id, cap]) => [id, clampInteger(consumed?.[id] ?? 0, 0, cap)]),
+  );
 }
 
 function normalizeCompletedMissions(completedMissions) {
@@ -6907,7 +6974,7 @@ function collectResourceNeeds(state) {
     }
   });
 
-  if (!state.activeAlchemy) {
+  if (getActiveAlchemyJobs(state).length < getAlchemySlots(state)) {
     const recipe = Object.values(PILL_RECIPES).find((candidate) => (state.buildings?.alchemyFurnace ?? 0) >= candidate.unlockLevel);
     if (recipe) {
       addCost(`丹房·${recipe.name}`, recipe.cost, 0.75);
@@ -7559,11 +7626,14 @@ function compareLootEquipment(state, item) {
     }
   });
   const deltas = effectsFromBonusObject(deltaBonuses);
+  const score = getLootScore(item);
+  const baselineScore = baseline ? getLootScore(baseline) : (equipped?.uid === item.uid ? score : 0);
   return {
     againstUid: baseline?.uid ?? null,
     againstName: baseline?.name ?? (equipped?.uid === item.uid ? item.name : '空位'),
     deltas,
-    scoreDelta: round(getLootScore(item) - (baseline ? getLootScore(baseline) : 0)),
+    score: round(score),
+    scoreDelta: round(score - baselineScore),
     summary: deltas.length ? deltas.map(formatEffectDelta).join('、') : (equipped?.uid === item.uid ? '已穿戴' : '无明显变化'),
   };
 }

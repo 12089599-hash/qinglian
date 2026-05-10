@@ -407,7 +407,8 @@ test('alchemy takes time before producing a pill', () => {
   updateGame(state, 44, 45_000);
   assert.equal(started.ok, true);
   assert.equal(state.pills, 0);
-  assert.equal(state.activeAlchemy.endsAt, 46_000);
+  assert.equal(state.activeAlchemy.length, 1);
+  assert.equal(state.activeAlchemy[0].endsAt, 46_000);
 
   updateGame(state, 1, 46_000);
   assert.equal(state.pills, 1);
@@ -427,11 +428,34 @@ test('alchemy furnace unlocks recipes and shortens crafting time', () => {
   const started = craftPill(state, 'clearHeartPill', 2000);
 
   assert.equal(started.ok, true);
-  assert.equal(state.activeAlchemy.recipeId, 'clearHeartPill');
-  assert.equal(state.activeAlchemy.endsAt, 45_000);
+  assert.equal(state.activeAlchemy[0].recipeId, 'clearHeartPill');
+  assert.equal(state.activeAlchemy[0].endsAt, 45_000);
 
   updateGame(state, 43, 45_000);
   assert.equal(state.inventoryPills.clearHeartPill, 1);
+});
+
+test('alchemy furnace levels add simultaneous crafting slots', () => {
+  const state = createGameState(1000);
+  state.buildings.alchemyFurnace = 5;
+  state.herbs = 100;
+  state.spiritStones = 200;
+  state.beastCores = 5;
+
+  const first = craftPill(state, 'gatherQiPill', 1000);
+  const second = craftPill(state, 'clearHeartPill', 2000);
+  const third = craftPill(state, 'meridianPill', 3000);
+
+  assert.equal(first.ok, true);
+  assert.equal(second.ok, true);
+  assert.equal(third.ok, false);
+  assert.equal(third.reason, 'busy');
+  assert.equal(state.activeAlchemy.length, 2);
+
+  updateGame(state, 45, 47_000);
+  assert.equal(state.inventoryPills.gatherQiPill, 1);
+  assert.equal(state.inventoryPills.clearHeartPill, 1);
+  assert.equal(state.activeAlchemy, null);
 });
 
 test('attribute pills grant permanent cultivation attributes', () => {
@@ -453,6 +477,31 @@ test('attribute pills grant permanent cultivation attributes', () => {
   assert.equal(calculateQiRate(state) > rateBefore, true);
 });
 
+test('attribute pills stop at their consumption caps', () => {
+  const state = createGameState(1000);
+  state.inventoryPills.bodyTemperPill = 31;
+  state.inventoryPills.spiritRootPill = 21;
+
+  for (let index = 0; index < 30; index += 1) {
+    assert.equal(consumePill(state, 'bodyTemperPill', 1000 + index).ok, true);
+  }
+  for (let index = 0; index < 20; index += 1) {
+    assert.equal(consumePill(state, 'spiritRootPill', 2000 + index).ok, true);
+  }
+
+  const bodyBlocked = consumePill(state, 'bodyTemperPill', 5000);
+  const rootBlocked = consumePill(state, 'spiritRootPill', 6000);
+
+  assert.equal(bodyBlocked.ok, false);
+  assert.equal(bodyBlocked.reason, 'capReached');
+  assert.equal(rootBlocked.ok, false);
+  assert.equal(rootBlocked.reason, 'capReached');
+  assert.equal(state.inventoryPills.bodyTemperPill, 1);
+  assert.equal(state.inventoryPills.spiritRootPill, 1);
+  assert.equal(state.consumedAttributePills.bodyTemperPill, 30);
+  assert.equal(state.consumedAttributePills.spiritRootPill, 20);
+});
+
 test('consumed pills grant a temporary cultivation speed boost', () => {
   const state = createGameState(1000);
   state.inventoryPills.gatherQiPill = 1;
@@ -461,7 +510,7 @@ test('consumed pills grant a temporary cultivation speed boost', () => {
 
   assert.equal(consumed.ok, true);
   assert.equal(state.pills, 0);
-  assert.equal(state.pillBoostUntil, 121_000);
+  assert.equal(state.pillBoostUntil, 1_201_000);
   assert.equal(calculateQiRate(state, 2_000), 4.64);
 });
 
@@ -477,7 +526,7 @@ test('clear heart and meridian pills affect breakthrough preparation', () => {
   assert.equal(clear.ok, true);
   assert.equal(meridian.ok, true);
   assert.equal(state.heartDemon, 1);
-  assert.equal(state.breakthroughBoostUntil, 181_000);
+  assert.equal(state.breakthroughBoostUntil, 1_801_000);
   assert.equal(calculateBreakthroughChance({ ...state, qi: REALMS[0].requiredQi }, 2_000), 0.72);
 });
 
@@ -843,7 +892,7 @@ test('cultivation paths alter combat alchemy and passive cultivation', () => {
 
   assert.equal(calculatePower(state), 50);
   assert.equal(calculateQiRate(state, 2000), 3.31);
-  assert.equal(state.activeAlchemy.endsAt, 45_000);
+  assert.equal(state.activeAlchemy[0].endsAt, 45_000);
   state.qi = 0;
   consumePill(state, 'gatherQiPill', 3000);
   assert.equal(state.qi, 67.6);
@@ -1714,10 +1763,19 @@ test('loot details compare against equipped items and organize weak unlocked loo
 
   const locked = toggleLootLock(state, 'locked-robe', 1000);
   const details = getEquipmentDetails(state);
+  const weapon = details.gear.find((item) => item.id === 'weapon');
+  const equipped = details.loot.find((item) => item.uid === 'equipped-sword');
   const better = details.loot.find((item) => item.uid === 'better-sword');
+  const weak = details.loot.find((item) => item.uid === 'weak-sword');
 
   assert.equal(locked.ok, true);
+  assert.equal(weapon.equippedLoot.name, '旧青锋剑');
+  assert.equal(equipped.comparison.score, 40);
+  assert.equal(equipped.comparison.scoreDelta, 0);
   assert.equal(better.comparison.againstName, '旧青锋剑');
+  assert.equal(better.comparison.score, 60);
+  assert.equal(weak.comparison.score, 28);
+  assert.equal(weak.comparison.scoreDelta, -12);
   assert.equal(better.comparison.deltas.find((delta) => delta.id === 'power').value, 20);
   assert.equal(better.comparison.summary.includes('+20'), true);
 

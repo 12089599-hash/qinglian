@@ -1245,6 +1245,11 @@ const spiritBeastQualities = {
     },
   };
 
+  const attributePillCaps = {
+    bodyTemperPill: 30,
+    spiritRootPill: 20,
+  };
+
   const gear = {
     weapon: {
       id: 'weapon',
@@ -2197,7 +2202,10 @@ const spiritBeastQualities = {
   refs.alchemyList?.addEventListener('click', (event) => {
     const craftButton = event.target.closest('[data-craft-recipe]');
     if (craftButton) {
-      craftPill(state, craftButton.dataset.craftRecipe);
+      const result = craftPill(state, craftButton.dataset.craftRecipe);
+      if (result.reason === 'busy') {
+        showToast('炉位已满', '待一炉丹成后再开火。', 'warning');
+      }
       saveState();
       render(true);
       return;
@@ -2207,6 +2215,8 @@ const spiritBeastQualities = {
       const result = consumePill(state, consumeButton.dataset.consumeRecipe);
       if (result.ok) {
         showToast('服丹', '丹药生效。');
+      } else if (result.reason === 'capReached') {
+        showToast('药性已满', '这类属性丹已经沉入根骨上限，先留给后续用途。', 'warning');
       }
       saveState();
       render(true);
@@ -2885,7 +2895,10 @@ const spiritBeastQualities = {
         gatherQiPill: 0,
         clearHeartPill: 0,
         meridianPill: 0,
+        bodyTemperPill: 0,
+        spiritRootPill: 0,
       },
+      consumedAttributePills: Object.fromEntries(Object.keys(attributePillCaps).map((id) => [id, 0])),
       craftedPills: 0,
       completedMissions: {},
       mapReputation: {},
@@ -2996,6 +3009,7 @@ const spiritBeastQualities = {
     state.foundationStability = Math.max(0, Number(state.foundationStability) || 0);
     state.activeAlchemy = normalizeAlchemy(state.activeAlchemy);
     state.inventoryPills = normalizeInventoryPills(state.inventoryPills, state.pills);
+    state.consumedAttributePills = normalizeConsumedAttributePills(state.consumedAttributePills);
     state.craftedPills = Math.max(0, Number(state.craftedPills) || 0);
     state.completedMissions = normalizeCompletedMissions(state.completedMissions);
     state.mapReputation = normalizeMapValues(state.mapReputation);
@@ -3263,8 +3277,10 @@ const spiritBeastQualities = {
       addLog(state, now, `${recipe.name}需要 ${recipe.unlockLevel} 级炼丹炉解锁。`);
       return { ok: false, reason: 'locked' };
     }
-    if (state.activeAlchemy) {
-      addLog(state, now, '丹炉正在炼制，暂时不能再开一炉。');
+    const jobs = getActiveAlchemyJobs(state);
+    const slots = getAlchemySlots(state);
+    if (jobs.length >= slots) {
+      addLog(state, now, '丹炉炉位已满，待一炉丹成后再开火。');
       return { ok: false, reason: 'busy' };
     }
     if (!canAfford(state, recipe.cost)) {
@@ -3272,13 +3288,30 @@ const spiritBeastQualities = {
       return { ok: false, reason: 'notEnoughResources' };
     }
     payResources(state, recipe.cost);
-    state.activeAlchemy = {
+    setActiveAlchemyJobs(state, [...jobs, {
       recipeId: recipe.id,
       startedAt: now,
       endsAt: now + getAlchemyDuration(state, recipe) * 1000,
-    };
+    }]);
     addLog(state, now, `丹炉起火，开始炼制${recipe.name}。`);
-    return { ok: true };
+    return { ok: true, slots, active: jobs.length + 1 };
+  }
+
+  function getAlchemySlots(state) {
+    const furnaceLevel = clampInteger(state.buildings?.alchemyFurnace ?? 0, 0, buildings.alchemyFurnace.maxLevel);
+    return Math.min(5, 1 + Math.floor(furnaceLevel / 5));
+  }
+
+  function getActiveAlchemyJobs(state) {
+    return Array.isArray(state.activeAlchemy)
+      ? state.activeAlchemy
+      : (state.activeAlchemy ? [state.activeAlchemy] : []);
+  }
+
+  function setActiveAlchemyJobs(state, jobs) {
+    const normalized = normalizeAlchemy(jobs);
+    state.activeAlchemy = normalized;
+    return normalized;
   }
 
   function upgradeBuilding(state, buildingId, now = Date.now()) {
@@ -3507,43 +3540,63 @@ const spiritBeastQualities = {
       addLog(state, now, '丹瓶已空。');
       return { ok: false };
     }
+    const attributeCap = attributePillCaps[recipeId];
+    if (attributeCap !== undefined) {
+      state.consumedAttributePills = normalizeConsumedAttributePills(state.consumedAttributePills);
+      if ((state.consumedAttributePills[recipeId] || 0) >= attributeCap) {
+        addLog(state, now, `${recipe.name}药性已满，继续服用也难入根骨。`);
+        return { ok: false, reason: 'capReached', cap: attributeCap };
+      }
+    }
     state.inventoryPills[recipeId] -= 1;
     if (recipeId === 'gatherQiPill') {
       const alchemyBonus = 1 + (state.cultivationPaths.alchemy || 0) * cultivationPaths.alchemy.pillQiBonusPerLevel;
       state.qi = round(state.qi + (65 + state.realmIndex * 30) * alchemyBonus);
-      state.pillBoostUntil = Math.max(state.pillBoostUntil || 0, now) + 120 * 1000;
+      state.pillBoostUntil = Math.max(state.pillBoostUntil || 0, now) + 20 * 60 * 1000;
       state.pills = state.inventoryPills.gatherQiPill;
       addLog(state, now, '服下一枚聚气丹，灵息周天暂时加快。');
     } else if (recipeId === 'clearHeartPill') {
       state.heartDemon = Math.max(0, state.heartDemon - 1);
       addLog(state, now, '服下一枚清心丹，心魔压力减轻。');
     } else if (recipeId === 'meridianPill') {
-      state.breakthroughBoostUntil = Math.max(state.breakthroughBoostUntil || 0, now) + 180 * 1000;
+      state.breakthroughBoostUntil = Math.max(state.breakthroughBoostUntil || 0, now) + 30 * 60 * 1000;
       addLog(state, now, '服下一枚护脉丹，破境天机暂时明朗。');
     } else if (recipeId === 'bodyTemperPill') {
       state.permanentBonuses ||= { qiRate: 0, power: 0 };
       state.permanentBonuses.power = round((state.permanentBonuses.power || 0) + 12);
+      state.consumedAttributePills[recipeId] = (state.consumedAttributePills[recipeId] || 0) + 1;
       addLog(state, now, '服下一枚淬体丹，肉身道威沉入根骨。');
     } else if (recipeId === 'spiritRootPill') {
       state.permanentBonuses ||= { qiRate: 0, power: 0 };
       state.permanentBonuses.qiRate = round((state.permanentBonuses.qiRate || 0) + 0.01);
+      state.consumedAttributePills[recipeId] = (state.consumedAttributePills[recipeId] || 0) + 1;
       addLog(state, now, '服下一枚培元丹，灵根吐纳更绵长。');
     }
     return { ok: true };
   }
 
   function completeAlchemyIfReady(state, now) {
-    if (!state.activeAlchemy || now < state.activeAlchemy.endsAt) {
+    const jobs = getActiveAlchemyJobs(state);
+    if (!jobs.length) {
       return;
     }
+    const ready = jobs.filter((job) => now >= job.endsAt);
+    if (!ready.length) {
+      return;
+    }
+    const pending = jobs.filter((job) => now < job.endsAt);
 
-    const recipe = pillRecipes[state.activeAlchemy.recipeId] || pillRecipes.gatherQiPill;
-    state.activeAlchemy = null;
-    state.inventoryPills[recipe.id] = (state.inventoryPills[recipe.id] || 0) + 1;
+    const completedNames = [];
+    ready.forEach((job) => {
+      const recipe = pillRecipes[job.recipeId] || pillRecipes.gatherQiPill;
+      state.inventoryPills[recipe.id] = (state.inventoryPills[recipe.id] || 0) + 1;
+      state.craftedPills += 1;
+      completedNames.push(recipe.name);
+      addLog(state, now, `丹炉火候正好，炼成一枚${recipe.name}。`);
+    });
+    setActiveAlchemyJobs(state, pending);
     state.pills = state.inventoryPills.gatherQiPill;
-    state.craftedPills += 1;
-    addLog(state, now, `丹炉火候正好，炼成一枚${recipe.name}。`);
-    showToast('炼丹完成', `获得 1 枚${recipe.name}。`);
+    showToast('炼丹完成', ready.length === 1 ? `获得 1 枚${completedNames[0]}。` : `炼成 ${ready.length} 炉：${completedNames.join('、')}。`);
   }
 
   function getMissionApproachOptions(state, mapId) {
@@ -4069,9 +4122,13 @@ const spiritBeastQualities = {
     } else if (activeMission) {
       refs.mission.textContent = activeMission.name;
       refs.missionTime.textContent = formatDuration((state.activeMission.endsAt - Date.now()) / 1000);
-    } else if (state.activeAlchemy) {
-      refs.mission.textContent = `炼制${(pillRecipes[state.activeAlchemy.recipeId] || pillRecipes.gatherQiPill).name}`;
-      refs.missionTime.textContent = formatDuration((state.activeAlchemy.endsAt - Date.now()) / 1000);
+    } else if (getActiveAlchemyJobs(state).length) {
+      const jobs = getActiveAlchemyJobs(state);
+      const firstJob = jobs[0];
+      refs.mission.textContent = jobs.length > 1
+        ? `炼制${(pillRecipes[firstJob.recipeId] || pillRecipes.gatherQiPill).name}等 ${jobs.length} 炉`
+        : `炼制${(pillRecipes[firstJob.recipeId] || pillRecipes.gatherQiPill).name}`;
+      refs.missionTime.textContent = formatDuration((firstJob.endsAt - Date.now()) / 1000);
     } else {
       refs.mission.textContent = '闭关修炼';
       refs.missionTime.textContent = '待命';
@@ -5155,6 +5212,7 @@ const spiritBeastQualities = {
         const realmLocked = nextLevel > getRealmUpgradeLimit(state);
         const qualityMaxed = quality.qualityIndex >= gearQualities.length - 1;
         const nextQuality = quality.qualityIndex + 1;
+        const equippedLoot = getEquippedLoot(state, item.id);
         return {
           id: item.id,
           name: item.name,
@@ -5165,6 +5223,12 @@ const spiritBeastQualities = {
           qualityIndex: quality.qualityIndex,
           qualityName: quality.qualityName,
           rarity: quality.rarity,
+          equippedLoot: equippedLoot ? {
+            uid: equippedLoot.uid,
+            name: equippedLoot.name,
+            rarity: getLootRarity(equippedLoot),
+            score: getLootScore(equippedLoot),
+          } : null,
           affix: affix ? { id: affix.id, name: affix.name, effects: effectsFromBonusObject(affix) } : { id: null, name: '无词条', effects: [] },
           effects: getGearEffects(item.id, level, quality.qualityIndex, affix),
           nextEffects: maxed ? [] : getGearEffects(item.id, nextLevel, quality.qualityIndex, affix),
@@ -5379,9 +5443,14 @@ const spiritBeastQualities = {
     if (activeMission) {
       return { title: `正在历练：${activeMission.name}`, detail: '等待历练完成，或先处理丹房、装备和宗门委托。', tab: 'missions' };
     }
-    if (state.activeAlchemy) {
-      const recipe = pillRecipes[state.activeAlchemy.recipeId] || pillRecipes.gatherQiPill;
-      return { title: `正在炼制${recipe.name}`, detail: '丹成后服用或继续排下一炉，能明显提高突破准备效率。', tab: 'alchemy' };
+    const activeAlchemyJobs = getActiveAlchemyJobs(state);
+    if (activeAlchemyJobs.length) {
+      const recipe = pillRecipes[activeAlchemyJobs[0].recipeId] || pillRecipes.gatherQiPill;
+      return {
+        title: activeAlchemyJobs.length > 1 ? `正在炼制${recipe.name}等 ${activeAlchemyJobs.length} 炉` : `正在炼制${recipe.name}`,
+        detail: '丹成后服用或继续排下一炉，能明显提高突破准备效率。',
+        tab: 'alchemy',
+      };
     }
     const chapter = getMainlineChapters(state).find((candidate) => !candidate.locked && !candidate.rewardClaimed);
     const claimableObjective = chapter?.objectives.find((objective) => objective.completed && !objective.claimed);
@@ -6842,31 +6911,49 @@ const spiritBeastQualities = {
       return;
     }
     const furnaceLevel = state.buildings.alchemyFurnace || 0;
+    const jobs = getActiveAlchemyJobs(state);
+    const slots = getAlchemySlots(state);
     const signature = Object.values(pillRecipes)
-      .map((recipe) => `${recipe.id}:${furnaceLevel}:${state.inventoryPills[recipe.id] || 0}:${Boolean(state.activeAlchemy)}:${state.activeAlchemy?.recipeId || ''}`)
-      .join('|');
+      .map((recipe) => `${recipe.id}:${furnaceLevel}:${state.inventoryPills[recipe.id] || 0}:${state.consumedAttributePills?.[recipe.id] || 0}`)
+      .join('|')
+      + `|slots:${jobs.length}/${slots}:${jobs.map((job) => `${job.recipeId}:${job.endsAt}`).join(',')}`;
     if (!force && renderCache.alchemy === signature) {
       return;
     }
-    refs.alchemyList.innerHTML = Object.values(pillRecipes)
+    refs.alchemyList.innerHTML = `
+      <div class="system-row alchemy-slot-summary">
+        <div>
+          <strong>丹炉炉位 <small>${jobs.length} / ${slots}</small></strong>
+          <span>${jobs.length ? jobs.map((job) => {
+            const recipe = pillRecipes[job.recipeId] || pillRecipes.gatherQiPill;
+            return `${recipe.name} ${formatDuration((job.endsAt - Date.now()) / 1000)}`;
+          }).join(' · ') : '炉火空闲，可同时开炉数随丹房等级提升。'}</span>
+          <small>丹房 5 / 10 / 15 / 20 级分别增加一个炉位。</small>
+        </div>
+      </div>
+      ${Object.values(pillRecipes)
       .map((recipe) => {
         const locked = furnaceLevel < recipe.unlockLevel;
         const count = state.inventoryPills[recipe.id] || 0;
+        const cap = attributePillCaps[recipe.id];
+        const consumed = state.consumedAttributePills?.[recipe.id] || 0;
+        const capped = cap !== undefined && consumed >= cap;
         return `
           <div class="system-row">
             <div>
               <strong>${recipe.name} <small>${count} 枚</small></strong>
               <span>${getRecipeEffectText(recipe.id)}</span>
+              ${cap !== undefined ? `<small>药性沉淀 ${consumed} / ${cap}</small>` : ''}
               <small>${locked ? `${recipe.unlockLevel} 级炼丹炉解锁` : `炼制 ${formatDuration(getAlchemyDuration(state, recipe))} · ${formatReward(recipe.cost)}`}</small>
             </div>
             <div class="row-actions">
-              <button data-craft-recipe="${recipe.id}" ${locked || state.activeAlchemy ? 'disabled' : ''}>炼制</button>
-              <button data-consume-recipe="${recipe.id}" ${count <= 0 ? 'disabled' : ''}>服用</button>
+              <button data-craft-recipe="${recipe.id}" ${locked || jobs.length >= slots ? 'disabled' : ''}>炼制</button>
+              <button data-consume-recipe="${recipe.id}" ${count <= 0 || capped ? 'disabled' : ''}>${capped ? '药性已满' : '服用'}</button>
             </div>
           </div>
         `;
       })
-      .join('');
+      .join('')}`;
     renderCache.alchemy = signature;
   }
 
@@ -6874,7 +6961,7 @@ const spiritBeastQualities = {
     if (!refs.gearList) {
       return;
     }
-    const signature = `${getRealmUpgradeLimit(state)}|${Object.keys(gear).map((id) => `${id}:${state.gear[id] || 0}:${state.gearQuality[id] || 0}:${state.gearAffixes[id] || ''}`).join('|')}`;
+    const signature = `${getRealmUpgradeLimit(state)}|${Object.keys(gear).map((id) => `${id}:${state.gear[id] || 0}:${state.gearQuality[id] || 0}:${state.gearAffixes[id] || ''}:${state.equippedLoot?.[id] || ''}`).join('|')}`;
     if (!force && renderCache.gear === signature) {
       return;
     }
@@ -7028,7 +7115,7 @@ const spiritBeastQualities = {
                 <small>${getSlotName(item.slot)} · ${item.realmBand} · ${item.rarity?.name || '凡品'}${item.equipped ? ' · 已穿戴' : ''}</small>
               </span>
               <em class="rarity-badge rarity-${item.rarity?.id || 'common'}">${item.rarity?.name || '凡品'}</em>
-              <span class="loot-power-delta ${item.comparison.scoreDelta >= 0 ? 'gain' : 'loss'}">${getLootPowerComparisonText(item.comparison)}</span>
+              <span class="loot-power-delta gain">${getLootPowerComparisonText(item.comparison)}</span>
             </summary>
             <div class="detail-stack">
               <small>器胚：${item.realmBand} · ${realms[item.minRealmIndex]?.name || '炼气一层'}后更常见 · ${item.intent.name}</small>
@@ -7170,20 +7257,17 @@ const spiritBeastQualities = {
       const weight = effect.mode === 'percent' ? 1000 : 1;
       return total + effect.value * weight;
     }, 0);
-    return effectScore + (item.comparison?.scoreDelta || 0);
+    return effectScore + (item.comparison?.score || 0);
   }
 
   function getLootPowerComparisonText(comparison) {
     if (!comparison) {
-      return '对比 --';
+      return '战力 --';
     }
-    if (comparison.scoreDelta > 0) {
-      return `战力对比 +${Math.round(comparison.scoreDelta)}`;
+    if (comparison.summary === '已穿戴') {
+      return `已穿戴 · 战力 ${Math.round(comparison.score || 0)}`;
     }
-    if (comparison.scoreDelta < 0) {
-      return `战力对比 ${Math.round(comparison.scoreDelta)}`;
-    }
-    return comparison.summary === '已穿戴' ? '已穿戴' : '战力对比 0';
+    return `战力 ${Math.round(comparison.score || 0)}`;
   }
 
   function getLootDismantleHint(item) {
@@ -7638,15 +7722,19 @@ const spiritBeastQualities = {
     const upgradeCost = maxed || realmLocked ? null : definition.cost(nextLevel);
     const refineCost = qualityMaxed || level <= 0 ? null : getRefineCost(nextQuality);
     const rerollCost = item.reroll?.cost;
+    const equippedText = item.equippedLoot
+      ? `穿戴：${item.equippedLoot.name} · ${item.equippedLoot.rarity?.name || '凡品'} · 战力 ${Math.round(item.equippedLoot.score || 0)}`
+      : '穿戴：未装备战利品';
     return `
       <details class="equipment-detail-card detail-row">
         <summary>
           <strong>${item.name} <small>${item.intent.name} · ${item.tier.name} ${level} / ${item.maxLevel} · ${item.qualityName}</small></strong>
           <em class="rarity-badge rarity-${item.rarity?.id || 'common'}">${item.rarity?.name || '凡品'}</em>
-          <span>${formatEffects(item.effects) || '尚未激活'}${item.affix.id ? ` · ${item.affix.name}` : ''}</span>
+          <span>${equippedText}</span>
           <small>展开查看器象、词条和下阶变化</small>
         </summary>
         <div class="detail-stack">
+          <small>${equippedText}</small>
           <small>当前：${formatEffects(item.effects) || '尚未激活'}</small>
           <small>下阶：${maxed ? '已至圆满' : formatEffects(item.nextEffects)}</small>
           <details class="nested-detail">
@@ -7709,9 +7797,9 @@ const spiritBeastQualities = {
 
   function getRecipeEffectText(recipeId) {
     const effects = {
-      gatherQiPill: '立即补充灵气，并提升灵息 2 分钟',
+      gatherQiPill: '立即补充灵气，并提升灵息 20 分钟',
       clearHeartPill: '降低 1 点心魔',
-      meridianPill: '提高破境天机 3 分钟',
+      meridianPill: '提高破境天机 30 分钟',
       bodyTemperPill: '永久沉淀 12 道威',
       spiritRootPill: '永久提升 1% 灵息',
     };
@@ -8628,11 +8716,17 @@ const spiritBeastQualities = {
     if (!alchemy) {
       return null;
     }
-    return {
-      recipeId: pillRecipes[alchemy.recipeId] ? alchemy.recipeId : 'gatherQiPill',
-      startedAt: Number(alchemy.startedAt) || Date.now(),
-      endsAt: Number(alchemy.endsAt) || Date.now(),
-    };
+    const jobs = Array.isArray(alchemy) ? alchemy : [alchemy];
+    const normalized = jobs
+      .map((job) => ({
+        recipeId: pillRecipes[job && job.recipeId] ? job.recipeId : 'gatherQiPill',
+        startedAt: Number(job && job.startedAt) || Date.now(),
+        endsAt: Number(job && job.endsAt) || Date.now(),
+      }))
+      .filter((job) => Number.isFinite(job.startedAt) && Number.isFinite(job.endsAt))
+      .sort((left, right) => left.endsAt - right.endsAt)
+      .slice(0, 5);
+    return normalized.length ? normalized : null;
   }
 
   function normalizeLevels(savedLevels, definitions) {
@@ -8717,6 +8811,12 @@ const spiritBeastQualities = {
       normalized.gatherQiPill = Math.max(0, Math.floor(Number(legacyPills) || 0));
     }
     return normalized;
+  }
+
+  function normalizeConsumedAttributePills(consumed) {
+    return Object.fromEntries(
+      Object.entries(attributePillCaps).map(([id, cap]) => [id, clampInteger(consumed && consumed[id], 0, cap)]),
+    );
   }
 
   function normalizeSectAssignments(assignments, disciples = 0) {
@@ -8970,7 +9070,7 @@ const spiritBeastQualities = {
         addCost(`宗门·${skill.name}`, skill.cost(nextLevel), 0.95);
       }
     });
-    if (!state.activeAlchemy) {
+    if (getActiveAlchemyJobs(state).length < getAlchemySlots(state)) {
       const recipe = Object.values(pillRecipes).find((candidate) => (state.buildings?.alchemyFurnace || 0) >= candidate.unlockLevel);
       if (recipe) addCost(`丹房·${recipe.name}`, recipe.cost, 0.75);
     }
@@ -9584,11 +9684,14 @@ const spiritBeastQualities = {
       }
     });
     const deltas = effectsFromBonusObject(deltaBonuses);
+    const score = getLootScore(item);
+    const baselineScore = baseline ? getLootScore(baseline) : (equipped?.uid === item.uid ? score : 0);
     return {
       againstUid: baseline?.uid || null,
       againstName: baseline?.name || (equipped?.uid === item.uid ? item.name : '空位'),
       deltas,
-      scoreDelta: round(getLootScore(item) - (baseline ? getLootScore(baseline) : 0)),
+      score: round(score),
+      scoreDelta: round(score - baselineScore),
       summary: deltas.length ? deltas.map(formatEffectDelta).join('、') : (equipped?.uid === item.uid ? '已穿戴' : '无明显变化'),
     };
   }
