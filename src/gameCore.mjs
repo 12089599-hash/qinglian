@@ -2551,6 +2551,8 @@ export function createGameState(now = Date.now()) {
     lastMissionEvent: null,
     lastMissionReport: null,
     missionReportHistory: [],
+    lastDepthFailure: null,
+    lastBossFailure: null,
     cultivationPaths: {
       sword: 0,
       alchemy: 0,
@@ -2649,6 +2651,9 @@ export function reviveGameState(saved, now = Date.now()) {
   state.lastMissionEvent = normalizeMissionEvent(state.lastMissionEvent);
   state.lastMissionReport = normalizeMissionReport(state.lastMissionReport);
   state.missionReportHistory = normalizeMissionReportHistory(state.missionReportHistory, state.lastMissionReport);
+  if (!state.lastBossFailure?.mapId || !MISSION_MAPS[state.lastBossFailure.mapId]) {
+    state.lastBossFailure = null;
+  }
   state.cultivationPaths = normalizeLevels(state.cultivationPaths, CULTIVATION_PATHS);
   state.formations = normalizeLevels(state.formations, FORMATIONS);
   state.completedMissions = normalizeCompletedMissions(state.completedMissions);
@@ -3203,6 +3208,32 @@ export function getMapDepthStatus(state, mapId) {
   };
 }
 
+export function getMapDepthRushStatus(state, mapId) {
+  const status = getMapDepthStatus(state, mapId);
+  if (!status.exists) {
+    return { exists: false, canRush: false, reason: 'unknownMap' };
+  }
+  const remaining = Math.max(0, MAP_DEPTH_MAX_LAYER - (status.clearedLayer ?? 0));
+  const power = calculatePower(state);
+  const ratio = status.danger > 0 ? power / status.danger : 0;
+  const canRush = status.unlocked && !status.maxed && ratio >= 1.25;
+  const maxLayers = canRush
+    ? Math.max(1, Math.min(5, remaining, 2 + Math.floor((ratio - 1.25) * 2)))
+    : 0;
+  return {
+    exists: true,
+    mapId,
+    mapName: status.mapName,
+    canRush,
+    reason: !status.unlocked ? 'realmLocked' : status.maxed ? 'maxLayer' : ratio < 1.25 ? 'pressure' : '',
+    power,
+    danger: status.danger,
+    ratio: round(ratio),
+    fromLayer: status.nextLayer,
+    maxLayers,
+  };
+}
+
 export function getMapDepthSweepStatus(state, mapId, now = Date.now()) {
   const status = getMapDepthStatus(state, mapId);
   if (!status.exists) {
@@ -3467,6 +3498,15 @@ export function challengeMapBoss(state, mapId, now = Date.now()) {
   if (battle.outcome !== 'victory') {
     applyResources(state, map.boss.failurePenalty ?? {});
     state.injuryUntil = now + 120 * 1000;
+    state.lastBossFailure = {
+      mapId: map.id,
+      mapName: map.name,
+      bossName: map.boss.name,
+      time: now,
+      title: battle.diagnosis?.title ?? '首领未伏',
+      detail: battle.diagnosis?.detail ?? battle.summary,
+      advice: battle.diagnosis?.advice ?? '先整备随行、丹息与阵势，再试探首领气机。',
+    };
     recordMissionReport(state, createBossReport(state, map, {
       outcome: 'failure',
       reward: map.boss.failurePenalty ?? {},
@@ -3480,6 +3520,9 @@ export function challengeMapBoss(state, mapId, now = Date.now()) {
   applyResources(state, map.boss.reward);
   addMapReputation(state, map.id, map.boss.reputation ?? 0);
   state.defeatedBosses[map.id] = true;
+  if (state.lastBossFailure?.mapId === map.id) {
+    state.lastBossFailure = null;
+  }
   recordMissionReport(state, createBossReport(state, map, {
     outcome: 'success',
     reward: map.boss.reward,
@@ -3683,13 +3726,17 @@ export function getCombatProfile(state) {
   const element = getDominantCombatElement(elementScores);
   const elementSources = compactSources(elementScores[element.id]?.sources ?? []);
 
+  const critChance = createCombatStat('会心', critSources, 'percent');
+  critChance.effectiveValue = round(Math.min(0.5, Math.max(0, critChance.value)));
+  critChance.effectiveLabel = '斗法实效';
+
   return {
     element,
     attack: createCombatStat('锋芒', attackSources),
     defense: createCombatStat('护体', defenseSources),
     vitality: createCombatStat('血元', vitalitySources),
     speed: createCombatStat('身法', speedSources),
-    critChance: createCombatStat('会心', critSources, 'percent'),
+    critChance,
     pierce: createCombatStat('破势', pierceSources),
     elementPower: {
       label: '灵根偏向',
@@ -3705,7 +3752,9 @@ export function simulateBossBattle(state, mapId, now = Date.now(), random = null
   if (!map) {
     return { outcome: 'defeat', reason: 'unknownMap', rounds: [] };
   }
-  return runTurnBattle(getPlayerCombatant(state), getBossCombatant(state, map), {
+  const player = getPlayerCombatant(state);
+  const enemy = applyBossMechanicPressure(state, map, player, getBossCombatant(state, map));
+  return runTurnBattle(player, enemy, {
     type: 'boss',
     now,
     random,
@@ -4526,6 +4575,29 @@ export function getNextGuidance(state) {
       title: activeAlchemyJobs.length > 1 ? `正在炼制${recipe.name}等 ${activeAlchemyJobs.length} 炉` : `正在炼制${recipe.name}`,
       detail: '丹成后服用或继续排下一炉，能明显提高突破准备效率。',
       tab: 'alchemy',
+    };
+  }
+
+  const lastDepthFailure = state.lastDepthFailure;
+  if (lastDepthFailure?.mapId && MISSION_MAPS[lastDepthFailure.mapId]) {
+    const title = lastDepthFailure.title === '灵根受制' ? '秘境灵根受制' : '秘境气机未稳';
+    const tab = ['护体不足', '血元不足', '灵根受制'].includes(lastDepthFailure.title) ? 'gear' : 'missions';
+    return {
+      title,
+      detail: `${lastDepthFailure.mapName}第 ${lastDepthFailure.layer} 层受阻，${lastDepthFailure.tribulation ? `${lastDepthFailure.tribulation}未散，` : ''}${lastDepthFailure.advice}`,
+      tab,
+      targetId: lastDepthFailure.mapId,
+    };
+  }
+
+  const lastBossFailure = state.lastBossFailure;
+  if (lastBossFailure?.mapId && MISSION_MAPS[lastBossFailure.mapId] && !state.defeatedBosses?.[lastBossFailure.mapId]) {
+    const tab = ['护体不足', '血元不足', '灵根受制'].includes(lastBossFailure.title) ? 'gear' : 'missions';
+    return {
+      title: '首领气机未伏',
+      detail: `${lastBossFailure.bossName}仍有余势，${lastBossFailure.advice}`,
+      tab,
+      targetId: tab === 'gear' ? 'wear' : lastBossFailure.mapId,
     };
   }
 
@@ -5406,6 +5478,72 @@ export function startMapDepthTrial(state, mapId, now = Date.now()) {
   return { ok: true, status, battle, report: result.report, outcome: result.outcome };
 }
 
+export function startMapDepthRush(state, mapId, now = Date.now(), options = {}) {
+  if (state.activeMission) {
+    return { ok: false, reason: 'busy' };
+  }
+  const rush = getMapDepthRushStatus(state, mapId);
+  if (!rush.exists) {
+    return { ok: false, reason: 'unknownMap' };
+  }
+  if (!rush.canRush) {
+    return { ok: false, reason: rush.reason || 'pressure', status: rush };
+  }
+
+  const map = MISSION_MAPS[mapId];
+  const requestedMax = clampInteger(options.maxLayers ?? rush.maxLayers, 1, 5);
+  const maxLayers = Math.min(requestedMax, rush.maxLayers);
+  const battles = [];
+  const reports = [];
+  const clearedLayers = [];
+  let reward = {};
+  let failed = null;
+  let stoppedReason = 'batchComplete';
+
+  for (let index = 0; index < maxLayers; index += 1) {
+    const status = getMapDepthStatus(state, mapId);
+    if (!status.unlocked || status.maxed) {
+      stoppedReason = status.maxed ? 'maxLayer' : 'realmLocked';
+      break;
+    }
+    if (index > 0 && calculatePower(state) < status.danger * 1.1) {
+      stoppedReason = 'pressure';
+      break;
+    }
+    const layer = status.nextLayer;
+    const battle = simulateDepthBattle(state, map, layer, now + index * 777);
+    addLog(state, now + index, `连探${status.mapName}秘境第 ${layer} 层。`);
+    const result = settleMapDepthTrial(state, map, layer, battle, now + index);
+    battles.push(battle);
+    reports.push(result.report);
+    reward = mergeRewards(reward, result.reward ?? {});
+    if (result.outcome === 'success') {
+      clearedLayers.push(layer);
+      continue;
+    }
+    failed = { layer, battle, report: result.report };
+    stoppedReason = 'defeat';
+    break;
+  }
+
+  if (clearedLayers.length > 1) {
+    addLog(state, now, `连探${map.name} ${clearedLayers[0]}-${clearedLayers.at(-1)} 层，合计获得${formatReward(reward)}。`);
+  }
+
+  return {
+    ok: battles.length > 0,
+    map,
+    fromLayer: rush.fromLayer,
+    clearedLayers,
+    battles,
+    reports,
+    reward,
+    failed,
+    stoppedReason,
+    nextStatus: getMapDepthStatus(state, mapId),
+  };
+}
+
 export function sweepMapDepth(state, mapId, now = Date.now()) {
   if (state.activeMission) {
     return { ok: false, reason: 'busy' };
@@ -5902,6 +6040,16 @@ function settleMapDepthTrial(state, map, layer, battle, now) {
     };
     applyResources(state, penalty);
     state.injuryUntil = now + 120 * 1000;
+    state.lastDepthFailure = {
+      mapId: map.id,
+      mapName: map.name,
+      layer,
+      time: now,
+      tribulation: battle.enemy?.tribulation?.name ?? null,
+      title: battle.diagnosis?.title ?? '秘境受阻',
+      detail: battle.diagnosis?.detail ?? battle.summary,
+      advice: battle.diagnosis?.advice ?? '先整备随行、丹息与阵势，再试探一层。',
+    };
     recordMissionReport(state, createDepthReport(state, map, layer, {
       outcome: 'failure',
       reward: penalty,
@@ -5918,6 +6066,9 @@ function settleMapDepthTrial(state, map, layer, battle, now) {
   applyResources(state, reward);
   state.mapDepths ??= {};
   state.mapDepths[map.id] = Math.max(state.mapDepths[map.id] ?? 0, layer);
+  if (state.lastDepthFailure?.mapId === map.id && layer >= (state.lastDepthFailure.layer ?? 0)) {
+    state.lastDepthFailure = null;
+  }
   addMapReputation(state, map.id, reputationGained);
   addDailyProgress(state, 'missions', 1, now);
   recordMissionReport(state, createDepthReport(state, map, layer, {
@@ -7522,7 +7673,7 @@ function getPlayerCombatant(state) {
     defense: Math.max(0, profile.defense.value),
     vitality: Math.max(1, profile.vitality.value),
     speed: Math.max(1, profile.speed.value),
-    critChance: Math.min(0.5, Math.max(0, profile.critChance.value)),
+    critChance: profile.critChance.effectiveValue ?? Math.min(0.5, Math.max(0, profile.critChance.value)),
     pierce: Math.max(0, profile.pierce.value),
   };
 }
@@ -7555,9 +7706,11 @@ function getSpiritBeastCombatant(state) {
 function getBossPressureScale(state, map) {
   const clearedDepth = clampInteger(state.mapDepths?.[map.id] ?? 0, 0, MAP_DEPTH_MAX_LAYER);
   const masteryLevel = getMapMastery(state, map.id).level;
-  const depthScale = Math.min(0.5, clearedDepth * 0.045);
+  const earlyDepthScale = Math.min(clearedDepth, 10) * 0.035;
+  const midDepthScale = Math.min(Math.max(0, clearedDepth - 10), 14) * 0.055;
+  const lateDepthScale = Math.max(0, clearedDepth - 24) * 0.075;
   const masteryScale = Math.min(0.16, masteryLevel * 0.04);
-  return round(1 + depthScale + masteryScale);
+  return round(1 + earlyDepthScale + midDepthScale + lateDepthScale + masteryScale);
 }
 
 function getBossCombatPower(state, map) {
@@ -7581,6 +7734,84 @@ function getBossCombatant(state, map) {
     speed: 10 + Math.floor(unlock / 3),
     critChance: Math.min(0.18, 0.04 + unlock * 0.003),
     pierce: Math.round(unlock * 1.4 * scale),
+  };
+}
+
+function applyBossMechanicPressure(state, map, player, enemy) {
+  if (!map || !player || !enemy) {
+    return enemy;
+  }
+  const basePower = getBossCombatPower(state, map);
+  const depthLayer = clampInteger(state.mapDepths?.[map.id] ?? 0, 0, MAP_DEPTH_MAX_LAYER);
+  const depthPressure = Math.min(0.14, depthLayer * 0.004);
+  const config = {
+    qinglanMountain: {
+      title: '山魈厚土',
+      score: player.defense * 0.26 + player.vitality * 0.035,
+      target: basePower * 0.09,
+      defense: 0.38,
+      vitality: 0.25,
+    },
+    herbValley: {
+      title: '药灵生息',
+      score: player.elementPower * 0.45 + player.attack * 0.18,
+      target: basePower * 0.12,
+      vitality: 0.36,
+      defense: 0.16,
+    },
+    mistyValley: {
+      title: '雾隐回身',
+      score: player.speed * 1.35 + player.elementPower * 0.18,
+      target: basePower * 0.12,
+      speed: 0.32,
+      crit: 0.08,
+    },
+    swordTomb: {
+      title: '剑魂残锋',
+      score: player.pierce * 0.9 + player.speed * 0.7 + player.elementPower * 0.16,
+      target: basePower * 0.14,
+      defense: 0.28,
+      pierce: 0.3,
+    },
+    demonRift: {
+      title: '魔影侵身',
+      score: player.defense * 0.34 + player.vitality * 0.055 + player.elementPower * 0.12,
+      target: basePower * 0.48,
+      attack: 0.28,
+      vitality: 0.2,
+      pierce: 0.18,
+    },
+    ancientRuins: {
+      title: '残阵易位',
+      score: player.elementPower * 0.38 + player.speed * 0.7 + player.defense * 0.18,
+      target: basePower * 0.18,
+      elementPower: 0.36,
+      defense: 0.18,
+      vitality: 0.18,
+    },
+  }[map.id];
+  if (!config) {
+    return enemy;
+  }
+  const gapPressure = Math.max(0, (config.target - config.score) / Math.max(1, config.target));
+  const pressure = round(Math.min(0.34, gapPressure * 0.22 + depthPressure));
+  if (pressure <= 0) {
+    return enemy;
+  }
+  const scaleValue = (value, multiplier = 0) => Math.round(value * (1 + pressure * multiplier));
+  return {
+    ...enemy,
+    attack: scaleValue(enemy.attack, config.attack ?? 0),
+    defense: scaleValue(enemy.defense, config.defense ?? 0),
+    vitality: scaleValue(enemy.vitality, config.vitality ?? 0),
+    speed: scaleValue(enemy.speed, config.speed ?? 0),
+    elementPower: scaleValue(enemy.elementPower, config.elementPower ?? 0),
+    pierce: scaleValue(enemy.pierce, config.pierce ?? 0),
+    critChance: Math.min(0.3, round(enemy.critChance + pressure * (config.crit ?? 0))),
+    mechanic: {
+      title: config.title,
+      pressure,
+    },
   };
 }
 
@@ -7710,6 +7941,9 @@ function runTurnBattle(player, enemy, { type = 'boss', now = Date.now(), random 
       maxHp: battlefieldEnemy.vitality,
       hp: enemyHp,
       tribulation: enemy.tribulation ?? null,
+      attack: battlefieldEnemy.attack,
+      defense: battlefieldEnemy.defense,
+      mechanic: enemy.mechanic ?? null,
     },
     rounds,
     diagnosis,

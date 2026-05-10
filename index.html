@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="青岚洞府" />
     <title>青岚洞府</title>
-    <link rel="stylesheet" href="styles.css?v=202605111455" />
+    <link rel="stylesheet" href="styles.css?v=202605111845" />
   </head>
   <body>
     <main class="shell">
@@ -239,22 +239,27 @@
                   <button data-loot-filter="jade" aria-pressed="false" type="button">玉佩</button>
                   <button data-loot-filter="boots" aria-pressed="false" type="button">云履</button>
                 </div>
-                <div class="loot-dismantle-options" aria-label="分解品质">
-                  <span>批量分解品质</span>
-                  <label><input type="checkbox" data-loot-rarity-toggle="common" checked />凡品</label>
-                  <label><input type="checkbox" data-loot-rarity-toggle="spirit" checked />蕴灵</label>
-                  <label><input type="checkbox" data-loot-rarity-toggle="mystic" />玄纹</label>
-                  <label><input type="checkbox" data-loot-rarity-toggle="earthFiend" />地煞</label>
-                  <label><input type="checkbox" data-loot-rarity-toggle="heavenWork" />天工</label>
-                  <label><input type="checkbox" data-loot-rarity-toggle="dao" />道器</label>
-                  <button data-reset-dismantle-defaults type="button">恢复默认</button>
-                </div>
-                <div class="loot-keep-options" aria-label="保留策略">
-                  <span>保留</span>
-                  <button data-loot-keep-strategy="equippedOnly" class="active" aria-pressed="true" type="button">已穿戴/锁定</button>
-                  <button data-loot-keep-strategy="bestPerSlot" aria-pressed="false" type="button">每位最佳</button>
-                  <button data-loot-keep-strategy="rareAndSets" aria-pressed="false" type="button">高品流派</button>
-                </div>
+                <details data-loot-rules class="loot-rules-panel" open>
+                  <summary>整理规则</summary>
+                  <div class="loot-rules-content">
+                    <div class="loot-dismantle-options" aria-label="分解品质">
+                      <span>批量分解品质</span>
+                      <label><input type="checkbox" data-loot-rarity-toggle="common" checked />凡品</label>
+                      <label><input type="checkbox" data-loot-rarity-toggle="spirit" checked />蕴灵</label>
+                      <label><input type="checkbox" data-loot-rarity-toggle="mystic" />玄纹</label>
+                      <label><input type="checkbox" data-loot-rarity-toggle="earthFiend" />地煞</label>
+                      <label><input type="checkbox" data-loot-rarity-toggle="heavenWork" />天工</label>
+                      <label><input type="checkbox" data-loot-rarity-toggle="dao" />道器</label>
+                      <button data-reset-dismantle-defaults type="button">恢复默认</button>
+                    </div>
+                    <div class="loot-keep-options" aria-label="保留策略">
+                      <span>保留</span>
+                      <button data-loot-keep-strategy="equippedOnly" class="active" aria-pressed="true" type="button">已穿戴/锁定</button>
+                      <button data-loot-keep-strategy="bestPerSlot" aria-pressed="false" type="button">每位最佳</button>
+                      <button data-loot-keep-strategy="rareAndSets" aria-pressed="false" type="button">高品流派</button>
+                    </div>
+                  </div>
+                </details>
                 <div class="loot-toolbar-actions">
                   <button data-lock-rare-loot type="button">锁珍品</button>
                   <button data-organize-loot type="button">一键整理</button>
@@ -369,6 +374,6 @@
 
     <div data-toast-stack class="toast-stack" aria-live="polite"></div>
 
-    <script src="browserGame.js?v=202605111455"></script>
+    <script src="browserGame.js?v=202605111845"></script>
   </body>
 </html>

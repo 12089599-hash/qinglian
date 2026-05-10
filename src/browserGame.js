@@ -2697,6 +2697,30 @@ const spiritBeastQualities = {
       render(true);
       return;
     }
+    const depthRushButton = event.target.closest('[data-rush-depth]');
+    if (depthRushButton) {
+      const result = startMapDepthRush(state, depthRushButton.dataset.rushDepth);
+      if (result.ok) {
+        const lastReport = result.reports.at(-1);
+        const title = result.failed ? '连探折返' : '连探秘境';
+        const layerText = result.clearedLayers.length
+          ? `${result.clearedLayers[0]}-${result.clearedLayers.at(-1)} 层`
+          : `第 ${result.fromLayer} 层`;
+        if (lastReport && startBattlePlayback(lastReport, result.failed ? 'danger' : 'victory')) {
+          showToast(title, `${result.map.name}${layerText}，获得${formatReward(result.reward)}。`, result.failed ? 'warning' : '');
+        } else {
+          showToast(title, `${result.map.name}${layerText}，获得${formatReward(result.reward)}。`, result.failed ? 'warning' : '');
+        }
+        triggerBattleFeedback(result.failed ? 'danger' : 'pulse');
+      } else if (result.reason === 'pressure') {
+        showToast('不宜连探', '下一层劫象未稳，先手动试探或整备气机。', 'warning');
+      } else if (result.reason === 'busy') {
+        showToast('正在行动', '当前行动结束后再深入秘境。', 'warning');
+      }
+      saveState();
+      render(true);
+      return;
+    }
     const depthSweepButton = event.target.closest('[data-sweep-depth]');
     if (depthSweepButton) {
       const result = sweepMapDepth(state, depthSweepButton.dataset.sweepDepth);
@@ -2955,6 +2979,9 @@ const spiritBeastQualities = {
     if (!summary) {
       return;
     }
+    if (refs.mobileDetailDialog?.contains(summary)) {
+      return;
+    }
     const detail = summary.parentElement;
     if (!shouldOpenMobileDetailDialog(detail)) {
       return;
@@ -2965,6 +2992,10 @@ const spiritBeastQualities = {
 
   refs.mobileDetailDialog?.addEventListener('click', (event) => {
     if (event.target === refs.mobileDetailDialog) {
+      refs.mobileDetailDialog.close();
+      return;
+    }
+    if (handleMobileDetailAction(event)) {
       refs.mobileDetailDialog.close();
     }
   });
@@ -3110,6 +3141,8 @@ const spiritBeastQualities = {
       lastMissionEvent: null,
       lastMissionReport: null,
       missionReportHistory: [],
+      lastDepthFailure: null,
+      lastBossFailure: null,
       cultivationPaths: {
         sword: 0,
         alchemy: 0,
@@ -3235,6 +3268,9 @@ const spiritBeastQualities = {
     state.lastMissionEvent = normalizeMissionEvent(state.lastMissionEvent);
     state.lastMissionReport = normalizeMissionReport(state.lastMissionReport);
     state.missionReportHistory = normalizeMissionReportHistory(state.missionReportHistory, state.lastMissionReport);
+    if (!state.lastBossFailure?.mapId || !missionMaps[state.lastBossFailure.mapId]) {
+      state.lastBossFailure = null;
+    }
     state.cultivationPaths = normalizeLevels(state.cultivationPaths, cultivationPaths);
     state.formations = normalizeLevels(state.formations, formations);
     state.buildings = normalizeBuildings(state.buildings);
@@ -3367,6 +3403,72 @@ const spiritBeastQualities = {
     addLog(state, now, `深入${status.mapName}秘境第 ${layer} 层。`);
     const result = settleMapDepthTrial(state, map, layer, battle, now);
     return { ok: true, status, battle, report: result.report, outcome: result.outcome };
+  }
+
+  function startMapDepthRush(state, mapId, now = Date.now(), options = {}) {
+    if (state.activeMission) {
+      return { ok: false, reason: 'busy' };
+    }
+    const rush = getMapDepthRushStatus(state, mapId);
+    if (!rush.exists) {
+      return { ok: false, reason: 'unknownMap' };
+    }
+    if (!rush.canRush) {
+      return { ok: false, reason: rush.reason || 'pressure', status: rush };
+    }
+
+    const map = missionMaps[mapId];
+    const requestedMax = clampInteger(options.maxLayers ?? rush.maxLayers, 1, 5);
+    const maxLayers = Math.min(requestedMax, rush.maxLayers);
+    const battles = [];
+    const reports = [];
+    const clearedLayers = [];
+    let reward = {};
+    let failed = null;
+    let stoppedReason = 'batchComplete';
+
+    for (let index = 0; index < maxLayers; index += 1) {
+      const status = getMapDepthStatus(state, mapId);
+      if (!status.unlocked || status.maxed) {
+        stoppedReason = status.maxed ? 'maxLayer' : 'realmLocked';
+        break;
+      }
+      if (index > 0 && calculatePower(state) < status.danger * 1.1) {
+        stoppedReason = 'pressure';
+        break;
+      }
+      const layer = status.nextLayer;
+      const battle = simulateDepthBattle(state, map, layer, now + index * 777);
+      addLog(state, now + index, `连探${status.mapName}秘境第 ${layer} 层。`);
+      const result = settleMapDepthTrial(state, map, layer, battle, now + index);
+      battles.push(battle);
+      reports.push(result.report);
+      reward = mergeRewards(reward, result.reward || {});
+      if (result.outcome === 'success') {
+        clearedLayers.push(layer);
+        continue;
+      }
+      failed = { layer, battle, report: result.report };
+      stoppedReason = 'defeat';
+      break;
+    }
+
+    if (clearedLayers.length > 1) {
+      addLog(state, now, `连探${map.name} ${clearedLayers[0]}-${clearedLayers.at(-1)} 层，合计获得${formatReward(reward)}。`);
+    }
+
+    return {
+      ok: battles.length > 0,
+      map,
+      fromLayer: rush.fromLayer,
+      clearedLayers,
+      battles,
+      reports,
+      reward,
+      failed,
+      stoppedReason,
+      nextStatus: getMapDepthStatus(state, mapId),
+    };
   }
 
   function sweepMapDepth(state, mapId, now = Date.now()) {
@@ -4094,6 +4196,16 @@ const spiritBeastQualities = {
       };
       applyResources(state, penalty);
       state.injuryUntil = now + 120 * 1000;
+      state.lastDepthFailure = {
+        mapId: map.id,
+        mapName: map.name,
+        layer,
+        time: now,
+        tribulation: battle.enemy?.tribulation?.name || null,
+        title: battle.diagnosis?.title || '秘境受阻',
+        detail: battle.diagnosis?.detail || battle.summary,
+        advice: battle.diagnosis?.advice || '先整备随行、丹息与阵势，再试探一层。',
+      };
       recordMissionReport(state, createDepthReport(state, map, layer, {
         outcome: 'failure',
         reward: penalty,
@@ -4110,6 +4222,9 @@ const spiritBeastQualities = {
     applyResources(state, reward);
     state.mapDepths ||= {};
     state.mapDepths[map.id] = Math.max(state.mapDepths[map.id] || 0, layer);
+    if (state.lastDepthFailure?.mapId === map.id && layer >= (state.lastDepthFailure.layer || 0)) {
+      state.lastDepthFailure = null;
+    }
     addMapReputation(state, map.id, reputationGained);
     addDailyProgress(state, 'missions', 1, now);
     addDailyProgress(state, 'depthTrials', 1, now);
@@ -5088,6 +5203,32 @@ const spiritBeastQualities = {
     };
   }
 
+  function getMapDepthRushStatus(state, mapId) {
+    const status = getMapDepthStatus(state, mapId);
+    if (!status.exists) {
+      return { exists: false, canRush: false, reason: 'unknownMap' };
+    }
+    const remaining = Math.max(0, mapDepthMaxLayer - (status.clearedLayer || 0));
+    const power = calculatePower(state);
+    const ratio = status.danger > 0 ? power / status.danger : 0;
+    const canRush = status.unlocked && !status.maxed && ratio >= 1.25;
+    const maxLayers = canRush
+      ? Math.max(1, Math.min(5, remaining, 2 + Math.floor((ratio - 1.25) * 2)))
+      : 0;
+    return {
+      exists: true,
+      mapId,
+      mapName: status.mapName,
+      canRush,
+      reason: !status.unlocked ? 'realmLocked' : status.maxed ? 'maxLayer' : ratio < 1.25 ? 'pressure' : '',
+      power,
+      danger: status.danger,
+      ratio: round(ratio),
+      fromLayer: status.nextLayer,
+      maxLayers,
+    };
+  }
+
   function getMapDepthSweepStatus(state, mapId, now = Date.now()) {
     const status = getMapDepthStatus(state, mapId);
     if (!status.exists) {
@@ -5314,6 +5455,15 @@ const spiritBeastQualities = {
     if (battle.outcome !== 'victory') {
       applyResources(state, map.boss.failurePenalty || {});
       state.injuryUntil = now + 120 * 1000;
+      state.lastBossFailure = {
+        mapId: map.id,
+        mapName: map.name,
+        bossName: map.boss.name,
+        time: now,
+        title: battle.diagnosis?.title || '首领未伏',
+        detail: battle.diagnosis?.detail || battle.summary,
+        advice: battle.diagnosis?.advice || '先整备随行、丹息与阵势，再试探首领气机。',
+      };
       recordMissionReport(state, createBossReport(state, map, {
         outcome: 'failure',
         reward: map.boss.failurePenalty || {},
@@ -5326,6 +5476,9 @@ const spiritBeastQualities = {
     applyResources(state, map.boss.reward);
     addMapReputation(state, map.id, map.boss.reputation || 0);
     state.defeatedBosses[map.id] = true;
+    if (state.lastBossFailure?.mapId === map.id) {
+      state.lastBossFailure = null;
+    }
     recordMissionReport(state, createBossReport(state, map, {
       outcome: 'success',
       reward: map.boss.reward,
@@ -5577,7 +5730,16 @@ const spiritBeastQualities = {
       { id: 'combatAttack', label: combat.attack.label, value: combat.attack.value, sources: combat.attack.sources },
       { id: 'combatDefense', label: combat.defense.label, value: combat.defense.value, sources: combat.defense.sources },
       { id: 'vitality', label: combat.vitality.label, value: combat.vitality.value, sources: combat.vitality.sources },
-      { id: 'critChance', label: combat.critChance.label, value: combat.critChance.value, unit: '%', sources: combat.critChance.sources },
+      {
+        id: 'critChance',
+        label: combat.critChance.label,
+        value: combat.critChance.effectiveValue ?? combat.critChance.value,
+        unit: '%',
+        hint: (combat.critChance.effectiveValue ?? combat.critChance.value) < combat.critChance.value
+          ? `斗法实效，面板 ${Math.round(combat.critChance.value * 100)}%`
+          : '展开查看气机来源',
+        sources: combat.critChance.sources,
+      },
       { id: 'elementPower', label: combat.elementPower.label, value: combat.elementPower.value, unit: combat.element.name, sources: combat.elementPower.sources },
       { id: 'cultivationSpeed', label: '灵息', value: calculateQiRate(state, now), unit: '/分钟', sources: cultivationSources },
       { id: 'breakthrough', label: '破境天机', value: calculateBreakthroughChance(state, now), unit: '%', sources: breakthroughSources },
@@ -5863,6 +6025,27 @@ const spiritBeastQualities = {
         title: activeAlchemyJobs.length > 1 ? `正在炼制${recipe.name}等 ${activeAlchemyJobs.length} 炉` : `正在炼制${recipe.name}`,
         detail: '丹成后服用或继续排下一炉，能明显提高突破准备效率。',
         tab: 'alchemy',
+      };
+    }
+    const lastDepthFailure = state.lastDepthFailure;
+    if (lastDepthFailure?.mapId && missionMaps[lastDepthFailure.mapId]) {
+      const title = lastDepthFailure.title === '灵根受制' ? '秘境灵根受制' : '秘境气机未稳';
+      const tab = ['护体不足', '血元不足', '灵根受制'].includes(lastDepthFailure.title) ? 'gear' : 'missions';
+      return {
+        title,
+        detail: `${lastDepthFailure.mapName}第 ${lastDepthFailure.layer} 层受阻，${lastDepthFailure.tribulation ? `${lastDepthFailure.tribulation}未散，` : ''}${lastDepthFailure.advice}`,
+        tab,
+        targetId: lastDepthFailure.mapId,
+      };
+    }
+    const lastBossFailure = state.lastBossFailure;
+    if (lastBossFailure?.mapId && missionMaps[lastBossFailure.mapId] && !state.defeatedBosses?.[lastBossFailure.mapId]) {
+      const tab = ['护体不足', '血元不足', '灵根受制'].includes(lastBossFailure.title) ? 'gear' : 'missions';
+      return {
+        title: '首领气机未伏',
+        detail: `${lastBossFailure.bossName}仍有余势，${lastBossFailure.advice}`,
+        tab,
+        targetId: tab === 'gear' ? 'wear' : lastBossFailure.mapId,
       };
     }
     const chapter = getMainlineChapters(state).find((candidate) => !candidate.locked && !candidate.rewardClaimed);
@@ -6382,6 +6565,7 @@ const spiritBeastQualities = {
 
   function renderMapActionPanel(map) {
     const depth = map.depth;
+    const depthRush = getMapDepthRushStatus(state, map.id);
     const depthSweep = getMapDepthSweepStatus(state, map.id);
     const bossSweep = getMapBossSweepStatus(state, map.id);
     const primaryMission = getPrimaryMissionForMap(map);
@@ -6416,6 +6600,11 @@ const spiritBeastQualities = {
             <strong>${depth?.maxed ? '秘境圆满' : `秘境第 ${depth?.nextLayer || 1} 层`}</strong>
             <span>${depth?.maxed ? '可转往更高地图' : `道行 ${calculatePower(state)} / 劫象 ${depth?.danger || 0}`}</span>
             <small>${depth?.tribulation ? `${depth.tribulation.name} · ${depthAdvice.label}` : depthAdvice.label}</small>
+          </button>
+          <button data-rush-depth="${map.id}" class="compact-action" ${!depthRush.canRush || busy ? 'disabled' : ''}>
+            <strong>${depthRush.canRush ? `连探 ${depthRush.maxLayers} 层` : '连探未稳'}</strong>
+            <span>${depthRush.canRush ? `从第 ${depthRush.fromLayer} 层起` : depthRush.reason === 'pressure' ? '先手动试探' : '暂不可用'}</span>
+            <small>${depthRush.canRush ? '低压层快速推进' : '避免盲目连败'}</small>
           </button>
           <button data-sweep-depth="${map.id}" ${!depthSweep.canSweep || busy ? 'disabled' : ''}>
             <strong>${depthSweep.canSweep ? '扫荡秘境' : depthSweep.sweptLayer ? '今日已扫' : '扫荡未开'}</strong>
@@ -7425,7 +7614,7 @@ const spiritBeastQualities = {
         <details class="attribute-row">
           <summary>
             <strong>${attribute.label}<span>${formatAttributeValue(attribute)}</span></strong>
-            <small>展开查看气机来源</small>
+            <small>${attribute.hint || '展开查看气机来源'}</small>
           </summary>
           <div class="source-list">
             ${attribute.sources.length ? attribute.sources.map((source) => `<span>${formatSourceValue(source)}</span>`).join('') : '<span>暂无额外来源</span>'}
@@ -7543,7 +7732,7 @@ const spiritBeastQualities = {
       .map((item) => {
         const maxed = item.empower.maxed;
         return `
-          <details class="equipment-detail-card detail-row" data-loot-detail="${item.uid}" ${openLootDetails.has(item.uid) ? 'open' : ''}>
+          <details class="equipment-detail-card detail-row loot-equipment-card" data-loot-detail="${item.uid}" ${openLootDetails.has(item.uid) ? 'open' : ''}>
             <summary class="loot-card-brief">
               <span class="loot-brief-main">
                 <strong>${item.locked ? '锁 ' : ''}${item.name}</strong>
@@ -7611,6 +7800,11 @@ const spiritBeastQualities = {
   }
 
   function renderLootDismantleControls() {
+    const rulesPanel = document.querySelector('[data-loot-rules]');
+    if (rulesPanel && !rulesPanel.dataset.layoutInitialized) {
+      rulesPanel.open = !isMobileLayout();
+      rulesPanel.dataset.layoutInitialized = 'true';
+    }
     document.querySelectorAll('[data-loot-rarity-toggle]').forEach((input) => {
       input.checked = activeLootDismantleRarities.has(input.dataset.lootRarityToggle);
       input.closest('label')?.classList.toggle('active', input.checked);
@@ -8756,6 +8950,9 @@ const spiritBeastQualities = {
     const elementScores = getCombatElementScores(state);
     const element = getDominantCombatElement(elementScores);
     const elementSources = compactSources(elementScores[element.id]?.sources || []);
+    const critChance = createCombatStat('会心', critSources, 'percent');
+    critChance.effectiveValue = round(Math.min(0.5, Math.max(0, critChance.value)));
+    critChance.effectiveLabel = '斗法实效';
 
     return {
       element,
@@ -8763,7 +8960,7 @@ const spiritBeastQualities = {
       defense: createCombatStat('护体', defenseSources),
       vitality: createCombatStat('血元', vitalitySources),
       speed: createCombatStat('身法', speedSources),
-      critChance: createCombatStat('会心', critSources, 'percent'),
+      critChance,
       pierce: createCombatStat('破势', pierceSources),
       elementPower: {
         label: '灵根偏向',
@@ -8779,7 +8976,9 @@ const spiritBeastQualities = {
     if (!map) {
       return { outcome: 'defeat', reason: 'unknownMap', rounds: [] };
     }
-    return runTurnBattle(getPlayerCombatant(state), getBossCombatant(state, map), {
+    const player = getPlayerCombatant(state);
+    const enemy = applyBossMechanicPressure(state, map, player, getBossCombatant(state, map));
+    return runTurnBattle(player, enemy, {
       type: 'boss',
       now,
       random,
@@ -9944,7 +10143,7 @@ const spiritBeastQualities = {
       defense: Math.max(0, profile.defense.value),
       vitality: Math.max(1, profile.vitality.value),
       speed: Math.max(1, profile.speed.value),
-      critChance: Math.min(0.5, Math.max(0, profile.critChance.value)),
+      critChance: profile.critChance.effectiveValue ?? Math.min(0.5, Math.max(0, profile.critChance.value)),
       pierce: Math.max(0, profile.pierce.value),
     };
   }
@@ -9977,9 +10176,11 @@ const spiritBeastQualities = {
   function getBossPressureScale(state, map) {
     const clearedDepth = clampInteger(state.mapDepths?.[map.id] || 0, 0, mapDepthMaxLayer);
     const masteryLevel = getMapMastery(state, map.id).level;
-    const depthScale = Math.min(0.5, clearedDepth * 0.045);
+    const earlyDepthScale = Math.min(clearedDepth, 10) * 0.035;
+    const midDepthScale = Math.min(Math.max(0, clearedDepth - 10), 14) * 0.055;
+    const lateDepthScale = Math.max(0, clearedDepth - 24) * 0.075;
     const masteryScale = Math.min(0.16, masteryLevel * 0.04);
-    return round(1 + depthScale + masteryScale);
+    return round(1 + earlyDepthScale + midDepthScale + lateDepthScale + masteryScale);
   }
 
   function getBossCombatPower(state, map) {
@@ -10003,6 +10204,84 @@ const spiritBeastQualities = {
       speed: 10 + Math.floor(unlock / 3),
       critChance: Math.min(0.18, 0.04 + unlock * 0.003),
       pierce: Math.round(unlock * 1.4 * scale),
+    };
+  }
+
+  function applyBossMechanicPressure(state, map, player, enemy) {
+    if (!map || !player || !enemy) {
+      return enemy;
+    }
+    const basePower = getBossCombatPower(state, map);
+    const depthLayer = clampInteger(state.mapDepths?.[map.id] || 0, 0, mapDepthMaxLayer);
+    const depthPressure = Math.min(0.14, depthLayer * 0.004);
+    const config = {
+      qinglanMountain: {
+        title: '山魈厚土',
+        score: player.defense * 0.26 + player.vitality * 0.035,
+        target: basePower * 0.09,
+        defense: 0.38,
+        vitality: 0.25,
+      },
+      herbValley: {
+        title: '药灵生息',
+        score: player.elementPower * 0.45 + player.attack * 0.18,
+        target: basePower * 0.12,
+        vitality: 0.36,
+        defense: 0.16,
+      },
+      mistyValley: {
+        title: '雾隐回身',
+        score: player.speed * 1.35 + player.elementPower * 0.18,
+        target: basePower * 0.12,
+        speed: 0.32,
+        crit: 0.08,
+      },
+      swordTomb: {
+        title: '剑魂残锋',
+        score: player.pierce * 0.9 + player.speed * 0.7 + player.elementPower * 0.16,
+        target: basePower * 0.14,
+        defense: 0.28,
+        pierce: 0.3,
+      },
+      demonRift: {
+        title: '魔影侵身',
+        score: player.defense * 0.34 + player.vitality * 0.055 + player.elementPower * 0.12,
+        target: basePower * 0.48,
+        attack: 0.28,
+        vitality: 0.2,
+        pierce: 0.18,
+      },
+      ancientRuins: {
+        title: '残阵易位',
+        score: player.elementPower * 0.38 + player.speed * 0.7 + player.defense * 0.18,
+        target: basePower * 0.18,
+        elementPower: 0.36,
+        defense: 0.18,
+        vitality: 0.18,
+      },
+    }[map.id];
+    if (!config) {
+      return enemy;
+    }
+    const gapPressure = Math.max(0, (config.target - config.score) / Math.max(1, config.target));
+    const pressure = round(Math.min(0.34, gapPressure * 0.22 + depthPressure));
+    if (pressure <= 0) {
+      return enemy;
+    }
+    const scaleValue = (value, multiplier = 0) => Math.round(value * (1 + pressure * multiplier));
+    return {
+      ...enemy,
+      attack: scaleValue(enemy.attack, config.attack || 0),
+      defense: scaleValue(enemy.defense, config.defense || 0),
+      vitality: scaleValue(enemy.vitality, config.vitality || 0),
+      speed: scaleValue(enemy.speed, config.speed || 0),
+      elementPower: scaleValue(enemy.elementPower, config.elementPower || 0),
+      pierce: scaleValue(enemy.pierce, config.pierce || 0),
+      critChance: Math.min(0.3, round(enemy.critChance + pressure * (config.crit || 0))),
+      mechanic: {
+        title: config.title,
+        pressure,
+      },
     };
   }
 
@@ -10132,6 +10411,9 @@ const spiritBeastQualities = {
         maxHp: battlefieldEnemy.vitality,
         hp: enemyHp,
         tribulation: enemy.tribulation || null,
+        attack: battlefieldEnemy.attack,
+        defense: battlefieldEnemy.defense,
+        mechanic: enemy.mechanic || null,
       },
       rounds,
       diagnosis,
@@ -11609,6 +11891,7 @@ const spiritBeastQualities = {
       '.tribulation-card',
       '.chapter-track-compact',
       '.gear-set-panel',
+      '.loot-equipment-card',
       '.beast-locked-group',
       '.resource-guidance-detail',
       '.mission-card-details',
@@ -11646,6 +11929,61 @@ const spiritBeastQualities = {
       return '<p class="section-note">暂无可展开内容。</p>';
     }
     return nodes.map((node) => node.outerHTML).join('');
+  }
+
+  function handleMobileDetailAction(event) {
+    const equipButton = event.target.closest('[data-equip-loot]');
+    if (equipButton) {
+      event.preventDefault();
+      const result = equipLootEquipment(state, equipButton.dataset.equipLoot);
+      if (result.ok) {
+        showToast('换上战利品', `${result.item.name}已生效。`);
+      }
+      saveState();
+      render(true);
+      return true;
+    }
+    const empowerButton = event.target.closest('[data-empower-loot]');
+    if (empowerButton) {
+      event.preventDefault();
+      const result = empowerLootEquipment(state, empowerButton.dataset.empowerLoot);
+      if (result.ok) {
+        showToast('器位强化', `${getSlotName(result.slot)}器位升至 ${result.level} 级。`);
+      }
+      saveState();
+      render(true);
+      return true;
+    }
+    const lockButton = event.target.closest('[data-toggle-loot-lock]');
+    if (lockButton) {
+      event.preventDefault();
+      const result = toggleLootLock(state, lockButton.dataset.toggleLootLock);
+      if (result.ok) {
+        showToast(result.locked ? '战利品锁定' : '战利品解锁', `${result.item.name}${result.locked ? '已保留' : '可整理'}。`);
+      }
+      saveState();
+      render(true);
+      return true;
+    }
+    const disassembleButton = event.target.closest('[data-disassemble-loot]');
+    if (disassembleButton) {
+      event.preventDefault();
+      const result = disassembleLootEquipment(state, disassembleButton.dataset.disassembleLoot);
+      if (result.ok) {
+        openLootDetails.delete(result.item.uid);
+        showToast('战利品分解', `获得${formatReward(result.reward)}。`);
+      } else if (result.reason === 'equipped') {
+        showToast('正在穿戴', '已穿戴的战利品不会直接分解，先换上其他同部位装备。', 'warning');
+      } else if (result.reason === 'locked') {
+        showToast('已锁定', '先解锁这件战利品，再进行分解。', 'warning');
+      } else {
+        showToast('分解失败', '这件战利品已经不在库藏中。', 'warning');
+      }
+      saveState();
+      render(true);
+      return true;
+    }
+    return false;
   }
 
   function openGuidanceTarget(tab, targetId = '') {

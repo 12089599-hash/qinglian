@@ -62,6 +62,7 @@ import {
   getLootEmpowerCost,
   getLootResonanceStatus,
   getMapDepthStatus,
+  getMapDepthRushStatus,
   getMapDepthSweepStatus,
   getMapStatuses,
   getMapBossSweepStatus,
@@ -90,6 +91,7 @@ import {
   resolveOpportunity,
   stabilizeFoundation,
   startMapDepthTrial,
+  startMapDepthRush,
   sweepMapBoss,
   sweepMapDepth,
   startMission,
@@ -1481,6 +1483,51 @@ test('map bosses scale into multi-round checks after depth progress', () => {
   assert.equal(deepened.rounds.some((round) => round.actor === 'enemy'), true);
 });
 
+test('deep map progress substantially strengthens late map bosses', () => {
+  const shallow = createGameState(1000);
+  shallow.realmIndex = realmIndexByName('元婴一变');
+  shallow.permanentBonuses.power = 4800;
+  shallow.gear.weapon = 10;
+  shallow.gear.robe = 10;
+  shallow.gear.amulet = 10;
+
+  const deep = JSON.parse(JSON.stringify(shallow));
+  deep.mapDepths.ancientRuins = 30;
+  deep.mapReputation.ancientRuins = 160;
+
+  const shallowStatus = getMapStatuses(shallow).find((map) => map.id === 'ancientRuins');
+  const deepStatus = getMapStatuses(deep).find((map) => map.id === 'ancientRuins');
+  const shallowBattle = simulateBossBattle(shallow, 'ancientRuins', 2000, () => 0.5);
+  const deepBattle = simulateBossBattle(deep, 'ancientRuins', 3000, () => 0.5);
+
+  assert.equal(deepStatus.boss.power > shallowStatus.boss.power * 2, true);
+  assert.equal(deepBattle.enemy.maxHp > shallowBattle.enemy.maxHp * 2, true);
+});
+
+test('boss pressure reacts to missing preparation stats', () => {
+  const exposed = createGameState(1000);
+  exposed.realmIndex = realmIndexByName('金丹一转');
+  exposed.permanentBonuses.power = 1800;
+  exposed.gear.weapon = 7;
+
+  const guarded = JSON.parse(JSON.stringify(exposed));
+  guarded.gear.robe = 8;
+  guarded.gear.amulet = 8;
+  guarded.lootEquipment = [
+    { uid: 'guard-robe', templateId: 'cloudthreadRobe', name: '玄守法袍', slot: 'robe', quality: 3, level: 0, element: 'earth', bonuses: { defense: 220, vitality: 180 } },
+    { uid: 'guard-amulet', templateId: 'xuanmuAmulet', name: '玄木护符', slot: 'amulet', quality: 3, level: 0, element: 'wood', bonuses: { defense: 140, vitality: 120, elementPower: 40 } },
+  ];
+  guarded.equippedLoot.robe = 'guard-robe';
+  guarded.equippedLoot.amulet = 'guard-amulet';
+
+  const exposedBattle = simulateBossBattle(exposed, 'demonRift', 2000, () => 0.5);
+  const guardedBattle = simulateBossBattle(guarded, 'demonRift', 2000, () => 0.5);
+
+  assert.equal(exposedBattle.enemy.mechanic.title, '魔影侵身');
+  assert.equal(exposedBattle.enemy.mechanic.pressure > guardedBattle.enemy.mechanic?.pressure || !guardedBattle.enemy.mechanic, true);
+  assert.equal(exposedBattle.enemy.attack > guardedBattle.enemy.attack, true);
+});
+
 test('turn battles convert defense into nonlinear mitigation instead of flat subtraction', () => {
   const exposed = createGameState(1000);
   exposed.realmIndex = realmIndexByName('筑基一层');
@@ -1583,6 +1630,23 @@ test('rare percent combat bonuses use a soft cap', () => {
   assert.equal(profile.attack.value < profile.attack.baseValue * 1.7, true);
 });
 
+test('combat profile exposes real combat capped critical chance', () => {
+  const state = createGameState(1000);
+  state.realmIndex = realmIndexByName('金丹一转');
+  state.lootEquipment = [
+    { uid: 'crit-sword', templateId: 'qingfengSword', name: '会心青锋', slot: 'weapon', quality: 5, level: 0, element: 'metal', bonuses: { critChance: 0.7, attack: 80 } },
+    { uid: 'crit-boots', templateId: 'cloudstepBoots', name: '会心云履', slot: 'boots', quality: 5, level: 0, element: 'metal', bonuses: { critChance: 0.35, speed: 60 } },
+  ];
+  state.equippedLoot.weapon = 'crit-sword';
+  state.equippedLoot.boots = 'crit-boots';
+
+  const profile = getCombatProfile(state);
+
+  assert.equal(profile.critChance.value > 0.5, true);
+  assert.equal(profile.critChance.effectiveValue, 0.5);
+  assert.equal(profile.critChance.effectiveLabel, '斗法实效');
+});
+
 test('ordinary prepared boss fights sit in the three to five round band', () => {
   const state = createGameState(1000);
   state.realmIndex = realmIndexByName('金丹一转');
@@ -1634,6 +1698,23 @@ test('winning boss battles settle without failure diagnosis', () => {
 
   assert.equal(battle.outcome, 'victory');
   assert.equal(battle.diagnosis, null);
+});
+
+test('failed boss guidance takes priority over long term side systems', () => {
+  const state = createGameState(1000);
+  state.lastBossFailure = {
+    mapId: 'demonRift',
+    mapName: '魔气裂隙',
+    bossName: '裂隙魔影',
+    title: '护体不足',
+    advice: '护身气机被冲散，宜先稳住衣符与山门阵势。',
+  };
+
+  const guidance = getNextGuidance(state);
+
+  assert.equal(guidance.title, '首领气机未伏');
+  assert.equal(guidance.tab, 'gear');
+  assert.equal(guidance.targetId, 'wear');
 });
 
 test('failed boss battles explain the most useful preparation lever', () => {
@@ -2951,6 +3032,39 @@ test('map depth trials scale difficulty and grant first-clear rewards', () => {
   assert.equal(state.lastMissionReport.battle.rounds.length > 0, true);
   assert.equal(state.lastMissionReport.battle.outcome, 'victory');
   assert.equal(state.spiritStones > 0, true);
+});
+
+test('dominant map depth rush clears several low pressure layers with real rewards', () => {
+  const state = createGameState(1000);
+  state.permanentBonuses.power = 5000;
+
+  const before = getMapDepthRushStatus(state, 'qinglanMountain');
+  const rushed = startMapDepthRush(state, 'qinglanMountain', 1000);
+
+  assert.equal(before.canRush, true);
+  assert.equal(rushed.ok, true);
+  assert.equal(rushed.clearedLayers.length > 1, true);
+  assert.equal(rushed.clearedLayers.length <= before.maxLayers, true);
+  assert.equal(state.mapDepths.qinglanMountain, rushed.clearedLayers.at(-1));
+  assert.equal(rushed.reward.spiritStones > 0, true);
+  assert.equal(rushed.battles.every((battle) => battle.outcome === 'victory'), true);
+  assert.equal(state.lastMissionReport.outcome, 'success');
+});
+
+test('failed map depth trials record the latest bottleneck for guidance', () => {
+  const state = createGameState(1000);
+  state.realmIndex = realmIndexByName('筑基一层');
+  state.mapDepths.qinglanMountain = 12;
+
+  const failed = startMapDepthTrial(state, 'qinglanMountain', 1000);
+  const guidance = getNextGuidance(state);
+
+  assert.equal(failed.ok, true);
+  assert.equal(failed.battle.outcome, 'defeat');
+  assert.equal(state.lastDepthFailure.mapId, 'qinglanMountain');
+  assert.equal(state.lastDepthFailure.layer, 13);
+  assert.equal(['missions', 'gear', 'overview'].includes(guidance.tab), true);
+  assert.match(guidance.title, /秘境|气机|护势|灵根/);
 });
 
 test('map depth trials rotate tribulations into combat', () => {
