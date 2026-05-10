@@ -4215,35 +4215,35 @@ const spiritBeastQualities = {
 
     ctx.clearRect(0, 0, width, height);
 
-    const sky = ctx.createLinearGradient(0, 0, 0, height);
-    sky.addColorStop(0, '#111827');
-    sky.addColorStop(0.52, '#18313b');
-    sky.addColorStop(1, '#23321f');
-    ctx.fillStyle = sky;
+    const wash = ctx.createLinearGradient(0, 0, 0, height);
+    wash.addColorStop(0, 'rgba(238, 236, 225, 0.04)');
+    wash.addColorStop(0.48, 'rgba(238, 236, 225, 0.015)');
+    wash.addColorStop(1, 'rgba(0, 0, 0, 0.48)');
+    ctx.fillStyle = wash;
     ctx.fillRect(0, 0, width, height);
 
-    drawMoon(width - 92, 76, 32 + pulse * 1.5);
-    drawMountains(width, height);
-    drawPlatform(width, height);
-    drawCultivator(width / 2, height - 105, pulse);
+    drawMoon(width - 100, 76, 27 + pulse);
+    drawInkRidges(width, height);
     drawQiStreams(width, height);
   }
 
   function drawMoon(x, y, radius) {
     ctx.beginPath();
     ctx.arc(x, y, radius, 0, Math.PI * 2);
-    ctx.fillStyle = '#f7e7a6';
-    ctx.shadowColor = '#f7e7a6';
-    ctx.shadowBlur = 22;
+    ctx.fillStyle = 'rgba(238, 236, 225, 0.42)';
+    ctx.shadowColor = 'rgba(238, 236, 225, 0.28)';
+    ctx.shadowBlur = 18;
     ctx.fill();
     ctx.shadowBlur = 0;
   }
 
-  function drawMountains(width, height) {
-    [
-      { y: height - 86, color: '#17262a', points: [0, 120, 250, 85, 420, 130, 610, 70, width, 120] },
-      { y: height - 54, color: '#20372f', points: [0, 92, 180, 50, 330, 96, 510, 42, width, 80] },
-    ].forEach((ridge) => {
+  function drawInkRidges(width, height) {
+    const ridges = [
+      { y: height - 116, alpha: 0.18, points: [0, 88, 160, 62, 300, 78, 460, 48, 620, 82, width, 46] },
+      { y: height - 78, alpha: 0.24, points: [0, 58, 190, 40, 350, 62, 540, 34, 700, 56, width, 28] },
+    ];
+
+    ridges.forEach((ridge) => {
       ctx.beginPath();
       ctx.moveTo(0, height);
       for (let i = 0; i < ridge.points.length; i += 2) {
@@ -4251,60 +4251,32 @@ const spiritBeastQualities = {
       }
       ctx.lineTo(width, height);
       ctx.closePath();
-      ctx.fillStyle = ridge.color;
+      ctx.fillStyle = `rgba(238, 236, 225, ${ridge.alpha})`;
       ctx.fill();
     });
-  }
 
-  function drawPlatform(width, height) {
-    ctx.fillStyle = '#3d3426';
-    ctx.beginPath();
-    ctx.ellipse(width / 2, height - 62, 150, 28, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = '#9b7a38';
-    ctx.beginPath();
-    ctx.ellipse(width / 2, height - 69, 120, 18, 0, 0, Math.PI * 2);
-    ctx.fill();
-  }
-
-  function drawCultivator(x, y, pulse) {
-    ctx.save();
-    ctx.translate(x, y + pulse * 2);
-
-    ctx.strokeStyle = 'rgba(124, 211, 183, 0.58)';
-    ctx.lineWidth = 3;
-    for (let i = 0; i < 3; i += 1) {
+    ctx.strokeStyle = 'rgba(238, 236, 225, 0.16)';
+    ctx.lineWidth = 2;
+    for (let i = 0; i < 4; i += 1) {
+      const y = height - 178 + i * 31 + Math.sin(animationTime * 0.9 + i) * 4;
       ctx.beginPath();
-      ctx.ellipse(0, 8, 34 + i * 20 + pulse * 3, 15 + i * 9, 0, 0, Math.PI * 2);
+      ctx.moveTo(48, y);
+      ctx.bezierCurveTo(width * 0.28, y - 34, width * 0.42, y + 24, width * 0.62, y - 8);
+      ctx.bezierCurveTo(width * 0.78, y - 32, width * 0.88, y + 16, width - 54, y - 20);
       ctx.stroke();
     }
-
-    ctx.fillStyle = '#111827';
-    ctx.beginPath();
-    ctx.arc(0, -28, 13, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = '#355f54';
-    ctx.beginPath();
-    ctx.moveTo(-24, 14);
-    ctx.quadraticCurveTo(0, -24, 24, 14);
-    ctx.lineTo(15, 36);
-    ctx.lineTo(-15, 36);
-    ctx.closePath();
-    ctx.fill();
-
-    ctx.restore();
   }
 
   function drawQiStreams(width) {
-    ctx.strokeStyle = 'rgba(125, 211, 252, 0.45)';
-    ctx.lineWidth = 2;
-    for (let i = 0; i < 9; i += 1) {
-      const offset = (animationTime * 34 + i * 72) % (width + 140);
+    ctx.strokeStyle = 'rgba(238, 236, 225, 0.28)';
+    ctx.lineWidth = 1.5;
+    for (let i = 0; i < 7; i += 1) {
+      const offset = (animationTime * 24 + i * 96) % (width + 160);
       const x = offset - 70;
-      const y = 80 + Math.sin(animationTime * 1.5 + i) * 26 + i * 15;
+      const y = 76 + Math.sin(animationTime * 1.2 + i) * 18 + i * 17;
       ctx.beginPath();
       ctx.moveTo(x, y);
-      ctx.quadraticCurveTo(x + 32, y - 26, x + 70, y + 4);
+      ctx.quadraticCurveTo(x + 34, y - 20, x + 82, y + 2);
       ctx.stroke();
     }
   }
