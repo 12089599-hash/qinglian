@@ -883,7 +883,7 @@ small {
 
 .map-action-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
   gap: 8px;
 }
 
@@ -1269,6 +1269,18 @@ small {
 
 .depth-card.maxed {
   border-color: rgba(232, 198, 106, 0.45);
+}
+
+.depth-actions,
+.boss-actions {
+  display: grid;
+  gap: 8px;
+  justify-items: stretch;
+}
+
+.depth-actions button,
+.boss-actions button {
+  width: 100%;
 }
 
 .cave-panel {
@@ -3995,6 +4007,11 @@ small {
   .market-refresh-row,
   .depth-card {
     grid-template-columns: 1fr;
+  }
+
+  .depth-actions,
+  .boss-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .goal-list li {

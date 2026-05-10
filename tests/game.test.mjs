@@ -62,7 +62,9 @@ import {
   getLootEmpowerCost,
   getLootResonanceStatus,
   getMapDepthStatus,
+  getMapDepthSweepStatus,
   getMapStatuses,
+  getMapBossSweepStatus,
   getMissionStatus,
   getGearQuality,
   getGearSetStatus,
@@ -87,6 +89,8 @@ import {
   resolveOpportunity,
   stabilizeFoundation,
   startMapDepthTrial,
+  sweepMapBoss,
+  sweepMapDepth,
   startMission,
   simulateBossBattle,
   setMissionApproach,
@@ -2690,6 +2694,56 @@ test('map depth trials remain threatening compared with same-map routes', () => 
   assert.equal(route.unlocked, true);
   assert.equal(depth.nextLayer, 3);
   assert.equal(depth.danger >= Math.round(route.recommendedPower * 0.8), true);
+});
+
+test('map depth sweep refreshes daily and never repeats first clear permanence', () => {
+  const state = createGameState(1000);
+  state.mapDepths.qinglanMountain = 10;
+  state.permanentBonuses.power = 30;
+  const dateOne = Date.parse('2026-05-10T00:00:00.000Z');
+  const dateTwo = Date.parse('2026-05-11T00:00:00.000Z');
+
+  const before = getMapDepthSweepStatus(state, 'qinglanMountain', dateOne);
+  const first = sweepMapDepth(state, 'qinglanMountain', dateOne);
+  const repeated = sweepMapDepth(state, 'qinglanMountain', dateOne + 1000);
+  const nextDay = sweepMapDepth(state, 'qinglanMountain', dateTwo);
+
+  assert.equal(before.canSweep, true);
+  assert.equal(before.targetLayer, 10);
+  assert.equal(first.ok, true);
+  assert.equal(first.fromLayer, 1);
+  assert.equal(first.toLayer, 10);
+  assert.equal(state.mapDepths.qinglanMountain, 10);
+  assert.equal(state.dailyDepthSweeps['2026-05-10'].qinglanMountain, 10);
+  assert.equal(state.permanentBonuses.power, 30);
+  assert.equal(first.reward.spiritStones > 0, true);
+  assert.equal(first.reward.powerBonus, undefined);
+  assert.equal(repeated.ok, false);
+  assert.equal(repeated.reason, 'alreadySwept');
+  assert.equal(nextDay.ok, true);
+  assert.equal(nextDay.fromLayer, 1);
+});
+
+test('defeated bosses refresh as daily sweep rewards without repeating first kill rewards', () => {
+  const state = createGameState(1000);
+  state.defeatedBosses.qinglanMountain = true;
+  state.permanentBonuses.power = 24;
+  const dateOne = Date.parse('2026-05-10T00:00:00.000Z');
+  const dateTwo = Date.parse('2026-05-11T00:00:00.000Z');
+
+  const status = getMapBossSweepStatus(state, 'qinglanMountain', dateOne);
+  const first = sweepMapBoss(state, 'qinglanMountain', dateOne);
+  const repeated = sweepMapBoss(state, 'qinglanMountain', dateOne + 1000);
+  const nextDay = sweepMapBoss(state, 'qinglanMountain', dateTwo);
+
+  assert.equal(status.canSweep, true);
+  assert.equal(first.ok, true);
+  assert.equal(first.reward.powerBonus, undefined);
+  assert.equal(state.permanentBonuses.power, 24);
+  assert.equal(state.dailyBossClaims['2026-05-10'].qinglanMountain, true);
+  assert.equal(repeated.ok, false);
+  assert.equal(repeated.reason, 'alreadySwept');
+  assert.equal(nextDay.ok, true);
 });
 
 test('market stock refreshes by day and enforces item limits', () => {

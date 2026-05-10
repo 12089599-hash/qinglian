@@ -2577,6 +2577,23 @@ const spiritBeastQualities = {
       render(true);
       return;
     }
+    const depthSweepButton = event.target.closest('[data-sweep-depth]');
+    if (depthSweepButton) {
+      const result = sweepMapDepth(state, depthSweepButton.dataset.sweepDepth);
+      if (result.ok) {
+        showToast('秘境扫荡', `${result.map.name}第 ${result.fromLayer}-${result.toLayer} 层，获得${formatReward(result.reward)}。`);
+        triggerBattleFeedback('pulse');
+      } else if (result.reason === 'alreadySwept') {
+        showToast('今日已扫', '此地秘境今日收益已领取，明日刷新。');
+      } else if (result.reason === 'noClear') {
+        showToast('尚未通关', '先手动打通至少一层，再开启每日扫荡。', 'warning');
+      } else if (result.reason === 'busy') {
+        showToast('正在行动', '当前行动结束后再扫荡。', 'warning');
+      }
+      saveState();
+      render(true);
+      return;
+    }
     const bossButton = event.target.closest('[data-challenge-boss]');
     if (bossButton) {
       const result = challengeMapBoss(state, bossButton.dataset.challengeBoss);
@@ -2599,6 +2616,23 @@ const spiritBeastQualities = {
         triggerBattleFeedback('danger');
       } else if (result.reason === 'depthLocked') {
         showToast('秘境未稳', `先推进到第 ${result.requiredLayer} 层，再寻首领气机。`, 'warning');
+      }
+      saveState();
+      render(true);
+      return;
+    }
+    const bossSweepButton = event.target.closest('[data-sweep-boss]');
+    if (bossSweepButton) {
+      const result = sweepMapBoss(state, bossSweepButton.dataset.sweepBoss);
+      if (result.ok) {
+        showToast('首领扫荡', `${result.boss.name}残象已破，获得${formatReward(result.reward)}。`);
+        triggerBattleFeedback('pulse');
+      } else if (result.reason === 'alreadySwept') {
+        showToast('今日已扫', '此首领今日残象已散，明日刷新。');
+      } else if (result.reason === 'notDefeated') {
+        showToast('尚未镇压', '首杀镇压后才会开启每日扫荡。', 'warning');
+      } else if (result.reason === 'busy') {
+        showToast('正在行动', '当前行动结束后再扫荡。', 'warning');
       }
       saveState();
       render(true);
@@ -2856,10 +2890,12 @@ const spiritBeastQualities = {
       completedMissions: {},
       mapReputation: {},
       mapDepths: {},
+      dailyDepthSweeps: {},
       missionApproaches: {},
       mapApproachCompletions: {},
       mapSpecialDrops: {},
       defeatedBosses: {},
+      dailyBossClaims: {},
       claimedGoals: {},
       claimedChapterRewards: {},
       permanentBonuses: {
@@ -2964,10 +3000,12 @@ const spiritBeastQualities = {
     state.completedMissions = normalizeCompletedMissions(state.completedMissions);
     state.mapReputation = normalizeMapValues(state.mapReputation);
     state.mapDepths = normalizeMapDepths(state.mapDepths);
+    state.dailyDepthSweeps = normalizeDailyMapLayers(state.dailyDepthSweeps);
     state.missionApproaches = normalizeMissionApproaches(state.missionApproaches);
     state.mapApproachCompletions = normalizeMapApproachCompletions(state.mapApproachCompletions);
     state.mapSpecialDrops = normalizeMapSpecialDrops(state.mapSpecialDrops);
     state.defeatedBosses = normalizeDefeatedBosses(state.defeatedBosses);
+    state.dailyBossClaims = normalizeDailyMapClaims(state.dailyBossClaims);
     state.claimedGoals = normalizeClaimedGoals(state.claimedGoals);
     state.claimedChapterRewards = normalizeClaimedGoals(state.claimedChapterRewards);
     state.permanentBonuses = normalizePermanentBonuses(state.permanentBonuses);
@@ -3144,6 +3182,38 @@ const spiritBeastQualities = {
     addLog(state, now, `深入${status.mapName}秘境第 ${layer} 层。`);
     const result = settleMapDepthTrial(state, map, layer, battle, now);
     return { ok: true, status, battle, report: result.report, outcome: result.outcome };
+  }
+
+  function sweepMapDepth(state, mapId, now = Date.now()) {
+    if (state.activeMission) {
+      return { ok: false, reason: 'busy' };
+    }
+    const status = getMapDepthSweepStatus(state, mapId, now);
+    if (!status.exists) {
+      return { ok: false, reason: status.reason };
+    }
+    if (!status.canSweep) {
+      return { ok: false, reason: status.reason || 'alreadySwept', status };
+    }
+    const map = missionMaps[mapId];
+    applyResources(state, status.reward);
+    state.dailyDepthSweeps ||= {};
+    state.dailyDepthSweeps[status.dateKey] ||= {};
+    state.dailyDepthSweeps[status.dateKey][mapId] = status.toLayer;
+    const reputationGained = Math.max(1, Math.ceil((map.reputationPerMission || 4) * 0.45 * (status.toLayer - status.fromLayer + 1)));
+    addMapReputation(state, mapId, reputationGained);
+    addDailyProgress(state, 'missions', 1, now);
+    addDailyProgress(state, 'depthTrials', 1, now);
+    addLog(state, now, `扫荡${map.name}秘境第 ${status.fromLayer}-${status.toLayer} 层，获得${formatReward(status.reward)}。`);
+    return {
+      ok: true,
+      map,
+      dateKey: status.dateKey,
+      fromLayer: status.fromLayer,
+      toLayer: status.toLayer,
+      reward: status.reward,
+      reputationGained,
+    };
   }
 
   function setMissionApproach(state, mapId, approachId, now = Date.now()) {
@@ -4561,6 +4631,53 @@ const spiritBeastQualities = {
     };
   }
 
+  function getMapDepthSweepStatus(state, mapId, now = Date.now()) {
+    const status = getMapDepthStatus(state, mapId);
+    if (!status.exists) {
+      return { exists: false, canSweep: false, reason: 'unknownMap' };
+    }
+    const dateKey = getDateKey(now);
+    const sweptLayer = clampInteger(state.dailyDepthSweeps?.[dateKey]?.[mapId] || 0, 0, mapDepthMaxLayer);
+    const targetLayer = clampInteger(status.clearedLayer || 0, 0, mapDepthMaxLayer);
+    const fromLayer = Math.min(targetLayer, sweptLayer + 1);
+    const reward = targetLayer > sweptLayer ? getDepthSweepReward(missionMaps[mapId], sweptLayer + 1, targetLayer) : {};
+    return {
+      exists: true,
+      mapId,
+      mapName: status.mapName,
+      dateKey,
+      sweptLayer,
+      targetLayer,
+      fromLayer,
+      toLayer: targetLayer,
+      canSweep: status.unlocked && targetLayer > sweptLayer,
+      reason: !status.unlocked ? 'realmLocked' : targetLayer <= 0 ? 'noClear' : targetLayer <= sweptLayer ? 'alreadySwept' : '',
+      reward,
+    };
+  }
+
+  function getMapBossSweepStatus(state, mapId, now = Date.now()) {
+    const map = missionMaps[mapId];
+    if (!map) {
+      return { exists: false, canSweep: false, reason: 'unknownMap' };
+    }
+    const dateKey = getDateKey(now);
+    const defeated = Boolean(state.defeatedBosses?.[mapId]);
+    const swept = Boolean(state.dailyBossClaims?.[dateKey]?.[mapId]);
+    return {
+      exists: true,
+      mapId,
+      mapName: map.name,
+      bossName: map.boss.name,
+      dateKey,
+      defeated,
+      swept,
+      canSweep: defeated && !swept,
+      reason: !defeated ? 'notDefeated' : swept ? 'alreadySwept' : '',
+      reward: defeated && !swept ? getBossSweepReward(map) : {},
+    };
+  }
+
   function getDepthTribulation(mapOrId, layer) {
     const map = typeof mapOrId === 'string' ? missionMaps[mapOrId] : mapOrId;
     const safeLayer = clampInteger(layer, 1, mapDepthMaxLayer);
@@ -4618,6 +4735,30 @@ const spiritBeastQualities = {
       reward.qiRateBonus = 0.02;
     }
     return reward;
+  }
+
+  function getDepthSweepReward(map, fromLayer, toLayer) {
+    let reward = {};
+    for (let layer = fromLayer; layer <= toLayer; layer += 1) {
+      reward = mergeRewards(reward, scaleRepeatableReward(getDepthReward(map, layer), 0.32));
+    }
+    return reward;
+  }
+
+  function getBossSweepReward(map) {
+    const baseReward = scaleRepeatableReward(map.boss.reward || {}, 0.45);
+    return mergeRewards(baseReward, {
+      spiritStones: Math.max(30, Math.round((map.boss.power || 180) * 0.18)),
+      forgingEssence: Math.max(1, Math.ceil((map.unlockRealmIndex || 0) / 7)),
+    });
+  }
+
+  function scaleRepeatableReward(reward, multiplier) {
+    return filterCost(Object.fromEntries(
+      Object.entries(reward || {})
+        .filter(([resource]) => resource !== 'powerBonus' && resource !== 'qiRateBonus')
+        .map(([resource, amount]) => [resource, Math.max(1, Math.floor((Number(amount) || 0) * multiplier))]),
+    ));
   }
 
   function getMissionOmen(state, mission) {
@@ -4735,6 +4876,36 @@ const spiritBeastQualities = {
     }));
     addLog(state, now, `镇压${map.boss.name}，${map.name}声望大涨，获得${formatReward(map.boss.reward)}。`);
     return { ok: true, reward: map.boss.reward, boss: map.boss, battle };
+  }
+
+  function sweepMapBoss(state, mapId, now = Date.now()) {
+    if (state.activeMission) {
+      return { ok: false, reason: 'busy' };
+    }
+    const status = getMapBossSweepStatus(state, mapId, now);
+    if (!status.exists) {
+      return { ok: false, reason: status.reason };
+    }
+    if (!status.canSweep) {
+      return { ok: false, reason: status.reason || 'alreadySwept', status };
+    }
+    const map = missionMaps[mapId];
+    applyResources(state, status.reward);
+    state.dailyBossClaims ||= {};
+    state.dailyBossClaims[status.dateKey] ||= {};
+    state.dailyBossClaims[status.dateKey][mapId] = true;
+    const reputationGained = Math.max(1, Math.ceil((map.boss.reputation || 10) * 0.25));
+    addMapReputation(state, mapId, reputationGained);
+    addDailyProgress(state, 'missions', 1, now);
+    addLog(state, now, `扫荡${map.boss.name}残余气机，获得${formatReward(status.reward)}。`);
+    return {
+      ok: true,
+      map,
+      boss: map.boss,
+      dateKey: status.dateKey,
+      reward: status.reward,
+      reputationGained,
+    };
   }
 
   function getGearQuality(state, gearId) {
@@ -5693,7 +5864,9 @@ const spiritBeastQualities = {
     const mapStatuses = getMapStatuses(state);
     const selectedMapId = resolveActiveMissionMapId(mapStatuses);
     const activeMap = mapStatuses.find((map) => map.id === selectedMapId) || mapStatuses[0];
-    const signature = `${selectedMapId}|${state.realmIndex}|${state.autoMissionId || ''}|${state.activeMission?.id || ''}:${state.activeMission?.layer || ''}|${Object.keys(missions).map((id) => `${id}:${state.completedMissions[id] || 0}`).join('|')}|${Object.entries(state.mapReputation).map(([id, value]) => `${id}:${value}`).join('|')}|${Object.entries(state.mapDepths || {}).map(([id, value]) => `${id}:${value}`).join('|')}|${Object.keys(state.defeatedBosses).join('|')}`;
+    const dailyDepthSignature = Object.entries(state.dailyDepthSweeps?.[getDateKey()] || {}).map(([id, value]) => `${id}:${value}`).join('|');
+    const dailyBossSignature = Object.entries(state.dailyBossClaims?.[getDateKey()] || {}).map(([id, value]) => `${id}:${value ? 1 : 0}`).join('|');
+    const signature = `${selectedMapId}|${state.realmIndex}|${state.autoMissionId || ''}|${state.activeMission?.id || ''}:${state.activeMission?.layer || ''}|${Object.keys(missions).map((id) => `${id}:${state.completedMissions[id] || 0}`).join('|')}|${Object.entries(state.mapReputation).map(([id, value]) => `${id}:${value}`).join('|')}|${Object.entries(state.mapDepths || {}).map(([id, value]) => `${id}:${value}`).join('|')}|${Object.keys(state.defeatedBosses).join('|')}|${dailyDepthSignature}|${dailyBossSignature}`;
     if (!force && renderCache.missions === signature) {
       return;
     }
@@ -5720,6 +5893,8 @@ const spiritBeastQualities = {
 
   function renderMapActionPanel(map) {
     const depth = map.depth;
+    const depthSweep = getMapDepthSweepStatus(state, map.id);
+    const bossSweep = getMapBossSweepStatus(state, map.id);
     const primaryMission = getPrimaryMissionForMap(map);
     const primaryStatus = primaryMission ? getMissionStatus(state, primaryMission.id) : null;
     const bossStatusText = {
@@ -5753,10 +5928,20 @@ const spiritBeastQualities = {
             <span>${depth?.maxed ? '可转往更高地图' : `道行 ${calculatePower(state)} / 劫象 ${depth?.danger || 0}`}</span>
             <small>${depth?.tribulation ? `${depth.tribulation.name} · ${depthAdvice.label}` : depthAdvice.label}</small>
           </button>
+          <button data-sweep-depth="${map.id}" ${!depthSweep.canSweep || busy ? 'disabled' : ''}>
+            <strong>${depthSweep.canSweep ? '扫荡秘境' : depthSweep.sweptLayer ? '今日已扫' : '扫荡未开'}</strong>
+            <span>${depthSweep.targetLayer ? `至第 ${depthSweep.targetLayer} 层` : '先打通秘境层数'}</span>
+            <small>${depthSweep.canSweep ? `可得 ${formatReward(depthSweep.reward)}` : depthSweep.reason === 'alreadySwept' ? `已至 ${depthSweep.sweptLayer} 层` : '通关后每日刷新'}</small>
+          </button>
           <button data-challenge-boss="${map.id}" ${map.boss.status !== 'ready' || busy ? 'disabled' : ''}>
             <strong>${bossStatusText}</strong>
             <span>${map.boss.name} · 道行 ${calculatePower(state)} / ${map.boss.power}</span>
             <small>${map.boss.status === 'depthLocked' ? `秘境 ${map.boss.depthGate.label}` : bossAdvice.label}</small>
+          </button>
+          <button data-sweep-boss="${map.id}" ${!bossSweep.canSweep || busy ? 'disabled' : ''}>
+            <strong>${bossSweep.canSweep ? '扫荡首领' : bossSweep.swept ? '首领已扫' : '首领未镇'}</strong>
+            <span>${map.boss.name} · 每日一次</span>
+            <small>${bossSweep.canSweep ? `可得 ${formatReward(bossSweep.reward)}` : bossSweep.defeated ? '明日刷新' : '首杀后开启'}</small>
           </button>
           ${primaryMission ? `
             <button data-start-mission="${primaryMission.id}" ${busy || !primaryStatus?.unlocked ? 'disabled' : ''}>
@@ -6203,6 +6388,7 @@ const spiritBeastQualities = {
     if (!depth) {
       return '';
     }
+    const sweep = getMapDepthSweepStatus(state, map.id);
     const advice = getMapCombatAdvice(map, depth.nextLayer >= 8 ? 'dark' : map.boss.element);
     return `
       <div class="depth-card ${depth.maxed ? 'maxed' : ''}">
@@ -6218,8 +6404,12 @@ const spiritBeastQualities = {
             <small class="depth-tribulation-row">秘境劫象：${depth.tribulation.name} · ${depth.tribulation.detail}</small>
             <small class="depth-reward-row">首通 ${formatReward(depth.reward)}</small>
           `}
+          <small class="depth-reward-row">${sweep.canSweep ? `今日可扫荡至 ${sweep.targetLayer} 层：${formatReward(sweep.reward)}` : sweep.targetLayer ? `今日扫荡 ${sweep.sweptLayer} / ${sweep.targetLayer}` : '打通首层后开启每日扫荡'}</small>
         </div>
-        <button data-start-depth="${map.id}" ${depth.maxed || !depth.unlocked || state.activeMission ? 'disabled' : ''}>${depth.maxed ? '已圆满' : '深入'}</button>
+        <div class="depth-actions">
+          <button data-start-depth="${map.id}" ${depth.maxed || !depth.unlocked || state.activeMission ? 'disabled' : ''}>${depth.maxed ? '已圆满' : '深入'}</button>
+          <button data-sweep-depth="${map.id}" ${!sweep.canSweep || state.activeMission ? 'disabled' : ''}>扫荡</button>
+        </div>
       </div>
     `;
   }
@@ -6231,6 +6421,7 @@ const spiritBeastQualities = {
       ready: '可挑战',
       defeated: '已镇压',
     }[map.boss.status] || '未发现';
+    const sweep = getMapBossSweepStatus(state, map.id);
     const disabled = map.boss.status !== 'ready' || Boolean(state.activeMission);
     const currentPower = calculatePower(state);
     const explorationGap = Math.max(0, map.exploration.target - map.exploration.cappedCompleted);
@@ -6265,8 +6456,12 @@ const spiritBeastQualities = {
           <span class="boss-counsel">${map.boss.omen.detail}</span>
           <span class="boss-counsel">${map.boss.omen.counsel}</span>
           <span>馈赠 ${formatReward(map.boss.reward)}</span>
+          ${map.boss.defeated ? `<span>今日残象 ${sweep.canSweep ? formatReward(sweep.reward) : sweep.swept ? '已扫荡' : '明日刷新'}</span>` : ''}
         </div>
-        <button data-challenge-boss="${map.id}" ${disabled ? 'disabled' : ''}>${statusText}</button>
+        <div class="boss-actions">
+          <button data-challenge-boss="${map.id}" ${disabled ? 'disabled' : ''}>${statusText}</button>
+          ${map.boss.defeated ? `<button data-sweep-boss="${map.id}" ${!sweep.canSweep || state.activeMission ? 'disabled' : ''}>扫荡</button>` : ''}
+        </div>
       </div>
     `;
   }
@@ -7984,6 +8179,46 @@ const spiritBeastQualities = {
     const normalized = {};
     Object.keys(missionMaps).forEach((id) => {
       normalized[id] = clampInteger(values?.[id] || 0, 0, mapDepthMaxLayer);
+    });
+    return normalized;
+  }
+
+  function normalizeDailyMapLayers(values) {
+    if (!values || typeof values !== 'object') {
+      return {};
+    }
+    const normalized = {};
+    Object.entries(values).forEach(([dateKey, layers]) => {
+      if (!layers || typeof layers !== 'object') {
+        return;
+      }
+      const valid = Object.fromEntries(
+        Object.entries(layers)
+          .filter(([mapId]) => missionMaps[mapId])
+          .map(([mapId, layer]) => [mapId, clampInteger(layer || 0, 0, mapDepthMaxLayer)]),
+      );
+      if (Object.keys(valid).length) {
+        normalized[dateKey] = valid;
+      }
+    });
+    return normalized;
+  }
+
+  function normalizeDailyMapClaims(values) {
+    if (!values || typeof values !== 'object') {
+      return {};
+    }
+    const normalized = {};
+    Object.entries(values).forEach(([dateKey, claims]) => {
+      if (!claims || typeof claims !== 'object') {
+        return;
+      }
+      const valid = Object.fromEntries(
+        Object.entries(claims).filter(([mapId, claimed]) => missionMaps[mapId] && Boolean(claimed)),
+      );
+      if (Object.keys(valid).length) {
+        normalized[dateKey] = valid;
+      }
     });
     return normalized;
   }
@@ -10677,6 +10912,10 @@ const spiritBeastQualities = {
   }
 
   function getDateKey(now = Date.now()) {
-    return new Date(now).toISOString().slice(0, 10);
+    const date = new Date(now);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 })();
