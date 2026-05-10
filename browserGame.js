@@ -7534,9 +7534,23 @@ const spiritBeastQualities = {
     if (!force && renderCache.beasts === signature) {
       return;
     }
-    refs.beastList.innerHTML = getEquipmentDetails(state).spiritBeasts
-      .map((item) => renderSpiritBeastRow(item))
-      .join('');
+    const items = getEquipmentDetails(state).spiritBeasts;
+    const visibleItems = items.filter((item) => item.unlock?.unlocked || item.level > 0 || item.deployed);
+    const hiddenItems = items.filter((item) => !visibleItems.includes(item));
+    refs.beastList.innerHTML = `
+      ${visibleItems.map((item) => renderSpiritBeastRow(item)).join('')}
+      ${hiddenItems.length ? `
+        <details class="beast-locked-group">
+          <summary>
+            <strong>异兽线索</strong>
+            <span>${hiddenItems.length} 只尚未现踪</span>
+          </summary>
+          <div class="beast-locked-list">
+            ${hiddenItems.map((item) => renderSpiritBeastRow(item)).join('')}
+          </div>
+        </details>
+      ` : ''}
+    `;
     renderCache.beasts = signature;
   }
 
@@ -7591,7 +7605,7 @@ const spiritBeastQualities = {
       ? `缺 ${bloodShort} 血脉精魄 · 玄纹以上战利品分解可得，当前可分解 ${lootStats.available} 件`
       : `${lootStats.total ? `库中有 ${lootStats.total} 件玄纹以上战利品可沉淀血脉精魄` : '玄纹以上战利品分解可沉淀血脉精魄'}`;
     return `
-      <div class="system-row">
+      <div class="system-row bloodline-row">
         <div>
           <strong>${item.name} <small>${item.rarity.name} · ${item.level} / ${item.maxLevel}</small></strong>
           <span>${item.detail}</span>
@@ -7814,7 +7828,7 @@ const spiritBeastQualities = {
     const tier = getUpgradeTier(Math.max(1, maxed ? level : nextLevel));
     const cost = maxed || realmLocked ? null : path.cost(nextLevel);
     return `
-      <div class="system-row">
+      <div class="system-row formation-row compact-system-row">
         <div>
           <strong>${path.name} <small>${tier.name} ${level} / ${path.maxLevel}</small></strong>
           <span>${getPathEffectText(path.id)}</span>
@@ -7832,7 +7846,7 @@ const spiritBeastQualities = {
     const tier = getUpgradeTier(Math.max(1, maxed ? level : nextLevel));
     const cost = maxed || realmLocked ? null : item.cost(nextLevel);
     return `
-      <div class="system-row">
+      <div class="system-row longterm-row compact-system-row">
         <div>
           <strong>${item.name} <small>${tier.name} ${level} / ${item.maxLevel}</small></strong>
           <span>${getUpgradeEffectText(item.id)}</span>
@@ -7989,7 +8003,7 @@ const spiritBeastQualities = {
     const tier = getUpgradeTier(Math.max(1, maxed ? item.level : nextLevel));
     const cost = maxed || realmLocked ? null : definition.cost(nextLevel);
     return `
-      <div class="system-row">
+      <div class="system-row formation-row compact-system-row">
         <div>
           <strong>${item.name} <small>${item.rarity.name} · ${tier.name} ${item.level} / ${item.maxLevel}</small></strong>
           <span>${formatEffects(item.effects) || item.detail}</span>
@@ -8007,7 +8021,7 @@ const spiritBeastQualities = {
     const nextLevel = item.level + 1;
     const cost = maxed ? null : definition.cost(nextLevel);
     return `
-      <div class="system-row">
+      <div class="system-row longterm-row compact-system-row">
         <div>
           <strong>${item.name} <small>${item.rarity?.name || '凡品'} · ${item.level} / ${item.maxLevel}</small></strong>
           <span>${item.detail}</span>
@@ -8168,15 +8182,40 @@ const spiritBeastQualities = {
     if (!refs.mainlineChapters) {
       return;
     }
-    refs.mainlineChapters.innerHTML = chapters
+    const activeIndex = Math.max(0, chapters.findIndex((chapter) => chapter.id === activeChapterId));
+    const activeChapter = chapters[activeIndex] || chapters[0];
+    const activeStatus = activeChapter.locked
+      ? '未解锁'
+      : activeChapter.rewardClaimed
+        ? '已完成'
+        : `${activeChapter.completedCount}/${activeChapter.objectives.length}`;
+    const chapterCards = chapters
       .map((chapter, index) => `
-        <div class="${chapter.id === activeChapterId ? 'active' : ''} ${chapter.rewardClaimed ? 'done' : ''} ${chapter.locked ? 'locked' : ''}">
+        <div class="chapter-track-card ${chapter.id === activeChapterId ? 'active' : ''} ${chapter.rewardClaimed ? 'done' : ''} ${chapter.locked ? 'locked' : ''}">
           <span>${index + 1}</span>
           <strong>${chapter.title}</strong>
           <small>${chapter.locked ? '未解锁' : chapter.rewardClaimed ? '已完成' : `${chapter.completedCount}/${chapter.objectives.length}`}</small>
         </div>
       `)
       .join('');
+    refs.mainlineChapters.innerHTML = `
+      <details class="chapter-track-compact">
+        <summary>
+          <div>
+            <span>篇章 ${activeIndex + 1}/${chapters.length}</span>
+            <strong>${activeChapter.title}</strong>
+            <small>${activeStatus}</small>
+          </div>
+          <ol class="chapter-dots" aria-label="篇章进度">
+            ${chapters.map((chapter, index) => `<li class="${chapter.id === activeChapterId ? 'active' : ''} ${chapter.rewardClaimed ? 'done' : ''} ${chapter.locked ? 'locked' : ''}">${chapter.rewardClaimed ? '✓' : index + 1}</li>`).join('')}
+          </ol>
+          <em>展开</em>
+        </summary>
+        <div class="chapter-track-list">
+          ${chapterCards}
+        </div>
+      </details>
+    `;
   }
 
   function claimGoalReward(state, goalId, now = Date.now()) {
