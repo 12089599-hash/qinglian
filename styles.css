@@ -3903,7 +3903,42 @@ small {
   }
 
   .chapter-track {
-    grid-template-columns: 1fr;
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+  }
+
+  .chapter-track::-webkit-scrollbar {
+    display: none;
+  }
+
+  .chapter-track div {
+    flex: 0 0 116px;
+    min-height: 58px;
+    padding: 7px 8px;
+    scroll-snap-align: start;
+  }
+
+  .chapter-track span {
+    width: 20px;
+    height: 20px;
+    font-size: 0.76rem;
+  }
+
+  .chapter-track strong {
+    margin-top: 5px;
+    font-size: 0.78rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .chapter-track small {
+    margin-top: 2px;
+    font-size: 0.68rem;
   }
 
   .mission-map-layout {

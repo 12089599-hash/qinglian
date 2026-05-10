@@ -73,6 +73,8 @@ assert.match(styles, /\.cultivation-drawer\s*>\s*summary\s*\{\s*display:\s*none/
 assert.match(styles, /@media \(max-width: 760px\)[\s\S]*\.cultivation-drawer\s*>\s*summary\s*\{[^}]*display:\s*flex/s);
 assert.match(styles, /@media \(max-width: 760px\)[\s\S]*\.vital-grid\s*\{[^}]*grid-template-columns:\s*repeat\(3, minmax\(0, 1fr\)\)/);
 assert.match(styles, /@media \(max-width: 760px\)[\s\S]*\.resource-grid\s*\{[^}]*grid-template-columns:\s*repeat\(3, minmax\(0, 1fr\)\)/);
+assert.match(styles, /@media \(max-width: 760px\)[\s\S]*\.chapter-track\s*\{[^}]*display:\s*flex[^}]*overflow-x:\s*auto/s);
+assert.match(styles, /@media \(max-width: 760px\)[\s\S]*\.chapter-track div\s*\{[^}]*flex:\s*0 0 116px[^}]*min-height:\s*58px/s);
 assert.match(html, /<details class="attribute-card mobile-fold-card"/);
 assert.match(source, /attributeCard\.open = openOverviewDetails/);
 assert.match(styles, /\.stats-panel\s*>\s*\.attribute-card\s*\{\s*order:\s*1/s);
