@@ -2513,7 +2513,7 @@ export function reviveGameState(saved, now = Date.now()) {
   const state = { ...createGameState(now), ...saved };
   const savedBalanceVersion = Number(saved?.balanceVersion) || 0;
   state.realmIndex = clampInteger(state.realmIndex, 0, REALMS.length - 1);
-  if (savedBalanceVersion < 3) {
+  if (savedBalanceVersion < 3 && state.realmIndex < LEGACY_REALM_INDEX_MAP.length) {
     state.realmIndex = migrateLegacyRealmIndex(state.realmIndex);
   }
   state.qi = Math.max(0, Number(state.qi) || 0);
@@ -2526,7 +2526,7 @@ export function reviveGameState(saved, now = Date.now()) {
   state.insightCarry = Math.max(0, Number(state.insightCarry) || 0);
   state.pillBoostUntil = Math.max(0, Number(state.pillBoostUntil) || 0);
   state.breakthroughBoostUntil = Math.max(0, Number(state.breakthroughBoostUntil) || 0);
-  state.foundationStability = Math.max(0, Number(state.foundationStability) || 0);
+  state.foundationStability = clampInteger(state.foundationStability, 0, 3);
   state.activeAlchemy = normalizeAlchemy(state.activeAlchemy);
   state.inventoryPills = normalizeInventoryPills(state.inventoryPills, state.pills);
   state.consumedAttributePills = normalizeConsumedAttributePills(state.consumedAttributePills);
@@ -5161,7 +5161,7 @@ export function performBreakthrough(state, now = Date.now(), random = Math.rando
   state.qi = Math.min(carriedQi, round(getCurrentRealm(state).requiredQi * 0.4));
   state.heartDemon = Math.max(0, (state.heartDemon ?? 0) - 1);
   state.insight = (state.insight ?? 0) + 1;
-  state.foundationStability = 0;
+  state.foundationStability = Math.max(0, (state.foundationStability ?? 0) - 1);
   state.breakthroughBoostUntil = 0;
   state.breakthroughCount += 1;
   maybeOpenDaoHeartChoice(state, now);

@@ -733,6 +733,13 @@ small {
   margin-top: 16px;
 }
 
+.foundation-hint {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
 .ghost-button {
   margin-left: auto;
   color: #eeb5a4;
@@ -2200,6 +2207,8 @@ small {
 .gear-detail-dialog form {
   display: grid;
   gap: 12px;
+  max-height: inherit;
+  overflow: auto;
   margin: 0;
   padding: 16px;
 }

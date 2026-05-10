@@ -297,6 +297,28 @@ test('legacy saves are rebalanced without wiping progress', () => {
   assert.equal(state.balanceVersion, 6);
 });
 
+test('expanded realm saves without a version do not jump through legacy migration', () => {
+  const expandedIndex = realmIndexByName('筑基一层');
+  const state = reviveGameState({
+    qi: 999_999,
+    realmIndex: expandedIndex,
+    spiritStones: 4321,
+  }, 1000);
+
+  assert.equal(state.realmIndex, expandedIndex);
+  assert.equal(state.spiritStones, 4321);
+  assert.equal(state.balanceVersion, 6);
+});
+
+test('revived foundation stability is capped to the visible preparation limit', () => {
+  const state = reviveGameState({
+    balanceVersion: 6,
+    foundationStability: 99,
+  }, 1000);
+
+  assert.equal(state.foundationStability, 3);
+});
+
 test('breakthrough advances realm and consumes qi on a successful attempt', () => {
   const state = createGameState(1000);
   state.qi = REALMS[0].requiredQi + 20;
@@ -307,6 +329,17 @@ test('breakthrough advances realm and consumes qi on a successful attempt', () =
   assert.equal(state.realmIndex, 1);
   assert.equal(state.qi, 10);
   assert.equal(getRealmProgress(state), 10 / REALMS[1].requiredQi);
+});
+
+test('successful breakthrough consumes one settled foundation layer', () => {
+  const state = createGameState(1000);
+  state.qi = REALMS[0].requiredQi + 20;
+  state.foundationStability = 3;
+
+  const result = performBreakthrough(state, 1000, () => 0.1);
+
+  assert.equal(result.ok, true);
+  assert.equal(state.foundationStability, 2);
 });
 
 test('failed breakthrough creates heart demon pressure', () => {

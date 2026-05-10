@@ -2077,6 +2077,7 @@ const spiritBeastQualities = {
     sectList: document.querySelector('[data-sect-list]'),
     sectStatus: document.querySelector('[data-sect-status]'),
     foundation: document.querySelector('[data-foundation]'),
+    foundationHint: document.querySelector('[data-foundation-hint]'),
     dailyList: document.querySelector('[data-daily-list]'),
     dailyStatus: document.querySelector('[data-daily-status]'),
     marketList: document.querySelector('[data-market-list]'),
@@ -3014,7 +3015,7 @@ const spiritBeastQualities = {
     const state = Object.assign(createGameState(now), saved);
     const savedBalanceVersion = Number(saved?.balanceVersion) || 0;
     state.realmIndex = Math.min(realms.length - 1, Math.max(0, Math.floor(Number(state.realmIndex) || 0)));
-    if (savedBalanceVersion < 3) {
+    if (savedBalanceVersion < 3 && state.realmIndex < legacyRealmIndexMap.length) {
       state.realmIndex = migrateLegacyRealmIndex(state.realmIndex);
     }
     state.qi = Math.max(0, Number(state.qi) || 0);
@@ -3027,7 +3028,7 @@ const spiritBeastQualities = {
     state.insightCarry = Math.max(0, Number(state.insightCarry) || 0);
     state.pillBoostUntil = Math.max(0, Number(state.pillBoostUntil) || 0);
     state.breakthroughBoostUntil = Math.max(0, Number(state.breakthroughBoostUntil) || 0);
-    state.foundationStability = Math.max(0, Number(state.foundationStability) || 0);
+    state.foundationStability = clampInteger(state.foundationStability, 0, 3);
     state.activeAlchemy = normalizeAlchemy(state.activeAlchemy);
     state.inventoryPills = normalizeInventoryPills(state.inventoryPills, state.pills);
     state.consumedAttributePills = normalizeConsumedAttributePills(state.consumedAttributePills);
@@ -3171,7 +3172,7 @@ const spiritBeastQualities = {
     state.qi = Math.min(carriedQi, round(getCurrentRealm(state).requiredQi * 0.4));
     state.heartDemon = Math.max(0, state.heartDemon - 1);
     state.insight += 1;
-    state.foundationStability = 0;
+    state.foundationStability = Math.max(0, (state.foundationStability || 0) - 1);
     state.breakthroughBoostUntil = 0;
     state.breakthroughCount += 1;
     maybeOpenDaoHeartChoice(state, now);
@@ -4173,6 +4174,12 @@ const spiritBeastQualities = {
       refs.stabilizeButton.textContent = foundation >= 3 ? '根基已稳' : `稳固根基 ${foundation}/3`;
       refs.stabilizeButton.disabled = foundation >= 3;
       refs.stabilizeButton.title = foundation >= 3 ? '破境后会消耗一层根基' : '消耗 35 灵石、8 灵草，提升破境把握并降低心魔';
+    }
+    if (refs.foundationHint) {
+      const foundation = state.foundationStability || 0;
+      refs.foundationHint.textContent = foundation >= 3
+        ? '根基已满，破境成功或受挫都会消耗 1 层。'
+        : `稳固根基 ${foundation}/3，可提升叩关把握并缓冲心魔。`;
     }
     if (refs.dominantPath) {
       const path = getDominantPath(state);
