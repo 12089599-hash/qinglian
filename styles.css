@@ -73,6 +73,7 @@ button:disabled {
 
 .hero {
   position: relative;
+  isolation: isolate;
   min-height: 300px;
   overflow: hidden;
   border: 1px solid rgba(238, 236, 225, 0.46);
@@ -109,17 +110,27 @@ button:disabled {
 }
 
 body[data-active-group="practice"] .hero::before {
+  top: -18px;
+  right: clamp(10px, 5vw, 72px);
+  bottom: -18px;
+  left: auto;
+  width: min(36vw, 390px);
   background:
-    url("assets/ink-meditator-v2.png") right 8% center / auto 132% no-repeat;
-  filter: grayscale(1) contrast(1.05) brightness(1.08);
-  mix-blend-mode: normal;
-  opacity: 0.46;
+    url("assets/ink-meditator-v2.png") center center / contain no-repeat;
+  filter: grayscale(1) invert(1) contrast(0.86) brightness(0.72);
+  mix-blend-mode: screen;
+  opacity: 0.28;
+  -webkit-mask-image:
+    radial-gradient(ellipse at 54% 50%, #000 0 34%, rgba(0, 0, 0, 0.62) 52%, transparent 74%);
+  mask-image:
+    radial-gradient(ellipse at 54% 50%, #000 0 34%, rgba(0, 0, 0, 0.62) 52%, transparent 74%);
 }
 
 body[data-active-group="practice"] .hero::after {
   background:
-    linear-gradient(90deg, rgba(6, 7, 7, 0.94) 0%, rgba(6, 7, 7, 0.62) 42%, rgba(6, 7, 7, 0.12) 78%),
-    linear-gradient(180deg, rgba(6, 7, 7, 0.02), rgba(6, 7, 7, 0.58));
+    radial-gradient(ellipse at 78% 46%, rgba(238, 236, 225, 0.08) 0 11%, rgba(6, 7, 7, 0.2) 42%, rgba(6, 7, 7, 0.7) 78%),
+    linear-gradient(90deg, rgba(6, 7, 7, 0.96) 0%, rgba(6, 7, 7, 0.72) 38%, rgba(6, 7, 7, 0.34) 72%, rgba(6, 7, 7, 0.66) 100%),
+    linear-gradient(180deg, rgba(6, 7, 7, 0.02), rgba(6, 7, 7, 0.62));
 }
 
 body[data-active-group="practice"] .hero canvas {
@@ -3481,9 +3492,9 @@ small {
   }
 
   body[data-active-group="practice"] .hero::before {
-    background-position: right 12px center;
-    background-size: auto 145%;
-    opacity: 0.5;
+    right: -24px;
+    width: min(58vw, 260px);
+    opacity: 0.18;
   }
 
   body[data-active-tab="overview"] .next-guidance {
