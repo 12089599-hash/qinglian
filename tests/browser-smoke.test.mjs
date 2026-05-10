@@ -130,6 +130,8 @@ assert.match(source, /gear-set-tier-track/);
 assert.match(source, /missionResidualDangerRatio/);
 assert.match(styles, /\.gear-set-tier-track\s*\{/);
 assert.match(styles, /@media \(max-width: 760px\)[\s\S]*\.progress-plan-grid\s*\{[^}]*grid-template-columns:\s*repeat\(4, minmax\(0, 1fr\)\)/);
+assert.match(styles, /@media \(min-width: 761px\)[\s\S]*body\[data-active-tab="overview"\]\s+\.dashboard\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\)/);
+assert.match(styles, /@media \(min-width: 761px\)[\s\S]*body\[data-active-tab="overview"\]\s+\.stats-panel\s*\{[^}]*position:\s*static[^}]*grid-auto-flow:\s*dense[^}]*max-height:\s*none[^}]*overflow:\s*visible/s);
 assert.match(styles, /@media \(max-width: 760px\)[\s\S]*\.section-tabs\s*\{[^}]*display:\s*grid[^}]*grid-template-columns:\s*repeat\(4, minmax\(0, 1fr\)\)/);
 assert.match(source, /洗练词条/);
 assert.match(styles, /\.sub-tabs/);

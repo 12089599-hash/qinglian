@@ -3498,6 +3498,57 @@ small {
   }
 }
 
+@media (min-width: 761px) {
+  body[data-active-tab="overview"] .dashboard {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  body[data-active-tab="overview"] .stats-panel {
+    position: static;
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(300px, 0.95fr);
+    grid-auto-flow: dense;
+    gap: 12px;
+    max-height: none;
+    overflow: visible;
+  }
+
+  body[data-active-tab="overview"] .stats-panel > header,
+  body[data-active-tab="overview"] .stats-panel > .cultivation-drawer,
+  body[data-active-tab="overview"] .stats-panel > .action-row,
+  body[data-active-tab="overview"] .stats-panel > .foundation-hint {
+    grid-column: 1 / -1;
+  }
+
+  body[data-active-tab="overview"] .stats-panel > header,
+  body[data-active-tab="overview"] .stats-panel > .resource-drawer,
+  body[data-active-tab="overview"] .stats-panel > .attribute-card,
+  body[data-active-tab="overview"] .stats-panel > .dao-heart-card,
+  body[data-active-tab="overview"] .stats-panel > .tribulation-card,
+  body[data-active-tab="overview"] .stats-panel > .action-row {
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+
+  body[data-active-tab="overview"] .stats-panel > .attribute-card,
+  body[data-active-tab="overview"] .stats-panel > .dao-heart-card {
+    grid-column: 1;
+  }
+
+  body[data-active-tab="overview"] .stats-panel > .resource-drawer,
+  body[data-active-tab="overview"] .stats-panel > .tribulation-card {
+    grid-column: 2;
+  }
+
+  body[data-active-tab="overview"] .stats-panel > .state-drawer {
+    grid-column: 2;
+  }
+
+  body[data-active-tab="overview"] .stats-panel > .action-row {
+    justify-content: start;
+  }
+}
+
 @media (max-width: 1120px) {
   .dashboard {
     grid-template-columns: 1fr;
