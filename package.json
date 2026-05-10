@@ -1,0 +1,19 @@
+{
+  "name": "qinglan-cave",
+  "version": "0.1.0",
+  "private": true,
+  "description": "青岚洞府 App packaging",
+  "scripts": {
+    "build:app": "node scripts/build-app-web.mjs",
+    "cap:sync": "npm run build:app && cap sync",
+    "cap:sync:ios": "npm run build:app && cap sync ios",
+    "cap:open:ios": "cap open ios"
+  },
+  "dependencies": {
+    "@capacitor/core": "8.3.3",
+    "@capacitor/ios": "8.3.3"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "8.3.3"
+  }
+}

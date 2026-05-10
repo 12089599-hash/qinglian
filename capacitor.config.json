@@ -1,0 +1,11 @@
+{
+  "appId": "com.qinglan.cave",
+  "appName": "青岚洞府",
+  "webDir": "www",
+  "ios": {
+    "contentInset": "always"
+  },
+  "server": {
+    "androidScheme": "https"
+  }
+}

@@ -76,11 +76,26 @@
 
 把整个文件夹拖到 Netlify，或导入到 Vercel。构建命令留空，发布目录选择项目根目录。
 
+## iOS App 打包
+
+项目已接入 Capacitor，可把当前网页游戏封装成 iOS App。
+
+1. 安装依赖：`npm install`
+2. 生成 App 网页包并同步 iOS 工程：`npm run cap:sync:ios`
+3. 安装完整 Xcode 后打开工程：`npm run cap:open:ios`
+4. 在 Xcode 中选择自己的 Team，修改 Bundle Identifier 后即可用模拟器、真机、TestFlight 和 App Store Connect 流程继续。
+
+当前 App 壳位于 `ios/App`，网页资源会同步到 `ios/App/App/public`。
+
 ## 文件说明
 
 - `index.html`: 游戏入口页面
 - `styles.css`: 页面样式
 - `browserGame.js`: GitHub Pages 直接运行的游戏脚本
+- `package.json`: App 打包脚本和 Capacitor 依赖
+- `capacitor.config.json`: App 名称、包名和网页输出目录配置
+- `scripts/build-app-web.mjs`: 生成 App 网页包
+- `ios/App`: iOS App 工程
 - `src/browserGame.js`: 浏览器直接运行的游戏版本
 - `src/gameCore.mjs`: 可测试的核心规则
 - `tests/game.test.mjs`: 核心规则测试
