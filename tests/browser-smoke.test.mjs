@@ -374,6 +374,7 @@ assert.match(styles, /\.loot-filters\s*\{[^}]*grid-column:\s*1 \/ -1/s);
 assert.match(html, />批量分解品质</);
 assert.match(html, />恢复默认</);
 assert.match(styles, /@media \(max-width: 760px\)[\s\S]*\.gear-subtabs\s*\{[^}]*display:\s*grid[^}]*grid-template-columns:\s*repeat\(5, minmax\(0, 1fr\)\)[^}]*overflow:\s*visible/s);
+assert.match(styles, /@media \(max-width: 760px\)[\s\S]*\.mobile-panel-body\s+\.gear-subtabs\s*\{[^}]*position:\s*static[^}]*top:\s*auto[^}]*z-index:\s*auto/s);
 assert.match(styles, /@media \(max-width: 760px\)[\s\S]*\.loot-filters\s*\{[^}]*display:\s*grid[^}]*grid-template-columns:\s*repeat\(4, minmax\(0, 1fr\)\)[^}]*overflow:\s*visible/s);
 assert.match(styles, /\.loot-variant/);
 assert.match(styles, /\.comparison-list/);

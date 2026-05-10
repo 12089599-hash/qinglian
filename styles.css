@@ -4852,6 +4852,13 @@ small {
       var(--ink);
   }
 
+  .mobile-panel-body .gear-subtabs {
+    position: static;
+    top: auto;
+    z-index: auto;
+    margin: 0 0 10px;
+  }
+
   .gear-subtabs button {
     min-width: 0;
     min-height: 34px;
