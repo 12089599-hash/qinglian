@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 320" role="img" aria-label="Ink wash cultivator meditation scene">
+  <defs>
+    <radialGradient id="halo" cx="50%" cy="42%" r="34%">
+      <stop offset="0" stop-color="#f5f1e8" stop-opacity=".24"/>
+      <stop offset=".42" stop-color="#f5f1e8" stop-opacity=".08"/>
+      <stop offset="1" stop-color="#f5f1e8" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="mist" x1="0" x2="1" y1="0" y2="0">
+      <stop offset="0" stop-color="#f5f1e8" stop-opacity="0"/>
+      <stop offset=".48" stop-color="#f5f1e8" stop-opacity=".14"/>
+      <stop offset="1" stop-color="#f5f1e8" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="soften">
+      <feGaussianBlur stdDeviation="1.4"/>
+    </filter>
+  </defs>
+
+  <g opacity=".48">
+    <ellipse cx="604" cy="132" rx="246" ry="96" fill="url(#halo)"/>
+    <ellipse cx="604" cy="226" rx="338" ry="38" fill="url(#mist)" filter="url(#soften)"/>
+  </g>
+
+  <g fill="none" stroke="#f5f1e8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M44 157 C178 119 238 151 334 122 C440 91 498 118 594 98 C724 70 820 117 924 87 C1004 64 1086 79 1160 45" opacity=".12" stroke-width="2"/>
+    <path d="M0 228 C146 208 273 241 422 213 C548 190 651 223 780 207 C928 188 1027 215 1200 183" opacity=".1" stroke-width="5"/>
+    <path d="M112 249 C258 232 392 267 540 240 C666 217 772 246 906 229 C1012 215 1102 224 1194 208" opacity=".12" stroke-width="2"/>
+    <path d="M214 148 C260 100 292 78 334 64 C351 103 378 130 422 154" opacity=".13" stroke-width="2"/>
+    <path d="M810 144 C857 94 904 60 962 43 C977 84 1011 122 1067 155" opacity=".11" stroke-width="2"/>
+    <path d="M444 117 C507 67 563 46 626 37 C669 82 728 113 791 129" opacity=".13" stroke-width="2"/>
+  </g>
+
+  <g transform="translate(600 164)" fill="none" stroke="#f5f1e8" stroke-linecap="round" stroke-linejoin="round">
+    <circle r="76" opacity=".2" stroke-width="1.4"/>
+    <circle r="50" opacity=".16" stroke-width="1"/>
+    <path d="M-82 0 C-40 -21 40 -21 82 0" opacity=".2" stroke-width="1.6"/>
+    <path d="M-54 -61 C-30 -88 30 -88 54 -61" opacity=".12" stroke-width="1"/>
+    <path d="M-92 -36 L-67 -24 M92 -36 L67 -24 M0 -100 L0 -75 M-58 -84 L-42 -61 M58 -84 L42 -61" opacity=".12" stroke-width="1.2"/>
+  </g>
+
+  <g transform="translate(600 168)" fill="#f5f1e8">
+    <ellipse cx="0" cy="94" rx="112" ry="20" opacity=".12" filter="url(#soften)"/>
+    <path d="M-18 -34 C-11 -49 11 -49 18 -34 C19 -16 12 -5 0 -5 C-12 -5 -19 -16 -18 -34Z" opacity=".28"/>
+    <path d="M-26 -4 C-58 22 -60 58 -40 78 C-19 65 18 65 40 78 C60 58 58 22 26 -4 C11 6 -11 6 -26 -4Z" opacity=".24"/>
+    <path d="M-43 35 C-85 45 -113 67 -128 93 C-78 91 -35 81 -5 60 C-16 52 -29 43 -43 35Z" opacity=".18"/>
+    <path d="M43 35 C85 45 113 67 128 93 C78 91 35 81 5 60 C16 52 29 43 43 35Z" opacity=".18"/>
+    <path d="M-9 -49 C-33 -41 -42 -17 -33 2 C-20 -10 -7 -14 0 -8 C7 -14 20 -10 33 2 C42 -17 33 -41 9 -49 C5 -58 -5 -58 -9 -49Z" opacity=".18"/>
+  </g>
+
+  <g fill="none" stroke="#f5f1e8" stroke-linecap="round">
+    <path d="M480 246 C533 229 667 229 720 246" opacity=".16" stroke-width="1.5"/>
+    <path d="M424 267 C510 244 690 244 776 267" opacity=".11" stroke-width="2"/>
+    <path d="M358 283 C478 259 722 259 842 283" opacity=".08" stroke-width="3"/>
+  </g>
+</svg>
