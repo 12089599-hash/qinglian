@@ -116,18 +116,18 @@ body[data-active-group="practice"] .hero::before {
     url("assets/ink-ascetic-hero.svg") center center / cover no-repeat;
   filter: none;
   mix-blend-mode: screen;
-  opacity: 0.34;
+  opacity: 0.12;
 }
 
 body[data-active-group="practice"] .hero::after {
   background:
-    radial-gradient(ellipse at 50% 42%, rgba(238, 236, 225, 0.08) 0 14%, rgba(6, 7, 7, 0.26) 48%, rgba(6, 7, 7, 0.74) 86%),
-    linear-gradient(90deg, rgba(6, 7, 7, 0.94) 0%, rgba(6, 7, 7, 0.68) 31%, rgba(6, 7, 7, 0.34) 50%, rgba(6, 7, 7, 0.72) 72%, rgba(6, 7, 7, 0.94) 100%),
-    linear-gradient(180deg, rgba(6, 7, 7, 0.04), rgba(6, 7, 7, 0.68));
+    linear-gradient(90deg, rgba(6, 7, 7, 0.12) 0%, rgba(6, 7, 7, 0.1) 42%, rgba(6, 7, 7, 0.04) 70%),
+    linear-gradient(180deg, rgba(6, 7, 7, 0.02), rgba(6, 7, 7, 0.1));
 }
 
 body[data-active-group="practice"] .hero canvas {
-  opacity: 0.12;
+  opacity: 0.92;
+  mix-blend-mode: normal;
 }
 
 body[data-active-tab="cave"] .hero::before {
