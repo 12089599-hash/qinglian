@@ -4311,31 +4311,58 @@ const spiritBeastQualities = {
 
   function drawCultivator(x, y, pulse) {
     ctx.save();
-    ctx.translate(x, y + pulse * 2);
+    ctx.translate(x, y + pulse * 1.5 - 3);
+    ctx.scale(1.08, 1.08);
 
     ctx.shadowColor = 'rgba(132, 214, 187, 0.24)';
     ctx.shadowBlur = 18;
     ctx.strokeStyle = 'rgba(132, 214, 187, 0.58)';
-    ctx.lineWidth = 2.4;
+    ctx.lineWidth = 2.2;
     for (let i = 0; i < 4; i += 1) {
       ctx.beginPath();
-      ctx.ellipse(0, 9, 32 + i * 17 + pulse * 2.6, 13 + i * 7, 0, 0, Math.PI * 2);
+      ctx.ellipse(0, 8, 34 + i * 18 + pulse * 2.6, 12 + i * 6.6, 0, 0, Math.PI * 2);
       ctx.stroke();
     }
     ctx.shadowBlur = 0;
 
     const robe = ctx.createLinearGradient(0, -24, 0, 50);
-    robe.addColorStop(0, '#5f9583');
-    robe.addColorStop(0.55, '#345f54');
-    robe.addColorStop(1, '#203a35');
+    robe.addColorStop(0, '#75ad99');
+    robe.addColorStop(0.5, '#3f7466');
+    robe.addColorStop(1, '#203f39');
+
+    const sleeve = ctx.createLinearGradient(0, 0, 0, 52);
+    sleeve.addColorStop(0, 'rgba(108, 168, 149, 0.96)');
+    sleeve.addColorStop(1, 'rgba(24, 58, 52, 0.98)');
+
+    const halo = ctx.createRadialGradient(0, -10, 8, 0, -10, 78);
+    halo.addColorStop(0, 'rgba(132, 214, 187, 0.16)');
+    halo.addColorStop(0.55, 'rgba(132, 214, 187, 0.04)');
+    halo.addColorStop(1, 'rgba(132, 214, 187, 0)');
+    ctx.fillStyle = halo;
+    ctx.beginPath();
+    ctx.ellipse(0, -7, 76, 70, 0, 0, Math.PI * 2);
+    ctx.fill();
 
     ctx.fillStyle = 'rgba(4, 10, 19, 0.98)';
     ctx.beginPath();
-    ctx.ellipse(0, -31, 13, 10, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, -31, 12, 10, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.beginPath();
     ctx.arc(0, -43, 7, 0, Math.PI * 2);
     ctx.fill();
+    ctx.strokeStyle = 'rgba(240, 207, 114, 0.34)';
+    ctx.lineWidth = 1.1;
+    ctx.beginPath();
+    ctx.moveTo(-15, -38);
+    ctx.quadraticCurveTo(0, -47, 15, -38);
+    ctx.stroke();
+    ctx.strokeStyle = 'rgba(240, 207, 114, 0.3)';
+    ctx.beginPath();
+    ctx.moveTo(-10, -42);
+    ctx.lineTo(10, -42);
+    ctx.moveTo(0, -51);
+    ctx.lineTo(0, -43);
+    ctx.stroke();
 
     ctx.strokeStyle = 'rgba(246, 238, 220, 0.2)';
     ctx.lineWidth = 1.1;
@@ -4348,29 +4375,63 @@ const spiritBeastQualities = {
 
     ctx.fillStyle = 'rgba(8, 19, 19, 0.68)';
     ctx.beginPath();
-    ctx.ellipse(0, 42, 64, 13, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, 43, 70, 13, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = 'rgba(240, 207, 114, 0.2)';
+    ctx.beginPath();
+    ctx.moveTo(0, 31);
+    ctx.quadraticCurveTo(-20, 36, -34, 48);
+    ctx.quadraticCurveTo(-12, 47, 0, 39);
+    ctx.quadraticCurveTo(12, 47, 34, 48);
+    ctx.quadraticCurveTo(20, 36, 0, 31);
     ctx.fill();
 
     ctx.fillStyle = robe;
     ctx.beginPath();
     ctx.moveTo(0, -18);
-    ctx.bezierCurveTo(-18, -14, -34, 6, -39, 31);
-    ctx.bezierCurveTo(-54, 34, -65, 40, -76, 49);
-    ctx.bezierCurveTo(-42, 54, -20, 48, -8, 36);
-    ctx.bezierCurveTo(-4, 43, 4, 43, 8, 36);
-    ctx.bezierCurveTo(20, 48, 42, 54, 76, 49);
-    ctx.bezierCurveTo(65, 40, 54, 34, 39, 31);
-    ctx.bezierCurveTo(34, 6, 18, -14, 0, -18);
+    ctx.bezierCurveTo(-16, -14, -27, 6, -31, 30);
+    ctx.bezierCurveTo(-20, 41, -8, 45, 0, 45);
+    ctx.bezierCurveTo(8, 45, 20, 41, 31, 30);
+    ctx.bezierCurveTo(27, 6, 16, -14, 0, -18);
     ctx.closePath();
     ctx.fill();
+    ctx.strokeStyle = 'rgba(10, 22, 22, 0.54)';
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
 
-    ctx.strokeStyle = 'rgba(246, 238, 220, 0.16)';
-    ctx.lineWidth = 1;
+    ctx.fillStyle = sleeve;
     ctx.beginPath();
-    ctx.moveTo(-35, 25);
-    ctx.quadraticCurveTo(-12, 30, -2, 39);
-    ctx.moveTo(35, 25);
-    ctx.quadraticCurveTo(12, 30, 2, 39);
+    ctx.moveTo(-19, 1);
+    ctx.bezierCurveTo(-43, 12, -62, 28, -73, 47);
+    ctx.bezierCurveTo(-45, 52, -20, 44, -6, 29);
+    ctx.bezierCurveTo(-9, 18, -12, 8, -19, 1);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(10, 22, 22, 0.32)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(19, 1);
+    ctx.bezierCurveTo(43, 12, 62, 28, 73, 47);
+    ctx.bezierCurveTo(45, 52, 20, 44, 6, 29);
+    ctx.bezierCurveTo(9, 18, 12, 8, 19, 1);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.strokeStyle = 'rgba(246, 238, 220, 0.14)';
+    ctx.lineWidth = 1.1;
+    ctx.beginPath();
+    ctx.moveTo(-25, 7);
+    ctx.quadraticCurveTo(-18, 24, -5, 39);
+    ctx.moveTo(25, 7);
+    ctx.quadraticCurveTo(18, 24, 5, 39);
+    ctx.moveTo(-43, 33);
+    ctx.quadraticCurveTo(-20, 39, -3, 36);
+    ctx.moveTo(43, 33);
+    ctx.quadraticCurveTo(20, 39, 3, 36);
     ctx.stroke();
 
     ctx.fillStyle = 'rgba(132, 214, 187, 0.36)';
@@ -4389,6 +4450,14 @@ const spiritBeastQualities = {
     ctx.lineTo(-2, 36);
     ctx.closePath();
     ctx.fill();
+
+    ctx.strokeStyle = 'rgba(132, 214, 187, 0.62)';
+    ctx.lineWidth = 1.6;
+    for (let i = 0; i < 3; i += 1) {
+      ctx.beginPath();
+      ctx.ellipse(0, 13, 43 + i * 18 + pulse * 1.8, 15 + i * 6, 0, 0.08 * Math.PI, 0.92 * Math.PI);
+      ctx.stroke();
+    }
 
     ctx.restore();
   }
