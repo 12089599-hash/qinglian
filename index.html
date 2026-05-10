@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>青岚洞府</title>
-    <link rel="stylesheet" href="styles.css?v=202605100005" />
+    <link rel="stylesheet" href="styles.css?v=202605100006" />
   </head>
   <body>
     <main class="shell">
@@ -55,28 +55,34 @@
             <h2>修行</h2>
             <button data-breakthrough class="primary-button">突破</button>
           </header>
-          <dl class="vital-grid">
-            <div class="vital-card vital-card-wide">
-              <dt>灵气</dt>
-              <dd data-qi>0 / 25</dd>
-            </div>
-            <div class="vital-card">
-              <dt>灵息</dt>
-              <dd data-qi-rate>3.2 / 分钟</dd>
-            </div>
-            <div class="vital-card">
-              <dt>灵石</dt>
-              <dd data-stones>0</dd>
-            </div>
-            <div class="vital-card">
-              <dt>道行</dt>
-              <dd data-power>22</dd>
-            </div>
-            <div class="vital-card vital-card-wide">
-              <dt>当前行动</dt>
-              <dd><span data-mission>闭关修炼</span> <small data-mission-time>待命</small></dd>
-            </div>
-          </dl>
+          <details class="cultivation-drawer mobile-fold-card" open>
+            <summary>
+              <h3>修行状态</h3>
+              <span>灵气 / 道行 / 行动</span>
+            </summary>
+            <dl class="vital-grid">
+              <div class="vital-card vital-card-wide">
+                <dt>灵气</dt>
+                <dd data-qi>0 / 25</dd>
+              </div>
+              <div class="vital-card">
+                <dt>灵息</dt>
+                <dd data-qi-rate>3.2 / 分钟</dd>
+              </div>
+              <div class="vital-card">
+                <dt>灵石</dt>
+                <dd data-stones>0</dd>
+              </div>
+              <div class="vital-card">
+                <dt>道行</dt>
+                <dd data-power>22</dd>
+              </div>
+              <div class="vital-card vital-card-wide">
+                <dt>当前行动</dt>
+                <dd><span data-mission>闭关修炼</span> <small data-mission-time>待命</small></dd>
+              </div>
+            </dl>
+          </details>
           <section data-progress-plan class="progress-plan" aria-label="当前修行路线"></section>
           <details class="resource-drawer" open>
             <summary>材料丹药</summary>
@@ -321,6 +327,6 @@
 
     <div data-toast-stack class="toast-stack" aria-live="polite"></div>
 
-    <script src="browserGame.js?v=202605100005"></script>
+    <script src="browserGame.js?v=202605100006"></script>
   </body>
 </html>

@@ -264,6 +264,10 @@ h2 {
   gap: 10px;
 }
 
+.cultivation-drawer > summary {
+  display: none;
+}
+
 .vital-card,
 .stats-grid div {
   min-height: 68px;
@@ -303,6 +307,7 @@ h2 {
   font-weight: 900;
 }
 
+.cultivation-drawer summary::after,
 .resource-drawer summary::after,
 .attribute-card summary::after,
 .dao-heart-card summary::after,
@@ -318,6 +323,7 @@ h2 {
   background: rgba(0, 0, 0, 0.14);
 }
 
+.cultivation-drawer[open] summary::after,
 .resource-drawer[open] summary::after,
 .attribute-card[open] summary::after,
 .dao-heart-card[open] summary::after,
@@ -326,6 +332,7 @@ h2 {
   color: var(--jade);
 }
 
+.cultivation-drawer summary::-webkit-details-marker,
 .resource-drawer summary::-webkit-details-marker {
   display: none;
 }
@@ -3192,12 +3199,12 @@ small {
   }
 
   body[data-active-tab="overview"] .hero {
-    min-height: 232px;
+    min-height: 216px;
   }
 
   body[data-active-tab="overview"] .hero canvas {
-    height: 232px;
-    min-height: 232px;
+    height: 216px;
+    min-height: 216px;
   }
 
   body[data-active-tab="overview"] .hero-panel .eyebrow,
@@ -3252,7 +3259,7 @@ small {
   body[data-active-tab="overview"] .stats-panel {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 8px;
   }
 
   body[data-active-tab="overview"] .stats-panel > .attribute-card {
@@ -3275,8 +3282,9 @@ small {
     margin-bottom: 0;
   }
 
-  body[data-active-tab="overview"] .stats-panel > .vital-grid {
+  body[data-active-tab="overview"] .stats-panel > .cultivation-drawer {
     order: 3;
+    margin-top: 0;
   }
 
   body[data-active-tab="overview"] .stats-panel > .state-drawer {
@@ -3306,18 +3314,101 @@ small {
     margin-top: 0;
   }
 
+  .cultivation-drawer,
+  .resource-drawer,
+  .attribute-card,
+  .dao-heart-card,
+  .tribulation-card {
+    padding: 8px;
+  }
+
+  .cultivation-drawer {
+    border: 1px solid rgba(232, 198, 106, 0.18);
+    border-radius: 8px;
+    background:
+      linear-gradient(135deg, rgba(232, 198, 106, 0.07), rgba(125, 211, 183, 0.05)),
+      rgba(0, 0, 0, 0.13);
+  }
+
+  .cultivation-drawer > summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .cultivation-drawer[open] > summary {
+    margin-bottom: 8px;
+  }
+
+  .cultivation-drawer h3 {
+    margin: 0;
+    color: var(--gold);
+    font-size: 0.86rem;
+  }
+
+  .cultivation-drawer summary span {
+    margin-left: auto;
+    color: var(--muted);
+    font-size: 0.72rem;
+    font-weight: 800;
+  }
+
+  .stats-grid,
+  .vital-grid {
+    gap: 6px;
+  }
+
+  .vital-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .vital-card-wide {
+    grid-column: span 1;
+  }
+
+  .vital-card,
+  .stats-grid div {
+    min-height: 48px;
+    padding: 7px;
+  }
+
+  .resource-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+    margin-top: 8px;
+  }
+
+  .resource-grid div {
+    min-height: 44px;
+    padding: 7px;
+  }
+
+  dt {
+    font-size: 0.68rem;
+  }
+
+  dd {
+    margin-top: 4px;
+    font-size: 0.94rem;
+    line-height: 1.18;
+    overflow-wrap: anywhere;
+  }
+
   .mobile-cultivation-hud {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 8px;
-    margin-top: 12px;
+    gap: 6px;
+    margin-top: 8px;
   }
 
   .mobile-cultivation-hud span {
     min-width: 0;
     border: 1px solid rgba(245, 238, 220, 0.12);
     border-radius: 8px;
-    padding: 9px 10px;
+    padding: 6px 7px;
     background:
       linear-gradient(135deg, rgba(125, 211, 183, 0.16), rgba(232, 198, 106, 0.08)),
       rgba(16, 20, 25, 0.72);
@@ -3333,14 +3424,14 @@ small {
 
   .mobile-cultivation-hud small {
     color: #aeb7ad;
-    font-size: 0.68rem;
+    font-size: 0.62rem;
     font-weight: 800;
   }
 
   .mobile-cultivation-hud strong {
-    margin-top: 3px;
+    margin-top: 2px;
     color: #f5eedc;
-    font-size: 0.78rem;
+    font-size: 0.72rem;
     font-variant-numeric: tabular-nums;
   }
 
@@ -3861,15 +3952,15 @@ small {
   }
 
   .vital-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .vital-card-wide {
-    grid-column: span 2;
+    grid-column: span 1;
   }
 
   .resource-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .panel {

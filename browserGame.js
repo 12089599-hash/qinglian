@@ -10393,6 +10393,10 @@ const spiritBeastQualities = {
     if (attributeCard) {
       attributeCard.open = openOverviewDetails;
     }
+    const cultivationDrawer = document.querySelector('.stats-panel > .cultivation-drawer');
+    if (cultivationDrawer) {
+      cultivationDrawer.open = openOverviewDetails;
+    }
     document.querySelectorAll('.stats-panel > .resource-drawer').forEach((drawer) => {
       drawer.open = openOverviewDetails;
     });
