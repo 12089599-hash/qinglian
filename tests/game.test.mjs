@@ -67,6 +67,7 @@ import {
   getMapBossSweepStatus,
   getMissionStatus,
   getGearQuality,
+  getGearSoulStatus,
   getGearSetStatus,
   getGearAffixRerollCost,
   getSectStatus,
@@ -102,6 +103,7 @@ import {
   upgradeCultivationPath,
   upgradeFormation,
   upgradeGear,
+  unlockGearSoulTalent,
   upgradeTreasure,
 } from '../src/gameCore.mjs';
 
@@ -1993,6 +1995,45 @@ test('loot batch dismantle remains repeatable after new eligible drops', () => {
   assert.equal(state.lootEquipment.some((item) => item.uid === 'weak-boots'), false);
 });
 
+test('rare loot dismantles into gear souls for slot-wide growth', () => {
+  const state = createGameState(1000);
+  state.lootEquipment = [
+    { uid: 'heaven-sword', templateId: 'qingfengSword', name: '玄鸣法剑', slot: 'weapon', quality: 4, variant: { rarityId: 'heavenWork' }, bonuses: { attack: 72 } },
+  ];
+
+  const dismantled = disassembleLootEquipment(state, 'heaven-sword', 2000);
+
+  assert.equal(dismantled.ok, true);
+  assert.equal(dismantled.reward.gearSouls >= 2, true);
+  assert.equal(state.gearSouls, dismantled.reward.gearSouls);
+});
+
+test('gear soul talents are bound to slots instead of individual loot drops', () => {
+  const state = createGameState(1000);
+  state.permanentBonuses.power = 600;
+  state.gearSouls = 4;
+  state.forgingEssence = 200;
+  state.lootEquipment = [
+    { uid: 'old-sword', templateId: 'qingfengSword', name: '旧青锋剑', slot: 'weapon', quality: 1, variant: { rarityId: 'spirit' }, bonuses: { attack: 18 } },
+    { uid: 'new-sword', templateId: 'bloodCopperBlade', name: '新赤铜刀', slot: 'weapon', quality: 2, variant: { rarityId: 'mystic' }, bonuses: { attack: 36 } },
+  ];
+
+  equipLootEquipment(state, 'old-sword', 2000);
+  const before = getCombatProfile(state).attack.value;
+  const unlocked = unlockGearSoulTalent(state, 'weapon', 3000);
+  const afterOld = getCombatProfile(state).attack;
+  equipLootEquipment(state, 'new-sword', 4000);
+  const afterNew = getCombatProfile(state).attack;
+  const soul = getGearSoulStatus(state).slots.find((slot) => slot.id === 'weapon');
+
+  assert.equal(unlocked.ok, true);
+  assert.equal(state.gearSoulTalents.weapon, 1);
+  assert.equal(afterOld.value > before, true);
+  assert.equal(afterNew.sources.some((source) => source.label.includes('器魂')), true);
+  assert.equal(soul.level, 1);
+  assert.equal(soul.nextCost.gearSouls > 0, true);
+});
+
 test('equipment details expose build school tags for loot decisions', () => {
   const state = reviveGameState({
     lootEquipment: [
@@ -2436,6 +2477,21 @@ test('bloodlines and sect skills create long term growth layers', () => {
   assert.equal(profile.attributes.some((attribute) => attribute.id === 'bloodline'), true);
 });
 
+test('bloodlines unlock awakening nodes at staged levels', () => {
+  const state = createGameState(1000);
+  state.bloodlines.whiteTigerBlood = 6;
+  state.bloodlines.blackTurtleBlood = 4;
+  const profile = getCombatProfile(state);
+  const details = getEquipmentDetails(state);
+  const whiteTiger = details.bloodlines.find((item) => item.id === 'whiteTigerBlood');
+  const blackTurtle = details.bloodlines.find((item) => item.id === 'blackTurtleBlood');
+
+  assert.equal(whiteTiger.awakeningNodes.filter((node) => node.active).length, 3);
+  assert.equal(blackTurtle.awakeningNodes.filter((node) => node.active).length, 2);
+  assert.equal(profile.critChance.sources.some((source) => source.label.includes('觉醒')), true);
+  assert.equal(profile.defense.sources.some((source) => source.label.includes('觉醒')), true);
+});
+
 test('mission opportunities offer choices and resolve rewards or costs', () => {
   const state = createGameState(1000);
   state.realmIndex = realmIndexByName('筑基一层');
@@ -2634,6 +2690,47 @@ test('deployed spirit beasts trigger named battle techniques', () => {
   assert.equal(battle.pet.skillName, SPIRIT_BEASTS.thunderTiger.skill.name);
   assert.equal(skillRound.skillName, SPIRIT_BEASTS.thunderTiger.skill.name);
   assert.equal(skillRound.damage > 0, true);
+});
+
+test('battle rounds expose readable highlights for combat feedback', () => {
+  const state = createGameState(1000);
+  state.realmIndex = realmIndexByName('筑基一层');
+  state.gear.weapon = 3;
+  state.gear.robe = 4;
+  state.spiritBeasts.thunderTiger = 4;
+  deploySpiritBeast(state, 'thunderTiger', 1000);
+
+  const battle = simulateBossBattle(state, 'demonRift', 2000, () => 0);
+  const highlights = new Set(battle.rounds.flatMap((round) => round.highlights ?? []));
+
+  assert.equal(highlights.has('会心'), true);
+  assert.equal(highlights.has('灵兽协战'), true);
+  assert.equal([...highlights].some((tag) => ['克制', '受制', '护体', '化影'].includes(tag)), true);
+});
+
+test('spirit beast assist roles create distinct battle moments', () => {
+  const pursuit = createGameState(1000);
+  pursuit.realmIndex = realmIndexByName('筑基一层');
+  pursuit.gear.weapon = 3;
+  pursuit.gear.robe = 2;
+  pursuit.spiritBeasts.thunderTiger = 4;
+  deploySpiritBeast(pursuit, 'thunderTiger', 1000);
+
+  const pursuitBattle = simulateBossBattle(pursuit, 'demonRift', 2000, () => 0);
+
+  assert.equal(SPIRIT_BEASTS.thunderTiger.assistRole, 'pursuit');
+  assert.equal(pursuitBattle.rounds.some((round) => round.actor === 'beast' && round.highlights?.includes('追击')), true);
+
+  const guarded = createGameState(1000);
+  guarded.realmIndex = realmIndexByName('筑基四层');
+  guarded.gear.robe = 3;
+  guarded.spiritBeasts.blackTurtle = 3;
+  deploySpiritBeast(guarded, 'blackTurtle', 1000);
+
+  const guardedBattle = simulateBossBattle(guarded, 'demonRift', 2000, () => 0.5);
+
+  assert.equal(SPIRIT_BEASTS.blackTurtle.assistRole, 'guard');
+  assert.equal(guardedBattle.rounds.some((round) => round.actor === 'enemy' && round.highlights?.includes('护主')), true);
 });
 
 test('character profile and equipment details expose concrete attribute sources', () => {
@@ -2869,6 +2966,24 @@ test('map depth trials rotate tribulations into combat', () => {
   assert.equal(started.battle.enemy.tribulation.id, status.tribulation.id);
   assert.match(started.battle.enemy.name, new RegExp(status.tribulation.name));
   assert.equal(started.report.battle.enemy.tribulation.id, status.tribulation.id);
+});
+
+test('map depth key layers grant first-clear gear souls and unlock richer pools', () => {
+  const state = createGameState(1000);
+  state.permanentBonuses.power = 8_000;
+  state.mapDepths.qinglanMountain = 4;
+  const status = getMapDepthStatus(state, 'qinglanMountain');
+
+  const started = startMapDepthTrial(state, 'qinglanMountain', 1000);
+  const sweep = sweepMapDepth(state, 'qinglanMountain', Date.parse('2026-05-11T00:00:00.000Z'));
+
+  assert.equal(status.nextLayer, 5);
+  assert.equal(status.reward.gearSouls >= 1, true);
+  assert.equal(started.ok, true);
+  assert.equal(started.report.reward.gearSouls >= 1, true);
+  assert.equal(state.gearSouls >= started.report.reward.gearSouls, true);
+  assert.equal(sweep.ok, true);
+  assert.equal(sweep.reward.gearSouls, undefined);
 });
 
 test('map depth trials settle immediately after creating battle data', () => {

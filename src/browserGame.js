@@ -319,6 +319,7 @@
     arrayFlags: { label: '阵旗', priority: 1.15, mapIds: ['ancientRuins', 'demonRift', 'swordTomb'], missionId: 'demonRift', approachId: 'relicSearch', commissionId: null, marketItemId: 'arrayManual', detail: '阵法、静室高阶和藏经阁会持续消耗阵旗。' },
     forgingEssence: { label: '炼器精魄', priority: 1.35, mapIds: ['swordTomb', 'mistyValley', 'qinglanMountain'], missionId: 'ancientSwordTomb', approachId: 'relicSearch', commissionId: 'forge', marketItemId: 'forgingAsh', detail: '器位强化、法宝和炼器阁中后期都需要炼器精魄。' },
     bloodEssence: { label: '血脉精魄', priority: 1.3, mapIds: ['demonRift', 'swordTomb', 'mistyValley', 'qinglanMountain'], missionId: 'ancientSwordTomb', approachId: 'relicSearch', commissionId: null, detail: '血脉精魄主要来自玄纹以上战利品分解，是血脉和御灵秘传的长期材料。' },
+    gearSouls: { label: '器魂', priority: 1.32, mapIds: ['ancientRuins', 'swordTomb', 'demonRift'], missionId: 'ancientSwordTomb', approachId: 'relicSearch', commissionId: null, detail: '器魂来自地煞以上战利品分解和秘境关键层，用来点亮器位长期天赋。' },
     insight: { label: '悟道', priority: 1.05, mapIds: ['ancientRuins', 'demonRift', 'swordTomb', 'qinglanMountain'], missionId: 'ancientRuins', approachId: 'daoInquiry', commissionId: null, marketItemId: 'insightScroll', detail: '悟道支撑藏经阁高阶和后续功法沉淀。' },
     qi: { label: '灵气', priority: 0.55, mapIds: ['ancientRuins', 'demonRift', 'swordTomb', 'herbValley', 'qinglanMountain'], missionId: 'ancientRuins', approachId: 'daoInquiry', commissionId: null, detail: '灵气不足时，问道路线、丹药和长期吐纳更重要。' },
   };
@@ -396,6 +397,7 @@ const spiritBeastQualities = {
     bonuses: { power: 9, defense: 5 },
     deployedBonuses: { defense: 8, vitality: 16 },
     combat: { element: 'earth', attack: 14, defense: 8, vitality: 48, speed: 11, critChance: 0.025, pierce: 2 },
+    assistRole: 'guard',
     skill: { name: '裂石扑击', cadence: 4, multiplier: 1.18, critBonus: 0.02, detail: '每四回合借岩势扑击，造成厚土战技。' },
   },
   cloudFox: {
@@ -410,6 +412,7 @@ const spiritBeastQualities = {
     bonuses: { qiRate: 0.04, herbRate: 0.015 },
     deployedBonuses: { vitality: 30, speed: 2, defense: 8 },
     combat: { element: 'wood', attack: 24, defense: 8, vitality: 64, speed: 15, critChance: 0.04, pierce: 3 },
+    assistRole: 'sustain',
     skill: { name: '云息缠灵', cadence: 3, multiplier: 1.32, critBonus: 0.03, detail: '每三回合牵引云息缠住劫影，造成一次青木战技。' },
   },
   greenFeatherCrane: {
@@ -424,6 +427,7 @@ const spiritBeastQualities = {
     bonuses: { breakthrough: 0.012, speed: 2 },
     deployedBonuses: { speed: 4, defense: 6, vitality: 20 },
     combat: { element: 'light', attack: 22, defense: 7, vitality: 58, speed: 17, critChance: 0.035, pierce: 3 },
+    assistRole: 'sustain',
     skill: { name: '青羽拂劫', cadence: 3, multiplier: 1.24, critBonus: 0.02, detail: '每三回合拂散劫影，造成曜阳战技。' },
   },
   thunderTiger: {
@@ -438,6 +442,7 @@ const spiritBeastQualities = {
     bonuses: { power: 22, dangerReduction: 5 },
     deployedBonuses: { attack: 22, pierce: 6, critChance: 0.012, vitality: 18 },
     combat: { element: 'light', attack: 38, defense: 6, vitality: 78, speed: 13, critChance: 0.08, pierce: 8 },
+    assistRole: 'pursuit',
     skill: { name: '雷痕扑杀', cadence: 2, multiplier: 1.58, critBonus: 0.08, detail: '隔回合扑杀劫影，曜阳雷痕更容易压出会心。' },
   },
   flameMarten: {
@@ -452,6 +457,7 @@ const spiritBeastQualities = {
     bonuses: { power: 18, alchemySpeed: 0.012 },
     deployedBonuses: { attack: 18, critChance: 0.012, speed: 2 },
     combat: { element: 'fire', attack: 36, defense: 5, vitality: 66, speed: 18, critChance: 0.085, pierce: 6 },
+    assistRole: 'pursuit',
     skill: { name: '焰尾连环', cadence: 2, multiplier: 1.44, critBonus: 0.07, detail: '隔回合甩出焰尾，造成离火战技。' },
   },
   snowSpiritDeer: {
@@ -466,6 +472,7 @@ const spiritBeastQualities = {
     bonuses: { breakthrough: 0.014, dangerReduction: 4 },
     deployedBonuses: { defense: 12, vitality: 32, speed: 2 },
     combat: { element: 'water', attack: 26, defense: 12, vitality: 82, speed: 14, critChance: 0.035, pierce: 4 },
+    assistRole: 'sustain',
     skill: { name: '雪魄凝心', cadence: 4, multiplier: 1.2, critBonus: 0.02, detail: '每四回合凝出雪魄寒芒，造成玄水战技。' },
   },
   blackTurtle: {
@@ -480,6 +487,7 @@ const spiritBeastQualities = {
     bonuses: { defense: 18, vitality: 58, dangerReduction: 4 },
     deployedBonuses: { defense: 22, vitality: 54 },
     combat: { element: 'earth', attack: 30, defense: 20, vitality: 120, speed: 7, critChance: 0.025, pierce: 5 },
+    assistRole: 'guard',
     skill: { name: '玄甲镇岳', cadence: 3, multiplier: 1.3, critBonus: 0.02, detail: '每三回合以玄甲镇压劫影，造成厚土战技。' },
   },
   goldenEyeApe: {
@@ -494,6 +502,7 @@ const spiritBeastQualities = {
     bonuses: { power: 26, pierce: 5 },
     deployedBonuses: { attack: 24, pierce: 10, critChance: 0.012 },
     combat: { element: 'metal', attack: 46, defense: 12, vitality: 94, speed: 14, critChance: 0.09, pierce: 13 },
+    assistRole: 'break',
     skill: { name: '金瞳破妄', cadence: 2, multiplier: 1.56, critBonus: 0.06, detail: '隔回合以金瞳锁定破绽，造成庚金战技。' },
   },
   shadowMoonLeopard: {
@@ -508,6 +517,7 @@ const spiritBeastQualities = {
     bonuses: { speed: 4, dangerReduction: 5 },
     deployedBonuses: { attack: 18, speed: 7, critChance: 0.018, pierce: 5 },
     combat: { element: 'dark', attack: 42, defense: 8, vitality: 82, speed: 22, critChance: 0.1, pierce: 10 },
+    assistRole: 'pursuit',
     skill: { name: '影月裂身', cadence: 2, multiplier: 1.5, critBonus: 0.08, detail: '隔回合穿入影月，造成玄阴战技。' },
   },
   starSandCarp: {
@@ -522,6 +532,7 @@ const spiritBeastQualities = {
     bonuses: { qiRate: 0.052, herbRate: 0.02, bloodEssenceBonus: 0.018 },
     deployedBonuses: { vitality: 42, defense: 14, elementPower: 10 },
     combat: { element: 'water', attack: 34, defense: 16, vitality: 108, speed: 13, critChance: 0.045, pierce: 7 },
+    assistRole: 'sustain',
     skill: { name: '星砂回潮', cadence: 3, multiplier: 1.42, critBonus: 0.03, detail: '每三回合卷起星砂潮汐，造成玄水战技。' },
   },
   nineSunCrow: {
@@ -536,6 +547,7 @@ const spiritBeastQualities = {
     bonuses: { power: 40, critChance: 0.01 },
     deployedBonuses: { attack: 32, critChance: 0.026, speed: 4, elementPower: 12 },
     combat: { element: 'light', attack: 58, defense: 9, vitality: 92, speed: 19, critChance: 0.13, pierce: 12 },
+    assistRole: 'pursuit',
     skill: { name: '九曜坠火', cadence: 2, multiplier: 1.72, critBonus: 0.1, detail: '隔回合坠下曜阳火羽，造成高爆发战技。' },
   },
   qingqiuFox: {
@@ -550,6 +562,7 @@ const spiritBeastQualities = {
     bonuses: { qiRate: 0.07, breakthrough: 0.018, herbRate: 0.024 },
     deployedBonuses: { vitality: 56, defense: 20, speed: 5, elementPower: 14 },
     combat: { element: 'wood', attack: 46, defense: 18, vitality: 128, speed: 18, critChance: 0.07, pierce: 9 },
+    assistRole: 'sustain',
     skill: { name: '青丘幻息', cadence: 3, multiplier: 1.62, critBonus: 0.05, detail: '每三回合化出幻息灵尾，造成青木战技。' },
   },
   floodDragon: {
@@ -564,6 +577,7 @@ const spiritBeastQualities = {
     bonuses: { power: 56, qiRate: 0.032, dangerReduction: 8, elementPower: 8 },
     deployedBonuses: { attack: 42, defense: 18, vitality: 62, pierce: 12, critChance: 0.018 },
     combat: { element: 'water', attack: 68, defense: 18, vitality: 142, speed: 16, critChance: 0.1, pierce: 16 },
+    assistRole: 'break',
     skill: { name: '蛟影翻江', cadence: 2, multiplier: 1.86, critBonus: 0.08, detail: '隔回合翻起蛟影江潮，造成古血玄水战技。' },
   },
 };
@@ -573,6 +587,29 @@ const spiritBeastQualities = {
     blackTurtleBlood: { id: 'blackTurtleBlood', name: '玄武血', detail: '玄甲藏息，护住血元与叩关余地。', rarityId: 'mystic', maxLevel: 6, cost: (level) => ({ bloodEssence: level, beastCores: Math.max(1, level), spiritStones: scaleCost(110, level) }), bonuses: { defense: 14, vitality: 48, breakthrough: 0.014, dangerReduction: 4 } },
     whiteTigerBlood: { id: 'whiteTigerBlood', name: '白虎血', detail: '杀伐脉象渐醒，锋芒与破势随之抬升。', rarityId: 'mystic', maxLevel: 6, cost: (level) => ({ bloodEssence: level, beastCores: Math.max(1, level), forgingEssence: Math.max(1, Math.ceil(level / 2)), spiritStones: scaleCost(120, level) }), bonuses: { power: 34, attack: 22, pierce: 5, critChance: 0.008 } },
     candleDragonBlood: { id: 'candleDragonBlood', name: '烛阴血', detail: '阴阳烛照，五行斗法与神识底蕴更深。', rarityId: 'earthFiend', maxLevel: 6, cost: (level) => ({ bloodEssence: level + 1, insight: Math.max(1, Math.ceil(level / 2)), spiritStones: scaleCost(160, level) }), bonuses: { elementPower: 16, power: 18, qiRate: 0.012, critChance: 0.006 } },
+  };
+
+  const bloodlineAwakenings = {
+    greenPhoenixBlood: [
+      { level: 2, name: '风骨初鸣', bonuses: { speedPct: 0.018, speed: 3 } },
+      { level: 4, name: '青影回旋', bonuses: { speedPct: 0.026, critChance: 0.006 } },
+      { level: 6, name: '鸾羽先声', bonuses: { speedPct: 0.034, qiRate: 0.012 } },
+    ],
+    blackTurtleBlood: [
+      { level: 2, name: '玄甲沉息', bonuses: { defensePct: 0.022, vitality: 80 } },
+      { level: 4, name: '归墟载岳', bonuses: { defensePct: 0.03, vitalityPct: 0.025 } },
+      { level: 6, name: '北冥回护', bonuses: { defensePct: 0.038, vitalityPct: 0.035 } },
+    ],
+    whiteTigerBlood: [
+      { level: 2, name: '杀纹开锋', bonuses: { attackPct: 0.02, pierce: 7 } },
+      { level: 4, name: '庚金裂隙', bonuses: { attackPct: 0.028, piercePct: 0.022 } },
+      { level: 6, name: '白虎照魄', bonuses: { attackPct: 0.036, critChance: 0.014 } },
+    ],
+    candleDragonBlood: [
+      { level: 2, name: '烛火照形', bonuses: { elementPower: 18, critChance: 0.006 } },
+      { level: 4, name: '阴阳换息', bonuses: { elementPower: 26, vitalityPct: 0.02 } },
+      { level: 6, name: '昼夜同轮', bonuses: { elementPower: 34, attackPct: 0.02 } },
+    ],
   };
 
   const daoHearts = {
@@ -1307,6 +1344,15 @@ const spiritBeastQualities = {
       dangerReductionPerLevel: 6,
       speedPerLevel: 4,
     },
+  };
+
+  const gearSoulTalents = {
+    weapon: { id: 'weapon', name: '剑魄入锋', maxLevel: 5, bonuses: (level) => ({ attackPct: round(level * 0.025), critChance: round(level * 0.004) }) },
+    offhand: { id: 'offhand', name: '余响破形', maxLevel: 5, bonuses: (level) => ({ piercePct: round(level * 0.025), attackPct: round(level * 0.008) }) },
+    amulet: { id: 'amulet', name: '符脉护命', maxLevel: 5, bonuses: (level) => ({ vitalityPct: round(level * 0.025), breakthrough: round(level * 0.004) }) },
+    robe: { id: 'robe', name: '玄衣藏息', maxLevel: 5, bonuses: (level) => ({ defensePct: round(level * 0.03), vitalityPct: round(level * 0.012) }) },
+    jade: { id: 'jade', name: '玉府回灵', maxLevel: 5, bonuses: (level) => ({ qiRate: round(level * 0.006), elementPower: level * 6 }) },
+    boots: { id: 'boots', name: '云踪化影', maxLevel: 5, bonuses: (level) => ({ speedPct: round(level * 0.03), dangerReduction: level * 3 }) },
   };
 
   const gearIntents = {
@@ -2048,6 +2094,7 @@ const spiritBeastQualities = {
     arrayFlags: document.querySelector('[data-array-flags]'),
     forgingEssence: document.querySelector('[data-forging-essence]'),
     bloodEssence: document.querySelector('[data-blood-essence]'),
+    gearSouls: document.querySelector('[data-gear-souls]'),
     heartDemon: document.querySelector('[data-heart-demon]'),
     power: document.querySelector('[data-power]'),
     breakthroughChance: document.querySelector('[data-breakthrough-chance]'),
@@ -2282,6 +2329,19 @@ const spiritBeastQualities = {
     const gearSummary = event.target.closest('.gear-card-brief');
     if (gearSummary && !event.target.closest('button')) {
       event.preventDefault();
+      return;
+    }
+    const soulButton = event.target.closest('[data-upgrade-gear-soul]');
+    if (soulButton) {
+      event.preventDefault();
+      const result = unlockGearSoulTalent(state, soulButton.dataset.upgradeGearSoul);
+      if (result.ok) {
+        showToast('器魂点亮', `${gear[result.slot].name}「${result.talent.name}」升至 ${result.level} 重。`);
+      } else if (result.reason === 'notEnoughResources') {
+        showToast('器魂不足', `点亮需要${formatReward(result.cost)}。`, 'warning');
+      }
+      saveState();
+      render(true);
       return;
     }
     const upgradeButton = event.target.closest('[data-upgrade-gear]');
@@ -2990,6 +3050,7 @@ const spiritBeastQualities = {
       arrayFlags: 0,
       forgingEssence: 0,
       bloodEssence: 0,
+      gearSouls: 0,
       realmIndex: 0,
       heartDemon: 0,
       insight: 0,
@@ -3031,6 +3092,7 @@ const spiritBeastQualities = {
       gear: Object.fromEntries(Object.keys(gear).map((id) => [id, 0])),
       gearQuality: Object.fromEntries(Object.keys(gear).map((id) => [id, 0])),
       gearAffixes: Object.fromEntries(Object.keys(gear).map((id) => [id, null])),
+      gearSoulTalents: Object.fromEntries(Object.keys(gear).map((id) => [id, 0])),
       lootEquipment: [],
       lootDropSerial: 0,
       equippedLoot: Object.fromEntries(Object.keys(gear).map((id) => [id, null])),
@@ -3134,6 +3196,7 @@ const spiritBeastQualities = {
     state.arrayFlags = Math.max(0, Number(state.arrayFlags) || 0);
     state.forgingEssence = Math.max(0, Number(state.forgingEssence) || 0);
     state.bloodEssence = Math.max(0, Number(state.bloodEssence) || 0);
+    state.gearSouls = Math.max(0, Number(state.gearSouls) || 0);
     state.sectDisciples = clampInteger(state.sectDisciples, 0, getSectCapacity(state));
     state.sectReputation = Math.max(0, Number(state.sectReputation) || 0);
     state.sectSkills = normalizeLevels(state.sectSkills, sectSkills);
@@ -3149,6 +3212,7 @@ const spiritBeastQualities = {
     state.gear = normalizeLevels(state.gear, gear);
     state.gearQuality = normalizeGearQuality(state.gearQuality);
     state.gearAffixes = normalizeGearAffixes(state.gearAffixes);
+    state.gearSoulTalents = normalizeLevels(state.gearSoulTalents, gearSoulTalents);
     const savedLootEquipment = state.lootEquipment;
     state.lootEquipment = normalizeLootEquipment(savedLootEquipment);
     state.gear = inheritLootLevelsToGear(state.gear, savedLootEquipment);
@@ -3837,11 +3901,12 @@ const spiritBeastQualities = {
   function selectMapLootTemplate(state, mission) {
     const mapId = getMissionMapId(mission);
     const profile = getMapLootProfile(mapId);
+    const depthPoolBonus = Math.floor((state.mapDepths?.[mapId] || 0) / 10);
     const completed = state.completedMissions?.[mission.id] || 0;
     const dropIndex = Math.max(0, Math.floor(completed / profile.dropEvery) - 1);
     const allTemplates = Object.values(lootEquipment);
-    const preferredTemplates = allTemplates.filter((template) => (template.lootTier || 0) <= (profile.tier || 0) + 1);
-    const rareWindow = Math.max(10, 34 - (profile.tier || 0) * 5);
+    const preferredTemplates = allTemplates.filter((template) => (template.lootTier || 0) <= (profile.tier || 0) + 1 + depthPoolBonus);
+    const rareWindow = Math.max(8, 34 - ((profile.tier || 0) + depthPoolBonus) * 5);
     const useFullPool = dropIndex > 0 && (dropIndex + hashString(`${mapId}:rare`)) % rareWindow === 0;
     const templates = useFullPool ? allTemplates : preferredTemplates;
     const seedOffset = hashString(`${mapId}:${mission.id}`) % templates.length;
@@ -4212,6 +4277,7 @@ const spiritBeastQualities = {
     if (refs.arrayFlags) refs.arrayFlags.textContent = Math.floor(state.arrayFlags);
     if (refs.forgingEssence) refs.forgingEssence.textContent = Math.floor(state.forgingEssence || 0);
     if (refs.bloodEssence) refs.bloodEssence.textContent = Math.floor(state.bloodEssence || 0);
+    if (refs.gearSouls) refs.gearSouls.textContent = Math.floor(state.gearSouls || 0);
     refs.heartDemon.textContent = Math.floor(state.heartDemon);
     refs.power.textContent = calculatePower(state);
     refs.breakthroughChance.textContent = `${Math.round(calculateBreakthroughChance(state, Date.now()) * 100)}%`;
@@ -4806,6 +4872,76 @@ const spiritBeastQualities = {
     ), 0);
   }
 
+  function getGearSoulTalentCost(nextLevel) {
+    return {
+      gearSouls: Math.max(1, Math.ceil(nextLevel * 1.2)),
+      forgingEssence: tieredLinearCost(24, nextLevel),
+    };
+  }
+
+  function getGearSoulSlotBonus(state, slot) {
+    const talent = gearSoulTalents[slot];
+    const level = clampInteger(state.gearSoulTalents?.[slot] || 0, 0, talent?.maxLevel || 0);
+    return talent && level > 0 ? talent.bonuses(level) : {};
+  }
+
+  function getGearSoulBonus(state, key) {
+    return Object.keys(gearSoulTalents).reduce((total, slot) => total + (getGearSoulSlotBonus(state, slot)[key] || 0), 0);
+  }
+
+  function getGearSoulSources(state, key, mode = 'flat') {
+    return Object.values(gearSoulTalents)
+      .map((talent) => {
+        const value = getGearSoulSlotBonus(state, talent.id)[key] || 0;
+        return value ? { label: `器魂·${talent.name}`, value, mode } : null;
+      })
+      .filter(Boolean);
+  }
+
+  function getGearSoulStatus(state) {
+    state.gearSoulTalents = normalizeLevels(state.gearSoulTalents, gearSoulTalents);
+    return {
+      resource: Math.floor(state.gearSouls || 0),
+      slots: Object.values(gearSoulTalents).map((talent) => {
+        const level = state.gearSoulTalents[talent.id] || 0;
+        const maxed = level >= talent.maxLevel;
+        const nextLevel = level + 1;
+        return {
+          id: talent.id,
+          slotName: gear[talent.id]?.name || talent.id,
+          name: talent.name,
+          level,
+          maxLevel: talent.maxLevel,
+          maxed,
+          effects: effectsFromBonusObject(talent.bonuses(level)),
+          nextEffects: maxed ? [] : effectsFromBonusObject(talent.bonuses(nextLevel)),
+          nextCost: maxed ? null : getGearSoulTalentCost(nextLevel),
+        };
+      }),
+    };
+  }
+
+  function unlockGearSoulTalent(state, slot, now = Date.now()) {
+    const talent = gearSoulTalents[slot];
+    if (!talent) {
+      return { ok: false, reason: 'unknownSlot' };
+    }
+    state.gearSoulTalents = normalizeLevels(state.gearSoulTalents, gearSoulTalents);
+    const level = state.gearSoulTalents[slot] || 0;
+    if (level >= talent.maxLevel) {
+      return { ok: false, reason: 'maxLevel' };
+    }
+    const cost = getGearSoulTalentCost(level + 1);
+    if (!canAfford(state, cost)) {
+      addLog(state, now, `点亮${talent.name}需要${formatReward(cost)}。`);
+      return { ok: false, reason: 'notEnoughResources', cost };
+    }
+    payResources(state, cost);
+    state.gearSoulTalents[slot] = level + 1;
+    addLog(state, now, `${gear[slot]?.name || '器位'}器魂点亮「${talent.name}」${state.gearSoulTalents[slot]} 重。`);
+    return { ok: true, slot, talent, level: state.gearSoulTalents[slot], cost };
+  }
+
   function getTieredLootBonus(level) {
     const safeLevel = clampInteger(level, 0, upgradeTiers[upgradeTiers.length - 1].maxLevel);
     return round(upgradeTiers.reduce((total, tier) => {
@@ -5022,7 +5158,7 @@ const spiritBeastQualities = {
   }
 
   function getDepthDanger(state, map, layer) {
-    return Math.max(0, getDepthPressure(map, layer) - getGearLevelBonus(state, 'dangerReductionPerLevel') - getGearAffixBonus(state, 'dangerReduction') - getGearSetBonus(state, 'dangerReduction') - getEquippedLootBonus(state, 'dangerReduction') - getMapMasteryBonus(state, 'dangerReduction') - getTreasureBonus(state, 'dangerReduction') - getSpiritBeastBonus(state, 'dangerReduction') - getBloodlineBonus(state, 'dangerReduction') - getSectSkillBonus(state, 'dangerReduction') - getDaoHeartBonus(state, 'dangerReduction') - (state.buildings.swordArray || 0) * buildings.swordArray.dangerReductionPerLevel - (state.cultivationPaths?.sword || 0) * cultivationPaths.sword.dangerReductionPerLevel);
+    return Math.max(0, getDepthPressure(map, layer) - getGearLevelBonus(state, 'dangerReductionPerLevel') - getGearAffixBonus(state, 'dangerReduction') - getGearSetBonus(state, 'dangerReduction') - getEquippedLootBonus(state, 'dangerReduction') - getMapMasteryBonus(state, 'dangerReduction') - getTreasureBonus(state, 'dangerReduction') - getSpiritBeastBonus(state, 'dangerReduction') - getBloodlineBonus(state, 'dangerReduction') - getGearSoulBonus(state, 'dangerReduction') - getSectSkillBonus(state, 'dangerReduction') - getDaoHeartBonus(state, 'dangerReduction') - (state.buildings.swordArray || 0) * buildings.swordArray.dangerReductionPerLevel - (state.cultivationPaths?.sword || 0) * cultivationPaths.sword.dangerReductionPerLevel);
   }
 
   function getDepthDuration(map, layer) {
@@ -5048,6 +5184,7 @@ const spiritBeastQualities = {
     }
     if (layer % 5 === 0) {
       reward.forgingEssence = Math.max(1, Math.ceil(layer / 5));
+      reward.gearSouls = Math.max(1, Math.ceil(layer / 10));
     }
     if (layer % 10 === 0) {
       reward.powerBonus = 8 + layer;
@@ -5077,7 +5214,7 @@ const spiritBeastQualities = {
   function scaleRepeatableReward(reward, multiplier) {
     return filterCost(Object.fromEntries(
       Object.entries(reward || {})
-        .filter(([resource]) => resource !== 'powerBonus' && resource !== 'qiRateBonus')
+        .filter(([resource]) => !['powerBonus', 'qiRateBonus', 'gearSouls'].includes(resource))
         .map(([resource, amount]) => [resource, Math.max(1, Math.floor((Number(amount) || 0) * multiplier))]),
     ));
   }
@@ -5382,6 +5519,7 @@ const spiritBeastQualities = {
       { label: '玉佩藏脉', value: getGearLevelBonus(state, 'qiBonusPerLevel'), mode: 'percent' },
       { label: '护符灵纹', value: getGearAffixBonus(state, 'qiBonus'), mode: 'percent' },
       { label: '同调器象', value: getGearSetBonus(state, 'qiBonus'), mode: 'percent' },
+      { label: '器魂回灵', value: getGearSoulBonus(state, 'qiRate'), mode: 'percent' },
       { label: '阵道感悟', value: (state.cultivationPaths.formation || 0) * cultivationPaths.formation.qiBonusPerLevel, mode: 'percent' },
       { label: '奇珍加持', value: getEquippedLootBonus(state, 'qiRate'), mode: 'percent' },
       { label: '地脉熟稔', value: getMapMasteryBonus(state, 'qiRate'), mode: 'percent' },
@@ -5402,6 +5540,7 @@ const spiritBeastQualities = {
       { label: '奇珍加持', value: Math.min(0.1, getEquippedLootBonus(state, 'breakthrough')), mode: 'percent' },
       { label: '法宝灵蕴', value: Math.min(0.12, getTreasureBonus(state, 'breakthrough')), mode: 'percent' },
       { label: '血脉灵契', value: Math.min(0.1, getBloodlineBonus(state, 'breakthrough')), mode: 'percent' },
+      { label: '器魂护关', value: Math.min(0.05, getGearSoulBonus(state, 'breakthrough')), mode: 'percent' },
       { label: '宗门秘传', value: Math.min(0.08, getSectSkillBonus(state, 'breakthrough')), mode: 'percent' },
       { label: '命格道心', value: Math.min(0.1, getDaoHeartBonus(state, 'breakthrough')), mode: 'percent' },
       { label: '悟道灵光', value: Math.min(0.15, (state.insight || 0) * 0.03), mode: 'percent' },
@@ -5416,6 +5555,7 @@ const spiritBeastQualities = {
       + getTreasureBonus(state, 'dangerReduction')
       + getSpiritBeastBonus(state, 'dangerReduction')
       + getBloodlineBonus(state, 'dangerReduction')
+      + getGearSoulBonus(state, 'dangerReduction')
       + getSectSkillBonus(state, 'dangerReduction')
       + getDaoHeartBonus(state, 'dangerReduction')
       + (state.cultivationPaths.sword || 0) * cultivationPaths.sword.dangerReductionPerLevel;
@@ -5450,6 +5590,7 @@ const spiritBeastQualities = {
         { label: '法宝灵蕴', value: getTreasureBonus(state, 'dangerReduction') },
         { label: '灵兽护持', value: getSpiritBeastBonus(state, 'dangerReduction') },
         { label: '血脉灵契', value: getBloodlineBonus(state, 'dangerReduction') },
+        { label: '器魂余荫', value: getGearSoulBonus(state, 'dangerReduction') },
         { label: '宗门秘传', value: getSectSkillBonus(state, 'dangerReduction') },
         { label: '命格道心', value: getDaoHeartBonus(state, 'dangerReduction') },
       ]) },
@@ -5508,9 +5649,11 @@ const spiritBeastQualities = {
             cost: level > 0 && quality.affixId ? getGearAffixRerollCost(state, item.id) : null,
             preview: level > 0 && quality.affixId ? getGearAffixRerollPreview(state, item.id) : { candidates: [], warnings: [] },
           },
+          soul: getGearSoulStatus(state).slots.find((slot) => slot.id === item.id),
         };
       }),
       sets: getGearSetStatus(state),
+      gearSoul: getGearSoulStatus(state),
       lootResonance: getLootResonanceStatus(state),
       loot: (state.lootEquipment || []).map((item) => {
         const slotLevel = state.gear?.[item.slot] || 0;
@@ -5594,6 +5737,7 @@ const spiritBeastQualities = {
           nextEffects: level < beast.maxLevel ? effectsFromBonusObject(scaleBonusObject(beast.bonuses, (level + 1) * growthMultiplier)) : [],
           nextBattleEffects: level < beast.maxLevel ? effectsFromBonusObject(scaleBonusObject(beast.deployedBonuses || {}, (level + 1) * growthMultiplier)) : [],
           skill: beast.skill ? { ...beast.skill } : null,
+          assistRole: beast.assistRole || 'strike',
         };
       }),
       bloodlines: Object.values(bloodlines).map((bloodline) => {
@@ -5610,6 +5754,11 @@ const spiritBeastQualities = {
           nextRarity: getNextRarityMilestone(level, bloodline.maxLevel, bloodline.rarityId || 'common'),
           effects: effectsFromBonusObject(scaleBonusObject(bloodline.bonuses, level)),
           nextEffects: maxed ? [] : effectsFromBonusObject(scaleBonusObject(bloodline.bonuses, nextLevel)),
+          awakeningNodes: (bloodlineAwakenings[bloodline.id] || []).map((node) => ({
+            ...node,
+            active: level >= node.level,
+            effects: effectsFromBonusObject(node.bonuses),
+          })),
           upgrade: {
             maxed,
             nextLevel,
@@ -6453,7 +6602,7 @@ const spiritBeastQualities = {
     const hp = getBattlePlaybackHp(battle, shownRounds);
     const progressPercent = rounds.length ? Math.round((visibleCount / rounds.length) * 100) : 0;
     const latestLowHp = latest?.targetHp <= Math.max(1, Math.round((latest?.targetMaxHp || 1) * 0.28));
-    const signature = `${report.id}:${visibleCount}:${latest?.damage || 0}:${latest?.targetHp || ''}:${latest?.skillName || ''}`;
+    const signature = `${report.id}:${visibleCount}:${latest?.damage || 0}:${latest?.healing || 0}:${latest?.targetHp || ''}:${latest?.skillName || ''}:${latest?.highlights?.join('|') || ''}`;
     if (!force && renderCache.battlePlayback === signature) {
       return;
     }
@@ -6475,21 +6624,21 @@ const spiritBeastQualities = {
           ${battle.pet ? renderCombatantCard('beast', battle.pet, battle.pet.hp ?? battle.pet.maxHp, latest?.actor === 'beast') : ''}
         </div>
         <div class="clash-mark ${latest?.critical ? 'critical' : ''} ${latestLowHp ? 'lowhp' : ''}">
-          <span>${latest ? latest.damage : '起势'}</span>
-          <small>${latest?.skillName || (latest?.critical ? '会心' : latestLowHp ? '气血将尽' : latest?.elementText || '凝神')}</small>
+          <span>${latest ? (latest.healing ? `+${latest.healing}` : latest.damage) : '起势'}</span>
+          <small>${latest?.skillName || latest?.highlights?.[0] || (latest?.critical ? '会心' : latestLowHp ? '气血将尽' : latest?.elementText || '凝神')}</small>
         </div>
         ${renderCombatantCard('enemy', battle.enemy, hp.enemy, latest?.actor === 'enemy')}
       </div>
       <div class="battle-playback-event ${latest?.actor || ''} ${latest?.critical ? 'critical' : ''} ${latestLowHp ? 'lowhp' : ''}">
-        <strong>${latest ? `${formatBattleActorName(latest)}${latest.skillName ? `施展「${latest.skillName}」` : '出手'}${latest.critical ? ' · 会心' : ''}` : '剑气未发'}</strong>
-        <span>${latest ? `${latest.elementText}${formatMitigationText(latest)}，造成 ${latest.damage} 伤害，${latest.targetName}余 ${latest.targetHp} 血元。` : '双方气机相探，五行生克正在流转。'}</span>
+        <strong>${latest ? `${formatBattleActorName(latest)}${latest.skillName ? `施展「${latest.skillName}」` : '出手'}${formatBattleHighlights(latest)}` : '剑气未发'}</strong>
+        <span>${latest ? `${latest.elementText}${formatMitigationText(latest)}，${latest.healing ? `回护 ${latest.healing} 血元` : `造成 ${latest.damage} 伤害`}，${latest.targetName}余 ${latest.targetHp} 血元。` : '双方气机相探，五行生克正在流转。'}</span>
       </div>
       <ol class="battle-playback-log">
         ${shownRounds.slice(-6).map((round) => `
           <li class="${round.actor} ${round.critical ? 'critical' : ''}">
             <span>${round.round}</span>
             <strong>${formatBattleActorName(round)} · ${round.skillName || round.elementText}</strong>
-            <em>${round.critical ? '会心 · ' : ''}${round.damage}${round.mitigated ? ` · 化${round.mitigated}` : ''}</em>
+            <em>${formatBattleHighlights(round, '')}${round.healing ? `回 ${round.healing}` : round.damage}${round.mitigated ? ` · 化${round.mitigated}` : ''}</em>
           </li>
         `).join('') || '<li class="muted"><span>0</span><strong>起势</strong><em>待发</em></li>'}
       </ol>
@@ -6521,7 +6670,9 @@ const spiritBeastQualities = {
     let player = battle.player?.maxHp || 0;
     let enemy = battle.enemy?.maxHp || 0;
     shownRounds.forEach((round) => {
-      if (round.actor === 'player' || round.actor === 'beast') {
+      if (round.healing) {
+        player = round.targetHp;
+      } else if (round.actor === 'player' || round.actor === 'beast') {
         enemy = round.targetHp;
       } else {
         player = round.targetHp;
@@ -6557,6 +6708,11 @@ const spiritBeastQualities = {
     return `，化去 ${round.mitigated}${parts.length ? `（${parts.join('，')}）` : ''}`;
   }
 
+  function formatBattleHighlights(round, prefix = ' · ') {
+    const highlights = Array.isArray(round?.highlights) ? round.highlights : [];
+    return highlights.length ? `${prefix}${highlights.join(' · ')}` : '';
+  }
+
   function getMapCombatAdvice(map, enemyElementId) {
     const enemyElement = combatElements[enemyElementId] || combatElements[map?.boss?.element] || combatElements.earth;
     const playerElement = getCombatProfile(state).element;
@@ -6581,7 +6737,7 @@ const spiritBeastQualities = {
       return;
     }
     const report = state.lastMissionReport;
-    const battleSignature = report?.battle ? `${report.battle.outcome}:${report.battle.summary}:${report.battle.rounds?.map((round) => `${round.actor}-${round.damage}-${round.targetHp}`).join(',')}` : '';
+    const battleSignature = report?.battle ? `${report.battle.outcome}:${report.battle.summary}:${report.battle.rounds?.map((round) => `${round.actor}-${round.damage}-${round.healing || 0}-${round.targetHp}-${round.highlights?.join('|') || ''}`).join(',')}` : '';
     const signature = report ? `${report.id}:${report.outcome}:${report.rewardText}:${report.approach?.id || ''}:${report.approachRewardText || ''}:${report.specialDropText || ''}:${report.rareRewardText}:${report.event?.id || ''}:${battleSignature}` : 'none';
     if (activeBattlePlayback && activeBattlePlayback.reportId === report?.id) {
       refs.missionReport.hidden = true;
@@ -6599,6 +6755,9 @@ const spiritBeastQualities = {
       return;
     }
     const history = (state.missionReportHistory || []).filter((item) => item.id !== report.id).slice(0, 4);
+    const battleRounds = report.battle
+      ? (report.battle.outcome === 'defeat' ? report.battle.rounds.slice(-3) : report.battle.rounds.slice(0, 6))
+      : [];
     refs.missionReport.hidden = false;
     refs.missionReport.classList.toggle('failure', report.outcome === 'failure');
     refs.missionReport.innerHTML = `
@@ -6633,9 +6792,9 @@ const spiritBeastQualities = {
             </div>
           ` : ''}
           <div class="battle-round-list">
-            ${report.battle.rounds.slice(0, 6).map((round) => `
+            ${battleRounds.map((round) => `
               <small class="${round.actor}">
-                ${round.round} · ${formatBattleActorName(round)} · ${round.skillName || round.elementText}${round.critical ? ' · 会心' : ''}${formatMitigationText(round)} · ${round.damage}
+                ${round.round} · ${formatBattleActorName(round)} · ${round.skillName || round.elementText}${formatBattleHighlights(round)}${formatMitigationText(round)} · ${round.healing ? `回 ${round.healing}` : round.damage}
               </small>
             `).join('')}
           </div>
@@ -7236,13 +7395,14 @@ const spiritBeastQualities = {
     if (!refs.gearList) {
       return;
     }
-    const signature = `${getRealmUpgradeLimit(state)}|${Object.keys(gear).map((id) => `${id}:${state.gear[id] || 0}:${state.gearQuality[id] || 0}:${state.gearAffixes[id] || ''}:${state.equippedLoot?.[id] || ''}`).join('|')}`;
+    const signature = `${getRealmUpgradeLimit(state)}|${state.gearSouls || 0}|${Object.keys(gear).map((id) => `${id}:${state.gear[id] || 0}:${state.gearQuality[id] || 0}:${state.gearAffixes[id] || ''}:${state.gearSoulTalents?.[id] || 0}:${state.equippedLoot?.[id] || ''}`).join('|')}`;
     if (!force && renderCache.gear === signature) {
       return;
     }
     const details = getEquipmentDetails(state);
     refs.gearList.innerHTML = `
       ${renderGearSetPanel(details.sets)}
+      ${renderGearSoulPanel(details.gearSoul)}
       ${details.gear.map((item) => renderGearRow(item)).join('')}
     `;
     renderCache.gear = signature;
@@ -7500,7 +7660,7 @@ const spiritBeastQualities = {
     button.textContent = !selected.length
       ? '请选择品质'
       : summary.count > 0
-        ? `分解 ${summary.count}${summary.reward.bloodEssence ? ` · 血脉+${summary.reward.bloodEssence}` : ''}`
+        ? `分解 ${summary.count}${summary.reward.gearSouls ? ` · 器魂+${summary.reward.gearSouls}` : summary.reward.bloodEssence ? ` · 血脉+${summary.reward.bloodEssence}` : ''}`
         : '无可分解';
     button.title = selected.length
       ? (summary.count > 0 ? `预计获得 ${formatReward(summary.reward)}` : '当前勾选品质没有可分解战利品')
@@ -8000,6 +8160,30 @@ const spiritBeastQualities = {
     `;
   }
 
+  function renderGearSoulPanel(gearSoul) {
+    if (!gearSoul) {
+      return '';
+    }
+    return `
+      <section class="resonance-card gear-soul-card">
+        <div>
+          <span>器魂炉</span>
+          <strong>${gearSoul.resource} 器魂</strong>
+          <small>高品战利品分解后沉入器位，换装不重置。</small>
+        </div>
+        <div class="gear-soul-grid">
+          ${gearSoul.slots.map((slot) => `
+            <button data-upgrade-gear-soul="${slot.id}" ${slot.maxed ? 'disabled' : ''}>
+              <strong>${slot.slotName}</strong>
+              <small>${slot.name} ${slot.level}/${slot.maxLevel}</small>
+              <em>${slot.maxed ? '已满' : formatReward(slot.nextCost)}</em>
+            </button>
+          `).join('')}
+        </div>
+      </section>
+    `;
+  }
+
   function renderGearRow(item) {
     const definition = gear[item.id];
     const level = item.level;
@@ -8059,6 +8243,7 @@ const spiritBeastQualities = {
           <span><b>下阶</b><small>${maxed ? '已至圆满' : formatEffects(item.nextEffects)}</small></span>
           <span><b>器象</b><small>${item.intent.detail}</small></span>
           <span><b>词条</b><small>${item.affix.id ? `${item.affix.name}（${formatEffects(item.affix.effects)}）` : '无'}</small></span>
+          <span><b>器魂</b><small>${item.soul ? `${item.soul.name} ${item.soul.level}/${item.soul.maxLevel} · ${formatEffects(item.soul.effects) || '未点亮'}` : '未点亮'}</small></span>
           <span><b>升级</b><small>${maxed ? '已达上限' : realmLocked ? `${getUpgradeTier(nextLevel).name}需更高境界` : formatReward(upgradeCost)}</small></span>
           <span><b>淬炼</b><small>${qualityMaxed ? '火候已满' : level <= 0 ? '先升级后可淬炼' : `${gearQualities[nextQuality]?.name || ''} · 成火 ${Math.round((item.refinement?.chance ?? gearQualities[item.qualityIndex]?.refineChance ?? 0) * 100)}% · ${formatReward(refineCost)}`}</small></span>
           <span><b>洗练</b><small>${item.reroll?.available ? formatReward(rerollCost) : '淬炼后可洗练词条'}</small></span>
@@ -8376,6 +8561,7 @@ const spiritBeastQualities = {
       arrayFlags: Math.max(0, round(after.arrayFlags - before.arrayFlags)),
       forgingEssence: Math.max(0, round((after.forgingEssence || 0) - (before.forgingEssence || 0))),
       bloodEssence: Math.max(0, round((after.bloodEssence || 0) - (before.bloodEssence || 0))),
+      gearSouls: Math.max(0, round((after.gearSouls || 0) - (before.gearSouls || 0))),
     };
   }
 
@@ -8395,6 +8581,7 @@ const spiritBeastQualities = {
       ['阵旗', `+${Math.floor(summary.arrayFlags || 0)}`],
       ['精魄', `+${Math.floor(summary.forgingEssence || 0)}`],
       ['血脉精魄', `+${Math.floor(summary.bloodEssence || 0)}`],
+      ['器魂', `+${Math.floor(summary.gearSouls || 0)}`],
     ].filter((row, index) => index === 0 || row[1] !== '+0');
 
     refs.offlineSummary.innerHTML = rows
@@ -8426,12 +8613,13 @@ const spiritBeastQualities = {
     const treasureBonus = 1 + getTreasureBonus(state, 'qiRate');
     const beastBonus = 1 + getSpiritBeastBonus(state, 'qiRate');
     const bloodlineBonus = 1 + getBloodlineBonus(state, 'qiRate');
+    const gearSoulBonus = 1 + getGearSoulBonus(state, 'qiRate');
     const sectSkillBonus = 1 + getSectSkillBonus(state, 'qiRate');
     const daoHeartBonus = 1 + getDaoHeartBonus(state, 'qiRate');
     const setBonus = 1 + getGearSetBonus(state, 'qiBonus');
     const pillBoost = state.pillBoostUntil && state.pillBoostUntil > now ? getGatherQiPillBoostMultiplier(state) : 1;
     const injuryPenalty = state.injuryUntil && state.injuryUntil > now ? 0.75 : 1;
-    return round(realm.qiRate * buildingBonus * formationBonus * gearBonus * affixBonus * pathBonus * permanentBonus * lootBonus * masteryBonus * treasureBonus * beastBonus * bloodlineBonus * sectSkillBonus * daoHeartBonus * setBonus * pillBoost * injuryPenalty);
+    return round(realm.qiRate * buildingBonus * formationBonus * gearBonus * affixBonus * pathBonus * permanentBonus * lootBonus * masteryBonus * treasureBonus * beastBonus * bloodlineBonus * gearSoulBonus * sectSkillBonus * daoHeartBonus * setBonus * pillBoost * injuryPenalty);
   }
 
   function getGatherQiPillBoostMultiplier(state) {
@@ -8454,6 +8642,7 @@ const spiritBeastQualities = {
     const treasureBonus = Math.min(0.12, getTreasureBonus(state, 'breakthrough'));
     const beastBonus = Math.min(0.08, getSpiritBeastBonus(state, 'breakthrough'));
     const bloodlineBonus = Math.min(0.1, getBloodlineBonus(state, 'breakthrough'));
+    const gearSoulBonus = Math.min(0.05, getGearSoulBonus(state, 'breakthrough'));
     const sectSkillBonus = Math.min(0.08, getSectSkillBonus(state, 'breakthrough'));
     const daoHeartBonus = Math.min(0.1, getDaoHeartBonus(state, 'breakthrough'));
     const setBonus = Math.min(0.08, getGearSetBonus(state, 'breakthrough'));
@@ -8461,7 +8650,7 @@ const spiritBeastQualities = {
     const pillBonus = state.breakthroughBoostUntil && state.breakthroughBoostUntil > now ? 0.12 : 0;
     const foundationBonus = Math.min(0.15, (state.foundationStability || 0) * 0.05);
     const heartDemonPenalty = Math.min(0.35, state.heartDemon * 0.15);
-    return round(Math.max(0.25, Math.min(0.95, 0.75 + preparation + insightBonus + gearBonus + affixBonus + lootBonus + formationBonus + treasureBonus + beastBonus + bloodlineBonus + sectSkillBonus + daoHeartBonus + setBonus + scriptureBonus + pillBonus + foundationBonus - heartDemonPenalty)));
+    return round(Math.max(0.25, Math.min(0.95, 0.75 + preparation + insightBonus + gearBonus + affixBonus + lootBonus + formationBonus + treasureBonus + beastBonus + bloodlineBonus + gearSoulBonus + sectSkillBonus + daoHeartBonus + setBonus + scriptureBonus + pillBonus + foundationBonus - heartDemonPenalty)));
   }
 
   function calculatePower(state) {
@@ -8502,6 +8691,7 @@ const spiritBeastQualities = {
       ...getEquippedLootSources(state, 'attack'),
       ...getLootResonanceSources(state, 'attack'),
       ...getBloodlineSources(state, 'attack'),
+      ...getGearSoulSources(state, 'attack'),
       ...getSectSkillSources(state, 'attack'),
       ...getDeployedSpiritBeastSources(state, 'attack'),
       ...getCombatPercentSources(state, 'attackPct'),
@@ -8514,6 +8704,7 @@ const spiritBeastQualities = {
       ...getEquippedLootSources(state, 'defense'),
       ...getLootResonanceSources(state, 'defense'),
       ...getBloodlineSources(state, 'defense'),
+      ...getGearSoulSources(state, 'defense'),
       ...getSectSkillSources(state, 'defense'),
       ...getDeployedSpiritBeastSources(state, 'defense'),
       ...getCombatPercentSources(state, 'defensePct'),
@@ -8527,6 +8718,7 @@ const spiritBeastQualities = {
       ...getEquippedLootSources(state, 'vitality'),
       ...getLootResonanceSources(state, 'vitality'),
       ...getBloodlineSources(state, 'vitality'),
+      ...getGearSoulSources(state, 'vitality'),
       ...getSectSkillSources(state, 'vitality'),
       ...getDeployedSpiritBeastSources(state, 'vitality'),
       ...getCombatPercentSources(state, 'vitalityPct'),
@@ -8538,6 +8730,7 @@ const spiritBeastQualities = {
       ...getGearSetSources(state, 'speed'),
       ...getEquippedLootSources(state, 'speed'),
       ...getBloodlineSources(state, 'speed'),
+      ...getGearSoulSources(state, 'speed'),
       ...getDeployedSpiritBeastSources(state, 'speed'),
       ...getCombatPercentSources(state, 'speedPct'),
     ]);
@@ -8547,6 +8740,7 @@ const spiritBeastQualities = {
       ...getGearSetSources(state, 'critChance', 'percent'),
       ...getEquippedLootSources(state, 'critChance', 'percent'),
       ...getBloodlineSources(state, 'critChance', 'percent'),
+      ...getGearSoulSources(state, 'critChance', 'percent'),
       ...getDeployedSpiritBeastSources(state, 'critChance', 'percent'),
     ]);
     const pierceSources = compactSources([
@@ -8555,6 +8749,7 @@ const spiritBeastQualities = {
       ...getGearSetSources(state, 'pierce'),
       ...getEquippedLootSources(state, 'pierce'),
       ...getBloodlineSources(state, 'pierce'),
+      ...getGearSoulSources(state, 'pierce'),
       ...getDeployedSpiritBeastSources(state, 'pierce'),
       ...getCombatPercentSources(state, 'piercePct'),
     ]);
@@ -8781,6 +8976,7 @@ const spiritBeastQualities = {
         actorName: String(round.actorName || ''),
         targetName: String(round.targetName || ''),
         damage: Math.max(0, Math.round(Number(round.damage) || 0)),
+        healing: Math.max(0, Math.round(Number(round.healing) || 0)),
         critical: Boolean(round.critical),
         skillName: typeof round.skillName === 'string' ? round.skillName : null,
         element: normalizeBattleElement(round.element),
@@ -8796,6 +8992,7 @@ const spiritBeastQualities = {
         rawDamage: Math.max(0, round(Number(round.rawDamage) || Number(round.damage) || 0)),
         effectiveDefense: Math.max(0, round(Number(round.effectiveDefense) || 0)),
         elementText: String(round.elementText || ''),
+        highlights: Array.isArray(round.highlights) ? round.highlights.map((tag) => String(tag)).filter(Boolean).slice(0, 5) : [],
         targetHp: Math.max(0, Math.round(Number(round.targetHp) || 0)),
         targetMaxHp: Math.max(1, Math.round(Number(round.targetMaxHp) || Number(round.targetHp) || 1)),
       }));
@@ -8821,6 +9018,7 @@ const spiritBeastQualities = {
       maxHp: Math.max(1, Math.round(Number(combatant?.maxHp) || Number(combatant?.vitality) || 1)),
       hp: Math.max(0, Math.round(Number(combatant?.hp) || 0)),
       skillName: typeof combatant?.skillName === 'string' ? combatant.skillName : null,
+      assistRole: typeof combatant?.assistRole === 'string' ? combatant.assistRole : null,
       tribulation: combatant?.tribulation && typeof combatant.tribulation === 'object' ? { ...combatant.tribulation } : null,
     };
   }
@@ -9355,6 +9553,7 @@ const spiritBeastQualities = {
       arrayFlags: state.arrayFlags || 0,
       forgingEssence: state.forgingEssence || 0,
       bloodEssence: state.bloodEssence || 0,
+      gearSouls: state.gearSouls || 0,
     };
   }
 
@@ -9642,6 +9841,7 @@ const spiritBeastQualities = {
       ...getEquippedLootSources(state, key, 'percent'),
       ...getLootResonanceSources(state, key, 'percent'),
       ...getBloodlineSources(state, key, 'percent'),
+      ...getGearSoulSources(state, key, 'percent'),
       ...getSectSkillSources(state, key, 'percent'),
       ...getDeployedSpiritBeastSources(state, key, 'percent'),
     ]);
@@ -9714,6 +9914,11 @@ const spiritBeastQualities = {
       add(resonance.element?.id, resonance.bonuses.elementPower || 0, '战利共鸣');
     }
 
+    const jadeSoul = getGearSoulSlotBonus(state, 'jade');
+    if (jadeSoul.elementPower) {
+      add(getDominantCombatElement(scores).id, jadeSoul.elementPower, '器魂玉府');
+    }
+
     const activeBeast = getActiveSpiritBeast(state);
     if (activeBeast) {
       const level = state.spiritBeasts?.[activeBeast.id] || 0;
@@ -9764,6 +9969,8 @@ const spiritBeastQualities = {
       pierce: Math.max(0, Math.round((combat.pierce || 2) * level * growthMultiplier)),
       skill: beast.skill ? { ...beast.skill } : null,
       skillName: beast.skill?.name || null,
+      assistRole: beast.assistRole || 'strike',
+      level,
     };
   }
 
@@ -9831,30 +10038,53 @@ const spiritBeastQualities = {
   }
 
   function runTurnBattle(player, enemy, { type = 'boss', now = Date.now(), random = null, beast = null } = {}) {
+    const battlefieldEnemy = beast?.assistRole === 'break'
+      ? { ...enemy, defense: Math.max(0, Math.round(enemy.defense * (1 - getBeastBreakReduction(beast)))) }
+      : enemy;
     let playerHp = player.vitality;
-    let enemyHp = enemy.vitality;
+    let enemyHp = battlefieldEnemy.vitality;
     const rounds = [];
     const maxRounds = type === 'depth' ? 8 : 10;
-    const playerHasInitiative = player.speed >= enemy.speed;
+    const playerHasInitiative = player.speed >= battlefieldEnemy.speed;
     const playerSideTurn = (round) => {
-      const playerHit = resolveCombatHit(player, enemy, round, true, now, random);
+      const playerHit = resolveCombatHit(player, battlefieldEnemy, round, true, now, random);
       enemyHp = Math.max(0, enemyHp - playerHit.damage);
-      rounds.push(createBattleRound(round, 'player', player, enemy, playerHit, enemyHp));
+      rounds.push(createBattleRound(round, 'player', player, battlefieldEnemy, playerHit, enemyHp, null, beast?.assistRole === 'break' ? ['破阵'] : []));
       if (enemyHp <= 0) {
         return;
       }
 
       if (beast) {
+        if (beast.assistRole === 'pursuit' && playerHit.critical) {
+          const pursuit = { name: '追击', multiplier: 0.42, critBonus: 0.02 };
+          const pursuitHit = resolveCombatHit(beast, battlefieldEnemy, round, true, now, random, pursuit);
+          enemyHp = Math.max(0, enemyHp - pursuitHit.damage);
+          rounds.push(createBattleRound(round, 'beast', beast, battlefieldEnemy, pursuitHit, enemyHp, pursuit.name, ['追击']));
+          if (enemyHp <= 0) {
+            return;
+          }
+        }
         const skill = getBeastSkillForRound(beast, round);
-        const beastHit = resolveCombatHit(beast, enemy, round, true, now, random, skill);
+        const beastHit = resolveCombatHit(beast, battlefieldEnemy, round, true, now, random, skill);
         enemyHp = Math.max(0, enemyHp - beastHit.damage);
-        rounds.push(createBattleRound(round, 'beast', beast, enemy, beastHit, enemyHp, skill?.name || null));
+        rounds.push(createBattleRound(round, 'beast', beast, battlefieldEnemy, beastHit, enemyHp, skill?.name || null));
       }
     };
     const enemyTurn = (round) => {
       const enemyHit = resolveCombatHit(enemy, player, round, false, now, random);
+      if (beast?.assistRole === 'guard' && enemyHit.damage > 0) {
+        const blocked = Math.max(1, Math.round(enemyHit.damage * getBeastGuardReduction(beast)));
+        enemyHit.damage = Math.max(1, enemyHit.damage - blocked);
+        enemyHit.mitigated += blocked;
+        enemyHit.assistHighlights = ['护主'];
+      }
       playerHp = Math.max(0, playerHp - enemyHit.damage);
       rounds.push(createBattleRound(round, 'enemy', enemy, player, enemyHit, playerHp));
+      if (beast?.assistRole === 'sustain' && playerHp > 0 && round % 3 === 0 && playerHp < player.vitality) {
+        const heal = Math.max(1, Math.min(player.vitality - playerHp, Math.round(beast.vitality * 0.18)));
+        playerHp = Math.min(player.vitality, playerHp + heal);
+        rounds.push(createSupportBattleRound(round, beast, player, heal, playerHp, ['回元']));
+      }
     };
     for (let round = 1; round <= maxRounds; round += 1) {
       if (playerHasInitiative) {
@@ -9894,11 +10124,12 @@ const spiritBeastQualities = {
         maxHp: beast.vitality,
         hp: beast.vitality,
         skillName: beast.skill?.name || null,
+        assistRole: beast.assistRole || 'strike',
       } : null,
       enemy: {
         name: enemy.name,
         element: enemy.element,
-        maxHp: enemy.vitality,
+        maxHp: battlefieldEnemy.vitality,
         hp: enemyHp,
         tribulation: enemy.tribulation || null,
       },
@@ -9908,6 +10139,14 @@ const spiritBeastQualities = {
         ? `${rounds.at(-1)?.round || 0} 回合压住${enemy.name}。`
         : `${rounds.at(-1)?.round || 0} 回合后退守，${enemy.name}仍有余势。`,
     };
+  }
+
+  function getBeastGuardReduction(beast) {
+    return clampNumber(0.12 + (beast.level || 0) * 0.018 + (beast.defense || 0) / 1000, 0.12, 0.32);
+  }
+
+  function getBeastBreakReduction(beast) {
+    return clampNumber(0.06 + (beast.level || 0) * 0.012 + (beast.pierce || 0) / 1400, 0.06, 0.22);
   }
 
   function createBattleDiagnosis(player, enemy, rounds, playerHp, enemyHp, outcome) {
@@ -9996,13 +10235,14 @@ const spiritBeastQualities = {
     };
   }
 
-  function createBattleRound(round, actor, attacker, defender, hit, targetHp, skillName = null) {
+  function createBattleRound(round, actor, attacker, defender, hit, targetHp, skillName = null, extraHighlights = []) {
     return {
       round,
       actor,
       actorName: attacker.name,
       targetName: defender.name,
       damage: hit.damage,
+      healing: 0,
       critical: hit.critical,
       skillName,
       element: attacker.element,
@@ -10018,9 +10258,55 @@ const spiritBeastQualities = {
       rawDamage: hit.rawDamage,
       effectiveDefense: hit.effectiveDefense,
       elementText: formatElementInteraction(attacker.element, defender.element, hit.elementModifier),
+      highlights: getBattleHighlights(actor, hit, extraHighlights),
       targetHp,
       targetMaxHp: defender.maxHp ?? defender.vitality,
     };
+  }
+
+  function createSupportBattleRound(round, beast, target, healing, targetHp, extraHighlights = []) {
+    return {
+      round,
+      actor: 'beast',
+      actorName: beast.name,
+      targetName: target.name,
+      damage: 0,
+      healing,
+      critical: false,
+      skillName: '回元',
+      element: beast.element,
+      targetElement: target.element,
+      elementModifier: 1,
+      defenseMitigation: 0,
+      speedMitigation: 0,
+      combinedMitigation: 0,
+      initiativeBonus: 0,
+      critGuard: 0,
+      critMultiplier: 1,
+      mitigated: 0,
+      rawDamage: 0,
+      effectiveDefense: 0,
+      elementText: '灵息回护',
+      highlights: getBattleHighlights('beast', { critical: false, elementModifier: 1 }, extraHighlights),
+      targetHp,
+      targetMaxHp: target.maxHp ?? target.vitality,
+    };
+  }
+
+  function getBattleHighlights(actor, hit, extraHighlights = []) {
+    const tags = [];
+    if (hit.critical) tags.push('会心');
+    if ((hit.defenseMitigation || 0) >= 0.18 || (hit.critGuard || 0) >= 0.12) tags.push('护体');
+    if ((hit.speedMitigation || 0) >= 0.08 || (hit.initiativeBonus || 0) >= 0.08) tags.push('化影');
+    if ((hit.elementModifier || 1) > 1.02) {
+      tags.push('克制');
+    } else if ((hit.elementModifier || 1) < 0.98) {
+      tags.push('受制');
+    }
+    if (actor === 'beast') tags.push('灵兽协战');
+    (hit.assistHighlights || []).forEach((tag) => tags.push(tag));
+    extraHighlights.forEach((tag) => tags.push(tag));
+    return [...new Set(tags)];
   }
 
   function seededCombatRoll(now, round, salt) {
@@ -10314,17 +10600,45 @@ const spiritBeastQualities = {
   }
 
   function getBloodlineBonus(state, key) {
-    return Object.entries(state.bloodlines || {}).reduce((total, [bloodlineId, level]) => total + (bloodlines[bloodlineId]?.bonuses?.[key] || 0) * (level || 0), 0);
+    const base = Object.entries(state.bloodlines || {}).reduce((total, [bloodlineId, level]) => total + (bloodlines[bloodlineId]?.bonuses?.[key] || 0) * (level || 0), 0);
+    return base + getBloodlineAwakeningBonus(state, key);
   }
 
   function getBloodlineSources(state, key, mode = 'flat') {
+    return [
+      ...Object.entries(state.bloodlines || {})
+        .map(([bloodlineId, level]) => {
+          const bloodline = bloodlines[bloodlineId];
+          const value = (bloodline?.bonuses?.[key] || 0) * (level || 0);
+          return value ? { label: bloodline.name, value, mode } : null;
+        })
+        .filter(Boolean),
+      ...getBloodlineAwakeningSources(state, key, mode),
+    ];
+  }
+
+  function getBloodlineAwakeningBonus(state, key) {
+    return Object.entries(state.bloodlines || {}).reduce((total, [bloodlineId, level]) => (
+      total + getBloodlineAwakeningNodes(bloodlineId, level)
+        .reduce((sum, node) => sum + (node.bonuses?.[key] || 0), 0)
+    ), 0);
+  }
+
+  function getBloodlineAwakeningSources(state, key, mode = 'flat') {
     return Object.entries(state.bloodlines || {})
-      .map(([bloodlineId, level]) => {
+      .flatMap(([bloodlineId, level]) => {
         const bloodline = bloodlines[bloodlineId];
-        const value = (bloodline?.bonuses?.[key] || 0) * (level || 0);
-        return value ? { label: bloodline.name, value, mode } : null;
-      })
-      .filter(Boolean);
+        return getBloodlineAwakeningNodes(bloodlineId, level)
+          .map((node) => {
+            const value = node.bonuses?.[key] || 0;
+            return value ? { label: `${bloodline?.name || '血脉'}觉醒·${node.name}`, value, mode } : null;
+          })
+          .filter(Boolean);
+      });
+  }
+
+  function getBloodlineAwakeningNodes(bloodlineId, level = 0) {
+    return (bloodlineAwakenings[bloodlineId] || []).filter((node) => (level || 0) >= node.level);
   }
 
   function getSectSkillBonus(state, key) {
@@ -10755,15 +11069,16 @@ const spiritBeastQualities = {
   function rollLootRarity(seed, uid = '', context = null) {
     const serial = Number(String(uid).match(/-(\d+)$/)?.[1]) || 0;
     const profile = getMapLootProfile(context?.mapId);
+    const depthPoolBonus = Math.floor((context?.state?.mapDepths?.[context?.mapId] || 0) / 10);
     if (serial > 0) {
-      const daoInterval = Math.max(120, Math.floor((profile.daoInterval || 500) / (1 + getSectSkillBonus(context?.state || {}, 'lootRarity'))));
+      const daoInterval = Math.max(90, Math.floor((profile.daoInterval || 500) / (1 + getSectSkillBonus(context?.state || {}, 'lootRarity') + depthPoolBonus * 0.18)));
       if (serial % daoInterval === 0) return getRarityTier('dao');
       if (serial % Math.max(70, Math.floor(daoInterval / 4)) === 0) return getRarityTier('heavenWork');
       if (serial % Math.max(28, Math.floor(daoInterval / 12)) === 0) return getRarityTier('earthFiend');
       if (serial % Math.max(10, Math.floor(daoInterval / 36)) === 0) return getRarityTier('mystic');
       if (serial % Math.max(4, Math.floor(daoInterval / 120)) === 0) return getRarityTier('spirit');
     }
-    const tierShift = profile.tier || 0;
+    const tierShift = (profile.tier || 0) + depthPoolBonus;
     const adjustedWeights = rarityTiers.map((tier, index) => {
       if (index === 0) return { ...tier, weight: Math.max(220, tier.weight - tierShift * 28) };
       if (tier.id === 'dao') return { ...tier, weight: Math.max(1, tierShift + 1) };
@@ -10920,13 +11235,7 @@ const spiritBeastQualities = {
     if (state.lockedLoot) {
       delete state.lockedLoot[item.uid];
     }
-    const dismantleMultiplier = getLootDismantleMultiplier(state, item);
-    const rarityIndex = getRarityIndex(getLootRarity(item).id);
-    const reward = filterCost({
-      forgingEssence: Math.floor(2 * dismantleMultiplier),
-      artifacts: 1,
-      bloodEssence: rarityIndex >= 2 ? Math.max(1, Math.floor((rarityIndex - 1) * dismantleMultiplier)) : 0,
-    });
+    const reward = getLootDismantleReward(state, item);
     applyResources(state, reward);
     addLog(state, now, `分解${item.name}，获得${formatReward(reward)}。`);
     return { ok: true, reward, item };
@@ -10974,11 +11283,7 @@ const spiritBeastQualities = {
       return { ok: true, removed: 0, reward: {}, items: [] };
     }
 
-    const reward = filterCost(removedItems.reduce((total, item) => ({
-      forgingEssence: total.forgingEssence + Math.floor(2 * getLootDismantleMultiplier(state, item)),
-      artifacts: total.artifacts + 1,
-      bloodEssence: total.bloodEssence + (getRarityIndex(getLootRarity(item).id) >= 2 ? Math.max(1, Math.floor((getRarityIndex(getLootRarity(item).id) - 1) * getLootDismantleMultiplier(state, item))) : 0),
-    }), { forgingEssence: 0, artifacts: 0, bloodEssence: 0 }));
+    const reward = filterCost(removedItems.reduce((total, item) => mergeRewards(total, getLootDismantleReward(state, item)), {}));
     const removedUids = new Set(removedItems.map((item) => item.uid));
     state.lootEquipment = items.filter((item) => !removedUids.has(item.uid));
     if (state.lockedLoot) {
@@ -10991,6 +11296,17 @@ const spiritBeastQualities = {
     applyResources(state, reward);
     addLog(state, now, `整理战利品，分解 ${removedItems.length} 件闲置装备，获得${formatReward(reward)}。`);
     return { ok: true, removed: removedItems.length, reward, items: removedItems };
+  }
+
+  function getLootDismantleReward(state, item) {
+    const dismantleMultiplier = getLootDismantleMultiplier(state, item);
+    const rarityIndex = getRarityIndex(getLootRarity(item).id);
+    return filterCost({
+      forgingEssence: Math.floor(2 * dismantleMultiplier),
+      artifacts: 1,
+      bloodEssence: rarityIndex >= 2 ? Math.max(1, Math.floor((rarityIndex - 1) * dismantleMultiplier)) : 0,
+      gearSouls: rarityIndex >= 3 ? Math.max(1, Math.floor((rarityIndex - 2) * dismantleMultiplier)) : 0,
+    });
   }
 
   function normalizeLootRaritySelection(rarityIds) {
@@ -11040,11 +11356,7 @@ const spiritBeastQualities = {
 
   function getOrganizableLootSummary(state, options = {}) {
     const items = getOrganizableLootItems(state, options);
-    const reward = filterCost(items.reduce((total, item) => ({
-      forgingEssence: total.forgingEssence + Math.floor(2 * getLootDismantleMultiplier(state, item)),
-      artifacts: total.artifacts + 1,
-      bloodEssence: total.bloodEssence + (getRarityIndex(getLootRarity(item).id) >= 2 ? Math.max(1, Math.floor((getRarityIndex(getLootRarity(item).id) - 1) * getLootDismantleMultiplier(state, item))) : 0),
-    }), { forgingEssence: 0, artifacts: 0, bloodEssence: 0 }));
+    const reward = filterCost(items.reduce((total, item) => mergeRewards(total, getLootDismantleReward(state, item)), {}));
     return { count: items.length, items, reward };
   }
 
@@ -11445,7 +11757,7 @@ const spiritBeastQualities = {
       return `道威永久 +${amount}`;
     }
 
-    const names = { qi: '灵气', herbs: '灵草', spiritStones: '灵石', pills: '聚气丹', gatherQiPill: '聚气丹', clearHeartPill: '清心丹', meridianPill: '护脉丹', bodyTemperPill: '淬体丹', spiritRootPill: '培元丹', beastCores: '妖核', artifacts: '法器', arrayFlags: '阵旗', forgingEssence: '炼器精魄', bloodEssence: '血脉精魄', heartDemon: '心魔', insight: '悟道' };
+    const names = { qi: '灵气', herbs: '灵草', spiritStones: '灵石', pills: '聚气丹', gatherQiPill: '聚气丹', clearHeartPill: '清心丹', meridianPill: '护脉丹', bodyTemperPill: '淬体丹', spiritRootPill: '培元丹', beastCores: '妖核', artifacts: '法器', arrayFlags: '阵旗', forgingEssence: '炼器精魄', bloodEssence: '血脉精魄', gearSouls: '器魂', heartDemon: '心魔', insight: '悟道' };
     return `${amount} ${names[key] || key}`;
   }
 
