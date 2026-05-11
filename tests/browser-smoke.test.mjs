@@ -50,6 +50,7 @@ assert.match(html, /data-hud-qi/);
 assert.match(html, /data-hud-rate/);
 assert.match(html, /data-hud-action/);
 assert.match(source, /const tabGroups/);
+assert.equal((source.match(/function getSelectedMapApproach\(/g) || []).length, 1);
 assert.match(source, /hudQi: document\.querySelector\('\[data-hud-qi\]'\)/);
 assert.match(source, /refs\.hudQi\.textContent =/);
 assert.match(source, /refs\.hudAction\.textContent =/);

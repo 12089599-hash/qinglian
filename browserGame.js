@@ -7117,7 +7117,7 @@ const spiritBeastQualities = {
 
   function renderMapGroup(map) {
     const routeList = map.routes.map((id) => missions[id]).filter(Boolean);
-    const selectedApproach = getSelectedMapApproach(map);
+    const selectedApproach = getSelectedMapApproachOption(map);
     const unlockedRoutes = routeList.filter((mission) => getMissionStatus(state, mission.id).unlocked).length;
     return `
       <section class="map-group ${map.unlocked ? '' : 'locked'}">
@@ -7163,7 +7163,7 @@ const spiritBeastQualities = {
     `;
   }
 
-  function getSelectedMapApproach(map) {
+  function getSelectedMapApproachOption(map) {
     if (!map.approachOptions?.length) {
       return null;
     }
