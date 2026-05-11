@@ -1,4 +1,16 @@
 (function () {
+  const accessGate = createAccessGate();
+  if (accessGate.isUnlocked()) {
+    accessGate.unlock();
+    bootGame();
+  } else {
+    accessGate.mount(() => {
+      accessGate.unlock();
+      bootGame();
+    });
+  }
+
+  function bootGame() {
   const realmGroups = [
     { prefix: '炼气', suffixes: ['一层', '二层', '三层', '四层', '五层', '六层', '七层', '八层', '九层'], startQi: 18, endQi: 4_800, startRate: 3.2, endRate: 7.2, startStone: 4, endStone: 12, qiCurve: 1.46 },
     { prefix: '筑基', suffixes: ['一层', '二层', '三层', '四层', '五层', '六层', '七层', '八层', '九层'], startQi: 16_000, endQi: 220_000, startRate: 6, endRate: 16, startStone: 10, endStone: 24 },
@@ -2352,6 +2364,7 @@ const spiritBeastQualities = {
   if (!gearSections.includes(activeGearSection)) {
     activeGearSection = 'wear';
   }
+  let selectedSpiritBeastId = localStorage.getItem('idle-xianxia-selected-beast') || '';
   const lootFilters = ['all', 'weapon', 'offhand', 'amulet', 'robe', 'jade', 'boots'];
   let activeLootFilter = localStorage.getItem('idle-xianxia-loot-filter') || 'all';
   if (!lootFilters.includes(activeLootFilter)) {
@@ -2702,10 +2715,25 @@ const spiritBeastQualities = {
   });
 
   refs.beastList?.addEventListener('click', (event) => {
+    const selectButton = event.target.closest('[data-select-beast]');
+    if (selectButton) {
+      selectedSpiritBeastId = selectButton.dataset.selectBeast;
+      localStorage.setItem('idle-xianxia-selected-beast', selectedSpiritBeastId);
+      render(true);
+      if (isMobileLayout()) {
+        const item = getEquipmentDetails(state).spiritBeasts.find((beast) => beast.id === selectedSpiritBeastId);
+        if (item) {
+          openSpiritBeastDetailDialog(item);
+        }
+      }
+      return;
+    }
     const deployButton = event.target.closest('[data-deploy-beast]');
     if (deployButton) {
       const result = deploySpiritBeast(state, deployButton.dataset.deployBeast);
       if (result.ok) {
+        selectedSpiritBeastId = result.beast.id;
+        localStorage.setItem('idle-xianxia-selected-beast', selectedSpiritBeastId);
         showToast('灵兽出战', `${result.beast.name}随行入阵。`);
       }
       saveState();
@@ -2716,6 +2744,8 @@ const spiritBeastQualities = {
     if (!button) return;
     const result = trainSpiritBeast(state, button.dataset.trainBeast);
     if (result.ok) {
+      selectedSpiritBeastId = button.dataset.trainBeast;
+      localStorage.setItem('idle-xianxia-selected-beast', selectedSpiritBeastId);
       showToast('灵兽培养', `${spiritBeasts[button.dataset.trainBeast].name}升至 ${result.level} 级${result.autoDeployed ? '，已自动出战。' : '。'}`);
     }
     saveState();
@@ -8191,56 +8221,127 @@ const spiritBeastQualities = {
     if (!refs.beastList) {
       return;
     }
-    const signature = `${state.realmIndex}|${state.spiritStones}|${state.herbs}|${state.beastCores}|${state.bloodEssence}|${state.forgingEssence}|${state.insight}|${state.activeSpiritBeast || ''}|${Object.entries(state.mapDepths || {}).map(([id, layer]) => `${id}:${layer}`).join('|')}|${Object.keys(state.defeatedBosses || {}).join(',')}|${Object.entries(state.spiritBeasts || {}).map(([id, level]) => `${id}:${level}`).join('|')}`;
+    const signature = `${selectedSpiritBeastId}|${state.realmIndex}|${state.spiritStones}|${state.herbs}|${state.beastCores}|${state.bloodEssence}|${state.forgingEssence}|${state.insight}|${state.activeSpiritBeast || ''}|${Object.entries(state.mapDepths || {}).map(([id, layer]) => `${id}:${layer}`).join('|')}|${Object.keys(state.defeatedBosses || {}).join(',')}|${Object.entries(state.spiritBeasts || {}).map(([id, level]) => `${id}:${level}`).join('|')}`;
     if (!force && renderCache.beasts === signature) {
       return;
     }
     const items = getEquipmentDetails(state).spiritBeasts;
-    const visibleItems = items.filter((item) => item.unlock?.unlocked || item.level > 0 || item.deployed);
-    const hiddenItems = items.filter((item) => !visibleItems.includes(item));
+    const selectedItem = getSelectedSpiritBeastItem(items);
+    const ownedCount = items.filter((item) => item.level > 0).length;
+    const lockedCount = items.filter((item) => !item.unlock?.unlocked && item.level <= 0).length;
     refs.beastList.innerHTML = `
-      ${visibleItems.map((item) => renderSpiritBeastRow(item)).join('')}
-      ${hiddenItems.length ? `
-        <details class="beast-locked-group">
-          <summary>
-            <strong>异兽线索</strong>
-            <span>${hiddenItems.length} 只尚未现踪</span>
-          </summary>
-          <div class="beast-locked-list">
-            ${hiddenItems.map((item) => renderSpiritBeastRow(item)).join('')}
+      <div class="beast-compendium">
+        <div class="beast-gallery-panel">
+          <div class="beast-gallery-head">
+            <strong>灵兽图鉴</strong>
+            <span>${ownedCount} 已结契 · ${lockedCount} 未现踪</span>
           </div>
-        </details>
-      ` : ''}
+          <div class="beast-gallery">
+            ${items.map((item) => renderSpiritBeastTile(item, item.id === selectedItem.id)).join('')}
+          </div>
+        </div>
+        ${renderSpiritBeastDetail(selectedItem)}
+      </div>
     `;
     renderCache.beasts = signature;
   }
 
-  function renderSpiritBeastRow(item) {
+  function getSelectedSpiritBeastItem(items) {
+    const selected = items.find((item) => item.id === selectedSpiritBeastId)
+      || items.find((item) => item.deployed)
+      || items.find((item) => item.level > 0)
+      || items.find((item) => item.unlock?.unlocked)
+      || items[0];
+    if (selected && selected.id !== selectedSpiritBeastId) {
+      selectedSpiritBeastId = selected.id;
+      localStorage.setItem('idle-xianxia-selected-beast', selectedSpiritBeastId);
+    }
+    return selected;
+  }
+
+  function renderSpiritBeastTile(item, selected = false) {
+    const locked = !item.unlock?.unlocked;
+    const statusText = item.deployed ? '随行' : locked ? '未现踪' : item.level > 0 ? '已结契' : '可结契';
+    const briefEffects = item.level > 0
+      ? formatShortEffects(item.deployed ? item.battleEffects : item.collectionEffects, 1)
+      : locked ? item.unlock.hint : '线索已齐，可培养结契';
+    return `
+      <button class="beast-tile ${selected ? 'selected' : ''} ${item.deployed ? 'active' : ''} ${locked ? 'locked' : ''}" data-select-beast="${item.id}" type="button">
+          <span class="beast-icon beast-icon-${item.id}" aria-hidden="true"></span>
+        <span class="beast-tile-main">
+          <strong>${item.name}</strong>
+          <small>${item.quality.name} · ${item.rarity.name}</small>
+          <em>${item.level} / ${item.maxLevel} · ${statusText}</em>
+          <i>${briefEffects}</i>
+        </span>
+      </button>
+    `;
+  }
+
+  function renderSpiritBeastDetail(item) {
     const definition = spiritBeasts[item.id];
     const maxed = item.level >= item.maxLevel;
     const nextLevel = item.level + 1;
     const cost = maxed ? null : definition.cost(nextLevel);
     const locked = !item.unlock?.unlocked;
+    const statusText = item.deployed ? '出战中' : locked ? '未现踪' : item.level > 0 ? '已结契' : '可结契';
     return `
-      <div class="system-row beast-row ${item.deployed ? 'active' : ''} ${locked ? 'locked' : ''}">
-        <span class="beast-icon beast-icon-${item.id}" aria-hidden="true"></span>
-        <div>
-          <strong>${item.name} <small>${item.quality.name} · ${item.rarity.name} · ${item.level} / ${item.maxLevel}${item.deployed ? ' · 出战' : locked ? ' · 未现踪' : ''}</small></strong>
-          <span>${item.detail}</span>
-          <small>血统：${item.quality.name} · 成长 ${Math.round(item.growthMultiplier * 100)}%</small>
-          ${locked ? `<small>线索：${item.unlock.hint}</small>` : ''}
-          <small>收集：${formatEffects(item.collectionEffects) || '尚未驯养'}</small>
-          <small>出战：${formatEffects(item.battleEffects) || '尚未形成协战'}${maxed ? '' : ` · 下阶 ${formatEffects(item.nextBattleEffects)}`}</small>
-          ${item.skill ? `<small>战技：${item.skill.name} · ${item.skill.detail}</small>` : ''}
-          <small>${item.nextRarity ? `下个资质 ${item.nextRarity.name} · ${item.nextRarity.level} 级` : '资质已稳'}</small>
-          <small>${maxed ? '已达上限' : `培养需 ${formatReward(cost)}`}</small>
+      <aside class="beast-detail-panel ${item.deployed ? 'active' : ''} ${locked ? 'locked' : ''}">
+        <div class="beast-detail-hero">
+          <span class="beast-icon beast-icon-${item.id}" aria-hidden="true"></span>
+          <div>
+            <small>${statusText}</small>
+            <h4>${item.name}</h4>
+            <p>血统：${item.quality.name} · ${item.rarity.name} · ${item.level} / ${item.maxLevel}</p>
+          </div>
         </div>
-        <div class="row-actions">
+        <p class="beast-detail-intro">${item.detail}</p>
+        <div class="beast-detail-grid">
+          <div>
+            <strong>收集底蕴</strong>
+            <span>${formatEffects(item.collectionEffects) || '尚未驯养'}</span>
+          </div>
+          <div>
+            <strong>出战协力</strong>
+            <span>${formatEffects(item.battleEffects) || '尚未形成协战'}${maxed ? '' : ` · 下阶 ${formatEffects(item.nextBattleEffects)}`}</span>
+          </div>
+          <div>
+            <strong>成长资质</strong>
+            <span>成长 ${Math.round(item.growthMultiplier * 100)}% · ${item.nextRarity ? `下个资质 ${item.nextRarity.name} · ${item.nextRarity.level} 级` : '资质已稳'}</span>
+          </div>
+          <div>
+            <strong>战技</strong>
+            <span>${item.skill ? `${item.skill.name} · ${item.skill.detail}` : '尚未形成战技'}</span>
+          </div>
+        </div>
+        ${locked ? `<p class="beast-unlock-note">线索：${item.unlock.hint}</p>` : ''}
+        <div class="beast-detail-cost">${maxed ? '已达上限' : `培养需 ${formatReward(cost)}`}</div>
+        <div class="row-actions beast-detail-actions">
           <button data-deploy-beast="${item.id}" ${item.level <= 0 || item.deployed ? 'disabled' : ''}>${item.deployed ? '出战中' : '出战'}</button>
           <button data-train-beast="${item.id}" ${maxed || locked ? 'disabled' : ''}>${locked ? '未现踪' : '培养'}</button>
         </div>
-      </div>
+      </aside>
     `;
+  }
+
+  function formatShortEffects(effects, limit = 2) {
+    return formatEffects((effects || []).slice(0, limit)) || '尚未驯养';
+  }
+
+  function openSpiritBeastDetailDialog(item) {
+    if (!refs.mobileDetailDialog || !refs.mobileDetailBody || !refs.mobileDetailTitle) {
+      return false;
+    }
+    refs.mobileDetailTitle.textContent = item.name;
+    refs.mobileDetailBody.innerHTML = renderSpiritBeastDetail(item);
+    if (typeof refs.mobileDetailDialog.showModal === 'function') {
+      if (!refs.mobileDetailDialog.open) {
+        refs.mobileDetailDialog.showModal();
+      }
+    } else {
+      refs.mobileDetailDialog.setAttribute('open', '');
+    }
+    return true;
   }
 
   function renderBloodlines(force = false) {
@@ -12155,6 +12256,32 @@ const spiritBeastQualities = {
   }
 
   function handleMobileDetailAction(event) {
+    const deployBeastButton = event.target.closest('[data-deploy-beast]');
+    if (deployBeastButton) {
+      event.preventDefault();
+      const result = deploySpiritBeast(state, deployBeastButton.dataset.deployBeast);
+      if (result.ok) {
+        selectedSpiritBeastId = result.beast.id;
+        localStorage.setItem('idle-xianxia-selected-beast', selectedSpiritBeastId);
+        showToast('灵兽出战', `${result.beast.name}随行入阵。`);
+      }
+      saveState();
+      render(true);
+      return true;
+    }
+    const trainBeastButton = event.target.closest('[data-train-beast]');
+    if (trainBeastButton) {
+      event.preventDefault();
+      const result = trainSpiritBeast(state, trainBeastButton.dataset.trainBeast);
+      if (result.ok) {
+        selectedSpiritBeastId = trainBeastButton.dataset.trainBeast;
+        localStorage.setItem('idle-xianxia-selected-beast', selectedSpiritBeastId);
+        showToast('灵兽培养', `${spiritBeasts[trainBeastButton.dataset.trainBeast].name}升至 ${result.level} 级${result.autoDeployed ? '，已自动出战。' : '。'}`);
+      }
+      saveState();
+      render(true);
+      return true;
+    }
     const equipButton = event.target.closest('[data-equip-loot]');
     if (equipButton) {
       event.preventDefault();
@@ -12480,5 +12607,115 @@ const spiritBeastQualities = {
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
+  }
+
+  }
+
+  function createAccessGate() {
+    const gate = document.querySelector('[data-access-gate]');
+    if (!gate) {
+      return {
+        isUnlocked: () => true,
+        unlock() {},
+        mount(callback) {
+          callback();
+        },
+      };
+    }
+
+    const form = gate.querySelector('[data-access-form]');
+    const input = gate.querySelector('[data-access-input]');
+    const error = gate.querySelector('[data-access-error]');
+    const submit = form?.querySelector('button[type="submit"]');
+    const accessKey = 'qinglan-cave-access-v1';
+    const passwordHash = 'db23a6e7a4952c91c84dd68e23cc19d57b4c4408f29f273f1ca8c8d79cb3d893';
+    const fallbackHash = '14txn3dgj4p';
+
+    function isUnlocked() {
+      try {
+        return localStorage.getItem(accessKey) === passwordHash;
+      } catch {
+        return false;
+      }
+    }
+
+    function unlock() {
+      document.body.dataset.accessLocked = 'false';
+      gate.hidden = true;
+      gate.setAttribute('aria-hidden', 'true');
+    }
+
+    function mount(callback) {
+      document.body.dataset.accessLocked = 'true';
+      gate.hidden = false;
+      gate.removeAttribute('aria-hidden');
+      requestAnimationFrame(() => input?.focus());
+      form?.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        if (!input) {
+          return;
+        }
+        if (error) {
+          error.textContent = '';
+        }
+        if (submit) {
+          submit.disabled = true;
+          submit.textContent = '校验中';
+        }
+        const accepted = await verifyPassword(input.value);
+        if (accepted) {
+          try {
+            localStorage.setItem(accessKey, passwordHash);
+          } catch {
+            // Private browsing may block storage; keep the current session unlocked.
+          }
+          callback();
+          return;
+        }
+        input.value = '';
+        input.focus();
+        if (error) {
+          error.textContent = '口令不合，请重新输入。';
+        }
+        if (submit) {
+          submit.disabled = false;
+          submit.textContent = '进入洞府';
+        }
+      });
+    }
+
+    async function verifyPassword(value) {
+      const normalized = String(value || '').trim();
+      if (!normalized) {
+        return false;
+      }
+      const digest = await hashAccessPassword(normalized);
+      return digest === passwordHash || digest === fallbackHash;
+    }
+
+    async function hashAccessPassword(value) {
+      const cryptoApi = globalThis.crypto;
+      if (cryptoApi?.subtle && typeof TextEncoder !== 'undefined') {
+        const data = new TextEncoder().encode(value);
+        const digest = await cryptoApi.subtle.digest('SHA-256', data);
+        return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('');
+      }
+      return accessFallbackHash(value);
+    }
+
+    function accessFallbackHash(value, seed = 0) {
+      let h1 = 0xdeadbeef ^ seed;
+      let h2 = 0x41c6ce57 ^ seed;
+      for (let i = 0; i < value.length; i += 1) {
+        const ch = value.charCodeAt(i);
+        h1 = Math.imul(h1 ^ ch, 2654435761);
+        h2 = Math.imul(h2 ^ ch, 1597334677);
+      }
+      h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+      h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+      return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(36);
+    }
+
+    return { isUnlocked, unlock, mount };
   }
 })();
