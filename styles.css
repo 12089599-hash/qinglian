@@ -1918,7 +1918,8 @@ small {
 }
 
 .building-icon,
-.beast-icon {
+.beast-icon,
+.treasure-icon {
   --icon-art: none;
   display: inline-grid;
   flex: 0 0 auto;
@@ -1935,7 +1936,8 @@ small {
 }
 
 .building-icon::before,
-.beast-icon::before {
+.beast-icon::before,
+.treasure-icon::before {
   content: "";
   display: block;
   width: 100%;
@@ -2614,6 +2616,59 @@ small {
   margin-top: 5px;
   color: var(--gold);
 }
+
+.treasure-row {
+  grid-template-columns: 62px minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.treasure-icon {
+  width: 58px;
+  height: 58px;
+  border-color: rgba(240, 207, 114, 0.32);
+  background:
+    radial-gradient(circle at 50% 50%, rgba(132, 214, 187, 0.1), rgba(0, 0, 0, 0.18) 72%),
+    rgba(2, 12, 10, 0.86);
+}
+
+.treasure-icon::before {
+  transform: scale(1.02);
+  filter:
+    brightness(1.16)
+    contrast(1.1)
+    saturate(1.04)
+    drop-shadow(0 0 5px rgba(132, 214, 187, 0.14))
+    drop-shadow(0 1px 1px rgba(0, 0, 0, 0.5));
+}
+
+.treasure-row strong {
+  color: var(--text);
+}
+
+.treasure-row strong small {
+  color: var(--gold);
+  font-size: 0.72rem;
+}
+
+.treasure-row span {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+}
+
+.treasure-icon-green-edge-sword { --icon-art: url("assets/treasures/green-edge-sword.png?v=202605120200"); }
+.treasure-icon-soul-bell { --icon-art: url("assets/treasures/soul-bell.png?v=202605120200"); }
+.treasure-icon-spirit-pagoda { --icon-art: url("assets/treasures/spirit-pagoda.png?v=202605120200"); }
+.treasure-icon-sword-gourd { --icon-art: url("assets/treasures/sword-gourd.png?v=202605120200"); }
+.treasure-icon-clear-jade-bottle { --icon-art: url("assets/treasures/clear-jade-bottle.png?v=202605120200"); }
+.treasure-icon-star-compass { --icon-art: url("assets/treasures/star-compass.png?v=202605120200"); }
+.treasure-icon-moon-mirror { --icon-art: url("assets/treasures/moon-mirror.png?v=202605120200"); }
+.treasure-icon-moon-pearl { --icon-art: url("assets/treasures/moon-pearl.png?v=202605120200"); }
+.treasure-icon-dao-whisk { --icon-art: url("assets/treasures/dao-whisk.png?v=202605120200"); }
+.treasure-icon-mountain-seal { --icon-art: url("assets/treasures/mountain-seal.png?v=202605120200"); }
+.treasure-icon-spirit-umbrella { --icon-art: url("assets/treasures/spirit-umbrella.png?v=202605120200"); }
+.treasure-icon-binding-cord { --icon-art: url("assets/treasures/binding-cord.png?v=202605120200"); }
 
 .source-hint {
   color: #9de8ca;
@@ -5719,6 +5774,24 @@ small {
     height: 48px;
   }
 
+  .treasure-row.compact-system-row {
+    grid-template-columns: 50px minmax(0, 1fr) auto;
+    align-items: center;
+  }
+
+  .treasure-icon {
+    width: 48px;
+    height: 48px;
+  }
+
+  .treasure-row strong {
+    font-size: 0.92rem;
+  }
+
+  .treasure-row strong small {
+    font-size: 0.64rem;
+  }
+
   .beast-row .row-actions {
     grid-column: 2;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -6062,6 +6135,22 @@ small {
 
   .compact-system-row {
     grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .treasure-row.compact-system-row {
+    grid-template-columns: 46px minmax(0, 1fr);
+  }
+
+  .treasure-row.compact-system-row > button {
+    grid-column: 2;
+    justify-self: start;
+    min-height: 30px;
+    margin-top: 4px;
+  }
+
+  .treasure-icon {
+    width: 44px;
+    height: 44px;
   }
 
   .compact-system-row > button {

@@ -381,9 +381,18 @@
   };
 
   const treasures = {
-    lifeBoundSeal: { id: 'lifeBoundSeal', name: '本命青印', detail: '护持经脉和神识，牵引破境天机，并提供少量道威。', rarityId: 'mystic', maxLevel: 8, cost: (level) => ({ spiritStones: scaleCost(120, level), artifacts: level, forgingEssence: level * 2 }), bonuses: { breakthrough: 0.025, power: 10 } },
-    swordGourd: { id: 'swordGourd', name: '养剑葫', detail: '温养剑气，凝练历练道威并平息行游劫象。', rarityId: 'spirit', maxLevel: 8, cost: (level) => ({ spiritStones: scaleCost(140, level), beastCores: level, forgingEssence: level * 2 }), bonuses: { power: 24, dangerReduction: 4 } },
-    spiritLamp: { id: 'spiritLamp', name: '聚灵灯', detail: '牵引洞府灵机，提升长期灵息效率。', rarityId: 'spirit', maxLevel: 8, cost: (level) => ({ spiritStones: scaleCost(110, level), arrayFlags: level, herbs: scaleCost(10, level) }), bonuses: { qiRate: 0.025 } },
+    lifeBoundSeal: { id: 'lifeBoundSeal', iconId: 'mountain-seal', name: '本命青印', detail: '青印镇住命宫，护持经脉和神识，叩关时多留一线回旋。', rarityId: 'mystic', element: 'earth', maxLevel: 8, cost: (level) => ({ spiritStones: scaleCost(120, level), artifacts: level, forgingEssence: level * 2 }), bonuses: { breakthrough: 0.025, defense: 10, vitality: 22, elementPower: 4 } },
+    swordGourd: { id: 'swordGourd', iconId: 'sword-gourd', name: '养剑葫', detail: '葫中温养剑气，行游遇煞时会自行泄出锋芒。', rarityId: 'spirit', element: 'metal', maxLevel: 8, cost: (level) => ({ spiritStones: scaleCost(140, level), beastCores: level, forgingEssence: level * 2 }), bonuses: { power: 20, attack: 12, dangerReduction: 4, elementPower: 5 } },
+    spiritLamp: { id: 'spiritLamp', iconId: 'spirit-pagoda', name: '聚灵塔', detail: '塔中收拢洞府灵机，让周天吐纳更绵长。', rarityId: 'spirit', element: 'wood', maxLevel: 8, cost: (level) => ({ spiritStones: scaleCost(110, level), arrayFlags: level, herbs: scaleCost(10, level) }), bonuses: { qiRate: 0.022, defense: 6, elementPower: 4 } },
+    greenEdgeSword: { id: 'greenEdgeSword', iconId: 'green-edge-sword', name: '青锋灵剑', detail: '剑锋受灵机淬洗，适合补足正面斗法的破势。', rarityId: 'mystic', element: 'metal', maxLevel: 10, cost: (level) => ({ spiritStones: scaleCost(150, level), artifacts: Math.max(1, level), forgingEssence: level * 3 }), bonuses: { power: 18, attack: 14, pierce: 3, elementPower: 6 } },
+    soulBell: { id: 'soulBell', iconId: 'soul-bell', name: '镇魂铃', detail: '铃音镇住神魂，能削弱劫象，也能稳住会心后的反噬。', rarityId: 'mystic', element: 'light', maxLevel: 10, cost: (level) => ({ spiritStones: scaleCost(145, level), insight: Math.max(1, Math.ceil(level / 2)), artifacts: Math.max(1, Math.ceil(level / 2)) }), bonuses: { breakthrough: 0.012, dangerReduction: 5, critChance: 0.006, elementPower: 5 } },
+    clearJadeBottle: { id: 'clearJadeBottle', iconId: 'clear-jade-bottle', name: '清玉净瓶', detail: '瓶中藏一缕清泉，滋养血元，并让吐纳气息更缓。', rarityId: 'spirit', element: 'water', maxLevel: 8, cost: (level) => ({ spiritStones: scaleCost(125, level), herbs: scaleCost(16, level), artifacts: Math.max(1, Math.ceil(level / 2)) }), bonuses: { qiRate: 0.014, vitality: 30, defense: 5, elementPower: 4 } },
+    starCompass: { id: 'starCompass', iconId: 'star-compass', name: '星罗盘', detail: '盘面推演地势和星路，让秘境推进更稳。', rarityId: 'earthFiend', element: 'light', maxLevel: 10, cost: (level) => ({ spiritStones: scaleCost(160, level), arrayFlags: Math.max(1, level), insight: Math.max(1, Math.ceil(level / 3)) }), bonuses: { dangerReduction: 6, speed: 1, breakthrough: 0.006, elementPower: 6 } },
+    moonMirror: { id: 'moonMirror', iconId: 'moon-mirror', name: '照月镜', detail: '镜面照出一线虚实，护住道体并压低斗法波动。', rarityId: 'earthFiend', element: 'water', maxLevel: 10, cost: (level) => ({ spiritStones: scaleCost(165, level), artifacts: Math.max(1, level), arrayFlags: Math.max(1, Math.ceil(level / 2)) }), bonuses: { defense: 14, vitality: 18, dangerReduction: 4, elementPower: 6 } },
+    moonPearl: { id: 'moonPearl', iconId: 'moon-pearl', name: '太阴灵珠', detail: '珠光收摄灵潮，适合长期积累和叩关前的温养。', rarityId: 'mystic', element: 'water', maxLevel: 10, cost: (level) => ({ spiritStones: scaleCost(150, level), herbs: scaleCost(22, level), forgingEssence: Math.max(1, level) }), bonuses: { qiRate: 0.018, breakthrough: 0.01, vitality: 20, elementPower: 5 } },
+    daoWhisk: { id: 'daoWhisk', iconId: 'dao-whisk', name: '拂云尘', detail: '拂尘扫去浊气，令身法和行游气机更轻。', rarityId: 'spirit', element: 'wood', maxLevel: 8, cost: (level) => ({ spiritStones: scaleCost(118, level), herbs: scaleCost(14, level), beastCores: Math.max(1, Math.ceil(level / 2)) }), bonuses: { qiRate: 0.01, speed: 2, dangerReduction: 3, elementPower: 4 } },
+    spiritUmbrella: { id: 'spiritUmbrella', iconId: 'spirit-umbrella', name: '玄纹灵伞', detail: '伞骨成阵，斗法时能分散部分冲击。', rarityId: 'mystic', element: 'earth', maxLevel: 10, cost: (level) => ({ spiritStones: scaleCost(150, level), arrayFlags: Math.max(1, level), forgingEssence: level * 2 }), bonuses: { defense: 16, vitality: 24, dangerReduction: 3, elementPower: 5 } },
+    bindingCord: { id: 'bindingCord', iconId: 'binding-cord', name: '缚灵索', detail: '索影缠住敌势，降低对手回旋空间。', rarityId: 'mystic', element: 'dark', maxLevel: 10, cost: (level) => ({ spiritStones: scaleCost(155, level), beastCores: Math.max(1, level), forgingEssence: level * 2 }), bonuses: { attack: 8, speed: 1, critChance: 0.006, dangerReduction: 3, elementPower: 5 } },
   };
 
 const spiritBeastQualities = {
@@ -6056,7 +6065,7 @@ const spiritBeastQualities = {
       }),
       treasures: Object.values(treasures).map((treasure) => {
         const level = state.treasures?.[treasure.id] || 0;
-        return { id: treasure.id, name: treasure.name, detail: treasure.detail, level, maxLevel: treasure.maxLevel, rarity: getRarityTierForLevel(level, treasure.rarityId || 'common'), nextRarity: getNextRarityMilestone(level, treasure.maxLevel, treasure.rarityId || 'common'), effects: effectsFromBonusObject(scaleBonusObject(treasure.bonuses, level)), nextEffects: level < treasure.maxLevel ? effectsFromBonusObject(scaleBonusObject(treasure.bonuses, level + 1)) : [] };
+        return { id: treasure.id, iconId: treasure.iconId || treasure.id, name: treasure.name, detail: treasure.detail, element: combatElements[treasure.element]?.name || '', level, maxLevel: treasure.maxLevel, rarity: getRarityTierForLevel(level, treasure.rarityId || 'common'), nextRarity: getNextRarityMilestone(level, treasure.maxLevel, treasure.rarityId || 'common'), effects: effectsFromBonusObject(scaleBonusObject(treasure.bonuses, level)), nextEffects: level < treasure.maxLevel ? effectsFromBonusObject(scaleBonusObject(treasure.bonuses, level + 1)) : [] };
       }),
       spiritBeasts: Object.values(spiritBeasts).map((beast) => {
         const level = state.spiritBeasts?.[beast.id] || 0;
@@ -8212,7 +8221,7 @@ const spiritBeastQualities = {
       return;
     }
     refs.treasureList.innerHTML = getEquipmentDetails(state).treasures
-      .map((item) => renderLongTermRow(item, 'data-upgrade-treasure'))
+      .map((item) => renderTreasureRow(item))
       .join('');
     renderCache.treasures = signature;
   }
@@ -8830,6 +8839,26 @@ const spiritBeastQualities = {
     `;
   }
 
+  function renderTreasureRow(item) {
+    const definition = treasures[item.id];
+    const maxed = item.level >= item.maxLevel;
+    const nextLevel = item.level + 1;
+    const cost = maxed ? null : definition.cost(nextLevel);
+    const iconClass = `treasure-icon treasure-icon-${item.iconId}`;
+    return `
+      <div class="system-row longterm-row treasure-row compact-system-row">
+        <span class="${iconClass}" aria-hidden="true"></span>
+        <div>
+          <strong>${item.name} <small>${item.rarity?.name || '凡品'} · ${item.element || '无相'} · ${item.level} / ${item.maxLevel}</small></strong>
+          <span>${item.detail}</span>
+          <small>当前 ${formatCompactEffects(item.effects, 4) || '尚未温养'}${maxed ? '' : ` · 下阶 ${formatCompactEffects(item.nextEffects, 4)}`}</small>
+          <small>${item.nextRarity ? `下个品阶 ${item.nextRarity.name} · ${item.nextRarity.level} 级` : '品阶已稳'} · ${maxed ? '已达上限' : `培养需 ${formatReward(cost)}`}</small>
+        </div>
+        <button data-upgrade-treasure="${item.id}" ${maxed ? 'disabled' : ''}>培养</button>
+      </div>
+    `;
+  }
+
   function getRecipeEffectText(recipeId) {
     const effects = {
       gatherQiPill: '立即补充灵气，并提升灵息 20 分钟',
@@ -9210,6 +9239,7 @@ const spiritBeastQualities = {
       ...getGearSetSources(state, 'attack'),
       ...getEquippedLootSources(state, 'attack'),
       ...getLootResonanceSources(state, 'attack'),
+      ...getTreasureSources(state, 'attack'),
       ...getBloodlineSources(state, 'attack'),
       ...getGearSoulSources(state, 'attack'),
       ...getSectSkillSources(state, 'attack'),
@@ -9223,6 +9253,7 @@ const spiritBeastQualities = {
       ...getGearSetSources(state, 'defense'),
       ...getEquippedLootSources(state, 'defense'),
       ...getLootResonanceSources(state, 'defense'),
+      ...getTreasureSources(state, 'defense'),
       ...getBloodlineSources(state, 'defense'),
       ...getGearSoulSources(state, 'defense'),
       ...getSectSkillSources(state, 'defense'),
@@ -9237,6 +9268,7 @@ const spiritBeastQualities = {
       ...getGearSetSources(state, 'vitality'),
       ...getEquippedLootSources(state, 'vitality'),
       ...getLootResonanceSources(state, 'vitality'),
+      ...getTreasureSources(state, 'vitality'),
       ...getBloodlineSources(state, 'vitality'),
       ...getGearSoulSources(state, 'vitality'),
       ...getSectSkillSources(state, 'vitality'),
@@ -9249,6 +9281,7 @@ const spiritBeastQualities = {
       ...getGearAffixSources(state, 'speed'),
       ...getGearSetSources(state, 'speed'),
       ...getEquippedLootSources(state, 'speed'),
+      ...getTreasureSources(state, 'speed'),
       ...getBloodlineSources(state, 'speed'),
       ...getGearSoulSources(state, 'speed'),
       ...getDeployedSpiritBeastSources(state, 'speed'),
@@ -9259,6 +9292,7 @@ const spiritBeastQualities = {
       ...getGearAffixSources(state, 'critChance', 'percent'),
       ...getGearSetSources(state, 'critChance', 'percent'),
       ...getEquippedLootSources(state, 'critChance', 'percent'),
+      ...getTreasureSources(state, 'critChance', 'percent'),
       ...getBloodlineSources(state, 'critChance', 'percent'),
       ...getGearSoulSources(state, 'critChance', 'percent'),
       ...getDeployedSpiritBeastSources(state, 'critChance', 'percent'),
@@ -9268,6 +9302,7 @@ const spiritBeastQualities = {
       ...getGearAffixSources(state, 'pierce'),
       ...getGearSetSources(state, 'pierce'),
       ...getEquippedLootSources(state, 'pierce'),
+      ...getTreasureSources(state, 'pierce'),
       ...getBloodlineSources(state, 'pierce'),
       ...getGearSoulSources(state, 'pierce'),
       ...getDeployedSpiritBeastSources(state, 'pierce'),
@@ -10364,6 +10399,7 @@ const spiritBeastQualities = {
       ...getGearSetSources(state, key, 'percent'),
       ...getEquippedLootSources(state, key, 'percent'),
       ...getLootResonanceSources(state, key, 'percent'),
+      ...getTreasureSources(state, key, 'percent'),
       ...getBloodlineSources(state, key, 'percent'),
       ...getGearSoulSources(state, key, 'percent'),
       ...getSectSkillSources(state, key, 'percent'),
@@ -10437,6 +10473,11 @@ const spiritBeastQualities = {
     if (resonance.active) {
       add(resonance.element?.id, resonance.bonuses.elementPower || 0, '战利共鸣');
     }
+
+    Object.entries(state.treasures || {}).forEach(([treasureId, level]) => {
+      const treasure = treasures[treasureId];
+      add(treasure?.element, (treasure?.bonuses?.elementPower || 0) * (level || 0), `法宝${treasure?.name || ''}`);
+    });
 
     const jadeSoul = getGearSoulSlotBonus(state, 'jade');
     if (jadeSoul.elementPower) {
@@ -11192,6 +11233,17 @@ const spiritBeastQualities = {
 
   function getTreasureBonus(state, key) {
     return Object.entries(state.treasures || {}).reduce((total, [treasureId, level]) => total + (treasures[treasureId]?.bonuses?.[key] || 0) * (level || 0), 0);
+  }
+
+  function getTreasureSources(state, key, mode = 'flat') {
+    return Object.entries(state.treasures || {})
+      .filter(([, level]) => level > 0)
+      .map(([treasureId, level]) => {
+        const treasure = treasures[treasureId];
+        const value = (treasure?.bonuses?.[key] || 0) * (level || 0);
+        return value ? { label: `法宝·${treasure.name}`, value: round(value), mode } : null;
+      })
+      .filter(Boolean);
   }
 
   function getActiveSpiritBeast(state) {
