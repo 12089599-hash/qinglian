@@ -1340,8 +1340,10 @@ small {
   isolation: isolate;
   overflow: hidden;
   border-color: rgba(240, 207, 114, 0.38);
+  border-radius: 50%;
   color: var(--gold);
   background:
+    radial-gradient(circle at 50% 46%, rgba(132, 214, 187, 0.11), rgba(5, 18, 16, 0.96) 66%),
     linear-gradient(145deg, rgba(240, 207, 114, 0.08), rgba(5, 18, 16, 0.96) 62%);
   box-shadow:
     inset 0 0 15px rgba(0, 0, 0, 0.54),
@@ -1353,12 +1355,14 @@ small {
 .map-stamp::before {
   content: "";
   position: absolute;
-  inset: 2px;
+  inset: -1px;
   z-index: 0;
-  border-radius: 7px;
-  background: var(--map-art) center / contain no-repeat;
+  border-radius: 50%;
+  background: var(--map-art) center / cover no-repeat;
   filter:
-    saturate(0.96)
+    brightness(1.18)
+    contrast(1.12)
+    saturate(1.02)
     drop-shadow(0 0 5px rgba(132, 214, 187, 0.12))
     drop-shadow(0 1px 1px rgba(0, 0, 0, 0.48));
 }
@@ -1369,32 +1373,32 @@ small {
   inset: 0;
   z-index: 1;
   background:
-    radial-gradient(circle at 48% 44%, transparent 0 46%, rgba(5, 14, 13, 0.28) 78%),
+    radial-gradient(circle at 48% 44%, transparent 0 49%, rgba(5, 14, 13, 0.32) 78%),
     linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(0, 0, 0, 0.18));
 }
 
 .map-stamp-qinglanMountain {
-  --map-art: url("assets/map-icons/qinglan-mountain.png?v=202605120030");
+  --map-art: url("assets/map-icons/qinglan-mountain.png?v=202605120100");
 }
 
 .map-stamp-herbValley {
-  --map-art: url("assets/map-icons/herb-valley.png?v=202605120030");
+  --map-art: url("assets/map-icons/herb-valley.png?v=202605120100");
 }
 
 .map-stamp-mistyValley {
-  --map-art: url("assets/map-icons/misty-valley.png?v=202605120030");
+  --map-art: url("assets/map-icons/misty-valley.png?v=202605120100");
 }
 
 .map-stamp-swordTomb {
-  --map-art: url("assets/map-icons/sword-tomb.png?v=202605120030");
+  --map-art: url("assets/map-icons/sword-tomb.png?v=202605120100");
 }
 
 .map-stamp-demonRift {
-  --map-art: url("assets/map-icons/demon-rift.png?v=202605120030");
+  --map-art: url("assets/map-icons/demon-rift.png?v=202605120100");
 }
 
 .map-stamp-ancientRuins {
-  --map-art: url("assets/map-icons/ancient-ruins.png?v=202605120030");
+  --map-art: url("assets/map-icons/ancient-ruins.png?v=202605120100");
 }
 
 .map-inline-mark {
@@ -1921,9 +1925,9 @@ small {
   place-items: center;
   overflow: hidden;
   border: 1px solid rgba(240, 207, 114, 0.34);
-  border-radius: 10px;
+  border-radius: 50%;
   background:
-    radial-gradient(circle at 50% 44%, rgba(240, 207, 114, 0.14), transparent 38%),
+    radial-gradient(circle at 50% 44%, rgba(240, 207, 114, 0.16), rgba(5, 18, 16, 0.92) 66%),
     linear-gradient(145deg, rgba(240, 207, 114, 0.1), rgba(5, 18, 16, 0.94));
   box-shadow:
     inset 0 0 15px rgba(0, 0, 0, 0.5),
@@ -1936,8 +1940,11 @@ small {
   display: block;
   width: 100%;
   height: 100%;
-  background: var(--icon-art) center / contain no-repeat;
+  background: var(--icon-art) center / cover no-repeat;
+  transform: scale(1.04);
   filter:
+    brightness(1.18)
+    contrast(1.1)
     drop-shadow(0 0 5px rgba(240, 207, 114, 0.14))
     drop-shadow(0 1px 1px rgba(0, 0, 0, 0.42));
 }
@@ -1947,12 +1954,12 @@ small {
   height: 42px;
 }
 
-.building-icon-alchemyFurnace { --icon-art: url("assets/cave-icons/alchemy-furnace.png?v=202605120030"); }
-.building-icon-meditationSeat { --icon-art: url("assets/cave-icons/meditation-seat.png?v=202605120030"); }
-.building-icon-spiritField { --icon-art: url("assets/cave-icons/spirit-field.png?v=202605120030"); }
-.building-icon-swordArray { --icon-art: url("assets/cave-icons/sword-array.png?v=202605120030"); }
-.building-icon-forgingHall { --icon-art: url("assets/cave-icons/forging-hall.png?v=202605120030"); }
-.building-icon-scriptureLibrary { --icon-art: url("assets/cave-icons/scripture-library.png?v=202605120030"); }
+.building-icon-alchemyFurnace { --icon-art: url("assets/cave-icons/alchemy-furnace.png?v=202605120100"); }
+.building-icon-meditationSeat { --icon-art: url("assets/cave-icons/meditation-seat.png?v=202605120100"); }
+.building-icon-spiritField { --icon-art: url("assets/cave-icons/spirit-field.png?v=202605120100"); }
+.building-icon-swordArray { --icon-art: url("assets/cave-icons/sword-array.png?v=202605120100"); }
+.building-icon-forgingHall { --icon-art: url("assets/cave-icons/forging-hall.png?v=202605120100"); }
+.building-icon-scriptureLibrary { --icon-art: url("assets/cave-icons/scripture-library.png?v=202605120100"); }
 
 .building-card.active {
   border-color: rgba(238, 236, 225, 0.72);
@@ -2692,7 +2699,14 @@ small {
 }
 
 .beast-tile.locked {
-  opacity: 0.68;
+  opacity: 0.86;
+}
+
+.beast-tile.locked .beast-icon {
+  opacity: 0.9;
+  filter:
+    saturate(0.76)
+    brightness(1.08);
 }
 
 .beast-tile-main {
@@ -2863,18 +2877,18 @@ small {
 }
 
 .beast-icon-stoneMarten,
-.beast-icon-flameMarten { --icon-art: url("assets/spirit-beasts/marten.png?v=202605120000"); }
+.beast-icon-flameMarten { --icon-art: url("assets/spirit-beasts/marten.png?v=202605120100"); }
 .beast-icon-cloudFox,
-.beast-icon-qingqiuFox { --icon-art: url("assets/spirit-beasts/fox.png?v=202605120000"); }
-.beast-icon-greenFeatherCrane { --icon-art: url("assets/spirit-beasts/crane.png?v=202605120000"); }
-.beast-icon-thunderTiger { --icon-art: url("assets/spirit-beasts/tiger.png?v=202605120000"); }
-.beast-icon-snowSpiritDeer { --icon-art: url("assets/spirit-beasts/deer.png?v=202605120000"); }
-.beast-icon-blackTurtle { --icon-art: url("assets/spirit-beasts/turtle.png?v=202605120000"); }
-.beast-icon-goldenEyeApe { --icon-art: url("assets/spirit-beasts/ape.png?v=202605120000"); }
-.beast-icon-shadowMoonLeopard { --icon-art: url("assets/spirit-beasts/leopard.png?v=202605120000"); }
-.beast-icon-starSandCarp { --icon-art: url("assets/spirit-beasts/carp.png?v=202605120000"); }
-.beast-icon-nineSunCrow { --icon-art: url("assets/spirit-beasts/crow.png?v=202605120000"); }
-.beast-icon-floodDragon { --icon-art: url("assets/spirit-beasts/dragon.png?v=202605120000"); }
+.beast-icon-qingqiuFox { --icon-art: url("assets/spirit-beasts/fox.png?v=202605120100"); }
+.beast-icon-greenFeatherCrane { --icon-art: url("assets/spirit-beasts/crane.png?v=202605120100"); }
+.beast-icon-thunderTiger { --icon-art: url("assets/spirit-beasts/tiger.png?v=202605120100"); }
+.beast-icon-snowSpiritDeer { --icon-art: url("assets/spirit-beasts/deer.png?v=202605120100"); }
+.beast-icon-blackTurtle { --icon-art: url("assets/spirit-beasts/turtle.png?v=202605120100"); }
+.beast-icon-goldenEyeApe { --icon-art: url("assets/spirit-beasts/ape.png?v=202605120100"); }
+.beast-icon-shadowMoonLeopard { --icon-art: url("assets/spirit-beasts/leopard.png?v=202605120100"); }
+.beast-icon-starSandCarp { --icon-art: url("assets/spirit-beasts/carp.png?v=202605120100"); }
+.beast-icon-nineSunCrow { --icon-art: url("assets/spirit-beasts/crow.png?v=202605120100"); }
+.beast-icon-floodDragon { --icon-art: url("assets/spirit-beasts/dragon.png?v=202605120100"); }
 
 .beast-card-body {
   display: grid;
@@ -2950,8 +2964,10 @@ small {
 }
 
 .beast-row.locked .beast-icon {
-  opacity: 0.48;
-  filter: saturate(0.55);
+  opacity: 0.9;
+  filter:
+    saturate(0.76)
+    brightness(1.08);
 }
 
 .beast-row.active .beast-icon {
@@ -5642,7 +5658,7 @@ small {
   .building-icon {
     width: 34px;
     height: 34px;
-    border-radius: 9px;
+    border-radius: 50%;
   }
 
   .building-card span {
