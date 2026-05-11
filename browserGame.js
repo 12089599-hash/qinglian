@@ -4522,6 +4522,8 @@ const spiritBeastQualities = {
   }
 
   function render(forceLists = false) {
+    renderTabs();
+
     const realm = getCurrentRealm(state);
     const progress = Math.max(0, Math.min(1, state.qi / realm.requiredQi));
     const remainingQi = Math.max(0, realm.requiredQi - state.qi);
@@ -8578,17 +8580,17 @@ const spiritBeastQualities = {
     const upgradeCost = maxed || realmLocked ? null : definition.cost(nextLevel);
     const refineCost = qualityMaxed || level <= 0 ? null : getRefineCost(nextQuality);
     const rerollCost = item.reroll?.cost;
-    const equippedText = item.equippedLoot
-      ? `穿戴：${item.equippedLoot.name} · ${item.equippedLoot.rarity?.name || '凡品'} · 战力 ${Math.round(item.equippedLoot.score || 0)}`
-      : '穿戴：未装备战利品';
-    const stageText = `${item.intent.name} · ${item.tier.name} ${level} / ${item.maxLevel} · ${item.qualityName}`;
+    const equippedName = item.equippedLoot?.name || '未穿戴';
+    const cardRarity = item.equippedLoot?.rarity?.name || '未穿戴';
+    const cardStageText = `${item.tier.name} ${level}/${item.maxLevel} · ${cardRarity}`;
     return `
       <details class="equipment-detail-card detail-row" data-gear-detail-card="${item.id}">
         <summary class="gear-card-brief">
+          <span class="gear-card-icon gear-card-icon-${item.id}" aria-hidden="true"></span>
           <span class="gear-brief-main">
-            <strong>${item.name}</strong>
-            <small>${stageText}</small>
-            <span class="gear-quick-line">${equippedText}</span>
+            <span class="gear-card-slot">${item.name}</span>
+            <strong class="gear-card-name">${equippedName}</strong>
+            <small class="gear-card-stage">${cardStageText}</small>
           </span>
           <span class="gear-main-actions">
             <button data-upgrade-gear="${item.id}" ${maxed || realmLocked ? 'disabled' : ''}>升级</button>
