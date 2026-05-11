@@ -1342,8 +1342,7 @@ small {
   border-color: rgba(240, 207, 114, 0.38);
   color: var(--gold);
   background:
-    radial-gradient(circle at 50% 48%, rgba(240, 207, 114, 0.16), transparent 35%),
-    linear-gradient(145deg, rgba(240, 207, 114, 0.12), rgba(5, 18, 16, 0.96) 62%);
+    linear-gradient(145deg, rgba(240, 207, 114, 0.08), rgba(5, 18, 16, 0.96) 62%);
   box-shadow:
     inset 0 0 15px rgba(0, 0, 0, 0.54),
     inset 0 0 0 1px rgba(132, 214, 187, 0.16),
@@ -1354,51 +1353,48 @@ small {
 .map-stamp::before {
   content: "";
   position: absolute;
-  inset: 4px;
-  z-index: -1;
-  border: 1px solid rgba(240, 207, 114, 0.32);
-  border-radius: 50%;
-  background:
-    radial-gradient(circle at 50% 42%, rgba(132, 214, 187, 0.18), transparent 58%),
-    conic-gradient(from 18deg, transparent 0 12deg, rgba(240, 207, 114, 0.16) 12deg 18deg, transparent 18deg 42deg);
-  transform: rotate(-8deg);
-  box-shadow: inset 0 0 8px rgba(132, 214, 187, 0.16);
+  inset: 2px;
+  z-index: 0;
+  border-radius: 7px;
+  background: var(--map-art) center / contain no-repeat;
+  filter:
+    saturate(0.96)
+    drop-shadow(0 0 5px rgba(132, 214, 187, 0.12))
+    drop-shadow(0 1px 1px rgba(0, 0, 0, 0.48));
 }
 
 .map-stamp::after {
   content: "";
-  width: 82%;
-  height: 82%;
-  max-width: 35px;
-  max-height: 35px;
-  background: var(--map-art) center / contain no-repeat;
-  filter:
-    drop-shadow(0 0 5px rgba(240, 207, 114, 0.14))
-    drop-shadow(0 1px 1px rgba(0, 0, 0, 0.42));
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background:
+    radial-gradient(circle at 48% 44%, transparent 0 46%, rgba(5, 14, 13, 0.28) 78%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(0, 0, 0, 0.18));
 }
 
 .map-stamp-qinglanMountain {
-  --map-art: url("assets/map-icons/qinglan-mountain.svg");
+  --map-art: url("assets/map-icons/qinglan-mountain.png?v=202605120030");
 }
 
 .map-stamp-herbValley {
-  --map-art: url("assets/map-icons/herb-valley.svg");
+  --map-art: url("assets/map-icons/herb-valley.png?v=202605120030");
 }
 
 .map-stamp-mistyValley {
-  --map-art: url("assets/map-icons/misty-valley.svg");
+  --map-art: url("assets/map-icons/misty-valley.png?v=202605120030");
 }
 
 .map-stamp-swordTomb {
-  --map-art: url("assets/map-icons/sword-tomb.svg");
+  --map-art: url("assets/map-icons/sword-tomb.png?v=202605120030");
 }
 
 .map-stamp-demonRift {
-  --map-art: url("assets/map-icons/demon-rift.svg");
+  --map-art: url("assets/map-icons/demon-rift.png?v=202605120030");
 }
 
 .map-stamp-ancientRuins {
-  --map-art: url("assets/map-icons/ancient-ruins.svg");
+  --map-art: url("assets/map-icons/ancient-ruins.png?v=202605120030");
 }
 
 .map-inline-mark {
@@ -1940,14 +1936,10 @@ small {
   display: block;
   width: 100%;
   height: 100%;
-  background: var(--icon-art) center / cover no-repeat;
+  background: var(--icon-art) center / contain no-repeat;
   filter:
     drop-shadow(0 0 5px rgba(240, 207, 114, 0.14))
     drop-shadow(0 1px 1px rgba(0, 0, 0, 0.42));
-}
-
-.beast-icon::before {
-  background-size: contain;
 }
 
 .building-icon {
@@ -1955,12 +1947,12 @@ small {
   height: 42px;
 }
 
-.building-icon-alchemyFurnace { --icon-art: url("assets/cave-icons/alchemy-furnace.svg"); }
-.building-icon-meditationSeat { --icon-art: url("assets/cave-icons/meditation-seat.svg"); }
-.building-icon-spiritField { --icon-art: url("assets/cave-icons/spirit-field.svg"); }
-.building-icon-swordArray { --icon-art: url("assets/cave-icons/sword-array.svg"); }
-.building-icon-forgingHall { --icon-art: url("assets/cave-icons/forging-hall.svg"); }
-.building-icon-scriptureLibrary { --icon-art: url("assets/cave-icons/scripture-library.svg"); }
+.building-icon-alchemyFurnace { --icon-art: url("assets/cave-icons/alchemy-furnace.png?v=202605120030"); }
+.building-icon-meditationSeat { --icon-art: url("assets/cave-icons/meditation-seat.png?v=202605120030"); }
+.building-icon-spiritField { --icon-art: url("assets/cave-icons/spirit-field.png?v=202605120030"); }
+.building-icon-swordArray { --icon-art: url("assets/cave-icons/sword-array.png?v=202605120030"); }
+.building-icon-forgingHall { --icon-art: url("assets/cave-icons/forging-hall.png?v=202605120030"); }
+.building-icon-scriptureLibrary { --icon-art: url("assets/cave-icons/scripture-library.png?v=202605120030"); }
 
 .building-card.active {
   border-color: rgba(238, 236, 225, 0.72);
