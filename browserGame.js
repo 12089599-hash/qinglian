@@ -2317,11 +2317,11 @@ const spiritBeastQualities = {
   });
   let activeBattlePlayback = null;
   let battlePlaybackTimer = null;
-  const panelTabs = ['overview', 'goals', 'daily', 'market', 'alchemy', 'gear', 'cultivation', 'sect', 'cave', 'missions', 'log'];
+  const panelTabs = ['overview', 'goals', 'daily', 'gear', 'alchemy', 'market', 'cultivation', 'sect', 'cave', 'missions', 'log'];
   const tabGroups = {
     practice: { label: '修行', tabs: ['overview', 'goals', 'daily', 'cultivation'] },
     travel: { label: '行游', tabs: ['missions'] },
-    vault: { label: '库藏', tabs: ['market', 'alchemy', 'gear'] },
+    vault: { label: '库藏', tabs: ['gear', 'alchemy', 'market'] },
     mountain: { label: '山门', tabs: ['sect', 'cave', 'log'] },
   };
   const tabLabels = {
@@ -3047,7 +3047,9 @@ const spiritBeastQualities = {
         return;
       }
       const remembered = localStorage.getItem(`idle-xianxia-${button.dataset.tabGroup}-tab`);
-      activeTab = group.tabs.includes(remembered) ? remembered : group.tabs[0];
+      activeTab = button.dataset.tabGroup === 'vault'
+        ? group.tabs[0]
+        : group.tabs.includes(remembered) ? remembered : group.tabs[0];
       localStorage.setItem('idle-xianxia-active-tab', activeTab);
       renderTabs();
       if (!openMobilePanelDialog(activeTab)) {
@@ -7115,6 +7117,8 @@ const spiritBeastQualities = {
 
   function renderMapGroup(map) {
     const routeList = map.routes.map((id) => missions[id]).filter(Boolean);
+    const selectedApproach = getSelectedMapApproach(map);
+    const unlockedRoutes = routeList.filter((mission) => getMissionStatus(state, mission.id).unlocked).length;
     return `
       <section class="map-group ${map.unlocked ? '' : 'locked'}">
         <div class="map-heading">
@@ -7133,14 +7137,39 @@ const spiritBeastQualities = {
           <small>声望 ${Math.floor(map.reputation)}</small>
           <small>${map.unlocked ? `${map.readiness.label} ${map.readiness.name}` : `${realms[map.unlockRealmIndex]?.name || '更高境界'}解锁`}</small>
         </div>
-        ${renderApproachSelector(map)}
-        ${renderDepthCard(map)}
-        ${renderBossCard(map)}
-        <div class="mission-list">
-          ${routeList.map((mission) => renderMissionCard(mission)).join('')}
+        <details class="map-approach-drawer">
+          <summary>
+            <span>行游路线</span>
+            <strong>${selectedApproach?.name || '未定'}</strong>
+            <small>${selectedApproach ? formatApproachSummary(selectedApproach) : '展开选择不同路线'}</small>
+          </summary>
+          ${renderApproachSelector(map)}
+        </details>
+        <div class="map-challenge-strip">
+          ${renderDepthCard(map)}
+          ${renderBossCard(map)}
         </div>
+        <details class="mission-route-drawer">
+          <summary>
+            <span>普通行游</span>
+            <strong>${unlockedRoutes} / ${routeList.length}</strong>
+            <small>展开查看全部路线和自动历练</small>
+          </summary>
+          <div class="mission-list">
+            ${routeList.map((mission) => renderMissionCard(mission)).join('')}
+          </div>
+        </details>
       </section>
     `;
+  }
+
+  function getSelectedMapApproach(map) {
+    if (!map.approachOptions?.length) {
+      return null;
+    }
+    return map.approachOptions.find((approach) => approach.selected)
+      || map.approachOptions.find((approach) => !approach.locked)
+      || map.approachOptions[0];
   }
 
   function renderApproachSelector(map) {
@@ -7848,7 +7877,7 @@ const spiritBeastQualities = {
                 <small>${getSlotName(item.slot)} · ${item.realmBand} · ${item.rarity?.name || '凡品'}${item.equipped ? ' · 已穿戴' : ''}</small>
               </span>
               <em class="rarity-badge rarity-${item.rarity?.id || 'common'}">${item.rarity?.name || '凡品'}</em>
-              <span class="loot-power-delta gain">${getLootPowerComparisonText(item.comparison)}</span>
+              <span class="loot-power-delta ${getLootPowerDeltaClass(item.comparison)}">${getLootPowerComparisonText(item.comparison)}</span>
             </summary>
             <div class="detail-stack">
               <small>器胚：${item.realmBand} · ${realms[item.minRealmIndex]?.name || '炼气一层'}后更常见 · ${item.intent.name}</small>
@@ -8005,7 +8034,25 @@ const spiritBeastQualities = {
     if (comparison.summary === '已穿戴') {
       return `已穿戴 · 战力 ${Math.round(comparison.score || 0)}`;
     }
-    return `战力 ${Math.round(comparison.score || 0)}`;
+    const delta = Math.round(comparison.scoreDelta || 0);
+    if (delta === 0) {
+      return `战力持平 ${Math.round(comparison.score || 0)}`;
+    }
+    return `战力 ${delta > 0 ? '+' : ''}${delta}`;
+  }
+
+  function getLootPowerDeltaClass(comparison) {
+    if (!comparison || comparison.summary === '已穿戴') {
+      return 'neutral';
+    }
+    const delta = Math.round(comparison.scoreDelta || 0);
+    if (delta > 0) {
+      return 'gain';
+    }
+    if (delta < 0) {
+      return 'loss';
+    }
+    return 'neutral';
   }
 
   function getLootDismantleHint(item) {
@@ -8302,43 +8349,66 @@ const spiritBeastQualities = {
           <span>${recommendation.detail}</span>
         </div>
       </div>
-      <div class="sect-skill-grid">
-        ${sect.skills.map((skill) => `
-          <div class="system-row">
-            <div>
-              <strong>${skill.name} <small>${skill.rarity.name} · ${skill.level} / ${skill.maxLevel}</small></strong>
-              <span>${skill.detail}</span>
-              <small>当前：${formatEffects(skill.effects) || '未研修'}</small>
-              <small>${skill.upgrade.maxed ? '已达上限' : skill.upgrade.reputationLocked ? `声望 ${sect.reputation} / ${skill.upgrade.requiredReputation}` : `研修需 ${formatReward(skill.upgrade.cost)}`}</small>
+      <details class="sect-compact-section">
+        <summary>
+          <span>宗门功法</span>
+          <strong>${sect.skills.filter((skill) => skill.level > 0).length} / ${sect.skills.length}</strong>
+          <small>展开研修秘传加成</small>
+        </summary>
+        <div class="sect-skill-grid">
+          ${sect.skills.map((skill) => `
+            <div class="system-row">
+              <div>
+                <strong>${skill.name} <small>${skill.rarity.name} · ${skill.level} / ${skill.maxLevel}</small></strong>
+                <span>${skill.detail}</span>
+                <small>当前：${formatEffects(skill.effects) || '未研修'}</small>
+                <small>${skill.upgrade.maxed ? '已达上限' : skill.upgrade.reputationLocked ? `声望 ${sect.reputation} / ${skill.upgrade.requiredReputation}` : `研修需 ${formatReward(skill.upgrade.cost)}`}</small>
+              </div>
+              <div class="row-actions">
+                <button data-upgrade-sect-skill="${skill.id}" ${skill.upgrade.maxed || skill.upgrade.reputationLocked ? 'disabled' : ''}>研修</button>
+              </div>
             </div>
-            <div class="row-actions">
-              <button data-upgrade-sect-skill="${skill.id}" ${skill.upgrade.maxed || skill.upgrade.reputationLocked ? 'disabled' : ''}>研修</button>
-            </div>
-          </div>
-        `).join('')}
-      </div>
-      <div class="disciple-roster">
-        ${sect.roster.length ? sect.roster.map((disciple) => `
-          <div>
-            <strong>${disciple.name}<small>${disciple.grade} · ${disciple.element}灵根 · ${disciple.jobName}</small></strong>
-            <span>资质 ${disciple.aptitude} · 根骨 ${disciple.root} · 悟性 ${disciple.comprehension}</span>
-            <small>修为 ${disciple.level} 级 · 历练 ${Math.floor(disciple.experience)} / ${disciple.nextExperience}</small>
-          </div>
-        `).join('') : '<div><strong>暂无弟子</strong><span>招募弟子后可派往委托。</span></div>'}
-      </div>
-      ${sect.commissions.map((commission) => `
-        <div class="system-row">
-          <div>
-            <strong>${commission.name} <small>${commission.assigned} 人</small></strong>
-            <span>${commission.detail}</span>
-            <small>${formatCommissionRates(commission.rates)} · 效率 x${commission.outputMultiplier}</small>
-          </div>
-          <div class="row-actions">
-            <button data-assign-sect="${commission.id}" data-delta="-1" ${commission.assigned <= 0 ? 'disabled' : ''}>-</button>
-            <button data-assign-sect="${commission.id}" data-delta="1" ${sect.idle <= 0 ? 'disabled' : ''}>+</button>
-          </div>
+          `).join('')}
         </div>
-      `).join('')}
+      </details>
+      <details class="sect-compact-section">
+        <summary>
+          <span>弟子名册</span>
+          <strong>${sect.roster.length} / ${sect.capacity}</strong>
+          <small>展开查看灵根、资质和委托去向</small>
+        </summary>
+        <div class="disciple-roster">
+          ${sect.roster.length ? sect.roster.map((disciple) => `
+            <div>
+              <strong>${disciple.name}<small>${disciple.grade} · ${disciple.element}灵根 · ${disciple.jobName}</small></strong>
+              <span>资质 ${disciple.aptitude} · 根骨 ${disciple.root} · 悟性 ${disciple.comprehension}</span>
+              <small>修为 ${disciple.level} 级 · 历练 ${Math.floor(disciple.experience)} / ${disciple.nextExperience}</small>
+            </div>
+          `).join('') : '<div><strong>暂无弟子</strong><span>招募弟子后可派往委托。</span></div>'}
+        </div>
+      </details>
+      <details class="sect-compact-section sect-commission-section">
+        <summary>
+          <span>委托分配</span>
+          <strong>${sect.assigned} / ${sect.disciples}</strong>
+          <small>展开调整弟子产出</small>
+        </summary>
+        <div class="sect-commission-grid">
+          ${sect.commissions.map((commission) => `
+            <div class="system-row compact-commission-row">
+              <div>
+                <strong>${commission.name} <small>${commission.assigned} 人</small></strong>
+                <span>${commission.detail}</span>
+                <small>${formatCommissionRates(commission.rates)} · 效率 x${commission.outputMultiplier}</small>
+              </div>
+              <div class="row-actions">
+                <button data-assign-sect="${commission.id}" data-delta="-1" ${commission.assigned <= 0 ? 'disabled' : ''}>-</button>
+                <button data-assign-sect="${commission.id}" data-delta="1" ${sect.idle <= 0 ? 'disabled' : ''}>+</button>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </details>
     `;
     renderCache.sect = signature;
   }
