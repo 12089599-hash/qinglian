@@ -2309,6 +2309,8 @@ const spiritBeastQualities = {
   const ctx = refs.canvas.getContext('2d');
   const renderCache = {};
   const openLootDetails = new Set();
+  const sectDetailIds = ['skills', 'disciples', 'commissions'];
+  const openSectDetails = new Set(parseStoredSectDetails(localStorage.getItem('idle-xianxia-sect-details')));
   const panelAnchors = new Map();
   document.querySelectorAll('.dashboard > [data-panel]').forEach((panel) => {
     const marker = document.createComment(`panel:${panel.dataset.panel}`);
@@ -2653,6 +2655,19 @@ const spiritBeastQualities = {
     } else {
       openLootDetails.delete(detail.dataset.lootDetail);
     }
+  }, true);
+
+  refs.sectList?.addEventListener('toggle', (event) => {
+    const detail = event.target.closest?.('[data-sect-detail]');
+    if (!detail) {
+      return;
+    }
+    if (detail.open) {
+      openSectDetails.add(detail.dataset.sectDetail);
+    } else {
+      openSectDetails.delete(detail.dataset.sectDetail);
+    }
+    saveSectDetails();
   }, true);
 
   refs.missionReport?.addEventListener('click', (event) => {
@@ -7981,6 +7996,25 @@ const spiritBeastQualities = {
     localStorage.setItem('idle-xianxia-loot-keep-strategy', activeLootKeepStrategy);
   }
 
+  function parseStoredSectDetails(raw) {
+    if (!raw) {
+      return [];
+    }
+    try {
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) {
+        return [];
+      }
+      return parsed.filter((id) => sectDetailIds.includes(id));
+    } catch {
+      return [];
+    }
+  }
+
+  function saveSectDetails() {
+    localStorage.setItem('idle-xianxia-sect-details', JSON.stringify([...openSectDetails].filter((id) => sectDetailIds.includes(id))));
+  }
+
   function updateLootOrganizeButton() {
     const button = document.querySelector('[data-organize-loot]');
     if (!button) {
@@ -8327,7 +8361,7 @@ const spiritBeastQualities = {
     const sect = getSectStatus(state);
     refs.sectStatus.textContent = sect.unlocked ? `${sect.levelName} · ${sect.disciples} / ${sect.capacity} 弟子` : '炼气三层后解锁';
     const recommendation = getSectRecommendation(state);
-    const signature = `${sect.unlocked}:${sect.levelName}:${sect.disciples}:${sect.capacity}:${sect.assigned}:${sect.reputation}:${state.spiritStones}:${state.herbs}:${state.beastCores}:${state.artifacts}:${state.forgingEssence}:${state.bloodEssence}:${state.insight}:${recommendation.id}:${sect.roster.map((disciple) => `${disciple.id}:${disciple.level}:${Math.floor(disciple.experience)}:${disciple.job}`).join('|')}:${Object.entries(state.sectAssignments).map(([id, count]) => `${id}:${count}`).join('|')}:${Object.entries(state.sectSkills || {}).map(([id, level]) => `${id}:${level}`).join('|')}`;
+    const signature = `${sect.unlocked}:${sect.levelName}:${sect.disciples}:${sect.capacity}:${sect.assigned}:${sect.reputation}:${recommendation.id}:${sect.roster.map((disciple) => `${disciple.id}:${disciple.level}:${Math.floor(disciple.experience)}:${disciple.job}`).join('|')}:${Object.entries(state.sectAssignments).map(([id, count]) => `${id}:${count}`).join('|')}:${Object.entries(state.sectSkills || {}).map(([id, level]) => `${id}:${level}`).join('|')}`;
     if (!force && renderCache.sect === signature) {
       return;
     }
@@ -8349,7 +8383,7 @@ const spiritBeastQualities = {
           <span>${recommendation.detail}</span>
         </div>
       </div>
-      <details class="sect-compact-section">
+      <details class="sect-compact-section" data-sect-detail="skills" ${openSectDetails.has('skills') ? 'open' : ''}>
         <summary>
           <span>宗门功法</span>
           <strong>${sect.skills.filter((skill) => skill.level > 0).length} / ${sect.skills.length}</strong>
@@ -8371,7 +8405,7 @@ const spiritBeastQualities = {
           `).join('')}
         </div>
       </details>
-      <details class="sect-compact-section">
+      <details class="sect-compact-section" data-sect-detail="disciples" ${openSectDetails.has('disciples') ? 'open' : ''}>
         <summary>
           <span>弟子名册</span>
           <strong>${sect.roster.length} / ${sect.capacity}</strong>
@@ -8387,7 +8421,7 @@ const spiritBeastQualities = {
           `).join('') : '<div><strong>暂无弟子</strong><span>招募弟子后可派往委托。</span></div>'}
         </div>
       </details>
-      <details class="sect-compact-section sect-commission-section">
+      <details class="sect-compact-section sect-commission-section" data-sect-detail="commissions" ${openSectDetails.has('commissions') ? 'open' : ''}>
         <summary>
           <span>委托分配</span>
           <strong>${sect.assigned} / ${sect.disciples}</strong>
