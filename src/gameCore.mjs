@@ -1447,13 +1447,15 @@ export const RARITY_TIERS = [
 ];
 
 const MAP_LOOT_PROFILES = {
-  qinglanMountain: { tier: 0, dropEvery: 2, daoInterval: 500 },
-  herbValley: { tier: 1, dropEvery: 2, daoInterval: 460 },
-  mistyValley: { tier: 1, dropEvery: 2, daoInterval: 440 },
-  swordTomb: { tier: 2, dropEvery: 4, daoInterval: 380 },
-  demonRift: { tier: 3, dropEvery: 4, daoInterval: 320 },
-  ancientRuins: { tier: 4, dropEvery: 4, daoInterval: 260 },
+  qinglanMountain: { poolTiers: [0], rarityShift: 0, dropEvery: 2, daoInterval: 500 },
+  herbValley: { poolTiers: [0, 1], rarityShift: 1, dropEvery: 2, daoInterval: 460 },
+  mistyValley: { poolTiers: [1], rarityShift: 1, dropEvery: 2, daoInterval: 440 },
+  swordTomb: { poolTiers: [2], rarityShift: 2, dropEvery: 4, daoInterval: 380 },
+  demonRift: { poolTiers: [3], rarityShift: 3, dropEvery: 4, daoInterval: 320 },
+  ancientRuins: { poolTiers: [4], rarityShift: 4, dropEvery: 4, daoInterval: 260 },
 };
+
+const LOOT_TIER_LABELS = ['炼气六器', '筑基六器', '玄纹六器', '金丹六器', '元婴六器'];
 
 export const COMBAT_ELEMENTS = {
   metal: { id: 'metal', name: '庚金', restrains: 'wood' },
@@ -8982,7 +8984,7 @@ function rollLootRarity(seed, uid = '', context = null) {
     if (serial % Math.max(10, Math.floor(daoInterval / 36)) === 0) return getRarityTier('mystic');
     if (serial % Math.max(4, Math.floor(daoInterval / 120)) === 0) return getRarityTier('spirit');
   }
-  const tierShift = (profile.tier ?? 0) + depthPoolBonus;
+  const tierShift = (profile.rarityShift ?? profile.tier ?? 0) + depthPoolBonus;
   const adjustedWeights = RARITY_TIERS.map((tier, index) => {
     if (index === 0) return { ...tier, weight: Math.max(220, tier.weight - tierShift * 28) };
     if (tier.id === 'dao') return { ...tier, weight: Math.max(1, tierShift + 1) };
@@ -9003,6 +9005,30 @@ function getMapLootProfile(mapId) {
   return MAP_LOOT_PROFILES[mapId] ?? MAP_LOOT_PROFILES.qinglanMountain;
 }
 
+function getMapLootPoolTiers(mapId) {
+  const profile = getMapLootProfile(mapId);
+  const tiers = Array.isArray(profile.poolTiers) && profile.poolTiers.length
+    ? profile.poolTiers
+    : [profile.tier ?? 0];
+  return [...new Set(tiers.map((tier) => Math.max(0, Math.min(4, Math.floor(Number(tier) || 0)))))].sort((left, right) => left - right);
+}
+
+export function getMapLootPoolInfo(mapId) {
+  const tiers = getMapLootPoolTiers(mapId);
+  const templates = Object.values(LOOT_EQUIPMENT).filter((template) => tiers.includes(template.lootTier ?? 0));
+  const slots = [...new Set(templates.map((template) => template.slot))];
+  const tierLabels = tiers.map((tier) => LOOT_TIER_LABELS[tier] ?? `${tier + 1}阶六器`);
+  return {
+    mapId,
+    tiers,
+    tierLabels,
+    label: tierLabels.join(' / '),
+    slots,
+    slotCount: slots.length,
+    templateIds: templates.map((template) => template.id),
+  };
+}
+
 function shouldDropMapLoot(state, mission, eventResult) {
   if (eventResult?.item) {
     return false;
@@ -9016,14 +9042,11 @@ function shouldDropMapLoot(state, mission, eventResult) {
 function selectMapLootTemplate(state, mission) {
   const mapId = getMissionMapId(mission);
   const profile = getMapLootProfile(mapId);
-  const depthPoolBonus = Math.floor(((state.mapDepths?.[mapId] ?? 0)) / 10);
   const completed = state.completedMissions?.[mission.id] ?? 0;
   const dropIndex = Math.max(0, Math.floor(completed / profile.dropEvery) - 1);
   const allTemplates = Object.values(LOOT_EQUIPMENT);
-  const preferredTemplates = allTemplates.filter((template) => (template.lootTier ?? 0) <= (profile.tier ?? 0) + 1 + depthPoolBonus);
-  const rareWindow = Math.max(8, 34 - ((profile.tier ?? 0) + depthPoolBonus) * 5);
-  const useFullPool = dropIndex > 0 && (dropIndex + hashString(`${mapId}:rare`)) % rareWindow === 0;
-  const templates = useFullPool ? allTemplates : preferredTemplates;
+  const pool = getMapLootPoolInfo(mapId);
+  const templates = pool.templateIds.map((templateId) => LOOT_EQUIPMENT[templateId]).filter(Boolean);
   const seedOffset = hashString(`${mapId}:${mission.id}`) % templates.length;
   return templates[(dropIndex + seedOffset) % templates.length]?.id ?? allTemplates[0].id;
 }

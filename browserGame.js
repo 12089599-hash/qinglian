@@ -1109,13 +1109,15 @@ const spiritBeastQualities = {
   ];
 
   const mapLootProfiles = {
-    qinglanMountain: { tier: 0, dropEvery: 2, daoInterval: 500 },
-    herbValley: { tier: 1, dropEvery: 2, daoInterval: 460 },
-    mistyValley: { tier: 1, dropEvery: 2, daoInterval: 440 },
-    swordTomb: { tier: 2, dropEvery: 4, daoInterval: 380 },
-    demonRift: { tier: 3, dropEvery: 4, daoInterval: 320 },
-    ancientRuins: { tier: 4, dropEvery: 4, daoInterval: 260 },
+    qinglanMountain: { poolTiers: [0], rarityShift: 0, dropEvery: 2, daoInterval: 500 },
+    herbValley: { poolTiers: [0, 1], rarityShift: 1, dropEvery: 2, daoInterval: 460 },
+    mistyValley: { poolTiers: [1], rarityShift: 1, dropEvery: 2, daoInterval: 440 },
+    swordTomb: { poolTiers: [2], rarityShift: 2, dropEvery: 4, daoInterval: 380 },
+    demonRift: { poolTiers: [3], rarityShift: 3, dropEvery: 4, daoInterval: 320 },
+    ancientRuins: { poolTiers: [4], rarityShift: 4, dropEvery: 4, daoInterval: 260 },
   };
+
+  const lootTierLabels = ['炼气六器', '筑基六器', '玄纹六器', '金丹六器', '元婴六器'];
 
   const combatElements = {
     metal: { id: 'metal', name: '庚金', restrains: 'wood' },
@@ -4142,6 +4144,30 @@ const spiritBeastQualities = {
     return mapLootProfiles[mapId] || mapLootProfiles.qinglanMountain;
   }
 
+  function getMapLootPoolTiers(mapId) {
+    const profile = getMapLootProfile(mapId);
+    const tiers = Array.isArray(profile.poolTiers) && profile.poolTiers.length
+      ? profile.poolTiers
+      : [profile.tier || 0];
+    return [...new Set(tiers.map((tier) => Math.max(0, Math.min(4, Math.floor(Number(tier) || 0)))))].sort((left, right) => left - right);
+  }
+
+  function getMapLootPoolInfo(mapId) {
+    const tiers = getMapLootPoolTiers(mapId);
+    const templates = Object.values(lootEquipment).filter((template) => tiers.includes(template.lootTier || 0));
+    const slots = [...new Set(templates.map((template) => template.slot))];
+    const tierLabels = tiers.map((tier) => lootTierLabels[tier] || `${tier + 1}阶六器`);
+    return {
+      mapId,
+      tiers,
+      tierLabels,
+      label: tierLabels.join(' / '),
+      slots,
+      slotCount: slots.length,
+      templateIds: templates.map((template) => template.id),
+    };
+  }
+
   function shouldDropMapLoot(state, mission, eventResult) {
     if (eventResult?.item) {
       return false;
@@ -4154,14 +4180,11 @@ const spiritBeastQualities = {
   function selectMapLootTemplate(state, mission) {
     const mapId = getMissionMapId(mission);
     const profile = getMapLootProfile(mapId);
-    const depthPoolBonus = Math.floor((state.mapDepths?.[mapId] || 0) / 10);
     const completed = state.completedMissions?.[mission.id] || 0;
     const dropIndex = Math.max(0, Math.floor(completed / profile.dropEvery) - 1);
     const allTemplates = Object.values(lootEquipment);
-    const preferredTemplates = allTemplates.filter((template) => (template.lootTier || 0) <= (profile.tier || 0) + 1 + depthPoolBonus);
-    const rareWindow = Math.max(8, 34 - ((profile.tier || 0) + depthPoolBonus) * 5);
-    const useFullPool = dropIndex > 0 && (dropIndex + hashString(`${mapId}:rare`)) % rareWindow === 0;
-    const templates = useFullPool ? allTemplates : preferredTemplates;
+    const pool = getMapLootPoolInfo(mapId);
+    const templates = pool.templateIds.map((templateId) => lootEquipment[templateId]).filter(Boolean);
     const seedOffset = hashString(`${mapId}:${mission.id}`) % templates.length;
     return templates[(dropIndex + seedOffset) % templates.length]?.id || allTemplates[0].id;
   }
@@ -6710,6 +6733,7 @@ const spiritBeastQualities = {
     const depthAdvice = getMapCombatAdvice(map, depth?.nextLayer >= 8 ? 'dark' : map.boss.element);
     const bossAdvice = getMapCombatAdvice(map, map.boss.element);
     const activeBeastBrief = formatActiveSpiritBeastBrief(state);
+    const lootPool = getMapLootPoolInfo(map.id);
     const routeText = primaryStatus?.unlocked
       ? `${primaryStatus.approach.name} · ${formatDuration(getMissionDuration(primaryMission, primaryStatus.approach.id))} · ${primaryStatus.omen.label}${primaryStatus.omen.name}`
       : `${realms[primaryStatus?.unlockRealmIndex]?.name || '更高境界'}解锁`;
@@ -6718,12 +6742,13 @@ const spiritBeastQualities = {
         <header>
           <div>
             <span>当前地图</span>
-            <strong>${map.icon} ${map.name}</strong>
+            <strong><span class="map-stamp map-inline-mark">${map.icon}</span>${map.name}</strong>
             <small>${map.mastery.name} · ${map.exploration.label} · 声望 ${Math.floor(map.reputation)}</small>
           </div>
           <em>${map.readiness.label} ${map.readiness.name}</em>
         </header>
         <small class="active-beast-status">${activeBeastBrief}</small>
+        <small class="map-loot-pool">装备池：${lootPool.label} · 六部位皆可出</small>
         <div class="map-action-grid">
           <button data-start-depth="${map.id}" ${!depth?.unlocked || depth?.maxed || busy ? 'disabled' : ''}>
             <strong>${depth?.maxed ? '秘境圆满' : `秘境第 ${depth?.nextLayer || 1} 层`}</strong>
@@ -7139,7 +7164,7 @@ const spiritBeastQualities = {
     return `
       <section class="map-group ${map.unlocked ? '' : 'locked'}">
         <div class="map-heading">
-          <span class="map-icon">${map.icon}</span>
+          <span class="map-icon map-stamp">${map.icon}</span>
           <div>
             <h3>${map.name}</h3>
             <small>${map.description}</small>
@@ -7152,6 +7177,7 @@ const spiritBeastQualities = {
         <div class="map-meta">
           <small>${map.exploration.label}</small>
           <small>声望 ${Math.floor(map.reputation)}</small>
+          <small>装备池 ${getMapLootPoolInfo(map.id).label}</small>
           <small>${map.unlocked ? `${map.readiness.label} ${map.readiness.name}` : `${realms[map.unlockRealmIndex]?.name || '更高境界'}解锁`}</small>
         </div>
         <details class="map-approach-drawer">
@@ -7221,7 +7247,7 @@ const spiritBeastQualities = {
     const statusText = map.unlocked ? `${map.readiness.label} ${map.readiness.name}` : `${realms[map.unlockRealmIndex]?.name || '更高境界'}解锁`;
     return `
       <button class="map-select-button ${active ? 'active' : ''} ${map.unlocked ? '' : 'locked'}" data-select-mission-map="${map.id}" role="tab" aria-selected="${active}">
-        <span class="map-select-icon">${map.icon}</span>
+        <span class="map-select-icon map-stamp">${map.icon}</span>
         <span>
           <strong>${map.name}</strong>
           <small>${statusText}</small>
@@ -7287,7 +7313,7 @@ const spiritBeastQualities = {
           : '可尝试镇压';
     return `
       <div class="boss-card ${map.boss.status}">
-        <div class="boss-mark">${map.icon}</div>
+        <div class="boss-mark map-stamp">${map.icon}</div>
         <div>
           <strong>${map.boss.name} <small>${map.boss.title}</small></strong>
           <div class="boss-requirements">
@@ -11547,7 +11573,7 @@ const spiritBeastQualities = {
       if (serial % Math.max(10, Math.floor(daoInterval / 36)) === 0) return getRarityTier('mystic');
       if (serial % Math.max(4, Math.floor(daoInterval / 120)) === 0) return getRarityTier('spirit');
     }
-    const tierShift = (profile.tier || 0) + depthPoolBonus;
+    const tierShift = (profile.rarityShift || profile.tier || 0) + depthPoolBonus;
     const adjustedWeights = rarityTiers.map((tier, index) => {
       if (index === 0) return { ...tier, weight: Math.max(220, tier.weight - tierShift * 28) };
       if (tier.id === 'dao') return { ...tier, weight: Math.max(1, tierShift + 1) };

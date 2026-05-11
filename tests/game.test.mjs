@@ -60,6 +60,7 @@ import {
   getDaoHeartChoices,
   getEquipmentDetails,
   getLootEmpowerCost,
+  getMapLootPoolInfo,
   getLootResonanceStatus,
   getMapDepthStatus,
   getMapDepthRushStatus,
@@ -687,13 +688,14 @@ test('loot templates carry realm bands for long term equipment chase', () => {
   assert.equal(templates.some((item) => item.name === '蛟骨战戟'), true);
 });
 
-test('early maps can roll the full equipment pool with very rare top rarity', () => {
+test('early maps can roll every equipment slot with very rare top rarity', () => {
   const state = createGameState(1000);
   state.realmIndex = realmIndexByName('筑基一层');
   state.permanentBonuses.power = 900;
 
   const seenSlots = new Set();
   const seenTemplates = new Set();
+  const pool = getMapLootPoolInfo('qinglanMountain');
   let daoDrops = 0;
 
   for (let index = 0; index < 1_500; index += 1) {
@@ -711,9 +713,31 @@ test('early maps can roll the full equipment pool with very rare top rarity', ()
   }
 
   assert.deepEqual([...seenSlots].sort(), ['amulet', 'boots', 'jade', 'offhand', 'robe', 'weapon']);
-  assert.equal(seenTemplates.size >= 12, true);
+  assert.equal(seenTemplates.size >= 6, true);
+  assert.equal([...seenTemplates].every((templateId) => pool.templateIds.includes(templateId)), true);
   assert.equal(daoDrops > 0, true);
   assert.equal(daoDrops <= 6, true);
+});
+
+test('each travel map exposes a full six slot equipment tier pool', () => {
+  const expectedPools = {
+    qinglanMountain: [0],
+    herbValley: [0, 1],
+    mistyValley: [1],
+    swordTomb: [2],
+    demonRift: [3],
+    ancientRuins: [4],
+  };
+  const slots = Object.keys(GEAR).sort();
+
+  Object.entries(expectedPools).forEach(([mapId, tiers]) => {
+    const pool = getMapLootPoolInfo(mapId);
+
+    assert.deepEqual(pool.tiers, tiers, `${MISSION_MAPS[mapId].name} should use its own equipment tier pool`);
+    assert.deepEqual([...pool.slots].sort(), slots, `${MISSION_MAPS[mapId].name} should drop every equipment slot`);
+    assert.equal(pool.label.includes('六器'), true);
+    assert.equal(pool.templateIds.every((templateId) => tiers.includes(LOOT_EQUIPMENT[templateId].lootTier)), true);
+  });
 });
 
 test('rare loot lock protects high grade drops during batch cleanup', () => {
