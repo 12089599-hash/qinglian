@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <radialGradient id="bg" cx="52%" cy="45%" r="58%">
+      <stop offset="0" stop-color="#382c49"/>
+      <stop offset="0.62" stop-color="#12101b"/>
+      <stop offset="1" stop-color="#050407"/>
+    </radialGradient>
+    <linearGradient id="rift" x1="36" y1="6" x2="88" y2="120">
+      <stop offset="0" stop-color="#ead7ff"/>
+      <stop offset="0.42" stop-color="#c28fe4"/>
+      <stop offset="1" stop-color="#4c365d"/>
+    </linearGradient>
+    <filter id="soft" x="-25%" y="-25%" width="150%" height="150%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2.2" flood-color="#000" flood-opacity="0.6"/>
+    </filter>
+  </defs>
+  <rect width="128" height="128" rx="22" fill="url(#bg)"/>
+  <circle cx="64" cy="64" r="47" fill="none" stroke="#d7bd69" stroke-opacity="0.42" stroke-width="3"/>
+  <path d="M59 8 32 55l25-10-17 48 28-29-9 56 38-74-25 10L94 9 66 35 59 8Z" fill="url(#rift)" filter="url(#soft)"/>
+  <path d="M39 101c18 7 35 7 52 0l-5 12c-14 6-28 6-42 0l-5-12Z" fill="#07050b" opacity="0.42"/>
+  <path d="M75 29 62 54l13-5-14 29" fill="none" stroke="#fff1bd" stroke-opacity="0.35" stroke-width="4" stroke-linecap="round"/>
+</svg>

@@ -6742,7 +6742,7 @@ const spiritBeastQualities = {
         <header>
           <div>
             <span>当前地图</span>
-            <strong><span class="map-stamp map-inline-mark">${map.icon}</span>${map.name}</strong>
+            <strong><span class="map-stamp map-inline-mark map-stamp-${map.id}" aria-label="${map.name}"></span>${map.name}</strong>
             <small>${map.mastery.name} · ${map.exploration.label} · 声望 ${Math.floor(map.reputation)}</small>
           </div>
           <em>${map.readiness.label} ${map.readiness.name}</em>
@@ -7164,7 +7164,7 @@ const spiritBeastQualities = {
     return `
       <section class="map-group ${map.unlocked ? '' : 'locked'}">
         <div class="map-heading">
-          <span class="map-icon map-stamp">${map.icon}</span>
+          <span class="map-icon map-stamp map-stamp-${map.id}" aria-label="${map.name}"></span>
           <div>
             <h3>${map.name}</h3>
             <small>${map.description}</small>
@@ -7247,7 +7247,7 @@ const spiritBeastQualities = {
     const statusText = map.unlocked ? `${map.readiness.label} ${map.readiness.name}` : `${realms[map.unlockRealmIndex]?.name || '更高境界'}解锁`;
     return `
       <button class="map-select-button ${active ? 'active' : ''} ${map.unlocked ? '' : 'locked'}" data-select-mission-map="${map.id}" role="tab" aria-selected="${active}">
-        <span class="map-select-icon map-stamp">${map.icon}</span>
+        <span class="map-select-icon map-stamp map-stamp-${map.id}" aria-label="${map.name}"></span>
         <span>
           <strong>${map.name}</strong>
           <small>${statusText}</small>
@@ -7313,7 +7313,7 @@ const spiritBeastQualities = {
           : '可尝试镇压';
     return `
       <div class="boss-card ${map.boss.status}">
-        <div class="boss-mark map-stamp">${map.icon}</div>
+        <div class="boss-mark map-stamp map-stamp-${map.id}" aria-label="${map.name}"></div>
         <div>
           <strong>${map.boss.name} <small>${map.boss.title}</small></strong>
           <div class="boss-requirements">

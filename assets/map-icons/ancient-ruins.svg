@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="45%" r="58%">
+      <stop offset="0" stop-color="#3a3427"/>
+      <stop offset="0.62" stop-color="#15140e"/>
+      <stop offset="1" stop-color="#060604"/>
+    </radialGradient>
+    <linearGradient id="stone" x1="28" y1="10" x2="96" y2="116">
+      <stop offset="0" stop-color="#f3ddb0"/>
+      <stop offset="0.5" stop-color="#d2b064"/>
+      <stop offset="1" stop-color="#5f5c47"/>
+    </linearGradient>
+    <filter id="soft" x="-25%" y="-25%" width="150%" height="150%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2.2" flood-color="#000" flood-opacity="0.58"/>
+    </filter>
+  </defs>
+  <rect width="128" height="128" rx="22" fill="url(#bg)"/>
+  <circle cx="64" cy="64" r="47" fill="none" stroke="#d7bd69" stroke-opacity="0.46" stroke-width="3"/>
+  <path d="M21 109h86V96h-9V48h10V36L64 14 20 36v12h10v48h-9v13Zm24-13V48h14v48H45Zm25 0V48h14v48H70Z" fill="url(#stone)" filter="url(#soft)"/>
+  <path d="M35 113h58" fill="none" stroke="#f0d98a" stroke-opacity="0.46" stroke-width="5" stroke-linecap="round"/>
+  <path d="M64 24 36 38h56L64 24Z" fill="#090906" opacity="0.36"/>
+</svg>

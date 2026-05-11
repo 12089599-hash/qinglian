@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="45%" r="58%">
+      <stop offset="0" stop-color="#204334"/>
+      <stop offset="0.64" stop-color="#0b1814"/>
+      <stop offset="1" stop-color="#020706"/>
+    </radialGradient>
+    <linearGradient id="mark" x1="30" y1="18" x2="94" y2="110">
+      <stop offset="0" stop-color="#f0d98a"/>
+      <stop offset="0.52" stop-color="#93df9b"/>
+      <stop offset="1" stop-color="#3b6450"/>
+    </linearGradient>
+    <filter id="soft" x="-25%" y="-25%" width="150%" height="150%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2.2" flood-color="#000" flood-opacity="0.55"/>
+    </filter>
+  </defs>
+  <rect width="128" height="128" rx="22" fill="url(#bg)"/>
+  <circle cx="64" cy="64" r="47" fill="none" stroke="#d7bd69" stroke-opacity="0.43" stroke-width="3"/>
+  <path d="M62 107h9V72c18-3 31-19 35-49-27 4-45 18-52 41C46 43 29 31 5 29c3 28 20 43 46 46l11 32Z" fill="url(#mark)" filter="url(#soft)"/>
+  <path d="M72 61c5-13 14-22 27-27-4 15-13 25-27 27ZM48 66c-14-3-23-11-29-26 15 4 25 13 29 26Z" fill="#07110f" opacity="0.36"/>
+  <path d="M33 105h62" fill="none" stroke="#f0d98a" stroke-opacity="0.4" stroke-width="4" stroke-linecap="round"/>
+</svg>

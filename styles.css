@@ -1231,23 +1231,63 @@ small {
   border-color: rgba(240, 207, 114, 0.38);
   color: var(--gold);
   background:
-    radial-gradient(circle at 50% 50%, rgba(132, 214, 187, 0.2), transparent 44%),
-    radial-gradient(circle at 50% 50%, transparent 42%, rgba(240, 207, 114, 0.22) 43% 48%, transparent 50%),
-    linear-gradient(135deg, rgba(240, 207, 114, 0.1), rgba(6, 18, 15, 0.92));
+    radial-gradient(circle at 50% 48%, rgba(240, 207, 114, 0.16), transparent 35%),
+    linear-gradient(145deg, rgba(240, 207, 114, 0.12), rgba(5, 18, 16, 0.96) 62%);
   box-shadow:
-    inset 0 0 18px rgba(0, 0, 0, 0.42),
-    inset 0 0 0 1px rgba(132, 214, 187, 0.12);
+    inset 0 0 15px rgba(0, 0, 0, 0.54),
+    inset 0 0 0 1px rgba(132, 214, 187, 0.16),
+    0 0 0 1px rgba(240, 207, 114, 0.06);
   text-shadow: 0 1px 8px rgba(240, 207, 114, 0.34);
 }
 
 .map-stamp::before {
   content: "";
   position: absolute;
-  inset: 7px;
+  inset: 4px;
   z-index: -1;
-  border: 1px solid rgba(238, 236, 225, 0.16);
-  border-radius: inherit;
-  transform: rotate(-10deg);
+  border: 1px solid rgba(240, 207, 114, 0.32);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 42%, rgba(132, 214, 187, 0.18), transparent 58%),
+    conic-gradient(from 18deg, transparent 0 12deg, rgba(240, 207, 114, 0.16) 12deg 18deg, transparent 18deg 42deg);
+  transform: rotate(-8deg);
+  box-shadow: inset 0 0 8px rgba(132, 214, 187, 0.16);
+}
+
+.map-stamp::after {
+  content: "";
+  width: 82%;
+  height: 82%;
+  max-width: 35px;
+  max-height: 35px;
+  background: var(--map-art) center / contain no-repeat;
+  filter:
+    drop-shadow(0 0 5px rgba(240, 207, 114, 0.14))
+    drop-shadow(0 1px 1px rgba(0, 0, 0, 0.42));
+}
+
+.map-stamp-qinglanMountain {
+  --map-art: url("assets/map-icons/qinglan-mountain.svg");
+}
+
+.map-stamp-herbValley {
+  --map-art: url("assets/map-icons/herb-valley.svg");
+}
+
+.map-stamp-mistyValley {
+  --map-art: url("assets/map-icons/misty-valley.svg");
+}
+
+.map-stamp-swordTomb {
+  --map-art: url("assets/map-icons/sword-tomb.svg");
+}
+
+.map-stamp-demonRift {
+  --map-art: url("assets/map-icons/demon-rift.svg");
+}
+
+.map-stamp-ancientRuins {
+  --map-art: url("assets/map-icons/ancient-ruins.svg");
 }
 
 .map-inline-mark {
@@ -1258,6 +1298,13 @@ small {
   border: 1px solid rgba(240, 207, 114, 0.38);
   border-radius: 8px;
   font-size: 0.82rem;
+}
+
+.map-inline-mark::after {
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  min-height: 20px;
 }
 
 .map-action-panel header strong .map-inline-mark {

@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="45%" r="58%">
+      <stop offset="0" stop-color="#213f37"/>
+      <stop offset="0.62" stop-color="#0b1816"/>
+      <stop offset="1" stop-color="#020706"/>
+    </radialGradient>
+    <linearGradient id="mark" x1="24" y1="18" x2="92" y2="110">
+      <stop offset="0" stop-color="#f0d98a"/>
+      <stop offset="0.58" stop-color="#8ad9bf"/>
+      <stop offset="1" stop-color="#31473e"/>
+    </linearGradient>
+    <filter id="soft" x="-25%" y="-25%" width="150%" height="150%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2.2" flood-color="#000" flood-opacity="0.55"/>
+    </filter>
+  </defs>
+  <rect width="128" height="128" rx="22" fill="url(#bg)"/>
+  <circle cx="64" cy="64" r="47" fill="none" stroke="#d7bd69" stroke-opacity="0.46" stroke-width="3"/>
+  <circle cx="64" cy="64" r="37" fill="none" stroke="#8ad9bf" stroke-opacity="0.2" stroke-width="2"/>
+  <path d="M22 94h84L82 46 67 68 52 32 22 94Z" fill="url(#mark)" filter="url(#soft)"/>
+  <path d="M46 84 56 61l11 20 8-12 11 15H46Z" fill="#07110f" opacity="0.42"/>
+  <path d="M31 101h66" fill="none" stroke="#f0d98a" stroke-opacity="0.42" stroke-width="4" stroke-linecap="round"/>
+</svg>
