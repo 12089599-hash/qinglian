@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="45%" r="58%"><stop offset="0" stop-color="#263b32"/><stop offset=".65" stop-color="#0b1713"/><stop offset="1" stop-color="#020706"/></radialGradient>
+    <linearGradient id="shell" x1="24" y1="18" x2="98" y2="110"><stop offset="0" stop-color="#eed895"/><stop offset=".52" stop-color="#8fc8a8"/><stop offset="1" stop-color="#33483c"/></linearGradient>
+    <filter id="s" x="-25%" y="-25%" width="150%" height="150%"><feDropShadow dx="0" dy="2" stdDeviation="2.2" flood-color="#000" flood-opacity=".58"/></filter>
+  </defs>
+  <rect width="128" height="128" rx="22" fill="url(#bg)"/>
+  <circle cx="64" cy="64" r="47" fill="none" stroke="#d7bd69" stroke-opacity=".45" stroke-width="3"/>
+  <path fill="url(#shell)" filter="url(#s)" d="M25 78c7-25 22-40 39-40s32 15 39 40c-10 19-68 19-78 0Z"/>
+  <path d="M64 43v49M42 65h44M50 49l28 37M78 49 50 86" stroke="#07110f" stroke-opacity=".34" stroke-width="4" stroke-linecap="round"/>
+  <path d="M23 80h-9M105 80h9" stroke="#f2ddb0" stroke-opacity=".7" stroke-width="6" stroke-linecap="round"/>
+</svg>

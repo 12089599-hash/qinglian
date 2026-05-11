@@ -8223,6 +8223,7 @@ const spiritBeastQualities = {
     const locked = !item.unlock?.unlocked;
     return `
       <div class="system-row beast-row ${item.deployed ? 'active' : ''} ${locked ? 'locked' : ''}">
+        <span class="beast-icon beast-icon-${item.id}" aria-hidden="true"></span>
         <div>
           <strong>${item.name} <small>${item.quality.name} · ${item.rarity.name} · ${item.level} / ${item.maxLevel}${item.deployed ? ' · 出战' : locked ? ' · 未现踪' : ''}</small></strong>
           <span>${item.detail}</span>
@@ -8345,8 +8346,13 @@ const spiritBeastQualities = {
       <div class="building-grid">
         ${cave.buildings.map((building) => `
           <button data-select-building="${building.id}" class="building-card ${building.id === selected.id ? 'active' : ''}" type="button">
-            <span>${building.tier.name}</span>
-            <strong>${building.name}</strong>
+            <span class="building-card-head">
+              <i class="building-icon building-icon-${building.id}" aria-hidden="true"></i>
+              <span>
+                <b>${building.tier.name}</b>
+                <strong>${building.name}</strong>
+              </span>
+            </span>
             <small>${building.level} / ${building.maxLevel} 级</small>
             <em>${formatEffects(building.effects) || '尚未营建'}</em>
           </button>
@@ -8367,8 +8373,13 @@ const spiritBeastQualities = {
       <section class="building-detail-card">
         <header>
           <div>
-            <span>${building.tier.name}</span>
-            <h3>${building.name}</h3>
+            <span class="building-detail-title">
+              <i class="building-icon building-icon-${building.id}" aria-hidden="true"></i>
+              <span>
+                <b>${building.tier.name}</b>
+                <h3>${building.name}</h3>
+              </span>
+            </span>
           </div>
           <button data-upgrade-building="${building.id}" ${upgrade.maxed || upgrade.realmLocked ? 'disabled' : ''}>${upgrade.maxed ? '圆满' : '升级'}</button>
         </header>

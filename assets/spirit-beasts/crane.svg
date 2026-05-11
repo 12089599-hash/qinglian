@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="45%" r="58%"><stop offset="0" stop-color="#253b3b"/><stop offset=".65" stop-color="#0b1817"/><stop offset="1" stop-color="#020706"/></radialGradient>
+    <linearGradient id="wing" x1="26" y1="10" x2="94" y2="114"><stop offset="0" stop-color="#f6e7c1"/><stop offset=".48" stop-color="#9adbc9"/><stop offset="1" stop-color="#42544d"/></linearGradient>
+    <filter id="s" x="-25%" y="-25%" width="150%" height="150%"><feDropShadow dx="0" dy="2" stdDeviation="2.2" flood-color="#000" flood-opacity=".58"/></filter>
+  </defs>
+  <rect width="128" height="128" rx="22" fill="url(#bg)"/>
+  <circle cx="64" cy="64" r="47" fill="none" stroke="#d7bd69" stroke-opacity=".44" stroke-width="3"/>
+  <path fill="url(#wing)" filter="url(#s)" d="M64 23c8 18 12 36 12 55 12-10 23-14 36-12-11 16-28 27-47 31-18-4-35-15-48-31 14-2 26 2 38 12 0-19 2-37 9-55Z"/>
+  <path fill="#09110f" opacity=".36" d="M64 42c-4 16-4 34 0 52 5-17 5-35 0-52Z"/>
+  <path d="M65 22c9 7 17 9 27 7-7 8-15 12-26 12" fill="none" stroke="#f4e6bc" stroke-opacity=".6" stroke-width="4" stroke-linecap="round"/>
+</svg>
