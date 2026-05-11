@@ -319,7 +319,6 @@
     arrayFlags: { label: '阵旗', priority: 1.15, mapIds: ['ancientRuins', 'demonRift', 'swordTomb'], missionId: 'demonRift', approachId: 'relicSearch', commissionId: null, marketItemId: 'arrayManual', detail: '阵法、静室高阶和藏经阁会持续消耗阵旗。' },
     forgingEssence: { label: '炼器精魄', priority: 1.35, mapIds: ['swordTomb', 'mistyValley', 'qinglanMountain'], missionId: 'ancientSwordTomb', approachId: 'relicSearch', commissionId: 'forge', marketItemId: 'forgingAsh', detail: '器位强化、法宝和炼器阁中后期都需要炼器精魄。' },
     bloodEssence: { label: '血脉精魄', priority: 1.3, mapIds: ['demonRift', 'swordTomb', 'mistyValley', 'qinglanMountain'], missionId: 'ancientSwordTomb', approachId: 'relicSearch', commissionId: null, detail: '血脉精魄主要来自玄纹以上战利品分解，是血脉和御灵秘传的长期材料。' },
-    gearSouls: { label: '器魂', priority: 1.32, mapIds: ['ancientRuins', 'swordTomb', 'demonRift'], missionId: 'ancientSwordTomb', approachId: 'relicSearch', commissionId: null, detail: '器魂来自地煞以上战利品分解和秘境关键层，用来点亮器位长期天赋。' },
     insight: { label: '悟道', priority: 1.05, mapIds: ['ancientRuins', 'demonRift', 'swordTomb', 'qinglanMountain'], missionId: 'ancientRuins', approachId: 'daoInquiry', commissionId: null, marketItemId: 'insightScroll', detail: '悟道支撑藏经阁高阶和后续功法沉淀。' },
     qi: { label: '灵气', priority: 0.55, mapIds: ['ancientRuins', 'demonRift', 'swordTomb', 'herbValley', 'qinglanMountain'], missionId: 'ancientRuins', approachId: 'daoInquiry', commissionId: null, detail: '灵气不足时，问道路线、丹药和长期吐纳更重要。' },
   };
@@ -1139,37 +1138,49 @@ const spiritBeastQualities = {
       { id: 'edge', name: '锋芒', bonuses: { attack: 14 } },
       { id: 'pierce', name: '破势', bonuses: { pierce: 12 } },
       { id: 'spark', name: '会心', bonuses: { critChance: 0.02 } },
+      { id: 'soulCut', name: '裂魄', minRarity: 'mystic', bonuses: { attack: 10, pierce: 10, critChance: 0.012 } },
       { id: 'trueEdge', name: '真锋', minRarity: 'earthFiend', bonuses: { attackPct: 0.035 } },
+      { id: 'heavenMark', name: '天痕', minRarity: 'heavenWork', bonuses: { attackPct: 0.025, elementPower: 18 } },
     ],
     offhand: [
       { id: 'wheel', name: '轮影', bonuses: { attack: 10, pierce: 6 } },
       { id: 'bell', name: '清音', bonuses: { qiRate: 0.014, defense: 8 } },
       { id: 'flare', name: '曜纹', bonuses: { critChance: 0.018, elementPower: 8 } },
+      { id: 'echoSeal', name: '回照', minRarity: 'mystic', bonuses: { defense: 10, qiRate: 0.012, elementPower: 8 } },
       { id: 'deepRift', name: '裂隙', minRarity: 'earthFiend', bonuses: { piercePct: 0.04 } },
+      { id: 'voidChime', name: '虚响', minRarity: 'heavenWork', bonuses: { piercePct: 0.025, critChance: 0.012 } },
     ],
     amulet: [
       { id: 'life', name: '养命', bonuses: { vitality: 28 } },
       { id: 'gate', name: '护关', bonuses: { breakthrough: 0.018 } },
       { id: 'breath', name: '纳息', bonuses: { qiRate: 0.018 } },
+      { id: 'wardPulse', name: '护脉', minRarity: 'mystic', bonuses: { vitality: 18, defense: 10, breakthrough: 0.012 } },
       { id: 'lifeRoot', name: '命根', minRarity: 'earthFiend', bonuses: { vitalityPct: 0.05 } },
+      { id: 'fateKnot', name: '命结', minRarity: 'heavenWork', bonuses: { vitalityPct: 0.035, breakthrough: 0.014 } },
     ],
     robe: [
       { id: 'guard', name: '护体', bonuses: { defense: 16 } },
       { id: 'step', name: '轻身', bonuses: { speed: 5 } },
       { id: 'ward', name: '避劫', bonuses: { dangerReduction: 8 } },
+      { id: 'mistSkin', name: '雾隐', minRarity: 'mystic', bonuses: { defense: 10, speed: 4, dangerReduction: 5 } },
       { id: 'wardVein', name: '玄护', minRarity: 'earthFiend', bonuses: { defensePct: 0.045 } },
+      { id: 'lotusArmor', name: '莲甲', minRarity: 'heavenWork', bonuses: { defensePct: 0.03, vitalityPct: 0.025 } },
     ],
     jade: [
       { id: 'root', name: '地脉', bonuses: { vitality: 22, defense: 8 } },
       { id: 'clear', name: '澄息', bonuses: { qiRate: 0.016 } },
       { id: 'pulse', name: '玉振', bonuses: { elementPower: 10, breakthrough: 0.012 } },
+      { id: 'springEye', name: '泉眼', minRarity: 'mystic', bonuses: { qiRate: 0.014, vitality: 18, elementPower: 8 } },
       { id: 'spiritCircle', name: '灵周', minRarity: 'heavenWork', bonuses: { vitalityPct: 0.04, defensePct: 0.025 } },
+      { id: 'daoSeed', name: '道种', minRarity: 'dao', bonuses: { qiRate: 0.022, breakthrough: 0.018, elementPower: 18 } },
     ],
     boots: [
       { id: 'cloud', name: '云痕', bonuses: { speed: 6 } },
       { id: 'shadow', name: '掠影', bonuses: { dangerReduction: 6, critChance: 0.012 } },
       { id: 'tread', name: '踏水', bonuses: { defense: 8, elementPower: 8 } },
+      { id: 'thunderTrail', name: '奔雷', minRarity: 'mystic', bonuses: { speed: 7, attack: 8, elementPower: 8 } },
       { id: 'windStep', name: '风骨', minRarity: 'earthFiend', bonuses: { speedPct: 0.045 } },
+      { id: 'voidWalk', name: '虚渡', minRarity: 'heavenWork', bonuses: { speedPct: 0.03, dangerReduction: 8 } },
     ],
   };
 
@@ -1412,6 +1423,25 @@ const spiritBeastQualities = {
       element: 'dark',
       elementPower: 22,
     },
+    starfallEdge: {
+      id: 'starfallEdge',
+      name: '星陨',
+      slot: 'weapon',
+      attack: 16,
+      pierce: 12,
+      critChance: 0.022,
+      element: 'light',
+      elementPower: 20,
+    },
+    thunderEdge: {
+      id: 'thunderEdge',
+      name: '雷纹',
+      slot: 'weapon',
+      attack: 20,
+      speed: 4,
+      element: 'fire',
+      elementPower: 20,
+    },
     spiritVein: {
       id: 'spiritVein',
       name: '灵脉',
@@ -1446,6 +1476,25 @@ const spiritBeastQualities = {
       vitality: 42,
       pierce: 10,
       element: 'dark',
+      elementPower: 18,
+    },
+    riverSeal: {
+      id: 'riverSeal',
+      name: '川泽',
+      slot: 'amulet',
+      defense: 16,
+      vitality: 32,
+      breakthrough: 0.018,
+      element: 'water',
+      elementPower: 16,
+    },
+    bloodCharm: {
+      id: 'bloodCharm',
+      name: '血篆',
+      slot: 'amulet',
+      vitality: 48,
+      attack: 8,
+      element: 'fire',
       elementPower: 18,
     },
     cloudStep: {
@@ -1485,6 +1534,26 @@ const spiritBeastQualities = {
       element: 'water',
       elementPower: 20,
     },
+    mistMantle: {
+      id: 'mistMantle',
+      name: '雾衣',
+      slot: 'robe',
+      defense: 16,
+      speed: 6,
+      dangerReduction: 10,
+      element: 'water',
+      elementPower: 16,
+    },
+    thunderRobe: {
+      id: 'thunderRobe',
+      name: '雷袍',
+      slot: 'robe',
+      defense: 14,
+      attack: 8,
+      speed: 6,
+      element: 'fire',
+      elementPower: 18,
+    },
     starWheel: {
       id: 'starWheel',
       name: '星轮',
@@ -1518,6 +1587,25 @@ const spiritBeastQualities = {
       slot: 'offhand',
       attack: 18,
       critChance: 0.025,
+      element: 'fire',
+      elementPower: 18,
+    },
+    riverBell: {
+      id: 'riverBell',
+      name: '川铃',
+      slot: 'offhand',
+      qiBonus: 0.024,
+      defense: 14,
+      element: 'water',
+      elementPower: 14,
+    },
+    thunderWheel: {
+      id: 'thunderWheel',
+      name: '雷轮',
+      slot: 'offhand',
+      attack: 12,
+      speed: 5,
+      critChance: 0.018,
       element: 'fire',
       elementPower: 18,
     },
@@ -1557,6 +1645,24 @@ const spiritBeastQualities = {
       element: 'light',
       elementPower: 16,
     },
+    springJade: {
+      id: 'springJade',
+      name: '泉玉',
+      slot: 'jade',
+      qiBonus: 0.028,
+      vitality: 28,
+      element: 'water',
+      elementPower: 14,
+    },
+    bloodJade: {
+      id: 'bloodJade',
+      name: '赤玉',
+      slot: 'jade',
+      vitality: 38,
+      critChance: 0.016,
+      element: 'fire',
+      elementPower: 18,
+    },
     cloudTrace: {
       id: 'cloudTrace',
       name: '云踪',
@@ -1593,15 +1699,34 @@ const spiritBeastQualities = {
       element: 'dark',
       elementPower: 16,
     },
+    mistStep: {
+      id: 'mistStep',
+      name: '雾履',
+      slot: 'boots',
+      speed: 9,
+      dangerReduction: 8,
+      element: 'water',
+      elementPower: 14,
+    },
+    thunderStep: {
+      id: 'thunderStep',
+      name: '雷步',
+      slot: 'boots',
+      speed: 11,
+      attack: 6,
+      critChance: 0.012,
+      element: 'fire',
+      elementPower: 16,
+    },
   };
 
   const gearAffixPools = {
-    weapon: ['swordIntent', 'breakerEdge', 'flameEdge', 'shadowPierce'],
-    offhand: ['starWheel', 'spiritBell', 'moonWheel', 'sunWheel'],
-    amulet: ['spiritVein', 'calmMind', 'sunSigil', 'moonSeal'],
-    robe: ['cloudStep', 'guardedBody', 'earthWard', 'waterMirror'],
-    jade: ['jadeRoot', 'clearJade', 'darkJade', 'brightJade'],
-    boots: ['cloudTrace', 'windStep', 'earthStep', 'shadowStep'],
+    weapon: ['swordIntent', 'breakerEdge', 'flameEdge', 'shadowPierce', 'starfallEdge', 'thunderEdge'],
+    offhand: ['starWheel', 'spiritBell', 'moonWheel', 'sunWheel', 'riverBell', 'thunderWheel'],
+    amulet: ['spiritVein', 'calmMind', 'sunSigil', 'moonSeal', 'riverSeal', 'bloodCharm'],
+    robe: ['cloudStep', 'guardedBody', 'earthWard', 'waterMirror', 'mistMantle', 'thunderRobe'],
+    jade: ['jadeRoot', 'clearJade', 'darkJade', 'brightJade', 'springJade', 'bloodJade'],
+    boots: ['cloudTrace', 'windStep', 'earthStep', 'shadowStep', 'mistStep', 'thunderStep'],
   };
 
   const gearAffixSets = {
@@ -1649,6 +1774,28 @@ const spiritBeastQualities = {
         { pieces: 6, name: '六镜照影', bonuses: { pierce: 14, vitality: 30, critChance: 0.02, speed: 3 } },
       ],
     },
+    riverMistVessel: {
+      id: 'riverMistVessel',
+      name: '川雾归藏',
+      detail: '星陨、川铃、川泽、雾衣、泉玉与雾履相应，稳住身法、护体与长线吐纳。',
+      affixes: ['starfallEdge', 'riverBell', 'riverSeal', 'mistMantle', 'springJade', 'mistStep'],
+      tiers: [
+        { pieces: 2, name: '雾起', bonuses: { defense: 12, qiBonus: 0.016 } },
+        { pieces: 4, name: '川回', bonuses: { speed: 3, dangerReduction: 8, vitality: 24 } },
+        { pieces: 6, name: '归藏成局', bonuses: { defense: 18, qiBonus: 0.028, dangerReduction: 10, vitality: 36 } },
+      ],
+    },
+    thunderBloodHunt: {
+      id: 'thunderBloodHunt',
+      name: '雷血逐影',
+      detail: '雷纹、雷轮、血篆、雷袍、赤玉与雷步同鸣，偏向爆发、会心和灵兽协战。',
+      affixes: ['thunderEdge', 'thunderWheel', 'bloodCharm', 'thunderRobe', 'bloodJade', 'thunderStep'],
+      tiers: [
+        { pieces: 2, name: '雷息', bonuses: { attack: 14, speed: 2 } },
+        { pieces: 4, name: '血影', bonuses: { vitality: 28, critChance: 0.014, elementPower: 12 } },
+        { pieces: 6, name: '逐影成势', bonuses: { attack: 24, speed: 4, vitality: 38, critChance: 0.018 } },
+      ],
+    },
   };
 
   const buildSchools = {
@@ -1658,7 +1805,7 @@ const spiritBeastQualities = {
       detail: '锋芒、破势、会心和灵根杀伐相互叠加。',
       stats: ['power', 'powerBonus', 'attack', 'pierce', 'critChance', 'elementPower'],
       elements: ['metal', 'fire', 'dark', 'light'],
-      affixes: ['edge', 'pierce', 'spark', 'swordIntent', 'breakerEdge', 'flameEdge', 'shadowPierce', 'starWheel', 'moonWheel', 'sunWheel'],
+      affixes: ['edge', 'pierce', 'spark', 'soulCut', 'trueEdge', 'heavenMark', 'swordIntent', 'breakerEdge', 'flameEdge', 'shadowPierce', 'starfallEdge', 'thunderEdge', 'starWheel', 'moonWheel', 'sunWheel', 'thunderWheel'],
     },
     spiritFlow: {
       id: 'spiritFlow',
@@ -1666,7 +1813,7 @@ const spiritBeastQualities = {
       detail: '吐纳、护关、灵草和丹火缩时更适合长期挂机。',
       stats: ['qiRate', 'qiBonus', 'breakthrough', 'herbRate', 'alchemySpeed'],
       elements: ['wood', 'light', 'water'],
-      affixes: ['bell', 'breath', 'gate', 'clear', 'spiritVein', 'calmMind', 'spiritBell', 'clearJade', 'brightJade'],
+      affixes: ['bell', 'breath', 'gate', 'clear', 'echoSeal', 'springEye', 'daoSeed', 'spiritVein', 'calmMind', 'spiritBell', 'riverBell', 'clearJade', 'brightJade', 'springJade'],
     },
     earthGuard: {
       id: 'earthGuard',
@@ -1674,7 +1821,7 @@ const spiritBeastQualities = {
       detail: '护体、血元、避劫和地水气象更适合秘境承压。',
       stats: ['defense', 'vitality', 'dangerReduction', 'speed'],
       elements: ['earth', 'water'],
-      affixes: ['guard', 'ward', 'root', 'tread', 'guardedBody', 'earthWard', 'waterMirror', 'jadeRoot', 'cloudStep', 'cloudTrace', 'earthStep'],
+      affixes: ['guard', 'ward', 'root', 'tread', 'wardPulse', 'mistSkin', 'lotusArmor', 'guardedBody', 'earthWard', 'waterMirror', 'mistMantle', 'jadeRoot', 'cloudStep', 'cloudTrace', 'earthStep', 'mistStep'],
     },
     beastBlood: {
       id: 'beastBlood',
@@ -1682,7 +1829,7 @@ const spiritBeastQualities = {
       detail: '御灵培养、血脉凝练和分解精粹服务长期养成。',
       stats: ['beastTraining', 'bloodEssenceBonus', 'dismantleBonus', 'lootRarity'],
       elements: ['dark', 'wood', 'fire'],
-      affixes: ['shadow', 'life', 'moonSeal', 'darkJade', 'shadowStep', 'windStep'],
+      affixes: ['shadow', 'life', 'lifeRoot', 'fateKnot', 'bloodCharm', 'moonSeal', 'darkJade', 'bloodJade', 'shadowStep', 'windStep', 'thunderStep'],
     },
   };
 
@@ -2094,7 +2241,6 @@ const spiritBeastQualities = {
     arrayFlags: document.querySelector('[data-array-flags]'),
     forgingEssence: document.querySelector('[data-forging-essence]'),
     bloodEssence: document.querySelector('[data-blood-essence]'),
-    gearSouls: document.querySelector('[data-gear-souls]'),
     heartDemon: document.querySelector('[data-heart-demon]'),
     power: document.querySelector('[data-power]'),
     breakthroughChance: document.querySelector('[data-breakthrough-chance]'),
@@ -2329,19 +2475,6 @@ const spiritBeastQualities = {
     const gearSummary = event.target.closest('.gear-card-brief');
     if (gearSummary && !event.target.closest('button')) {
       event.preventDefault();
-      return;
-    }
-    const soulButton = event.target.closest('[data-upgrade-gear-soul]');
-    if (soulButton) {
-      event.preventDefault();
-      const result = unlockGearSoulTalent(state, soulButton.dataset.upgradeGearSoul);
-      if (result.ok) {
-        showToast('器魂点亮', `${gear[result.slot].name}「${result.talent.name}」升至 ${result.level} 重。`);
-      } else if (result.reason === 'notEnoughResources') {
-        showToast('器魂不足', `点亮需要${formatReward(result.cost)}。`, 'warning');
-      }
-      saveState();
-      render(true);
       return;
     }
     const upgradeButton = event.target.closest('[data-upgrade-gear]');
@@ -3246,6 +3379,7 @@ const spiritBeastQualities = {
     state.gearQuality = normalizeGearQuality(state.gearQuality);
     state.gearAffixes = normalizeGearAffixes(state.gearAffixes);
     state.gearSoulTalents = normalizeLevels(state.gearSoulTalents, gearSoulTalents);
+    retireLegacyGearSouls(state);
     const savedLootEquipment = state.lootEquipment;
     state.lootEquipment = normalizeLootEquipment(savedLootEquipment);
     state.gear = inheritLootLevelsToGear(state.gear, savedLootEquipment);
@@ -4392,7 +4526,6 @@ const spiritBeastQualities = {
     if (refs.arrayFlags) refs.arrayFlags.textContent = Math.floor(state.arrayFlags);
     if (refs.forgingEssence) refs.forgingEssence.textContent = Math.floor(state.forgingEssence || 0);
     if (refs.bloodEssence) refs.bloodEssence.textContent = Math.floor(state.bloodEssence || 0);
-    if (refs.gearSouls) refs.gearSouls.textContent = Math.floor(state.gearSouls || 0);
     refs.heartDemon.textContent = Math.floor(state.heartDemon);
     refs.power.textContent = calculatePower(state);
     refs.breakthroughChance.textContent = `${Math.round(calculateBreakthroughChance(state, Date.now()) * 100)}%`;
@@ -4995,66 +5128,46 @@ const spiritBeastQualities = {
   }
 
   function getGearSoulSlotBonus(state, slot) {
-    const talent = gearSoulTalents[slot];
-    const level = clampInteger(state.gearSoulTalents?.[slot] || 0, 0, talent?.maxLevel || 0);
-    return talent && level > 0 ? talent.bonuses(level) : {};
+    return {};
   }
 
   function getGearSoulBonus(state, key) {
-    return Object.keys(gearSoulTalents).reduce((total, slot) => total + (getGearSoulSlotBonus(state, slot)[key] || 0), 0);
+    return 0;
   }
 
   function getGearSoulSources(state, key, mode = 'flat') {
-    return Object.values(gearSoulTalents)
-      .map((talent) => {
-        const value = getGearSoulSlotBonus(state, talent.id)[key] || 0;
-        return value ? { label: `器魂·${talent.name}`, value, mode } : null;
-      })
-      .filter(Boolean);
+    return [];
   }
 
   function getGearSoulStatus(state) {
-    state.gearSoulTalents = normalizeLevels(state.gearSoulTalents, gearSoulTalents);
-    return {
-      resource: Math.floor(state.gearSouls || 0),
-      slots: Object.values(gearSoulTalents).map((talent) => {
-        const level = state.gearSoulTalents[talent.id] || 0;
-        const maxed = level >= talent.maxLevel;
-        const nextLevel = level + 1;
-        return {
-          id: talent.id,
-          slotName: gear[talent.id]?.name || talent.id,
-          name: talent.name,
-          level,
-          maxLevel: talent.maxLevel,
-          maxed,
-          effects: effectsFromBonusObject(talent.bonuses(level)),
-          nextEffects: maxed ? [] : effectsFromBonusObject(talent.bonuses(nextLevel)),
-          nextCost: maxed ? null : getGearSoulTalentCost(nextLevel),
-        };
-      }),
-    };
+    return null;
   }
 
   function unlockGearSoulTalent(state, slot, now = Date.now()) {
-    const talent = gearSoulTalents[slot];
-    if (!talent) {
-      return { ok: false, reason: 'unknownSlot' };
-    }
-    state.gearSoulTalents = normalizeLevels(state.gearSoulTalents, gearSoulTalents);
-    const level = state.gearSoulTalents[slot] || 0;
-    if (level >= talent.maxLevel) {
-      return { ok: false, reason: 'maxLevel' };
-    }
-    const cost = getGearSoulTalentCost(level + 1);
-    if (!canAfford(state, cost)) {
-      addLog(state, now, `点亮${talent.name}需要${formatReward(cost)}。`);
-      return { ok: false, reason: 'notEnoughResources', cost };
-    }
-    payResources(state, cost);
-    state.gearSoulTalents[slot] = level + 1;
-    addLog(state, now, `${gear[slot]?.name || '器位'}器魂点亮「${talent.name}」${state.gearSoulTalents[slot]} 重。`);
-    return { ok: true, slot, talent, level: state.gearSoulTalents[slot], cost };
+    retireLegacyGearSouls(state);
+    return { ok: false, reason: 'retired' };
+  }
+
+  function getRetiredGearSoulRefund(state) {
+    const looseSouls = Math.max(0, Math.floor(Number(state.gearSouls) || 0));
+    const talents = normalizeLevels(state.gearSoulTalents, gearSoulTalents);
+    const talentRefund = Object.values(talents).reduce((total, level) => {
+      let refund = 0;
+      for (let nextLevel = 1; nextLevel <= level; nextLevel += 1) {
+        const cost = getGearSoulTalentCost(nextLevel);
+        refund += Math.max(0, Math.floor(cost.gearSouls || 0)) * 3;
+        refund += Math.ceil((cost.forgingEssence || 0) * 0.5);
+      }
+      return total + refund;
+    }, 0);
+    return looseSouls * 2 + talentRefund;
+  }
+
+  function retireLegacyGearSouls(state) {
+    const refund = getRetiredGearSoulRefund(state);
+    state.forgingEssence = Math.max(0, Number(state.forgingEssence) || 0) + refund;
+    state.gearSouls = 0;
+    state.gearSoulTalents = Object.fromEntries(Object.keys(gear).map((id) => [id, 0]));
   }
 
   function getTieredLootBonus(level) {
@@ -5324,8 +5437,10 @@ const spiritBeastQualities = {
       reward.arrayFlags = Math.max(1, Math.ceil(layer / 12));
     }
     if (layer % 5 === 0) {
-      reward.forgingEssence = Math.max(1, Math.ceil(layer / 5));
-      reward.gearSouls = Math.max(1, Math.ceil(layer / 10));
+      reward.forgingEssence = Math.max(2, Math.ceil(layer / 4));
+      if (layer >= 10) {
+        reward.bloodEssence = Math.max(1, Math.ceil(layer / 14));
+      }
     }
     if (layer % 10 === 0) {
       reward.powerBonus = 8 + layer;
@@ -5672,7 +5787,6 @@ const spiritBeastQualities = {
       { label: '玉佩藏脉', value: getGearLevelBonus(state, 'qiBonusPerLevel'), mode: 'percent' },
       { label: '护符灵纹', value: getGearAffixBonus(state, 'qiBonus'), mode: 'percent' },
       { label: '同调器象', value: getGearSetBonus(state, 'qiBonus'), mode: 'percent' },
-      { label: '器魂回灵', value: getGearSoulBonus(state, 'qiRate'), mode: 'percent' },
       { label: '阵道感悟', value: (state.cultivationPaths.formation || 0) * cultivationPaths.formation.qiBonusPerLevel, mode: 'percent' },
       { label: '奇珍加持', value: getEquippedLootBonus(state, 'qiRate'), mode: 'percent' },
       { label: '地脉熟稔', value: getMapMasteryBonus(state, 'qiRate'), mode: 'percent' },
@@ -5693,7 +5807,6 @@ const spiritBeastQualities = {
       { label: '奇珍加持', value: Math.min(0.1, getEquippedLootBonus(state, 'breakthrough')), mode: 'percent' },
       { label: '法宝灵蕴', value: Math.min(0.12, getTreasureBonus(state, 'breakthrough')), mode: 'percent' },
       { label: '血脉灵契', value: Math.min(0.1, getBloodlineBonus(state, 'breakthrough')), mode: 'percent' },
-      { label: '器魂护关', value: Math.min(0.05, getGearSoulBonus(state, 'breakthrough')), mode: 'percent' },
       { label: '宗门秘传', value: Math.min(0.08, getSectSkillBonus(state, 'breakthrough')), mode: 'percent' },
       { label: '命格道心', value: Math.min(0.1, getDaoHeartBonus(state, 'breakthrough')), mode: 'percent' },
       { label: '悟道灵光', value: Math.min(0.15, (state.insight || 0) * 0.03), mode: 'percent' },
@@ -5752,7 +5865,6 @@ const spiritBeastQualities = {
         { label: '法宝灵蕴', value: getTreasureBonus(state, 'dangerReduction') },
         { label: '灵兽护持', value: getSpiritBeastBonus(state, 'dangerReduction') },
         { label: '血脉灵契', value: getBloodlineBonus(state, 'dangerReduction') },
-        { label: '器魂余荫', value: getGearSoulBonus(state, 'dangerReduction') },
         { label: '宗门秘传', value: getSectSkillBonus(state, 'dangerReduction') },
         { label: '命格道心', value: getDaoHeartBonus(state, 'dangerReduction') },
       ]) },
@@ -5811,11 +5923,9 @@ const spiritBeastQualities = {
             cost: level > 0 && quality.affixId ? getGearAffixRerollCost(state, item.id) : null,
             preview: level > 0 && quality.affixId ? getGearAffixRerollPreview(state, item.id) : { candidates: [], warnings: [] },
           },
-          soul: getGearSoulStatus(state).slots.find((slot) => slot.id === item.id),
         };
       }),
       sets: getGearSetStatus(state),
-      gearSoul: getGearSoulStatus(state),
       lootResonance: getLootResonanceStatus(state),
       loot: (state.lootEquipment || []).map((item) => {
         const slotLevel = state.gear?.[item.slot] || 0;
@@ -7584,14 +7694,13 @@ const spiritBeastQualities = {
     if (!refs.gearList) {
       return;
     }
-    const signature = `${getRealmUpgradeLimit(state)}|${state.gearSouls || 0}|${Object.keys(gear).map((id) => `${id}:${state.gear[id] || 0}:${state.gearQuality[id] || 0}:${state.gearAffixes[id] || ''}:${state.gearSoulTalents?.[id] || 0}:${state.equippedLoot?.[id] || ''}`).join('|')}`;
+    const signature = `${getRealmUpgradeLimit(state)}|${Object.keys(gear).map((id) => `${id}:${state.gear[id] || 0}:${state.gearQuality[id] || 0}:${state.gearAffixes[id] || ''}:${state.equippedLoot?.[id] || ''}`).join('|')}`;
     if (!force && renderCache.gear === signature) {
       return;
     }
     const details = getEquipmentDetails(state);
     refs.gearList.innerHTML = `
       ${renderGearSetPanel(details.sets)}
-      ${renderGearSoulPanel(details.gearSoul)}
       ${details.gear.map((item) => renderGearRow(item)).join('')}
     `;
     renderCache.gear = signature;
@@ -7854,7 +7963,7 @@ const spiritBeastQualities = {
     button.textContent = !selected.length
       ? '请选择品质'
       : summary.count > 0
-        ? `分解 ${summary.count}${summary.reward.gearSouls ? ` · 器魂+${summary.reward.gearSouls}` : summary.reward.bloodEssence ? ` · 血脉+${summary.reward.bloodEssence}` : ''}`
+        ? `分解 ${summary.count}${summary.reward.bloodEssence ? ` · 血脉+${summary.reward.bloodEssence}` : summary.reward.forgingEssence ? ` · 精魄+${summary.reward.forgingEssence}` : ''}`
         : '无可分解';
     button.title = selected.length
       ? (summary.count > 0 ? `预计获得 ${formatReward(summary.reward)}` : '当前勾选品质没有可分解战利品')
@@ -8354,30 +8463,6 @@ const spiritBeastQualities = {
     `;
   }
 
-  function renderGearSoulPanel(gearSoul) {
-    if (!gearSoul) {
-      return '';
-    }
-    return `
-      <section class="resonance-card gear-soul-card">
-        <div>
-          <span>器魂炉</span>
-          <strong>${gearSoul.resource} 器魂</strong>
-          <small>高品战利品分解后沉入器位，换装不重置。</small>
-        </div>
-        <div class="gear-soul-grid">
-          ${gearSoul.slots.map((slot) => `
-            <button data-upgrade-gear-soul="${slot.id}" ${slot.maxed ? 'disabled' : ''}>
-              <strong>${slot.slotName}</strong>
-              <small>${slot.name} ${slot.level}/${slot.maxLevel}</small>
-              <em>${slot.maxed ? '已满' : formatReward(slot.nextCost)}</em>
-            </button>
-          `).join('')}
-        </div>
-      </section>
-    `;
-  }
-
   function renderGearRow(item) {
     const definition = gear[item.id];
     const level = item.level;
@@ -8437,7 +8522,6 @@ const spiritBeastQualities = {
           <span><b>下阶</b><small>${maxed ? '已至圆满' : formatEffects(item.nextEffects)}</small></span>
           <span><b>器象</b><small>${item.intent.detail}</small></span>
           <span><b>词条</b><small>${item.affix.id ? `${item.affix.name}（${formatEffects(item.affix.effects)}）` : '无'}</small></span>
-          <span><b>器魂</b><small>${item.soul ? `${item.soul.name} ${item.soul.level}/${item.soul.maxLevel} · ${formatEffects(item.soul.effects) || '未点亮'}` : '未点亮'}</small></span>
           <span><b>升级</b><small>${maxed ? '已达上限' : realmLocked ? `${getUpgradeTier(nextLevel).name}需更高境界` : formatReward(upgradeCost)}</small></span>
           <span><b>淬炼</b><small>${qualityMaxed ? '火候已满' : level <= 0 ? '先升级后可淬炼' : `${gearQualities[nextQuality]?.name || ''} · 成火 ${Math.round((item.refinement?.chance ?? gearQualities[item.qualityIndex]?.refineChance ?? 0) * 100)}% · ${formatReward(refineCost)}`}</small></span>
           <span><b>洗练</b><small>${item.reroll?.available ? formatReward(rerollCost) : '淬炼后可洗练词条'}</small></span>
@@ -8755,7 +8839,6 @@ const spiritBeastQualities = {
       arrayFlags: Math.max(0, round(after.arrayFlags - before.arrayFlags)),
       forgingEssence: Math.max(0, round((after.forgingEssence || 0) - (before.forgingEssence || 0))),
       bloodEssence: Math.max(0, round((after.bloodEssence || 0) - (before.bloodEssence || 0))),
-      gearSouls: Math.max(0, round((after.gearSouls || 0) - (before.gearSouls || 0))),
     };
   }
 
@@ -8775,7 +8858,6 @@ const spiritBeastQualities = {
       ['阵旗', `+${Math.floor(summary.arrayFlags || 0)}`],
       ['精魄', `+${Math.floor(summary.forgingEssence || 0)}`],
       ['血脉精魄', `+${Math.floor(summary.bloodEssence || 0)}`],
-      ['器魂', `+${Math.floor(summary.gearSouls || 0)}`],
     ].filter((row, index) => index === 0 || row[1] !== '+0');
 
     refs.offlineSummary.innerHTML = rows
@@ -9752,7 +9834,6 @@ const spiritBeastQualities = {
       arrayFlags: state.arrayFlags || 0,
       forgingEssence: state.forgingEssence || 0,
       bloodEssence: state.bloodEssence || 0,
-      gearSouls: state.gearSouls || 0,
     };
   }
 
@@ -10115,7 +10196,7 @@ const spiritBeastQualities = {
 
     const jadeSoul = getGearSoulSlotBonus(state, 'jade');
     if (jadeSoul.elementPower) {
-      add(getDominantCombatElement(scores).id, jadeSoul.elementPower, '器魂玉府');
+      add(getDominantCombatElement(scores).id, jadeSoul.elementPower, '玉府灵机');
     }
 
     const activeBeast = getActiveSpiritBeast(state);
@@ -11587,7 +11668,6 @@ const spiritBeastQualities = {
       forgingEssence: Math.floor(2 * dismantleMultiplier),
       artifacts: 1,
       bloodEssence: rarityIndex >= 2 ? Math.max(1, Math.floor((rarityIndex - 1) * dismantleMultiplier)) : 0,
-      gearSouls: rarityIndex >= 3 ? Math.max(1, Math.floor((rarityIndex - 2) * dismantleMultiplier)) : 0,
     });
   }
 
@@ -12095,7 +12175,7 @@ const spiritBeastQualities = {
       return `道威永久 +${amount}`;
     }
 
-    const names = { qi: '灵气', herbs: '灵草', spiritStones: '灵石', pills: '聚气丹', gatherQiPill: '聚气丹', clearHeartPill: '清心丹', meridianPill: '护脉丹', bodyTemperPill: '淬体丹', spiritRootPill: '培元丹', beastCores: '妖核', artifacts: '法器', arrayFlags: '阵旗', forgingEssence: '炼器精魄', bloodEssence: '血脉精魄', gearSouls: '器魂', heartDemon: '心魔', insight: '悟道' };
+    const names = { qi: '灵气', herbs: '灵草', spiritStones: '灵石', pills: '聚气丹', gatherQiPill: '聚气丹', clearHeartPill: '清心丹', meridianPill: '护脉丹', bodyTemperPill: '淬体丹', spiritRootPill: '培元丹', beastCores: '妖核', artifacts: '法器', arrayFlags: '阵旗', forgingEssence: '炼器精魄', bloodEssence: '血脉精魄', heartDemon: '心魔', insight: '悟道' };
     return `${amount} ${names[key] || key}`;
   }
 

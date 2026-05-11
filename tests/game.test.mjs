@@ -68,7 +68,6 @@ import {
   getMapBossSweepStatus,
   getMissionStatus,
   getGearQuality,
-  getGearSoulStatus,
   getGearSetStatus,
   getGearAffixRerollCost,
   getSectStatus,
@@ -105,7 +104,6 @@ import {
   upgradeCultivationPath,
   upgradeFormation,
   upgradeGear,
-  unlockGearSoulTalent,
   upgradeTreasure,
 } from '../src/gameCore.mjs';
 
@@ -844,6 +842,25 @@ test('gear affix sets align one matching affix with every equipment slot', () =>
   Object.keys(GEAR_AFFIXES).forEach((affixId) => {
     assert.equal(usedAffixes.has(affixId), true, `${GEAR_AFFIXES[affixId].name} should belong to a set`);
   });
+});
+
+test('gear affix pools add more set routes without a separate soul panel', () => {
+  assert.equal(Object.values(GEAR_AFFIX_POOLS).every((pool) => pool.length >= 6), true);
+  assert.equal(Boolean(GEAR_AFFIX_SETS.riverMistVessel), true);
+  assert.equal(Boolean(GEAR_AFFIX_SETS.thunderBloodHunt), true);
+
+  const state = createGameState(1000);
+  state.gear.weapon = 1;
+  state.gear.offhand = 1;
+  state.gearAffixes.weapon = 'starfallEdge';
+  state.gearAffixes.offhand = 'riverBell';
+
+  const status = getGearSetStatus(state).find((set) => set.id === 'riverMistVessel');
+
+  assert.equal(status.active, true);
+  assert.equal(status.activeTier.pieces, 2);
+  assert.equal(status.effects.some((effect) => effect.label === '护体'), true);
+  assert.equal(getEquipmentDetails(state).gearSoul, undefined);
 });
 
 test('gear affix reroll reports attribute and set impact', () => {
@@ -2076,7 +2093,7 @@ test('loot batch dismantle remains repeatable after new eligible drops', () => {
   assert.equal(state.lootEquipment.some((item) => item.uid === 'weak-boots'), false);
 });
 
-test('rare loot dismantles into gear souls for slot-wide growth', () => {
+test('rare loot dismantles into existing forging and blood materials', () => {
   const state = createGameState(1000);
   state.lootEquipment = [
     { uid: 'heaven-sword', templateId: 'qingfengSword', name: '玄鸣法剑', slot: 'weapon', quality: 4, variant: { rarityId: 'heavenWork' }, bonuses: { attack: 72 } },
@@ -2085,34 +2102,28 @@ test('rare loot dismantles into gear souls for slot-wide growth', () => {
   const dismantled = disassembleLootEquipment(state, 'heaven-sword', 2000);
 
   assert.equal(dismantled.ok, true);
-  assert.equal(dismantled.reward.gearSouls >= 2, true);
-  assert.equal(state.gearSouls, dismantled.reward.gearSouls);
+  assert.equal(dismantled.reward.gearSouls, undefined);
+  assert.equal(state.gearSouls, 0);
+  assert.equal(dismantled.reward.forgingEssence >= 3, true);
+  assert.equal(dismantled.reward.bloodEssence >= 4, true);
 });
 
-test('gear soul talents are bound to slots instead of individual loot drops', () => {
-  const state = createGameState(1000);
-  state.permanentBonuses.power = 600;
-  state.gearSouls = 4;
-  state.forgingEssence = 200;
-  state.lootEquipment = [
-    { uid: 'old-sword', templateId: 'qingfengSword', name: '旧青锋剑', slot: 'weapon', quality: 1, variant: { rarityId: 'spirit' }, bonuses: { attack: 18 } },
-    { uid: 'new-sword', templateId: 'bloodCopperBlade', name: '新赤铜刀', slot: 'weapon', quality: 2, variant: { rarityId: 'mystic' }, bonuses: { attack: 36 } },
-  ];
+test('legacy gear souls are retired into forging essence on load', () => {
+  const revived = reviveGameState({
+    forgingEssence: 8,
+    gearSouls: 6,
+    gearSoulTalents: {
+      weapon: 2,
+      robe: 1,
+      boots: 1,
+    },
+  }, 2000);
+  const attackSources = getCombatProfile(revived).attack.sources;
 
-  equipLootEquipment(state, 'old-sword', 2000);
-  const before = getCombatProfile(state).attack.value;
-  const unlocked = unlockGearSoulTalent(state, 'weapon', 3000);
-  const afterOld = getCombatProfile(state).attack;
-  equipLootEquipment(state, 'new-sword', 4000);
-  const afterNew = getCombatProfile(state).attack;
-  const soul = getGearSoulStatus(state).slots.find((slot) => slot.id === 'weapon');
-
-  assert.equal(unlocked.ok, true);
-  assert.equal(state.gearSoulTalents.weapon, 1);
-  assert.equal(afterOld.value > before, true);
-  assert.equal(afterNew.sources.some((source) => source.label.includes('器魂')), true);
-  assert.equal(soul.level, 1);
-  assert.equal(soul.nextCost.gearSouls > 0, true);
+  assert.equal(revived.gearSouls, 0);
+  assert.equal(Object.values(revived.gearSoulTalents).every((level) => level === 0), true);
+  assert.equal(revived.forgingEssence > 8, true);
+  assert.equal(attackSources.some((source) => source.label.includes('器魂')), false);
 });
 
 test('equipment details expose build school tags for loot decisions', () => {
@@ -3082,7 +3093,7 @@ test('map depth trials rotate tribulations into combat', () => {
   assert.equal(started.report.battle.enemy.tribulation.id, status.tribulation.id);
 });
 
-test('map depth key layers grant first-clear gear souls and unlock richer pools', () => {
+test('map depth key layers grant first-clear forging materials and no retired soul resource', () => {
   const state = createGameState(1000);
   state.permanentBonuses.power = 8_000;
   state.mapDepths.qinglanMountain = 4;
@@ -3092,10 +3103,12 @@ test('map depth key layers grant first-clear gear souls and unlock richer pools'
   const sweep = sweepMapDepth(state, 'qinglanMountain', Date.parse('2026-05-11T00:00:00.000Z'));
 
   assert.equal(status.nextLayer, 5);
-  assert.equal(status.reward.gearSouls >= 1, true);
+  assert.equal(status.reward.gearSouls, undefined);
+  assert.equal(status.reward.forgingEssence >= 2, true);
   assert.equal(started.ok, true);
-  assert.equal(started.report.reward.gearSouls >= 1, true);
-  assert.equal(state.gearSouls >= started.report.reward.gearSouls, true);
+  assert.equal(started.report.reward.gearSouls, undefined);
+  assert.equal(started.report.reward.forgingEssence >= 2, true);
+  assert.equal(state.gearSouls, 0);
   assert.equal(sweep.ok, true);
   assert.equal(sweep.reward.gearSouls, undefined);
 });

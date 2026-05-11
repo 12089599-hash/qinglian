@@ -488,15 +488,6 @@ const RESOURCE_GUIDES = {
     commissionId: null,
     detail: '血脉精魄主要来自玄纹以上战利品分解，是血脉和御灵秘传的长期材料。',
   },
-  gearSouls: {
-    label: '器魂',
-    priority: 1.32,
-    mapIds: ['ancientRuins', 'swordTomb', 'demonRift'],
-    missionId: 'ancientSwordTomb',
-    approachId: 'relicSearch',
-    commissionId: null,
-    detail: '器魂来自地煞以上战利品分解和秘境关键层，用来点亮器位长期天赋。',
-  },
   insight: {
     label: '悟道',
     priority: 1.05,
@@ -1485,37 +1476,49 @@ const LOOT_VARIANT_AFFIXES = {
     { id: 'edge', name: '锋芒', bonuses: { attack: 14 } },
     { id: 'pierce', name: '破势', bonuses: { pierce: 12 } },
     { id: 'spark', name: '会心', bonuses: { critChance: 0.02 } },
+    { id: 'soulCut', name: '裂魄', minRarity: 'mystic', bonuses: { attack: 10, pierce: 10, critChance: 0.012 } },
     { id: 'trueEdge', name: '真锋', minRarity: 'earthFiend', bonuses: { attackPct: 0.035 } },
+    { id: 'heavenMark', name: '天痕', minRarity: 'heavenWork', bonuses: { attackPct: 0.025, elementPower: 18 } },
   ],
   offhand: [
     { id: 'wheel', name: '轮影', bonuses: { attack: 10, pierce: 6 } },
     { id: 'bell', name: '清音', bonuses: { qiRate: 0.014, defense: 8 } },
     { id: 'flare', name: '曜纹', bonuses: { critChance: 0.018, elementPower: 8 } },
+    { id: 'echoSeal', name: '回照', minRarity: 'mystic', bonuses: { defense: 10, qiRate: 0.012, elementPower: 8 } },
     { id: 'deepRift', name: '裂隙', minRarity: 'earthFiend', bonuses: { piercePct: 0.04 } },
+    { id: 'voidChime', name: '虚响', minRarity: 'heavenWork', bonuses: { piercePct: 0.025, critChance: 0.012 } },
   ],
   amulet: [
     { id: 'life', name: '养命', bonuses: { vitality: 28 } },
     { id: 'gate', name: '护关', bonuses: { breakthrough: 0.018 } },
     { id: 'breath', name: '纳息', bonuses: { qiRate: 0.018 } },
+    { id: 'wardPulse', name: '护脉', minRarity: 'mystic', bonuses: { vitality: 18, defense: 10, breakthrough: 0.012 } },
     { id: 'lifeRoot', name: '命根', minRarity: 'earthFiend', bonuses: { vitalityPct: 0.05 } },
+    { id: 'fateKnot', name: '命结', minRarity: 'heavenWork', bonuses: { vitalityPct: 0.035, breakthrough: 0.014 } },
   ],
   robe: [
     { id: 'guard', name: '护体', bonuses: { defense: 16 } },
     { id: 'step', name: '轻身', bonuses: { speed: 5 } },
     { id: 'ward', name: '避劫', bonuses: { dangerReduction: 8 } },
+    { id: 'mistSkin', name: '雾隐', minRarity: 'mystic', bonuses: { defense: 10, speed: 4, dangerReduction: 5 } },
     { id: 'wardVein', name: '玄护', minRarity: 'earthFiend', bonuses: { defensePct: 0.045 } },
+    { id: 'lotusArmor', name: '莲甲', minRarity: 'heavenWork', bonuses: { defensePct: 0.03, vitalityPct: 0.025 } },
   ],
   jade: [
     { id: 'root', name: '地脉', bonuses: { vitality: 22, defense: 8 } },
     { id: 'clear', name: '澄息', bonuses: { qiRate: 0.016 } },
     { id: 'pulse', name: '玉振', bonuses: { elementPower: 10, breakthrough: 0.012 } },
+    { id: 'springEye', name: '泉眼', minRarity: 'mystic', bonuses: { qiRate: 0.014, vitality: 18, elementPower: 8 } },
     { id: 'spiritCircle', name: '灵周', minRarity: 'heavenWork', bonuses: { vitalityPct: 0.04, defensePct: 0.025 } },
+    { id: 'daoSeed', name: '道种', minRarity: 'dao', bonuses: { qiRate: 0.022, breakthrough: 0.018, elementPower: 18 } },
   ],
   boots: [
     { id: 'cloud', name: '云痕', bonuses: { speed: 6 } },
     { id: 'shadow', name: '掠影', bonuses: { dangerReduction: 6, critChance: 0.012 } },
     { id: 'tread', name: '踏水', bonuses: { defense: 8, elementPower: 8 } },
+    { id: 'thunderTrail', name: '奔雷', minRarity: 'mystic', bonuses: { speed: 7, attack: 8, elementPower: 8 } },
     { id: 'windStep', name: '风骨', minRarity: 'earthFiend', bonuses: { speedPct: 0.045 } },
+    { id: 'voidWalk', name: '虚渡', minRarity: 'heavenWork', bonuses: { speedPct: 0.03, dangerReduction: 8 } },
   ],
 };
 
@@ -1812,6 +1815,25 @@ export const GEAR_AFFIXES = {
     element: 'dark',
     elementPower: 22,
   },
+  starfallEdge: {
+    id: 'starfallEdge',
+    name: '星陨',
+    slot: 'weapon',
+    attack: 16,
+    pierce: 12,
+    critChance: 0.022,
+    element: 'light',
+    elementPower: 20,
+  },
+  thunderEdge: {
+    id: 'thunderEdge',
+    name: '雷纹',
+    slot: 'weapon',
+    attack: 20,
+    speed: 4,
+    element: 'fire',
+    elementPower: 20,
+  },
   spiritVein: {
     id: 'spiritVein',
     name: '灵脉',
@@ -1846,6 +1868,25 @@ export const GEAR_AFFIXES = {
     vitality: 42,
     pierce: 10,
     element: 'dark',
+    elementPower: 18,
+  },
+  riverSeal: {
+    id: 'riverSeal',
+    name: '川泽',
+    slot: 'amulet',
+    defense: 16,
+    vitality: 32,
+    breakthrough: 0.018,
+    element: 'water',
+    elementPower: 16,
+  },
+  bloodCharm: {
+    id: 'bloodCharm',
+    name: '血篆',
+    slot: 'amulet',
+    vitality: 48,
+    attack: 8,
+    element: 'fire',
     elementPower: 18,
   },
   cloudStep: {
@@ -1885,6 +1926,26 @@ export const GEAR_AFFIXES = {
     element: 'water',
     elementPower: 20,
   },
+  mistMantle: {
+    id: 'mistMantle',
+    name: '雾衣',
+    slot: 'robe',
+    defense: 16,
+    speed: 6,
+    dangerReduction: 10,
+    element: 'water',
+    elementPower: 16,
+  },
+  thunderRobe: {
+    id: 'thunderRobe',
+    name: '雷袍',
+    slot: 'robe',
+    defense: 14,
+    attack: 8,
+    speed: 6,
+    element: 'fire',
+    elementPower: 18,
+  },
   starWheel: {
     id: 'starWheel',
     name: '星轮',
@@ -1918,6 +1979,25 @@ export const GEAR_AFFIXES = {
     slot: 'offhand',
     attack: 18,
     critChance: 0.025,
+    element: 'fire',
+    elementPower: 18,
+  },
+  riverBell: {
+    id: 'riverBell',
+    name: '川铃',
+    slot: 'offhand',
+    qiBonus: 0.024,
+    defense: 14,
+    element: 'water',
+    elementPower: 14,
+  },
+  thunderWheel: {
+    id: 'thunderWheel',
+    name: '雷轮',
+    slot: 'offhand',
+    attack: 12,
+    speed: 5,
+    critChance: 0.018,
     element: 'fire',
     elementPower: 18,
   },
@@ -1957,6 +2037,24 @@ export const GEAR_AFFIXES = {
     element: 'light',
     elementPower: 16,
   },
+  springJade: {
+    id: 'springJade',
+    name: '泉玉',
+    slot: 'jade',
+    qiBonus: 0.028,
+    vitality: 28,
+    element: 'water',
+    elementPower: 14,
+  },
+  bloodJade: {
+    id: 'bloodJade',
+    name: '赤玉',
+    slot: 'jade',
+    vitality: 38,
+    critChance: 0.016,
+    element: 'fire',
+    elementPower: 18,
+  },
   cloudTrace: {
     id: 'cloudTrace',
     name: '云踪',
@@ -1993,15 +2091,34 @@ export const GEAR_AFFIXES = {
     element: 'dark',
     elementPower: 16,
   },
+  mistStep: {
+    id: 'mistStep',
+    name: '雾履',
+    slot: 'boots',
+    speed: 9,
+    dangerReduction: 8,
+    element: 'water',
+    elementPower: 14,
+  },
+  thunderStep: {
+    id: 'thunderStep',
+    name: '雷步',
+    slot: 'boots',
+    speed: 11,
+    attack: 6,
+    critChance: 0.012,
+    element: 'fire',
+    elementPower: 16,
+  },
 };
 
 export const GEAR_AFFIX_POOLS = {
-  weapon: ['swordIntent', 'breakerEdge', 'flameEdge', 'shadowPierce'],
-  offhand: ['starWheel', 'spiritBell', 'moonWheel', 'sunWheel'],
-  amulet: ['spiritVein', 'calmMind', 'sunSigil', 'moonSeal'],
-  robe: ['cloudStep', 'guardedBody', 'earthWard', 'waterMirror'],
-  jade: ['jadeRoot', 'clearJade', 'darkJade', 'brightJade'],
-  boots: ['cloudTrace', 'windStep', 'earthStep', 'shadowStep'],
+  weapon: ['swordIntent', 'breakerEdge', 'flameEdge', 'shadowPierce', 'starfallEdge', 'thunderEdge'],
+  offhand: ['starWheel', 'spiritBell', 'moonWheel', 'sunWheel', 'riverBell', 'thunderWheel'],
+  amulet: ['spiritVein', 'calmMind', 'sunSigil', 'moonSeal', 'riverSeal', 'bloodCharm'],
+  robe: ['cloudStep', 'guardedBody', 'earthWard', 'waterMirror', 'mistMantle', 'thunderRobe'],
+  jade: ['jadeRoot', 'clearJade', 'darkJade', 'brightJade', 'springJade', 'bloodJade'],
+  boots: ['cloudTrace', 'windStep', 'earthStep', 'shadowStep', 'mistStep', 'thunderStep'],
 };
 
 export const GEAR_AFFIX_SETS = {
@@ -2049,6 +2166,28 @@ export const GEAR_AFFIX_SETS = {
       { pieces: 6, name: '六镜照影', bonuses: { pierce: 14, vitality: 30, critChance: 0.02, speed: 3 } },
     ],
   },
+  riverMistVessel: {
+    id: 'riverMistVessel',
+    name: '川雾归藏',
+    detail: '星陨、川铃、川泽、雾衣、泉玉与雾履相应，稳住身法、护体与长线吐纳。',
+    affixes: ['starfallEdge', 'riverBell', 'riverSeal', 'mistMantle', 'springJade', 'mistStep'],
+    tiers: [
+      { pieces: 2, name: '雾起', bonuses: { defense: 12, qiBonus: 0.016 } },
+      { pieces: 4, name: '川回', bonuses: { speed: 3, dangerReduction: 8, vitality: 24 } },
+      { pieces: 6, name: '归藏成局', bonuses: { defense: 18, qiBonus: 0.028, dangerReduction: 10, vitality: 36 } },
+    ],
+  },
+  thunderBloodHunt: {
+    id: 'thunderBloodHunt',
+    name: '雷血逐影',
+    detail: '雷纹、雷轮、血篆、雷袍、赤玉与雷步同鸣，偏向爆发、会心和灵兽协战。',
+    affixes: ['thunderEdge', 'thunderWheel', 'bloodCharm', 'thunderRobe', 'bloodJade', 'thunderStep'],
+    tiers: [
+      { pieces: 2, name: '雷息', bonuses: { attack: 14, speed: 2 } },
+      { pieces: 4, name: '血影', bonuses: { vitality: 28, critChance: 0.014, elementPower: 12 } },
+      { pieces: 6, name: '逐影成势', bonuses: { attack: 24, speed: 4, vitality: 38, critChance: 0.018 } },
+    ],
+  },
 };
 
 export const BUILD_SCHOOLS = {
@@ -2058,7 +2197,7 @@ export const BUILD_SCHOOLS = {
     detail: '锋芒、破势、会心和灵根杀伐相互叠加。',
     stats: ['power', 'powerBonus', 'attack', 'pierce', 'critChance', 'elementPower'],
     elements: ['metal', 'fire', 'dark', 'light'],
-    affixes: ['edge', 'pierce', 'spark', 'swordIntent', 'breakerEdge', 'flameEdge', 'shadowPierce', 'starWheel', 'moonWheel', 'sunWheel'],
+    affixes: ['edge', 'pierce', 'spark', 'soulCut', 'trueEdge', 'heavenMark', 'swordIntent', 'breakerEdge', 'flameEdge', 'shadowPierce', 'starfallEdge', 'thunderEdge', 'starWheel', 'moonWheel', 'sunWheel', 'thunderWheel'],
   },
   spiritFlow: {
     id: 'spiritFlow',
@@ -2066,7 +2205,7 @@ export const BUILD_SCHOOLS = {
     detail: '吐纳、护关、灵草和丹火缩时更适合长期挂机。',
     stats: ['qiRate', 'qiBonus', 'breakthrough', 'herbRate', 'alchemySpeed'],
     elements: ['wood', 'light', 'water'],
-    affixes: ['bell', 'breath', 'gate', 'clear', 'spiritVein', 'calmMind', 'spiritBell', 'clearJade', 'brightJade'],
+    affixes: ['bell', 'breath', 'gate', 'clear', 'echoSeal', 'springEye', 'daoSeed', 'spiritVein', 'calmMind', 'spiritBell', 'riverBell', 'clearJade', 'brightJade', 'springJade'],
   },
   earthGuard: {
     id: 'earthGuard',
@@ -2074,7 +2213,7 @@ export const BUILD_SCHOOLS = {
     detail: '护体、血元、避劫和地水气象更适合秘境承压。',
     stats: ['defense', 'vitality', 'dangerReduction', 'speed'],
     elements: ['earth', 'water'],
-    affixes: ['guard', 'ward', 'root', 'tread', 'guardedBody', 'earthWard', 'waterMirror', 'jadeRoot', 'cloudStep', 'cloudTrace', 'earthStep'],
+    affixes: ['guard', 'ward', 'root', 'tread', 'wardPulse', 'mistSkin', 'lotusArmor', 'guardedBody', 'earthWard', 'waterMirror', 'mistMantle', 'jadeRoot', 'cloudStep', 'cloudTrace', 'earthStep', 'mistStep'],
   },
   beastBlood: {
     id: 'beastBlood',
@@ -2082,7 +2221,7 @@ export const BUILD_SCHOOLS = {
     detail: '御灵培养、血脉凝练和分解精粹服务长期养成。',
     stats: ['beastTraining', 'bloodEssenceBonus', 'dismantleBonus', 'lootRarity'],
     elements: ['dark', 'wood', 'fire'],
-    affixes: ['shadow', 'life', 'moonSeal', 'darkJade', 'shadowStep', 'windStep'],
+    affixes: ['shadow', 'life', 'lifeRoot', 'fateKnot', 'bloodCharm', 'moonSeal', 'darkJade', 'bloodJade', 'shadowStep', 'windStep', 'thunderStep'],
   },
 };
 
@@ -2674,6 +2813,7 @@ export function reviveGameState(saved, now = Date.now()) {
   state.forgingEssence = Math.max(0, Number(state.forgingEssence) || 0);
   state.bloodEssence = Math.max(0, Number(state.bloodEssence) || 0);
   state.gearSouls = Math.max(0, Number(state.gearSouls) || 0);
+  retireLegacyGearSouls(state);
   state.sectDisciples = clampInteger(state.sectDisciples, 0, getSectCapacity(state));
   state.sectReputation = Math.max(0, Number(state.sectReputation) || 0);
   state.sectSkills = normalizeLevels(state.sectSkills, SECT_SKILLS);
@@ -2993,66 +3133,46 @@ function getGearSoulTalentCost(nextLevel) {
 }
 
 function getGearSoulSlotBonus(state, slot) {
-  const talent = GEAR_SOUL_TALENTS[slot];
-  const level = clampInteger(state.gearSoulTalents?.[slot] ?? 0, 0, talent?.maxLevel ?? 0);
-  return talent && level > 0 ? talent.bonuses(level) : {};
+  return {};
 }
 
 function getGearSoulBonus(state, key) {
-  return Object.keys(GEAR_SOUL_TALENTS).reduce((total, slot) => total + (getGearSoulSlotBonus(state, slot)[key] ?? 0), 0);
+  return 0;
 }
 
 function getGearSoulSources(state, key, mode = 'flat') {
-  return Object.values(GEAR_SOUL_TALENTS)
-    .map((talent) => {
-      const value = getGearSoulSlotBonus(state, talent.id)[key] ?? 0;
-      return value ? { label: `器魂·${talent.name}`, value, mode } : null;
-    })
-    .filter(Boolean);
+  return [];
 }
 
 export function getGearSoulStatus(state) {
-  state.gearSoulTalents = normalizeLevels(state.gearSoulTalents, GEAR_SOUL_TALENTS);
-  return {
-    resource: Math.floor(state.gearSouls ?? 0),
-    slots: Object.values(GEAR_SOUL_TALENTS).map((talent) => {
-      const level = state.gearSoulTalents[talent.id] ?? 0;
-      const maxed = level >= talent.maxLevel;
-      const nextLevel = level + 1;
-      return {
-        id: talent.id,
-        slotName: GEAR[talent.id]?.name ?? talent.id,
-        name: talent.name,
-        level,
-        maxLevel: talent.maxLevel,
-        maxed,
-        effects: effectsFromBonusObject(talent.bonuses(level)),
-        nextEffects: maxed ? [] : effectsFromBonusObject(talent.bonuses(nextLevel)),
-        nextCost: maxed ? null : getGearSoulTalentCost(nextLevel),
-      };
-    }),
-  };
+  return null;
 }
 
 export function unlockGearSoulTalent(state, slot, now = Date.now()) {
-  const talent = GEAR_SOUL_TALENTS[slot];
-  if (!talent) {
-    return { ok: false, reason: 'unknownSlot' };
-  }
-  state.gearSoulTalents = normalizeLevels(state.gearSoulTalents, GEAR_SOUL_TALENTS);
-  const level = state.gearSoulTalents[slot] ?? 0;
-  if (level >= talent.maxLevel) {
-    return { ok: false, reason: 'maxLevel' };
-  }
-  const cost = getGearSoulTalentCost(level + 1);
-  if (!canAfford(state, cost)) {
-    addLog(state, now, `点亮${talent.name}需要${formatReward(cost)}。`);
-    return { ok: false, reason: 'notEnoughResources', cost };
-  }
-  payResources(state, cost);
-  state.gearSoulTalents[slot] = level + 1;
-  addLog(state, now, `${GEAR[slot]?.name ?? '器位'}器魂点亮「${talent.name}」${state.gearSoulTalents[slot]} 重。`);
-  return { ok: true, slot, talent, level: state.gearSoulTalents[slot], cost };
+  retireLegacyGearSouls(state);
+  return { ok: false, reason: 'retired' };
+}
+
+function getRetiredGearSoulRefund(state) {
+  const looseSouls = Math.max(0, Math.floor(Number(state.gearSouls) || 0));
+  const talents = normalizeLevels(state.gearSoulTalents, GEAR_SOUL_TALENTS);
+  const talentRefund = Object.values(talents).reduce((total, level) => {
+    let refund = 0;
+    for (let nextLevel = 1; nextLevel <= level; nextLevel += 1) {
+      const cost = getGearSoulTalentCost(nextLevel);
+      refund += Math.max(0, Math.floor(cost.gearSouls || 0)) * 3;
+      refund += Math.ceil((cost.forgingEssence || 0) * 0.5);
+    }
+    return total + refund;
+  }, 0);
+  return looseSouls * 2 + talentRefund;
+}
+
+function retireLegacyGearSouls(state) {
+  const refund = getRetiredGearSoulRefund(state);
+  state.forgingEssence = Math.max(0, Number(state.forgingEssence) || 0) + refund;
+  state.gearSouls = 0;
+  state.gearSoulTalents = Object.fromEntries(Object.keys(GEAR).map((id) => [id, 0]));
 }
 
 function getTieredLootBonus(level) {
@@ -3329,8 +3449,10 @@ function getDepthReward(map, layer) {
     reward.arrayFlags = Math.max(1, Math.ceil(layer / 12));
   }
   if (layer % 5 === 0) {
-    reward.forgingEssence = Math.max(1, Math.ceil(layer / 5));
-    reward.gearSouls = Math.max(1, Math.ceil(layer / 10));
+    reward.forgingEssence = Math.max(2, Math.ceil(layer / 4));
+    if (layer >= 10) {
+      reward.bloodEssence = Math.max(1, Math.ceil(layer / 14));
+    }
   }
   if (layer % 10 === 0) {
     reward.powerBonus = 8 + layer;
@@ -3792,7 +3914,6 @@ export function getCharacterProfile(state, now = Date.now()) {
     { label: '玉佩藏脉', value: getGearLevelBonus(state, 'qiBonusPerLevel'), mode: 'percent' },
     { label: '护符灵纹', value: getGearAffixBonus(state, 'qiBonus'), mode: 'percent' },
     { label: '同调器象', value: getGearSetBonus(state, 'qiBonus'), mode: 'percent' },
-    { label: '器魂回灵', value: getGearSoulBonus(state, 'qiRate'), mode: 'percent' },
     { label: '阵道感悟', value: (state.cultivationPaths?.formation ?? 0) * CULTIVATION_PATHS.formation.qiBonusPerLevel, mode: 'percent' },
     { label: '奇珍加持', value: getEquippedLootBonus(state, 'qiRate'), mode: 'percent' },
     { label: '地脉熟稔', value: getMapMasteryBonus(state, 'qiRate'), mode: 'percent' },
@@ -3813,7 +3934,6 @@ export function getCharacterProfile(state, now = Date.now()) {
     { label: '奇珍加持', value: Math.min(0.1, getEquippedLootBonus(state, 'breakthrough')), mode: 'percent' },
     { label: '法宝灵蕴', value: Math.min(0.12, getTreasureBonus(state, 'breakthrough')), mode: 'percent' },
     { label: '血脉灵契', value: Math.min(0.1, getBloodlineBonus(state, 'breakthrough')), mode: 'percent' },
-    { label: '器魂护关', value: Math.min(0.05, getGearSoulBonus(state, 'breakthrough')), mode: 'percent' },
     { label: '宗门秘传', value: Math.min(0.08, getSectSkillBonus(state, 'breakthrough')), mode: 'percent' },
     { label: '命格道心', value: Math.min(0.1, getDaoHeartBonus(state, 'breakthrough')), mode: 'percent' },
     { label: '悟道灵光', value: Math.min(0.15, (state.insight ?? 0) * 0.03), mode: 'percent' },
@@ -3863,7 +3983,6 @@ export function getCharacterProfile(state, now = Date.now()) {
       { label: '法宝灵蕴', value: getTreasureBonus(state, 'dangerReduction') },
       { label: '灵兽护持', value: getSpiritBeastBonus(state, 'dangerReduction') },
       { label: '血脉灵契', value: getBloodlineBonus(state, 'dangerReduction') },
-      { label: '器魂余荫', value: getGearSoulBonus(state, 'dangerReduction') },
       { label: '宗门秘传', value: getSectSkillBonus(state, 'dangerReduction') },
       { label: '命格道心', value: getDaoHeartBonus(state, 'dangerReduction') },
     ]) },
@@ -4137,11 +4256,9 @@ export function getEquipmentDetails(state) {
           cost: level > 0 && quality.affixId ? getGearAffixRerollCost(state, item.id) : null,
           preview: level > 0 && quality.affixId ? getGearAffixRerollPreview(state, item.id) : { candidates: [], warnings: [] },
         },
-        soul: getGearSoulStatus(state).slots.find((slot) => slot.id === item.id),
       };
     }),
     sets: getGearSetStatus(state),
-    gearSoul: getGearSoulStatus(state),
     lootResonance: getLootResonanceStatus(state),
     loot: (state.lootEquipment ?? []).map((item) => {
       const slotLevel = state.gear?.[item.slot] ?? 0;
@@ -4434,7 +4551,6 @@ function getLootDismantleReward(state, item) {
     forgingEssence: Math.floor(2 * dismantleMultiplier),
     artifacts: 1,
     bloodEssence: rarityIndex >= 2 ? Math.max(1, Math.floor((rarityIndex - 1) * dismantleMultiplier)) : 0,
-    gearSouls: rarityIndex >= 3 ? Math.max(1, Math.floor((rarityIndex - 2) * dismantleMultiplier)) : 0,
   });
 }
 
@@ -7645,7 +7761,7 @@ function getCombatElementScores(state) {
 
   const jadeSoul = getGearSoulSlotBonus(state, 'jade');
   if (jadeSoul.elementPower) {
-    add(getDominantCombatElement(scores).id, jadeSoul.elementPower, '器魂玉府');
+    add(getDominantCombatElement(scores).id, jadeSoul.elementPower, '玉府灵机');
   }
 
   const activeBeast = getActiveSpiritBeast(state);
@@ -9079,7 +9195,6 @@ function formatRewardEntry(key, amount) {
     arrayFlags: '阵旗',
     forgingEssence: '炼器精魄',
     bloodEssence: '血脉精魄',
-    gearSouls: '器魂',
     heartDemon: '心魔',
     insight: '悟道',
   };
