@@ -1946,6 +1946,10 @@ small {
     drop-shadow(0 1px 1px rgba(0, 0, 0, 0.42));
 }
 
+.beast-icon::before {
+  background-size: contain;
+}
+
 .building-icon {
   width: 42px;
   height: 42px;
@@ -2867,18 +2871,18 @@ small {
 }
 
 .beast-icon-stoneMarten,
-.beast-icon-flameMarten { --icon-art: url("assets/spirit-beasts/marten.png"); }
+.beast-icon-flameMarten { --icon-art: url("assets/spirit-beasts/marten.png?v=202605120000"); }
 .beast-icon-cloudFox,
-.beast-icon-qingqiuFox { --icon-art: url("assets/spirit-beasts/fox.png"); }
-.beast-icon-greenFeatherCrane { --icon-art: url("assets/spirit-beasts/crane.png"); }
-.beast-icon-thunderTiger { --icon-art: url("assets/spirit-beasts/tiger.png"); }
-.beast-icon-snowSpiritDeer { --icon-art: url("assets/spirit-beasts/deer.png"); }
-.beast-icon-blackTurtle { --icon-art: url("assets/spirit-beasts/turtle.png"); }
-.beast-icon-goldenEyeApe { --icon-art: url("assets/spirit-beasts/ape.png"); }
-.beast-icon-shadowMoonLeopard { --icon-art: url("assets/spirit-beasts/leopard.png"); }
-.beast-icon-starSandCarp { --icon-art: url("assets/spirit-beasts/carp.png"); }
-.beast-icon-nineSunCrow { --icon-art: url("assets/spirit-beasts/crow.png"); }
-.beast-icon-floodDragon { --icon-art: url("assets/spirit-beasts/dragon.png"); }
+.beast-icon-qingqiuFox { --icon-art: url("assets/spirit-beasts/fox.png?v=202605120000"); }
+.beast-icon-greenFeatherCrane { --icon-art: url("assets/spirit-beasts/crane.png?v=202605120000"); }
+.beast-icon-thunderTiger { --icon-art: url("assets/spirit-beasts/tiger.png?v=202605120000"); }
+.beast-icon-snowSpiritDeer { --icon-art: url("assets/spirit-beasts/deer.png?v=202605120000"); }
+.beast-icon-blackTurtle { --icon-art: url("assets/spirit-beasts/turtle.png?v=202605120000"); }
+.beast-icon-goldenEyeApe { --icon-art: url("assets/spirit-beasts/ape.png?v=202605120000"); }
+.beast-icon-shadowMoonLeopard { --icon-art: url("assets/spirit-beasts/leopard.png?v=202605120000"); }
+.beast-icon-starSandCarp { --icon-art: url("assets/spirit-beasts/carp.png?v=202605120000"); }
+.beast-icon-nineSunCrow { --icon-art: url("assets/spirit-beasts/crow.png?v=202605120000"); }
+.beast-icon-floodDragon { --icon-art: url("assets/spirit-beasts/dragon.png?v=202605120000"); }
 
 .beast-card-body {
   display: grid;
