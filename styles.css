@@ -370,6 +370,7 @@ h2 {
   display: grid;
   grid-template-columns: minmax(320px, 0.72fr) minmax(560px, 1.28fr);
   gap: 14px;
+  align-items: start;
   margin-top: 14px;
 }
 
@@ -886,11 +887,11 @@ small {
 
 .resource-guidance-card {
   display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(180px, 0.9fr);
-  gap: 12px;
+  grid-template-columns: 1fr;
+  gap: 8px;
   border: 1px solid rgba(238, 236, 225, 0.34);
   border-radius: 8px;
-  padding: 12px;
+  padding: 9px 11px;
   background:
     linear-gradient(135deg, rgba(238, 236, 225, 0.13), rgba(238, 236, 225, 0.08)),
     rgba(255, 255, 255, 0.03);
@@ -1033,9 +1034,9 @@ small {
 }
 
 .resource-guidance-card span {
-  margin-top: 5px;
+  margin-top: 4px;
   color: var(--paper);
-  line-height: 1.45;
+  line-height: 1.35;
 }
 
 .resource-guidance-card small {
@@ -1046,7 +1047,7 @@ small {
 
 .resource-guidance-toggle {
   display: inline-flex;
-  margin-top: 8px;
+  margin-top: 5px;
   color: var(--gold);
   font-size: 0.74rem;
   font-style: normal;
@@ -1073,6 +1074,7 @@ small {
 
 .resource-guidance-list {
   display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 7px;
 }
 
@@ -1541,7 +1543,7 @@ small {
 
 .map-challenge-strip {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: 1fr;
   gap: 8px;
 }
 
@@ -1551,7 +1553,7 @@ small {
 
 .map-challenge-strip .boss-card,
 .map-challenge-strip .depth-card {
-  align-self: stretch;
+  align-self: start;
 }
 
 .approach-selector {
@@ -1668,6 +1670,10 @@ small {
 .boss-counsel,
 .depth-reward-row {
   display: block;
+}
+
+.boss-counsel {
+  display: none;
 }
 
 .depth-tribulation-row {
@@ -5363,6 +5369,10 @@ small {
 
   .resource-guidance-card {
     padding: 10px;
+  }
+
+  .resource-guidance-list {
+    grid-template-columns: 1fr;
   }
 
   .resource-guidance-detail summary span,

@@ -2332,6 +2332,8 @@ const spiritBeastQualities = {
   const ctx = refs.canvas.getContext('2d');
   const renderCache = {};
   const openLootDetails = new Set();
+  const openMissionDetails = new Set(parseStoredMissionDetails(localStorage.getItem('idle-xianxia-mission-details')));
+  const openMissionDrawers = new Set(parseStoredMissionDrawers(localStorage.getItem('idle-xianxia-mission-drawers')));
   const sectDetailIds = ['skills', 'disciples', 'commissions'];
   const openSectDetails = new Set(parseStoredSectDetails(localStorage.getItem('idle-xianxia-sect-details')));
   const panelAnchors = new Map();
@@ -2971,6 +2973,30 @@ const spiritBeastQualities = {
       render(true);
     }
   });
+
+  refs.missionList?.addEventListener('toggle', (event) => {
+    const detail = event.target.closest?.('details');
+    if (!detail || !refs.missionList.contains(detail)) {
+      return;
+    }
+    if (detail.dataset.missionDetail) {
+      if (detail.open) {
+        openMissionDetails.add(detail.dataset.missionDetail);
+      } else {
+        openMissionDetails.delete(detail.dataset.missionDetail);
+      }
+      saveMissionDetails();
+      return;
+    }
+    if (detail.dataset.missionDrawer) {
+      if (detail.open) {
+        openMissionDrawers.add(detail.dataset.missionDrawer);
+      } else {
+        openMissionDrawers.delete(detail.dataset.missionDrawer);
+      }
+      saveMissionDrawers();
+    }
+  }, true);
 
   refs.sectList?.addEventListener('click', (event) => {
     const recruitButton = event.target.closest('[data-recruit-disciple]');
@@ -6621,7 +6647,7 @@ const spiritBeastQualities = {
       return;
     }
     const guidance = getResourceGuidance(state);
-    const detailsOpen = isMobileLayout() ? '' : ' open';
+    const detailsOpen = '';
     const layoutMode = isMobileLayout() ? 'mobile' : 'desktop';
     const signature = guidance.stable
       ? `stable:${layoutMode}`
@@ -6653,11 +6679,11 @@ const spiritBeastQualities = {
       <details class="resource-guidance-card resource-guidance-detail"${detailsOpen}>
         <summary>
           <strong>寻材指引 <small>${primary.label}缺口 ${primary.shortfall}</small></strong>
-          <span>${primary.demandText}，${primary.route.detail}。</span>
-          <small>${primary.detail}</small>
+          <span>${primary.demandText} · ${routeText}</span>
           <em class="resource-guidance-toggle" aria-hidden="true"></em>
         </summary>
         <div class="resource-guidance-list">
+          <div><b>说明</b><small>${primary.detail}</small></div>
           <div><b>行游</b><small>${routeText}${primary.route.missionName ? ` · 可刷${primary.route.missionName}` : ''}</small></div>
           ${primary.route.fallback ? `<div><b>稳妥</b><small>若${primary.route.mapName}未稳，先回${primary.route.fallback.mapName}走「${primary.route.fallback.approachName}」。</small></div>` : ''}
           ${primary.commission ? `<div><b>宗门</b><small>${primary.commission.unlocked ? `派弟子做${primary.commission.name}` : `解锁后可做${primary.commission.name}`}</small></div>` : ''}
@@ -7219,7 +7245,7 @@ const spiritBeastQualities = {
           <small>装备池 ${getMapLootPoolInfo(map.id).label}</small>
           <small>${map.unlocked ? `${map.readiness.label} ${map.readiness.name}` : `${realms[map.unlockRealmIndex]?.name || '更高境界'}解锁`}</small>
         </div>
-        <details class="map-approach-drawer">
+        <details class="map-approach-drawer" data-mission-drawer="${map.id}:approach" ${openMissionDrawers.has(`${map.id}:approach`) ? 'open' : ''}>
           <summary>
             <span>行游路线</span>
             <strong>${selectedApproach?.name || '未定'}</strong>
@@ -7231,7 +7257,7 @@ const spiritBeastQualities = {
           ${renderDepthCard(map)}
           ${renderBossCard(map)}
         </div>
-        <details class="mission-route-drawer">
+        <details class="mission-route-drawer" data-mission-drawer="${map.id}:routes" ${openMissionDrawers.has(`${map.id}:routes`) ? 'open' : ''}>
           <summary>
             <span>普通行游</span>
             <strong>${unlockedRoutes} / ${routeList.length}</strong>
@@ -7397,7 +7423,7 @@ const spiritBeastQualities = {
           <small>产出 ${formatReward(status.rewardPreview)}</small>
         </button>
         <button data-auto-mission="${mission.id}" class="mini-button ${active ? 'active' : ''}" ${!status.unlocked ? 'disabled' : ''}>${active ? '自动中' : '自动'}</button>
-        <details class="mission-card-details">
+        <details class="mission-card-details" data-mission-detail="${mission.id}" ${openMissionDetails.has(mission.id) ? 'open' : ''}>
           <summary>展开详情</summary>
           <small>${status.unlocked ? `${status.omen.detail} · ${status.omen.counsel}` : '缘机未至'} · ${failureText} · ${rareText} · ${specialText} · ${eventText}</small>
         </details>
@@ -8061,6 +8087,50 @@ const spiritBeastQualities = {
 
   function saveLootKeepStrategy() {
     localStorage.setItem('idle-xianxia-loot-keep-strategy', activeLootKeepStrategy);
+  }
+
+  function parseStoredMissionDetails(raw) {
+    if (!raw) {
+      return [];
+    }
+    try {
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) {
+        return [];
+      }
+      return parsed.filter((id) => missions[id]);
+    } catch {
+      return [];
+    }
+  }
+
+  function saveMissionDetails() {
+    localStorage.setItem('idle-xianxia-mission-details', JSON.stringify([...openMissionDetails].filter((id) => missions[id])));
+  }
+
+  function parseStoredMissionDrawers(raw) {
+    if (!raw) {
+      return [];
+    }
+    try {
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) {
+        return [];
+      }
+      return parsed.filter((id) => {
+        const [mapId, drawer] = String(id).split(':');
+        return missionMaps[mapId] && ['approach', 'routes'].includes(drawer);
+      });
+    } catch {
+      return [];
+    }
+  }
+
+  function saveMissionDrawers() {
+    localStorage.setItem('idle-xianxia-mission-drawers', JSON.stringify([...openMissionDrawers].filter((id) => {
+      const [mapId, drawer] = String(id).split(':');
+      return missionMaps[mapId] && ['approach', 'routes'].includes(drawer);
+    })));
   }
 
   function parseStoredSectDetails(raw) {
