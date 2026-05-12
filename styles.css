@@ -2663,18 +2663,18 @@ small {
   -webkit-box-orient: vertical;
 }
 
-.treasure-icon-green-edge-sword { --icon-art: url("assets/treasures/green-edge-sword.png?v=202605120200"); }
-.treasure-icon-soul-bell { --icon-art: url("assets/treasures/soul-bell.png?v=202605120200"); }
-.treasure-icon-spirit-pagoda { --icon-art: url("assets/treasures/spirit-pagoda.png?v=202605120200"); }
-.treasure-icon-sword-gourd { --icon-art: url("assets/treasures/sword-gourd.png?v=202605120200"); }
-.treasure-icon-clear-jade-bottle { --icon-art: url("assets/treasures/clear-jade-bottle.png?v=202605120200"); }
-.treasure-icon-star-compass { --icon-art: url("assets/treasures/star-compass.png?v=202605120200"); }
-.treasure-icon-moon-mirror { --icon-art: url("assets/treasures/moon-mirror.png?v=202605120200"); }
-.treasure-icon-moon-pearl { --icon-art: url("assets/treasures/moon-pearl.png?v=202605120200"); }
-.treasure-icon-dao-whisk { --icon-art: url("assets/treasures/dao-whisk.png?v=202605120200"); }
-.treasure-icon-mountain-seal { --icon-art: url("assets/treasures/mountain-seal.png?v=202605120200"); }
-.treasure-icon-spirit-umbrella { --icon-art: url("assets/treasures/spirit-umbrella.png?v=202605120200"); }
-.treasure-icon-binding-cord { --icon-art: url("assets/treasures/binding-cord.png?v=202605120200"); }
+.treasure-icon-green-edge-sword { --icon-art: url("assets/treasures/green-edge-sword.png?v=202605121030"); }
+.treasure-icon-soul-bell { --icon-art: url("assets/treasures/soul-bell.png?v=202605121030"); }
+.treasure-icon-spirit-pagoda { --icon-art: url("assets/treasures/spirit-pagoda.png?v=202605121030"); }
+.treasure-icon-sword-gourd { --icon-art: url("assets/treasures/sword-gourd.png?v=202605121030"); }
+.treasure-icon-clear-jade-bottle { --icon-art: url("assets/treasures/clear-jade-bottle.png?v=202605121030"); }
+.treasure-icon-star-compass { --icon-art: url("assets/treasures/star-compass.png?v=202605121030"); }
+.treasure-icon-moon-mirror { --icon-art: url("assets/treasures/moon-mirror.png?v=202605121030"); }
+.treasure-icon-moon-pearl { --icon-art: url("assets/treasures/moon-pearl.png?v=202605121030"); }
+.treasure-icon-dao-whisk { --icon-art: url("assets/treasures/dao-whisk.png?v=202605121030"); }
+.treasure-icon-mountain-seal { --icon-art: url("assets/treasures/mountain-seal.png?v=202605121030"); }
+.treasure-icon-spirit-umbrella { --icon-art: url("assets/treasures/spirit-umbrella.png?v=202605121030"); }
+.treasure-icon-binding-cord { --icon-art: url("assets/treasures/binding-cord.png?v=202605121030"); }
 
 .source-hint {
   color: #9de8ca;

@@ -259,7 +259,7 @@ assert.match(styles, /\.battle-flow/);
 assert.match(styles, /\.beast-compendium/);
 assert.match(styles, /assets\/spirit-beasts\/fox\.png/);
 assert.match(styles, /\.beast-icon/);
-assert.match(styles, /assets\/treasures\/sword-gourd\.png\?v=202605120200/);
+assert.match(styles, /assets\/treasures\/sword-gourd\.png\?v=202605121030/);
 assert.match(styles, /\.treasure-row\.compact-system-row/);
 assert.match(styles, /\.beast-tile\.selected/);
 assert.match(styles, /\.beast-detail-panel/);
