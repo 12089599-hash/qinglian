@@ -32,7 +32,12 @@ assert.match(source, /function createAccessGate/);
 assert.match(source, /qinglan-cave-access-v1/);
 assert.match(styles, /\.access-gate\s*\{/);
 assert.doesNotMatch(html, /class="panel goals-panel active"/);
-assert.match(source, /localStorage\.setItem\(saveKey, JSON\.stringify\(revived\)\)/);
+assert.match(source, /function createStorageAdapter/);
+assert.match(source, /saveWriteSuspended/);
+assert.match(source, /storage\.setItem\(saveKey, JSON\.stringify\(revived\)\)/);
+assert.match(source, /data-export-save/);
+assert.match(html, /data-import-save-input/);
+assert.match(styles, /\.save-tools\s*\{/);
 assert.match(source, /function createRealmTrack/);
 assert.match(source, /currentBalanceVersion\s*=\s*6/);
 assert.match(source, /元婴.*九变/);
@@ -552,3 +557,26 @@ const context = {
 
 vm.createContext(context);
 assert.doesNotThrow(() => vm.runInContext(source, context));
+
+const storageCalls = [];
+const brokenSaveContext = {
+  Date,
+  Math,
+  localStorage: {
+    getItem: (key) => (key === 'idle-xianxia-save-v1' ? '{broken save' : null),
+    removeItem() {},
+    setItem(key, value) {
+      storageCalls.push([key, value]);
+    },
+  },
+  document: documentWithoutOptionalPanels(),
+  performance: { now: () => 0 },
+  requestAnimationFrame() {},
+  setInterval() {},
+};
+
+vm.createContext(brokenSaveContext);
+assert.doesNotThrow(() => vm.runInContext(source, brokenSaveContext));
+assert.ok(storageCalls.some(([key]) => key.startsWith('idle-xianxia-save-v1-recovery-')));
+assert.ok(storageCalls.some(([key]) => key === 'idle-xianxia-save-v1-latest-recovery-key'));
+assert.ok(!storageCalls.some(([key]) => key === 'idle-xianxia-save-v1'), 'broken saves must not be overwritten');

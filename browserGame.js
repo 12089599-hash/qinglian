@@ -1,4 +1,5 @@
 (function () {
+  const storage = createStorageAdapter();
   const accessGate = createAccessGate();
   if (accessGate.isUnlocked()) {
     accessGate.unlock();
@@ -2250,6 +2251,11 @@ const spiritBeastQualities = {
   ];
 
   const saveKey = 'idle-xianxia-save-v1';
+  const saveLastGoodKey = `${saveKey}-last-good`;
+  const saveRecoveryKey = `${saveKey}-latest-recovery-key`;
+  let saveWriteSuspended = false;
+  let saveRecoveryNotice = null;
+  let saveFailureNotified = false;
   const refs = {
     realm: document.querySelector('[data-realm]'),
     qi: document.querySelector('[data-qi]'),
@@ -2326,16 +2332,20 @@ const spiritBeastQualities = {
     offlineSummary: document.querySelector('[data-offline-summary]'),
     toastStack: document.querySelector('[data-toast-stack]'),
     log: document.querySelector('[data-log]'),
+    exportSave: document.querySelector('[data-export-save]'),
+    importSave: document.querySelector('[data-import-save]'),
+    importSaveInput: document.querySelector('[data-import-save-input]'),
+    saveStatus: document.querySelector('[data-save-status]'),
     canvas: document.querySelector('[data-world]'),
   };
 
   const ctx = refs.canvas.getContext('2d');
   const renderCache = {};
   const openLootDetails = new Set();
-  const openMissionDetails = new Set(parseStoredMissionDetails(localStorage.getItem('idle-xianxia-mission-details')));
-  const openMissionDrawers = new Set(parseStoredMissionDrawers(localStorage.getItem('idle-xianxia-mission-drawers')));
+  const openMissionDetails = new Set(parseStoredMissionDetails(storage.getItem('idle-xianxia-mission-details')));
+  const openMissionDrawers = new Set(parseStoredMissionDrawers(storage.getItem('idle-xianxia-mission-drawers')));
   const sectDetailIds = ['skills', 'disciples', 'commissions'];
-  const openSectDetails = new Set(parseStoredSectDetails(localStorage.getItem('idle-xianxia-sect-details')));
+  const openSectDetails = new Set(parseStoredSectDetails(storage.getItem('idle-xianxia-sect-details')));
   const panelAnchors = new Map();
   document.querySelectorAll('.dashboard > [data-panel]').forEach((panel) => {
     const marker = document.createComment(`panel:${panel.dataset.panel}`);
@@ -2366,34 +2376,34 @@ const spiritBeastQualities = {
   };
   const gearSections = ['wear', 'loot', 'treasures', 'beasts', 'bloodlines'];
   const isMobileLayout = () => typeof window !== 'undefined' && window.matchMedia?.('(max-width: 760px)').matches;
-  const storedActiveTab = localStorage.getItem('idle-xianxia-active-tab');
+  const storedActiveTab = storage.getItem('idle-xianxia-active-tab');
   let activeTab = isMobileLayout() ? 'overview' : (storedActiveTab === 'overview' ? 'goals' : storedActiveTab || 'goals');
   if (!panelTabs.includes(activeTab)) {
     activeTab = isMobileLayout() ? 'overview' : 'goals';
   }
-  let activeGearSection = localStorage.getItem('idle-xianxia-gear-section') || 'wear';
+  let activeGearSection = storage.getItem('idle-xianxia-gear-section') || 'wear';
   if (!gearSections.includes(activeGearSection)) {
     activeGearSection = 'wear';
   }
-  let selectedSpiritBeastId = localStorage.getItem('idle-xianxia-selected-beast') || '';
+  let selectedSpiritBeastId = storage.getItem('idle-xianxia-selected-beast') || '';
   const lootFilters = ['all', 'weapon', 'offhand', 'amulet', 'robe', 'jade', 'boots'];
-  let activeLootFilter = localStorage.getItem('idle-xianxia-loot-filter') || 'all';
+  let activeLootFilter = storage.getItem('idle-xianxia-loot-filter') || 'all';
   if (!lootFilters.includes(activeLootFilter)) {
     activeLootFilter = 'all';
   }
   const defaultLootDismantleRarities = ['common', 'spirit'];
   const lootDismantleRarityIds = rarityTiers.map((tier) => tier.id);
-  let activeLootDismantleRarities = new Set(parseStoredLootDismantleRarities(localStorage.getItem('idle-xianxia-loot-dismantle-rarities')));
+  let activeLootDismantleRarities = new Set(parseStoredLootDismantleRarities(storage.getItem('idle-xianxia-loot-dismantle-rarities')));
   const lootKeepStrategies = ['equippedOnly', 'bestPerSlot', 'rareAndSets'];
-  let activeLootKeepStrategy = localStorage.getItem('idle-xianxia-loot-keep-strategy') || 'equippedOnly';
+  let activeLootKeepStrategy = storage.getItem('idle-xianxia-loot-keep-strategy') || 'equippedOnly';
   if (!lootKeepStrategies.includes(activeLootKeepStrategy)) {
     activeLootKeepStrategy = 'equippedOnly';
   }
-  let activeMissionMapId = localStorage.getItem('idle-xianxia-mission-map') || missionMapIds[0];
+  let activeMissionMapId = storage.getItem('idle-xianxia-mission-map') || missionMapIds[0];
   if (!missionMaps[activeMissionMapId]) {
     activeMissionMapId = missionMapIds[0];
   }
-  let activeBuildingId = localStorage.getItem('idle-xianxia-cave-building') || 'meditationSeat';
+  let activeBuildingId = storage.getItem('idle-xianxia-cave-building') || 'meditationSeat';
   if (!buildings[activeBuildingId]) {
     activeBuildingId = 'meditationSeat';
   }
@@ -2656,7 +2666,7 @@ const spiritBeastQualities = {
   document.querySelectorAll('[data-loot-filter]').forEach((button) => {
     button.addEventListener('click', () => {
       activeLootFilter = lootFilters.includes(button.dataset.lootFilter) ? button.dataset.lootFilter : 'all';
-      localStorage.setItem('idle-xianxia-loot-filter', activeLootFilter);
+      storage.setItem('idle-xianxia-loot-filter', activeLootFilter);
       renderLoot(true);
     });
   });
@@ -2729,7 +2739,7 @@ const spiritBeastQualities = {
     const selectButton = event.target.closest('[data-select-beast]');
     if (selectButton) {
       selectedSpiritBeastId = selectButton.dataset.selectBeast;
-      localStorage.setItem('idle-xianxia-selected-beast', selectedSpiritBeastId);
+      storage.setItem('idle-xianxia-selected-beast', selectedSpiritBeastId);
       render(true);
       if (isMobileLayout()) {
         const item = getEquipmentDetails(state).spiritBeasts.find((beast) => beast.id === selectedSpiritBeastId);
@@ -2744,7 +2754,7 @@ const spiritBeastQualities = {
       const result = deploySpiritBeast(state, deployButton.dataset.deployBeast);
       if (result.ok) {
         selectedSpiritBeastId = result.beast.id;
-        localStorage.setItem('idle-xianxia-selected-beast', selectedSpiritBeastId);
+        storage.setItem('idle-xianxia-selected-beast', selectedSpiritBeastId);
         showToast('灵兽出战', `${result.beast.name}随行入阵。`);
       }
       saveState();
@@ -2756,7 +2766,7 @@ const spiritBeastQualities = {
     const result = trainSpiritBeast(state, button.dataset.trainBeast);
     if (result.ok) {
       selectedSpiritBeastId = button.dataset.trainBeast;
-      localStorage.setItem('idle-xianxia-selected-beast', selectedSpiritBeastId);
+      storage.setItem('idle-xianxia-selected-beast', selectedSpiritBeastId);
       showToast('灵兽培养', `${spiritBeasts[button.dataset.trainBeast].name}升至 ${result.level} 级${result.autoDeployed ? '，已自动出战。' : '。'}`);
     }
     saveState();
@@ -2768,8 +2778,8 @@ const spiritBeastQualities = {
     if (lootButton) {
       activeGearSection = 'loot';
       activeLootFilter = 'all';
-      localStorage.setItem('idle-xianxia-gear-section', activeGearSection);
-      localStorage.setItem('idle-xianxia-loot-filter', activeLootFilter);
+      storage.setItem('idle-xianxia-gear-section', activeGearSection);
+      storage.setItem('idle-xianxia-loot-filter', activeLootFilter);
       renderGearSections();
       renderLoot(true);
       document.querySelector('[data-gear-section-panel="loot"]')?.scrollIntoView({ block: 'start', behavior: 'smooth' });
@@ -2842,7 +2852,7 @@ const spiritBeastQualities = {
     const mapButton = event.target.closest('[data-select-mission-map]');
     if (mapButton) {
       activeMissionMapId = mapButton.dataset.selectMissionMap;
-      localStorage.setItem('idle-xianxia-mission-map', activeMissionMapId);
+      storage.setItem('idle-xianxia-mission-map', activeMissionMapId);
       render(true);
       return;
     }
@@ -3036,7 +3046,7 @@ const spiritBeastQualities = {
     if (upgradeButton) {
       const result = upgradeBuilding(state, upgradeButton.dataset.upgradeBuilding);
       activeBuildingId = upgradeButton.dataset.upgradeBuilding;
-      localStorage.setItem('idle-xianxia-cave-building', activeBuildingId);
+      storage.setItem('idle-xianxia-cave-building', activeBuildingId);
       if (result.ok) {
         renderCache.cave = '';
         showToast('洞府升阶', `${buildings[activeBuildingId].name}升至 ${result.level} 级。`);
@@ -3052,7 +3062,7 @@ const spiritBeastQualities = {
     const selectButton = event.target.closest('[data-select-building]');
     if (selectButton) {
       activeBuildingId = selectButton.dataset.selectBuilding;
-      localStorage.setItem('idle-xianxia-cave-building', activeBuildingId);
+      storage.setItem('idle-xianxia-cave-building', activeBuildingId);
       render(true);
     }
   });
@@ -3122,17 +3132,17 @@ const spiritBeastQualities = {
       if (button.dataset.tabGroup === 'practice' && isMobileLayout()) {
         closeMobilePanelDialog({ resetTab: false });
         activeTab = 'overview';
-        localStorage.setItem('idle-xianxia-active-tab', activeTab);
-        localStorage.setItem('idle-xianxia-practice-tab', activeTab);
+        storage.setItem('idle-xianxia-active-tab', activeTab);
+        storage.setItem('idle-xianxia-practice-tab', activeTab);
         renderTabs();
         window.scrollTo?.({ top: 0, behavior: 'smooth' });
         return;
       }
-      const remembered = localStorage.getItem(`idle-xianxia-${button.dataset.tabGroup}-tab`);
+      const remembered = storage.getItem(`idle-xianxia-${button.dataset.tabGroup}-tab`);
       activeTab = button.dataset.tabGroup === 'vault'
         ? group.tabs[0]
         : group.tabs.includes(remembered) ? remembered : group.tabs[0];
-      localStorage.setItem('idle-xianxia-active-tab', activeTab);
+      storage.setItem('idle-xianxia-active-tab', activeTab);
       renderTabs();
       if (!openMobilePanelDialog(activeTab)) {
         window.scrollTo?.({ top: 0, behavior: 'smooth' });
@@ -3146,8 +3156,8 @@ const spiritBeastQualities = {
       return;
     }
     activeTab = button.dataset.tab;
-    localStorage.setItem('idle-xianxia-active-tab', activeTab);
-    localStorage.setItem(`idle-xianxia-${getTabGroup(activeTab)}-tab`, activeTab);
+    storage.setItem('idle-xianxia-active-tab', activeTab);
+    storage.setItem(`idle-xianxia-${getTabGroup(activeTab)}-tab`, activeTab);
     renderTabs();
     if (!openMobilePanelDialog(activeTab)) {
       window.scrollTo?.({ top: 0, behavior: 'smooth' });
@@ -3160,8 +3170,8 @@ const spiritBeastQualities = {
       return;
     }
     activeTab = button.dataset.mobilePanelTab;
-    localStorage.setItem('idle-xianxia-active-tab', activeTab);
-    localStorage.setItem(`idle-xianxia-${getTabGroup(activeTab)}-tab`, activeTab);
+    storage.setItem('idle-xianxia-active-tab', activeTab);
+    storage.setItem(`idle-xianxia-${getTabGroup(activeTab)}-tab`, activeTab);
     renderTabs();
     openMobilePanelDialog(activeTab);
   });
@@ -3171,8 +3181,8 @@ const spiritBeastQualities = {
     delete document.body.dataset.mobilePanelOpen;
     if (isMobileLayout() && activeTab !== 'overview') {
       activeTab = 'overview';
-      localStorage.setItem('idle-xianxia-active-tab', activeTab);
-      localStorage.setItem('idle-xianxia-practice-tab', activeTab);
+      storage.setItem('idle-xianxia-active-tab', activeTab);
+      storage.setItem('idle-xianxia-practice-tab', activeTab);
       renderTabs();
       window.scrollTo?.({ top: 0, behavior: 'auto' });
     }
@@ -3221,13 +3231,29 @@ const spiritBeastQualities = {
     refs.mobileDetailDialog?.close();
   });
 
+  refs.exportSave?.addEventListener('click', () => {
+    exportSaveFile();
+  });
+
+  refs.importSave?.addEventListener('click', () => {
+    refs.importSaveInput?.click();
+  });
+
+  refs.importSaveInput?.addEventListener('change', () => {
+    const file = refs.importSaveInput.files?.[0];
+    if (file) {
+      importSaveFile(file);
+    }
+    refs.importSaveInput.value = '';
+  });
+
   refs.gearSubTabs?.addEventListener('click', (event) => {
     const button = event.target.closest('[data-gear-section]');
     if (!button || !gearSections.includes(button.dataset.gearSection)) {
       return;
     }
     activeGearSection = button.dataset.gearSection;
-    localStorage.setItem('idle-xianxia-gear-section', activeGearSection);
+    storage.setItem('idle-xianxia-gear-section', activeGearSection);
     renderGearSections();
   });
 
@@ -3262,6 +3288,7 @@ const spiritBeastQualities = {
   });
 
   render();
+  showSaveRecoveryNotice();
 
   function claimGoalById(goalId) {
     const result = claimGoalReward(state, goalId);
@@ -4983,11 +5010,20 @@ const spiritBeastQualities = {
   }
 
   function saveState() {
-    localStorage.setItem(saveKey, JSON.stringify(state));
+    if (saveWriteSuspended) {
+      return false;
+    }
+    const saved = storage.setItem(saveKey, JSON.stringify(state));
+    if (!saved && !saveFailureNotified) {
+      saveFailureNotified = true;
+      updateSaveStatus('当前浏览器未能写入本地存档，请先导出存档保底。');
+      showToast('存档写入受阻', '当前浏览器未能写入本地存档，请先导出存档保底。', 'warning');
+    }
+    return saved;
   }
 
   function loadState() {
-    const saved = localStorage.getItem(saveKey);
+    const saved = storage.getItem(saveKey);
     const now = Date.now();
     if (!saved) {
       return createGameState(now);
@@ -4999,11 +5035,101 @@ const spiritBeastQualities = {
         pendingOfflineSummary = applyOfflineProgress(revived, offlineSeconds, now);
         revived.log.unshift({ time: now, text: `闭关离线 ${formatDuration(offlineSeconds)}，灵气仍在缓慢增长。` });
       }
-      localStorage.setItem(saveKey, JSON.stringify(revived));
+      storage.setItem(saveLastGoodKey, saved);
+      storage.setItem(saveKey, JSON.stringify(revived));
       return revived;
     } catch (error) {
-      return createGameState(now);
+      const backupKey = `${saveKey}-recovery-${formatDateKey(now)}-${Math.floor(now % 100000)}`;
+      storage.setItem(backupKey, saved);
+      storage.setItem(saveRecoveryKey, backupKey);
+      saveWriteSuspended = true;
+      saveRecoveryNotice = {
+        backupKey,
+        reason: error instanceof Error ? error.message : String(error),
+      };
+      const fresh = createGameState(now);
+      fresh.log.unshift({ time: now, text: `存档读取异常，旧档已保存在「${backupKey}」，自动保存已暂停，避免覆盖旧档。` });
+      return fresh;
     }
+  }
+
+  function showSaveRecoveryNotice() {
+    updateSaveStatus();
+    if (!saveRecoveryNotice) {
+      return;
+    }
+    showToast('存档已保护', '旧档读取失败，已暂停自动覆盖。可导出当前状态，或把恢复键交给我继续修。', 'warning');
+  }
+
+  function updateSaveStatus(message = '') {
+    if (!refs.saveStatus) {
+      return;
+    }
+    if (message) {
+      refs.saveStatus.textContent = message;
+      return;
+    }
+    if (saveWriteSuspended) {
+      refs.saveStatus.textContent = `读取异常，旧档已保护：${storage.getItem(saveRecoveryKey) || '本地恢复槽'}。`;
+      return;
+    }
+    const mode = storage.isPersistent() ? '当前设备' : '临时会话';
+    refs.saveStatus.textContent = `${mode}存档正常。换到 App / GitHub Pages / 本地文件时，可用导出和导入迁移。`;
+  }
+
+  function exportSaveFile() {
+    if (!saveWriteSuspended) {
+      saveState();
+    }
+    const payload = {
+      game: 'qinglan-cave',
+      version: 1,
+      exportedAt: Date.now(),
+      href: globalThis.location?.href || '',
+      saveKey,
+      state,
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `qinglan-save-${formatDateKey(Date.now())}.json`;
+    document.body.append(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+    updateSaveStatus('存档已导出。导入到 App 或另一个网页地址即可继续。');
+    showToast('存档导出', '已生成当前进度的存档文件。');
+  }
+
+  function importSaveFile(file) {
+    const reader = new FileReader();
+    reader.addEventListener('load', () => {
+      try {
+        const parsed = JSON.parse(String(reader.result || '{}'));
+        const importedState = parsed?.game === 'qinglan-cave' ? parsed.state : parsed;
+        if (!importedState || typeof importedState !== 'object') {
+          throw new Error('存档格式不正确');
+        }
+        const revived = reviveGameState(importedState, Date.now());
+        storage.setItem(saveLastGoodKey, JSON.stringify(state));
+        saveWriteSuspended = false;
+        saveRecoveryNotice = null;
+        state = revived;
+        saveState();
+        render(true);
+        updateSaveStatus('存档导入成功，已接管当前进度。');
+        showToast('存档导入', `已恢复到${getCurrentRealm(state).name}。`);
+      } catch (error) {
+        updateSaveStatus('导入失败：存档文件无法识别。');
+        showToast('导入失败', error instanceof Error ? error.message : '存档文件无法识别。', 'warning');
+      }
+    });
+    reader.addEventListener('error', () => {
+      updateSaveStatus('导入失败：文件读取异常。');
+      showToast('导入失败', '文件读取异常。', 'warning');
+    });
+    reader.readAsText(file);
   }
 
   function getCurrentRealm(state) {
@@ -6776,7 +6902,7 @@ const spiritBeastQualities = {
       return activeMissionMapId;
     }
     activeMissionMapId = mapStatuses.find((map) => map.unlocked)?.id || mapStatuses[0]?.id || missionMapIds[0];
-    localStorage.setItem('idle-xianxia-mission-map', activeMissionMapId);
+    storage.setItem('idle-xianxia-mission-map', activeMissionMapId);
     return activeMissionMapId;
   }
 
@@ -8082,11 +8208,11 @@ const spiritBeastQualities = {
   }
 
   function saveLootDismantleRarities() {
-    localStorage.setItem('idle-xianxia-loot-dismantle-rarities', JSON.stringify(getSelectedLootDismantleRarities()));
+    storage.setItem('idle-xianxia-loot-dismantle-rarities', JSON.stringify(getSelectedLootDismantleRarities()));
   }
 
   function saveLootKeepStrategy() {
-    localStorage.setItem('idle-xianxia-loot-keep-strategy', activeLootKeepStrategy);
+    storage.setItem('idle-xianxia-loot-keep-strategy', activeLootKeepStrategy);
   }
 
   function parseStoredMissionDetails(raw) {
@@ -8105,7 +8231,7 @@ const spiritBeastQualities = {
   }
 
   function saveMissionDetails() {
-    localStorage.setItem('idle-xianxia-mission-details', JSON.stringify([...openMissionDetails].filter((id) => missions[id])));
+    storage.setItem('idle-xianxia-mission-details', JSON.stringify([...openMissionDetails].filter((id) => missions[id])));
   }
 
   function parseStoredMissionDrawers(raw) {
@@ -8127,7 +8253,7 @@ const spiritBeastQualities = {
   }
 
   function saveMissionDrawers() {
-    localStorage.setItem('idle-xianxia-mission-drawers', JSON.stringify([...openMissionDrawers].filter((id) => {
+    storage.setItem('idle-xianxia-mission-drawers', JSON.stringify([...openMissionDrawers].filter((id) => {
       const [mapId, drawer] = String(id).split(':');
       return missionMaps[mapId] && ['approach', 'routes'].includes(drawer);
     })));
@@ -8149,7 +8275,7 @@ const spiritBeastQualities = {
   }
 
   function saveSectDetails() {
-    localStorage.setItem('idle-xianxia-sect-details', JSON.stringify([...openSectDetails].filter((id) => sectDetailIds.includes(id))));
+    storage.setItem('idle-xianxia-sect-details', JSON.stringify([...openSectDetails].filter((id) => sectDetailIds.includes(id))));
   }
 
   function updateLootOrganizeButton() {
@@ -8333,7 +8459,7 @@ const spiritBeastQualities = {
       || items[0];
     if (selected && selected.id !== selectedSpiritBeastId) {
       selectedSpiritBeastId = selected.id;
-      localStorage.setItem('idle-xianxia-selected-beast', selectedSpiritBeastId);
+      storage.setItem('idle-xianxia-selected-beast', selectedSpiritBeastId);
     }
     return selected;
   }
@@ -12296,8 +12422,8 @@ const spiritBeastQualities = {
     }
     if (resetTab && isMobileLayout() && activeTab !== 'overview') {
       activeTab = 'overview';
-      localStorage.setItem('idle-xianxia-active-tab', activeTab);
-      localStorage.setItem('idle-xianxia-practice-tab', activeTab);
+      storage.setItem('idle-xianxia-active-tab', activeTab);
+      storage.setItem('idle-xianxia-practice-tab', activeTab);
       renderTabs();
     }
   }
@@ -12384,7 +12510,7 @@ const spiritBeastQualities = {
       const result = deploySpiritBeast(state, deployBeastButton.dataset.deployBeast);
       if (result.ok) {
         selectedSpiritBeastId = result.beast.id;
-        localStorage.setItem('idle-xianxia-selected-beast', selectedSpiritBeastId);
+        storage.setItem('idle-xianxia-selected-beast', selectedSpiritBeastId);
         showToast('灵兽出战', `${result.beast.name}随行入阵。`);
       }
       saveState();
@@ -12397,7 +12523,7 @@ const spiritBeastQualities = {
       const result = trainSpiritBeast(state, trainBeastButton.dataset.trainBeast);
       if (result.ok) {
         selectedSpiritBeastId = trainBeastButton.dataset.trainBeast;
-        localStorage.setItem('idle-xianxia-selected-beast', selectedSpiritBeastId);
+        storage.setItem('idle-xianxia-selected-beast', selectedSpiritBeastId);
         showToast('灵兽培养', `${spiritBeasts[trainBeastButton.dataset.trainBeast].name}升至 ${result.level} 级${result.autoDeployed ? '，已自动出战。' : '。'}`);
       }
       saveState();
@@ -12464,8 +12590,8 @@ const spiritBeastQualities = {
     }
     activeTab = tab;
     focusGuidanceTarget(tab, targetId);
-    localStorage.setItem('idle-xianxia-active-tab', activeTab);
-    localStorage.setItem(`idle-xianxia-${getTabGroup(activeTab)}-tab`, activeTab);
+    storage.setItem('idle-xianxia-active-tab', activeTab);
+    storage.setItem(`idle-xianxia-${getTabGroup(activeTab)}-tab`, activeTab);
     render(true);
     if (!openMobilePanelDialog(activeTab)) {
       window.scrollTo?.({ top: 0, behavior: 'smooth' });
@@ -12475,19 +12601,19 @@ const spiritBeastQualities = {
   function focusGuidanceTarget(tab, targetId = '') {
     if (tab === 'cave' && buildings[targetId]) {
       activeBuildingId = targetId;
-      localStorage.setItem('idle-xianxia-cave-building', activeBuildingId);
+      storage.setItem('idle-xianxia-cave-building', activeBuildingId);
     }
     if (tab === 'missions' && missions[targetId]?.mapId) {
       activeMissionMapId = missions[targetId].mapId;
-      localStorage.setItem('idle-xianxia-mission-map', activeMissionMapId);
+      storage.setItem('idle-xianxia-mission-map', activeMissionMapId);
     }
     if (tab === 'missions' && missionMaps[targetId]) {
       activeMissionMapId = targetId;
-      localStorage.setItem('idle-xianxia-mission-map', activeMissionMapId);
+      storage.setItem('idle-xianxia-mission-map', activeMissionMapId);
     }
     if (tab === 'gear' && ['loot', 'wear', 'treasures', 'beasts'].includes(targetId)) {
       activeGearSection = targetId;
-      localStorage.setItem('idle-xianxia-gear-section', activeGearSection);
+      storage.setItem('idle-xianxia-gear-section', activeGearSection);
     }
   }
 
@@ -12731,6 +12857,90 @@ const spiritBeastQualities = {
     return `${year}-${month}-${day}`;
   }
 
+  function formatDateKey(now = Date.now()) {
+    const date = new Date(now);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hour = String(date.getHours()).padStart(2, '0');
+    const minute = String(date.getMinutes()).padStart(2, '0');
+    return `${year}${month}${day}-${hour}${minute}`;
+  }
+
+  }
+
+  function createStorageAdapter() {
+    const memory = new Map();
+
+    function getNativeStorage() {
+      try {
+        return globalThis.localStorage || null;
+      } catch {
+        return null;
+      }
+    }
+
+    return {
+      getItem(key) {
+        const textKey = String(key);
+        const nativeStorage = getNativeStorage();
+        if (nativeStorage) {
+          try {
+            const value = nativeStorage.getItem(textKey);
+            if (value !== null) {
+              memory.set(textKey, value);
+            }
+            return value;
+          } catch {
+            return memory.has(textKey) ? memory.get(textKey) : null;
+          }
+        }
+        return memory.has(textKey) ? memory.get(textKey) : null;
+      },
+      setItem(key, value) {
+        const textKey = String(key);
+        const textValue = String(value);
+        memory.set(textKey, textValue);
+        const nativeStorage = getNativeStorage();
+        if (!nativeStorage) {
+          return false;
+        }
+        try {
+          nativeStorage.setItem(textKey, textValue);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      removeItem(key) {
+        const textKey = String(key);
+        memory.delete(textKey);
+        const nativeStorage = getNativeStorage();
+        if (!nativeStorage) {
+          return false;
+        }
+        try {
+          nativeStorage.removeItem(textKey);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      isPersistent() {
+        const nativeStorage = getNativeStorage();
+        if (!nativeStorage) {
+          return false;
+        }
+        const probeKey = 'idle-xianxia-storage-probe';
+        try {
+          nativeStorage.setItem(probeKey, '1');
+          nativeStorage.removeItem(probeKey);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+    };
   }
 
   function createAccessGate() {
@@ -12755,7 +12965,7 @@ const spiritBeastQualities = {
 
     function isUnlocked() {
       try {
-        return localStorage.getItem(accessKey) === passwordHash;
+        return storage.getItem(accessKey) === passwordHash;
       } catch {
         return false;
       }
@@ -12787,7 +12997,7 @@ const spiritBeastQualities = {
         const accepted = await verifyPassword(input.value);
         if (accepted) {
           try {
-            localStorage.setItem(accessKey, passwordHash);
+            storage.setItem(accessKey, passwordHash);
           } catch {
             // Private browsing may block storage; keep the current session unlocked.
           }
