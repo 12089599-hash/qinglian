@@ -1278,6 +1278,10 @@ small {
   display: inline-flex;
 }
 
+.mobile-map-flow {
+  display: none;
+}
+
 .map-action-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
@@ -7578,5 +7582,230 @@ small {
 
   body[data-mobile-panel-open] .dashboard {
     overflow: hidden;
+  }
+
+  body[data-active-tab="overview"] .hero-panel {
+    top: calc(26px + env(safe-area-inset-top));
+    grid-template-rows: auto auto auto 1fr auto;
+  }
+
+  body[data-active-tab="overview"] .hero-panel h1 {
+    display: block;
+    grid-column: 1;
+    grid-row: 1;
+    margin: 0;
+    color: #f7dfaa;
+    font-size: clamp(1.18rem, 5.1vw, 1.42rem);
+    line-height: 1.05;
+    letter-spacing: 0.08em;
+    text-shadow:
+      0 2px 12px rgba(0, 0, 0, 0.62),
+      0 0 16px rgba(240, 207, 114, 0.16);
+  }
+
+  body[data-active-tab="overview"] .realm-line {
+    grid-row: 2;
+    margin-top: -1px;
+  }
+
+  body[data-active-tab="overview"] .realm-line span:first-child {
+    display: none;
+  }
+
+  body[data-active-tab="overview"] .realm-line span:last-child {
+    color: #f5eedc;
+    font-size: clamp(0.68rem, 2.9vw, 0.78rem);
+    font-weight: 850;
+  }
+
+  body[data-active-tab="overview"] .progress-track {
+    grid-row: 3;
+  }
+
+  body[data-active-tab="overview"] .stats-panel > .opening-objective {
+    display: none;
+  }
+
+  body[data-active-tab="overview"] .stats-panel > .action-row {
+    order: 2;
+  }
+
+  body[data-active-tab="overview"] .stats-panel > .foundation-hint {
+    order: 3;
+  }
+
+  body[data-active-tab="overview"] .stats-panel > .progress-plan {
+    order: 4;
+  }
+
+  body[data-active-tab="overview"] .stats-panel > .cultivation-drawer {
+    order: 5;
+  }
+
+  .goal-list {
+    gap: 7px;
+  }
+
+  .goal-list li {
+    grid-template-columns: 18px minmax(0, 1fr) auto;
+    gap: 7px;
+    align-items: center;
+    min-height: 46px;
+    padding: 8px;
+  }
+
+  .goal-list li > span {
+    width: 18px;
+    height: 18px;
+    font-size: 0.66rem;
+  }
+
+  .goal-list strong {
+    font-size: 0.86rem;
+    line-height: 1.18;
+  }
+
+  .goal-list small {
+    display: -webkit-box;
+    overflow: hidden;
+    margin-top: 2px;
+    font-size: 0.68rem;
+    line-height: 1.22;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+  }
+
+  .goal-list button,
+  .goal-list em {
+    grid-column: auto;
+    justify-self: end;
+  }
+
+  .goal-list button {
+    min-height: 30px;
+    padding: 0 9px;
+    font-size: 0.76rem;
+  }
+
+  .resource-guidance {
+    display: none;
+  }
+
+  [data-panel="missions"] .progress-plan {
+    display: none;
+  }
+
+  .map-action-panel {
+    margin-bottom: 8px;
+  }
+
+  .map-action-panel .map-loot-pool {
+    margin-top: -2px;
+    padding: 4px 8px;
+    font-size: 0.7rem;
+  }
+
+  .mobile-map-flow {
+    display: grid;
+    gap: 8px;
+  }
+
+  .mobile-map-flow-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .mobile-map-flow-title span,
+  .mobile-map-flow-title strong {
+    display: block;
+    min-width: 0;
+    line-height: 1.15;
+  }
+
+  .mobile-map-flow-title span {
+    color: var(--jade);
+    font-size: 0.76rem;
+    font-weight: 900;
+  }
+
+  .mobile-map-flow-title strong {
+    color: var(--gold);
+    font-size: 0.82rem;
+    white-space: nowrap;
+  }
+
+  .mobile-map-flow .approach-selector {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 5px;
+    border-radius: 8px;
+    padding: 5px;
+  }
+
+  .mobile-map-flow .approach-selector button {
+    min-height: 48px;
+    gap: 1px;
+    padding: 6px 5px;
+  }
+
+  .mobile-map-flow .approach-selector strong {
+    font-size: 0.74rem;
+  }
+
+  .mobile-map-flow .approach-selector span {
+    display: none;
+  }
+
+  .mobile-map-flow .approach-selector small {
+    overflow: hidden;
+    font-size: 0.62rem;
+    line-height: 1.16;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .mobile-map-flow .mission-list {
+    gap: 5px;
+  }
+
+  .mobile-map-flow .mission-card {
+    grid-template-columns: minmax(0, 1fr) 48px;
+    gap: 5px;
+  }
+
+  .mobile-map-flow .mission-card > button:first-child {
+    min-height: 44px;
+    padding: 6px 8px;
+  }
+
+  .mobile-map-flow .mission-card > button:first-child strong {
+    font-size: 0.82rem;
+  }
+
+  .mobile-map-flow .mission-card > button:first-child span {
+    font-size: 0.64rem;
+  }
+
+  .mobile-map-flow .mission-card > .mini-button {
+    min-height: 30px;
+    font-size: 0.72rem;
+  }
+
+  .map-action-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .map-group > .map-heading,
+  .map-group > .map-progress,
+  .map-group > .map-meta,
+  .map-group > .map-approach-drawer,
+  .map-group > .mission-route-drawer {
+    display: none;
+  }
+
+  .map-group {
+    padding: 8px;
   }
 }

@@ -7529,11 +7529,14 @@ const spiritBeastQualities = {
 
   function renderMapActionPanel(map) {
     const depth = map.depth;
+    const routeList = (map.routes || []).map((id) => missions[id]).filter(Boolean);
     const depthRush = getMapDepthRushStatus(state, map.id);
     const depthSweep = getMapDepthSweepStatus(state, map.id);
     const bossSweep = getMapBossSweepStatus(state, map.id);
     const primaryMission = getPrimaryMissionForMap(map);
     const primaryStatus = primaryMission ? getMissionStatus(state, primaryMission.id) : null;
+    const selectedApproach = getSelectedMapApproachOption(map);
+    const unlockedRoutes = routeList.filter((mission) => getMissionStatus(state, mission.id).unlocked).length;
     const bossStatusText = {
       locked: '未解锁',
       hidden: '先探地势',
@@ -7561,6 +7564,20 @@ const spiritBeastQualities = {
         </header>
         <small class="active-beast-status">${activeBeastBrief}</small>
         <small class="map-loot-pool">装备池：${lootPool.label} · 六部位皆可出</small>
+        <div class="mobile-map-flow">
+          <div class="mobile-map-flow-title">
+            <span>行游方式</span>
+            <strong>${selectedApproach?.name || '未定'}</strong>
+          </div>
+          ${renderApproachSelector(map)}
+          <div class="mobile-map-flow-title">
+            <span>普通行游</span>
+            <strong>${unlockedRoutes} / ${routeList.length}</strong>
+          </div>
+          <div class="mission-list">
+            ${routeList.map((mission) => renderMissionCard(mission)).join('')}
+          </div>
+        </div>
         <div class="map-action-grid">
           <button data-start-depth="${map.id}" ${!depth?.unlocked || depth?.maxed || busy ? 'disabled' : ''}>
             <strong>${depth?.maxed ? '秘境圆满' : `秘境第 ${depth?.nextLayer || 1} 层`}</strong>
