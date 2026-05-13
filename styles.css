@@ -7290,3 +7290,186 @@ small {
     display: grid;
   }
 }
+
+@media (max-width: 760px) {
+  body:not([data-active-tab="overview"]) .panel {
+    border-color: rgba(221, 190, 111, 0.34);
+    background:
+      radial-gradient(ellipse at 50% -12%, rgba(132, 214, 187, 0.12), transparent 44%),
+      linear-gradient(180deg, rgba(12, 42, 38, 0.9), rgba(5, 18, 18, 0.94));
+    box-shadow:
+      inset 0 0 0 1px rgba(132, 214, 187, 0.08),
+      0 16px 42px rgba(0, 0, 0, 0.32);
+  }
+
+  body:not([data-active-tab="overview"]) .panel > header h2,
+  body:not([data-active-tab="overview"]) .panel h2 {
+    color: #f7dfaa;
+    letter-spacing: 0.04em;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.38);
+  }
+
+  .mission-map-selector,
+  .approach-selector,
+  .gear-subtabs {
+    border: 1px solid rgba(221, 190, 111, 0.24);
+    border-radius: 10px;
+    padding: 6px;
+    background:
+      linear-gradient(180deg, rgba(7, 27, 26, 0.84), rgba(3, 13, 14, 0.88));
+  }
+
+  .gear-subtabs {
+    top: 48px;
+    margin: 0 0 10px;
+  }
+
+  .gear-subtabs button,
+  .approach-selector button,
+  .map-select-button {
+    border-color: rgba(132, 214, 187, 0.26);
+    border-radius: 8px;
+    color: #e8dcc4;
+    background:
+      linear-gradient(180deg, rgba(20, 48, 44, 0.82), rgba(5, 19, 20, 0.86));
+    box-shadow: inset 0 1px 0 rgba(245, 238, 220, 0.06);
+  }
+
+  .gear-subtabs button.active,
+  .approach-selector button.active,
+  .map-select-button.active {
+    border-color: rgba(240, 207, 114, 0.74);
+    color: #f7dfaa;
+    background:
+      radial-gradient(ellipse at 26% 0%, rgba(132, 214, 187, 0.22), transparent 46%),
+      linear-gradient(135deg, rgba(33, 88, 72, 0.9), rgba(9, 34, 33, 0.88));
+    box-shadow:
+      inset 0 1px 0 rgba(255, 250, 220, 0.14),
+      0 8px 20px rgba(0, 0, 0, 0.22);
+  }
+
+  .gear-subtabs button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    font-size: 13px;
+    white-space: nowrap;
+  }
+
+  .gear-subtabs button::before {
+    content: "";
+    flex: 0 0 auto;
+    width: 15px;
+    height: 15px;
+    background: var(--gear-tab-icon) center center / contain no-repeat;
+    filter: drop-shadow(0 0 4px rgba(240, 207, 114, 0.18));
+  }
+
+  .gear-subtabs button:nth-child(1)::before {
+    --gear-tab-icon: var(--icon-attributes);
+  }
+
+  .gear-subtabs button:nth-child(2)::before {
+    --gear-tab-icon: var(--icon-vault);
+  }
+
+  .gear-subtabs button:nth-child(3)::before {
+    --gear-tab-icon: var(--icon-detail);
+  }
+
+  .gear-subtabs button:nth-child(4)::before {
+    --gear-tab-icon: var(--icon-action);
+  }
+
+  .gear-subtabs button:nth-child(5)::before {
+    --gear-tab-icon: var(--icon-tribulation);
+  }
+
+  .resource-guidance-card,
+  .map-action-panel,
+  .map-group,
+  .mission-card,
+  [data-gear-list] .equipment-detail-card,
+  .gear-set-panel,
+  .loot-rules-panel,
+  .system-row,
+  .cave-stage-card,
+  .building-detail-card,
+  .sect-compact-section,
+  .mission-report {
+    border-color: rgba(132, 214, 187, 0.2);
+    background:
+      linear-gradient(180deg, rgba(16, 45, 41, 0.72), rgba(5, 18, 18, 0.78));
+    box-shadow:
+      inset 0 1px 0 rgba(245, 238, 220, 0.04),
+      0 10px 26px rgba(0, 0, 0, 0.2);
+  }
+
+  .resource-guidance-card {
+    border-color: rgba(221, 190, 111, 0.32);
+  }
+
+  .map-group,
+  [data-gear-list] .equipment-detail-card {
+    border-radius: 10px;
+  }
+
+  .map-action-panel header span,
+  .map-group h3,
+  .resource-guidance-card strong,
+  .gear-card-name,
+  .system-row strong,
+  .cave-stage-card strong,
+  .sect-compact-section > summary strong {
+    color: #f7dfaa;
+  }
+
+  .mission-card > button:first-child,
+  .map-action-grid button,
+  .gear-main-actions button,
+  .compact-system-row > button,
+  .mission-card > .mini-button,
+  .loot-filters button {
+    border-color: rgba(132, 214, 187, 0.34);
+    color: #f2e6cc;
+    background:
+      linear-gradient(180deg, rgba(21, 50, 47, 0.9), rgba(6, 22, 22, 0.88));
+  }
+
+  .map-action-grid button:not(:disabled):active,
+  .gear-main-actions button:not(:disabled):active,
+  .compact-system-row > button:not(:disabled):active {
+    transform: translateY(1px);
+  }
+
+  .map-select-icon,
+  [data-gear-list] .gear-card-icon,
+  .boss-mark,
+  .map-icon {
+    filter:
+      drop-shadow(0 0 5px rgba(240, 207, 114, 0.18))
+      drop-shadow(0 6px 12px rgba(0, 0, 0, 0.35));
+  }
+
+  .gear-card-slot,
+  .gear-card-stage,
+  .map-action-panel header small,
+  .system-row span {
+    color: #a9cfbd;
+  }
+
+  .mission-report-history,
+  .log-panel {
+    border-color: rgba(132, 214, 187, 0.18);
+    background: rgba(5, 18, 18, 0.62);
+  }
+
+  body[data-active-group="mountain"] .system-row.muted-row {
+    min-height: 118px;
+    border-color: rgba(132, 214, 187, 0.2);
+    background:
+      radial-gradient(ellipse at 16% 0%, rgba(132, 214, 187, 0.12), transparent 52%),
+      linear-gradient(180deg, rgba(13, 37, 35, 0.72), rgba(5, 18, 18, 0.82));
+  }
+}
