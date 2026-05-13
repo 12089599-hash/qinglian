@@ -1,5 +1,6 @@
 (function () {
   const storage = createStorageAdapter();
+  initHeroArtPreload();
   const accessGate = createAccessGate();
   if (accessGate.isUnlocked()) {
     accessGate.unlock();
@@ -22,7 +23,7 @@
   const legacyRealmIndexMap = [0, 1, 2, 9, 13, 18, 26, 27];
   const realms = createRealmTrack();
 
-  const currentBalanceVersion = 6;
+  const currentBalanceVersion = 7;
   const mapDepthMaxLayer = 30;
   const missionResidualDangerRatio = 0.24;
   const DEPTH_TRIBULATIONS = [
@@ -396,6 +397,13 @@
     bindingCord: { id: 'bindingCord', iconId: 'binding-cord', name: '缚灵索', detail: '索影缠住敌势，降低对手回旋空间。', rarityId: 'mystic', element: 'dark', maxLevel: 10, cost: (level) => ({ spiritStones: scaleCost(155, level), beastCores: Math.max(1, level), forgingEssence: level * 2 }), bonuses: { attack: 8, speed: 1, critChance: 0.006, dangerReduction: 3, elementPower: 5 } },
   };
 
+  Object.assign(treasures, {
+    xuanFireOrb: { id: 'xuanFireOrb', iconId: 'xuan-fire-orb', name: '玄火珠', detail: '珠内伏着一线玄火，出手时会留下灼烧余势。', rarityId: 'earthFiend', element: 'fire', maxLevel: 10, cost: (level) => ({ spiritStones: scaleCost(190, level), artifacts: Math.max(1, level), forgingEssence: level * 2 }), bonuses: { attack: 18, critChance: 0.008, elementPower: 8 }, statusEffect: { id: 'burn', name: '灼烧' } },
+    windListeningBell: { id: 'windListeningBell', iconId: 'wind-listening-bell', name: '听风铃', detail: '铃音听风辨位，让身法与先手更稳定。', rarityId: 'earthFiend', element: 'wood', maxLevel: 10, cost: (level) => ({ spiritStones: scaleCost(180, level), insight: Math.max(1, Math.ceil(level / 2)), artifacts: Math.max(1, level) }), bonuses: { speed: 4, dangerReduction: 5, elementPower: 6 }, statusEffect: { id: 'windbind', name: '缠风' } },
+    taixuMirror: { id: 'taixuMirror', iconId: 'taixu-mirror', name: '太虚镜', detail: '镜中折出虚实两面，能让敌势短暂失衡。', rarityId: 'dao', element: 'light', maxLevel: 12, cost: (level) => ({ spiritStones: scaleCost(360, level), insight: Math.max(1, level), artifacts: Math.max(1, level), forgingEssence: level * 3 }), bonuses: { breakthrough: 0.014, defense: 18, speed: 2, elementPower: 10 }, statusEffect: { id: 'weaken', name: '失衡' } },
+    namelessTalisman: { id: 'namelessTalisman', iconId: 'nameless-talisman', name: '无名古符', detail: '符纹残缺却不失灵机，是后期隐藏流派的线索。', rarityId: 'heavenWork', element: 'dark', maxLevel: 12, cost: (level) => ({ spiritStones: scaleCost(260, level), bloodEssence: Math.max(1, Math.ceil(level / 2)), insight: Math.max(1, Math.ceil(level / 3)) }), bonuses: { power: 30, pierce: 5, elementPower: 8 }, statusEffect: { id: 'seal', name: '封脉' } },
+  });
+
 const spiritBeastQualities = {
   wild: { id: 'wild', name: '野灵', growthMultiplier: 0.86, costMultiplier: 0.7 },
   spirit: { id: 'spirit', name: '通灵', growthMultiplier: 1, costMultiplier: 1 },
@@ -602,6 +610,11 @@ const spiritBeastQualities = {
     skill: { name: '蛟影翻江', cadence: 2, multiplier: 1.86, critBonus: 0.08, detail: '隔回合翻起蛟影江潮，造成古血玄水战技。' },
   },
 };
+
+  Object.assign(spiritBeasts, {
+    moonshadowFox: { id: 'moonshadowFox', name: '月隐灵狐', detail: '云纹灵狐的隐藏异相，月下出手会扰乱敌方气机。', rarityId: 'heavenWork', qualityId: 'heaven', unlock: { realmIndex: 6, mapId: 'qinglanMountain', insight: 1 }, maxLevel: 12, cost: (level) => ({ spiritStones: scaleCost(220, level), herbs: scaleCost(34, level), beastCores: level * 3, insight: Math.max(1, Math.ceil(level / 3)) }), bonuses: { qiRate: 0.046, speed: 3, dangerReduction: 4 }, deployedBonuses: { speed: 6, vitality: 36, elementPower: 10 }, combat: { element: 'dark', attack: 40, defense: 12, vitality: 92, speed: 21, critChance: 0.08, pierce: 8 }, assistRole: 'sustain', skill: { name: '月隐迷踪', cadence: 3, multiplier: 1.5, critBonus: 0.05, detail: '每三回合以月影扰乱劫象，造成玄阴战技。' } },
+    ancientAzureCrane: { id: 'ancientAzureCrane', name: '太古青鹤', detail: '青羽灵鹤的稀有古血，擅长护持破境与曜阳斗法。', rarityId: 'dao', qualityId: 'ancient', unlock: { realmIndex: 12, mapId: 'mistyValley', depthLayer: 4, insight: 2 }, maxLevel: 14, cost: (level) => ({ spiritStones: scaleCost(430, level), herbs: scaleCost(72, level), beastCores: level * 5, insight: Math.max(1, Math.ceil(level / 2)) }), bonuses: { breakthrough: 0.022, qiRate: 0.036, elementPower: 8 }, deployedBonuses: { defense: 20, speed: 8, elementPower: 18 }, combat: { element: 'light', attack: 58, defense: 18, vitality: 128, speed: 24, critChance: 0.09, pierce: 11 }, assistRole: 'break', skill: { name: '太古拂劫', cadence: 2, multiplier: 1.76, critBonus: 0.07, detail: '隔回合拂开劫象破绽，造成曜阳古血战技。' } },
+  });
 
   const bloodlines = {
     greenPhoenixBlood: { id: 'greenPhoenixBlood', name: '青鸾血', detail: '青鸾余息入脉，吐纳与身法更轻灵。', rarityId: 'spirit', maxLevel: 6, cost: (level) => ({ bloodEssence: level, herbs: scaleCost(26, level), spiritStones: scaleCost(90, level) }), bonuses: { qiRate: 0.028, speed: 2, herbRate: 0.01 } },
@@ -1120,6 +1133,57 @@ const spiritBeastQualities = {
     bonuses: { dangerReduction: 30, speed: 18, attack: 18, pierce: 10, elementPower: 26 },
   },
 };
+
+  const expandedLootSlots = {
+    weapon: { names: ['松纹剑', '寒铁刃'], base: { power: 28, attack: 18, elementPower: 8 } },
+    offhand: { names: ['回风铃', '玄砂轮'], base: { power: 18, defense: 10, pierce: 6, elementPower: 7 } },
+    amulet: { names: ['青叶符', '护脉佩'], base: { breakthrough: 0.01, vitality: 22, defense: 6, elementPower: 6 } },
+    robe: { names: ['隐岚衣', '墨云袍'], base: { defense: 18, vitality: 36, dangerReduction: 5, elementPower: 7 } },
+    jade: { names: ['灵泉玉', '藏脉璧'], base: { qiRate: 0.012, vitality: 20, elementPower: 7 } },
+    boots: { names: ['轻岚履', '踏雾靴'], base: { speed: 4, dangerReduction: 7, defense: 8, elementPower: 6 } },
+  };
+  const expandedLootTiers = [
+    { key: 'spirit', tier: 0, band: '炼气', minRealmIndex: 0, quality: 1, multiplier: 1, prefix: '灵纹', element: 'wood' },
+    { key: 'mystic', tier: 1, band: '筑基', minRealmIndex: 9, quality: 1, multiplier: 1.18, prefix: '玄纹', element: 'water' },
+    { key: 'earthFiend', tier: 2, band: '筑基', minRealmIndex: 12, quality: 2, multiplier: 1.38, prefix: '地煞', element: 'earth' },
+    { key: 'goldCore', tier: 3, band: '金丹', minRealmIndex: 18, quality: 2, multiplier: 1.62, prefix: '金丹', element: 'metal' },
+    { key: 'heavenWork', tier: 4, band: '元婴', minRealmIndex: 27, quality: 3, multiplier: 1.92, prefix: '天工', element: 'light' },
+  ];
+  Object.assign(lootEquipment, createExpandedLootEquipment());
+
+  function createExpandedLootEquipment() {
+    const generated = {};
+    Object.entries(expandedLootSlots).forEach(([slot, config]) => {
+      expandedLootTiers.forEach((tier) => {
+        config.names.forEach((name, index) => {
+          const id = `${tier.key}${capitalize(slot)}${index + 1}`;
+          generated[id] = {
+            id,
+            name: `${tier.prefix}${name}`,
+            slot,
+            realmBand: tier.band,
+            minRealmIndex: tier.minRealmIndex,
+            lootTier: tier.tier,
+            quality: tier.quality,
+            element: tier.element,
+            bonuses: scaleLootBonuses(config.base, tier.multiplier + index * 0.08),
+          };
+        });
+      });
+    });
+    return generated;
+  }
+
+  function scaleLootBonuses(bonuses, multiplier) {
+    return Object.fromEntries(Object.entries(bonuses).map(([key, value]) => [
+      key,
+      key === 'qiRate' || key === 'breakthrough' ? round(value * multiplier) : Math.round(value * multiplier),
+    ]));
+  }
+
+  function capitalize(value) {
+    return `${value.charAt(0).toUpperCase()}${value.slice(1)}`;
+  }
 
   const rarityTiers = [
     { id: 'common', name: '凡品', weight: 420, qualityBonus: 0, bonusMultiplier: 1, affixCount: 1, dismantleMultiplier: 1 },
@@ -1917,7 +1981,7 @@ const spiritBeastQualities = {
       title: '今日吐纳',
       detail: '累计修炼即可领取基础补给',
       progressKey: 'cultivationSeconds',
-      target: 300,
+      target: 120,
       reward: { spiritStones: 80, qi: 180 },
     },
     dailyMission: {
@@ -1946,6 +2010,16 @@ const spiritBeastQualities = {
       reward: { forgingEssence: 1, arrayFlags: 1 },
     },
   };
+
+  const openingObjectives = [
+    { id: 'openingBreath', title: '吐纳一次', detail: '先让周天运转起来，拿到第一次突破的灵气。', tab: 'overview', action: 'claimOpening', completed: (state) => (state.totalCultivationSeconds || 0) >= 30, reward: { qi: 20, spiritStones: 24 } },
+    { id: 'openingBreakthrough', title: '突破一次', detail: '首次破境应在 2-3 分钟内发生，先建立成长反馈。', tab: 'overview', action: 'claimOpening', completed: (state) => (state.realmIndex || 0) >= 1, reward: { spiritStones: 60, herbs: 8, gatherQiPill: 1 } },
+    { id: 'openingAlchemy', title: '炼丹一次', detail: '让丹房成为早期节奏的一部分，后续突破不会只等挂机。', tab: 'alchemy', targetId: 'gatherQiPill', action: 'claimOpening', completed: (state) => (state.craftedPills || 0) >= 1, reward: { qi: 40, herbs: 10, spiritStones: 40 } },
+    { id: 'openingTravel', title: '行游一次', detail: '完成一次外出，带回第一件可穿戴战利品。', tab: 'missions', targetId: 'cavePatrol', action: 'claimOpening', completed: (state) => Object.values(state.completedMissions || {}).some((count) => count >= 1), reward: { spiritStones: 50, artifacts: 1 }, lootTemplateId: 'qingfengSword' },
+    { id: 'openingEquip', title: '装备一次', detail: '把战利品装上身，开始形成流派和斗法反馈。', tab: 'gear', targetId: 'loot', action: 'claimOpening', completed: (state) => Object.values(state.equippedLoot || {}).some(Boolean), reward: { forgingEssence: 1, spiritStones: 50 } },
+    { id: 'openingCave', title: '升级洞府一次', detail: '让洞府建设进入循环，灵田、丹炉或阵台都可以。', tab: 'cave', action: 'claimOpening', completed: (state) => Object.entries(state.buildings || {}).some(([id, level]) => level > (id === 'meditationSeat' ? 1 : 0)), reward: { qiRateBonus: 0.01, herbs: 12 } },
+    { id: 'openingDaily', title: '完成日常一次', detail: '把短目标接到每日留存，之后再逐渐拉长节奏。', tab: 'daily', action: 'claimOpening', completed: (state, dateKey = getDateKey()) => Object.values(state.dailyClaims?.[dateKey] || {}).some(Boolean), reward: { spiritStones: 80, openingSecretClues: 1 } },
+  ];
 
   const marketItems = {
     herbBundle: {
@@ -2100,7 +2174,7 @@ const spiritBeastQualities = {
           title: '炼成一枚聚气丹',
           detail: '突破前用丹药快速补足灵气',
           completed: (state) => (state.craftedPills || 0) >= 1,
-          reward: { qi: 360, spiritStones: 90, herbs: 12 },
+          reward: { qi: 90, spiritStones: 90, herbs: 12 },
         },
       ],
     },
@@ -2282,6 +2356,8 @@ const spiritBeastQualities = {
     hudRate: document.querySelector('[data-hud-rate]'),
     hudAction: document.querySelector('[data-hud-action]'),
     nextGuidance: document.querySelector('[data-next-guidance]'),
+    openingObjective: document.querySelector('[data-opening-objective]'),
+    openingAction: document.querySelector('[data-opening-action]'),
     mission: document.querySelector('[data-mission]'),
     missionTime: document.querySelector('[data-mission-time]'),
     pillBoost: document.querySelector('[data-pill-boost]'),
@@ -2336,10 +2412,27 @@ const spiritBeastQualities = {
     importSave: document.querySelector('[data-import-save]'),
     importSaveInput: document.querySelector('[data-import-save-input]'),
     saveStatus: document.querySelector('[data-save-status]'),
+    cloudStatus: document.querySelector('[data-cloud-status]'),
+    cloudEmail: document.querySelector('[data-cloud-email]'),
+    cloudPassword: document.querySelector('[data-cloud-password]'),
+    cloudLogin: document.querySelector('[data-cloud-login]'),
+    cloudRegister: document.querySelector('[data-cloud-register]'),
+    cloudLogout: document.querySelector('[data-cloud-logout]'),
+    cloudUpload: document.querySelector('[data-cloud-upload]'),
+    cloudPull: document.querySelector('[data-cloud-pull]'),
+    cloudDelete: document.querySelector('[data-cloud-delete]'),
+    cloudRefreshRank: document.querySelector('[data-cloud-refresh-rank]'),
+    leaderboardList: document.querySelector('[data-leaderboard-list]'),
     canvas: document.querySelector('[data-world]'),
   };
 
   const ctx = refs.canvas.getContext('2d');
+  const cloudClient = globalThis.createQinglanCloudClient?.(globalThis.readQinglanCloudConfig?.() || {}, { storage }) || null;
+  let cloudSession = cloudClient?.getSession?.() || null;
+  let cloudBusy = false;
+  let cloudLastSaveAt = 0;
+  let cloudSaveTimer = null;
+  let leaderboardRows = [];
   const renderCache = {};
   const openLootDetails = new Set();
   const openMissionDetails = new Set(parseStoredMissionDetails(storage.getItem('idle-xianxia-mission-details')));
@@ -2376,6 +2469,10 @@ const spiritBeastQualities = {
   };
   const gearSections = ['wear', 'loot', 'treasures', 'beasts', 'bloodlines'];
   const isMobileLayout = () => typeof window !== 'undefined' && window.matchMedia?.('(max-width: 760px)').matches;
+  function usesInlineMobilePages() {
+    const shouldUseInlineMobilePages = isMobileLayout();
+    return shouldUseInlineMobilePages;
+  }
   const storedActiveTab = storage.getItem('idle-xianxia-active-tab');
   let activeTab = isMobileLayout() ? 'overview' : (storedActiveTab === 'overview' ? 'goals' : storedActiveTab || 'goals');
   if (!panelTabs.includes(activeTab)) {
@@ -2457,6 +2554,19 @@ const spiritBeastQualities = {
     }
     saveState();
     render(true);
+  });
+
+  document.querySelector('[data-open-character-detail]')?.addEventListener('click', () => {
+    const detail = document.querySelector('.stats-panel > .attribute-card');
+    if (!detail) {
+      return;
+    }
+    if (isMobileLayout()) {
+      openMobileDetailDialog(detail);
+      return;
+    }
+    detail.open = true;
+    detail.scrollIntoView?.({ block: 'nearest', behavior: 'smooth' });
   });
 
   refs.alchemyList?.addEventListener('click', (event) => {
@@ -3247,6 +3357,37 @@ const spiritBeastQualities = {
     refs.importSaveInput.value = '';
   });
 
+  refs.cloudLogin?.addEventListener('click', () => {
+    handleCloudLogin();
+  });
+
+  refs.cloudRegister?.addEventListener('click', () => {
+    handleCloudRegister();
+  });
+
+  refs.cloudLogout?.addEventListener('click', () => {
+    cloudClient?.clearSession?.();
+    cloudSession = null;
+    renderCloudPanel();
+    showToast('云端账号', '已退出当前云端账号。');
+  });
+
+  refs.cloudUpload?.addEventListener('click', () => {
+    uploadCloudSnapshot('manual');
+  });
+
+  refs.cloudPull?.addEventListener('click', () => {
+    pullCloudSnapshot();
+  });
+
+  refs.cloudRefreshRank?.addEventListener('click', () => {
+    refreshLeaderboard();
+  });
+
+  refs.cloudDelete?.addEventListener('click', () => {
+    requestCloudAccountDeletion();
+  });
+
   refs.gearSubTabs?.addEventListener('click', (event) => {
     const button = event.target.closest('[data-gear-section]');
     if (!button || !gearSections.includes(button.dataset.gearSection)) {
@@ -3272,7 +3413,17 @@ const spiritBeastQualities = {
     if (refs.nextGuidance.dataset.guidanceAction === 'claimChapter' && claimChapterById(refs.nextGuidance.dataset.guidanceTarget)) {
       return;
     }
+    if (refs.nextGuidance.dataset.guidanceAction === 'claimOpening' && claimOpeningById(refs.nextGuidance.dataset.guidanceTarget)) {
+      return;
+    }
     openGuidanceTarget(refs.nextGuidance.dataset.gotoTab, refs.nextGuidance.dataset.guidanceTarget);
+  });
+
+  refs.openingAction?.addEventListener('click', () => {
+    if (refs.openingAction.dataset.openingAction === 'claimOpening' && claimOpeningById(refs.openingAction.dataset.openingTarget)) {
+      return;
+    }
+    openGuidanceTarget(refs.openingAction.dataset.openingTab || 'overview', refs.openingAction.dataset.openingTarget || '');
   });
 
   refs.progressPlan?.addEventListener('click', (event) => {
@@ -3304,6 +3455,16 @@ const spiritBeastQualities = {
     const result = claimChapterReward(state, chapterId);
     if (result.ok) {
       showToast('主线完成', `获得${formatReward(result.reward)}。`);
+    }
+    saveState();
+    render(true);
+    return result.ok;
+  }
+
+  function claimOpeningById(objectiveId) {
+    const result = claimOpeningObjective(state, objectiveId);
+    if (result.ok) {
+      showToast('开府七步', `获得${formatReward(result.reward)}。`);
     }
     saveState();
     render(true);
@@ -3354,6 +3515,8 @@ const spiritBeastQualities = {
       dailyBossClaims: {},
       claimedGoals: {},
       claimedChapterRewards: {},
+      openingClaims: {},
+      openingSecretClues: 0,
       permanentBonuses: {
         qiRate: 0,
         power: 0,
@@ -3468,6 +3631,8 @@ const spiritBeastQualities = {
     state.dailyBossClaims = normalizeDailyMapClaims(state.dailyBossClaims);
     state.claimedGoals = normalizeClaimedGoals(state.claimedGoals);
     state.claimedChapterRewards = normalizeClaimedGoals(state.claimedChapterRewards);
+    state.openingClaims = normalizeClaimedGoals(state.openingClaims);
+    state.openingSecretClues = Math.max(0, Number(state.openingSecretClues) || 0);
     state.permanentBonuses = normalizePermanentBonuses(state.permanentBonuses);
     state.autoMissionId = missions[state.autoMissionId] ? state.autoMissionId : null;
     state.arrayFlags = Math.max(0, Number(state.arrayFlags) || 0);
@@ -4649,7 +4814,7 @@ const spiritBeastQualities = {
     refs.qi.textContent = `${Math.floor(state.qi)} / ${realm.requiredQi}`;
     refs.qiRate.textContent = `${formatRate(calculateQiRate(state, Date.now()))} / 分钟`;
     if (refs.hudQi) refs.hudQi.textContent = `${Math.floor(state.qi)} / ${realm.requiredQi}`;
-    if (refs.hudRate) refs.hudRate.textContent = `${formatRate(calculateQiRate(state, Date.now()))} / 分钟`;
+    if (refs.hudRate) refs.hudRate.textContent = `${formatRate(calculateQiRate(state, Date.now()))}/分`;
     refs.stones.textContent = Math.floor(state.spiritStones);
     refs.herbs.textContent = Math.floor(state.herbs);
     refs.pills.textContent = Math.floor(state.pills);
@@ -4672,7 +4837,9 @@ const spiritBeastQualities = {
       refs.nextGuidance.dataset.guidanceAction = guidance.action || '';
       refs.nextGuidance.dataset.guidanceTarget = guidance.targetId || '';
     }
+    renderOpeningObjective();
     renderProgressPlan(forceLists);
+    renderCloudPanel();
 
     if (activeDepth) {
       const map = missionMaps[activeDepth.mapId];
@@ -4692,7 +4859,7 @@ const spiritBeastQualities = {
       refs.mission.textContent = '闭关修炼';
       refs.missionTime.textContent = '待命';
     }
-    if (refs.hudAction) refs.hudAction.textContent = refs.mission.textContent;
+    if (refs.hudAction) refs.hudAction.textContent = formatHudAction(refs.mission.textContent);
 
     if (refs.pillBoost) {
       const secondsLeft = Math.max(0, Math.ceil(((state.pillBoostUntil || 0) - Date.now()) / 1000));
@@ -4704,7 +4871,7 @@ const spiritBeastQualities = {
     }
     if (refs.stabilizeButton) {
       const foundation = state.foundationStability || 0;
-      refs.stabilizeButton.textContent = foundation >= 3 ? '根基已稳' : `稳固根基 ${foundation}/3`;
+      refs.stabilizeButton.textContent = foundation >= 3 ? '根基已稳' : `稳固 ${foundation}/3`;
       refs.stabilizeButton.disabled = foundation >= 3;
       refs.stabilizeButton.title = foundation >= 3 ? '破境后会消耗一层根基' : '消耗 35 灵石、8 灵草，提升破境把握并降低心魔';
     }
@@ -4775,20 +4942,38 @@ const spiritBeastQualities = {
     ctx.clearRect(0, 0, width, height);
 
     const sky = ctx.createLinearGradient(0, 0, 0, height);
-    sky.addColorStop(0, '#101927');
-    sky.addColorStop(0.52, '#18343e');
-    sky.addColorStop(1, '#1f372b');
+    sky.addColorStop(0, '#06151d');
+    sky.addColorStop(0.45, '#12323c');
+    sky.addColorStop(0.7, '#163733');
+    sky.addColorStop(1, '#071312');
     ctx.fillStyle = sky;
     ctx.fillRect(0, 0, width, height);
 
-    drawMoon(width - 92, 76, 32 + pulse * 1.5);
+    drawStars(width, height, pulse);
+    drawMoon(width - 126, 76, 28 + pulse * 1.1);
     drawMountains(width, height);
+    drawLake(width, height, pulse);
+    drawBamboo(width, height);
     drawPlatform(width, height, pulse);
-    drawCultivator(width / 2, height - 105, pulse);
+    drawLanterns(width, height, pulse);
     drawQiStreams(width, height);
   }
 
+  function drawStars(width, height, pulse) {
+    ctx.save();
+    ctx.fillStyle = 'rgba(229, 245, 229, 0.62)';
+    for (let i = 0; i < 42; i += 1) {
+      const x = (i * 127) % width;
+      const y = 18 + ((i * 53) % Math.max(80, height * 0.5));
+      const alpha = 0.22 + ((i % 5) * 0.08) + pulse * 0.03;
+      ctx.globalAlpha = Math.max(0.12, Math.min(0.72, alpha));
+      ctx.fillRect(x, y, i % 7 === 0 ? 2 : 1, i % 7 === 0 ? 2 : 1);
+    }
+    ctx.restore();
+  }
+
   function drawMoon(x, y, radius) {
+    ctx.save();
     ctx.beginPath();
     ctx.arc(x, y, radius, 0, Math.PI * 2);
     ctx.fillStyle = '#f7e7a6';
@@ -4796,13 +4981,27 @@ const spiritBeastQualities = {
     ctx.shadowBlur = 24;
     ctx.fill();
     ctx.shadowBlur = 0;
+    ctx.fillStyle = 'rgba(133, 119, 82, 0.16)';
+    [
+      [-8, -7, 7],
+      [8, 4, 5],
+      [-1, 10, 4],
+    ].forEach(([dx, dy, r]) => {
+      ctx.beginPath();
+      ctx.arc(x + dx, y + dy, r, 0, Math.PI * 2);
+      ctx.fill();
+    });
+    ctx.shadowBlur = 0;
+    ctx.restore();
   }
 
   function drawMountains(width, height) {
     [
-      { y: height - 86, color: '#16282c', points: [0, 120, 250, 85, 420, 130, 610, 70, width, 120] },
-      { y: height - 54, color: '#203b31', points: [0, 92, 180, 50, 330, 96, 510, 42, width, 80] },
+      { y: height - 112, color: '#0b2027', alpha: 0.9, points: [0, 58, 52, 150, 112, 78, 180, 168, 260, 84, 335, 142, 430, 72, 520, 150, 620, 66, width, 126] },
+      { y: height - 80, color: '#122c2d', alpha: 0.96, points: [0, 88, 90, 54, 180, 106, 300, 64, 420, 118, 560, 56, width, 92] },
     ].forEach((ridge) => {
+      ctx.save();
+      ctx.globalAlpha = ridge.alpha;
       ctx.beginPath();
       ctx.moveTo(0, height);
       for (let i = 0; i < ridge.points.length; i += 2) {
@@ -4812,33 +5011,181 @@ const spiritBeastQualities = {
       ctx.closePath();
       ctx.fillStyle = ridge.color;
       ctx.fill();
+      ctx.restore();
     });
+  }
+
+  function drawLake(width, height, pulse) {
+    const y = height - 126;
+    const water = ctx.createLinearGradient(0, y, 0, height);
+    water.addColorStop(0, 'rgba(48, 117, 111, 0.22)');
+    water.addColorStop(0.5, 'rgba(9, 37, 38, 0.5)');
+    water.addColorStop(1, 'rgba(5, 12, 12, 0.82)');
+    ctx.fillStyle = water;
+    ctx.fillRect(0, y, width, height - y);
+
+    ctx.save();
+    ctx.strokeStyle = 'rgba(125, 221, 190, 0.18)';
+    ctx.lineWidth = 1;
+    for (let i = 0; i < 12; i += 1) {
+      const yy = y + 20 + i * 13;
+      ctx.beginPath();
+      ctx.moveTo(28 + (i % 2) * 18, yy);
+      ctx.bezierCurveTo(width * 0.3, yy + Math.sin(animationTime + i) * 5, width * 0.68, yy - 5, width - 34, yy + Math.cos(animationTime + i) * 4);
+      ctx.stroke();
+    }
+    const glow = ctx.createRadialGradient(width / 2, y + 84, 12, width / 2, y + 84, 190 + pulse * 8);
+    glow.addColorStop(0, 'rgba(132, 214, 187, 0.26)');
+    glow.addColorStop(0.45, 'rgba(132, 214, 187, 0.08)');
+    glow.addColorStop(1, 'rgba(132, 214, 187, 0)');
+    ctx.fillStyle = glow;
+    ctx.fillRect(0, y, width, height - y);
+    ctx.restore();
   }
 
   function drawPlatform(width, height, pulse) {
     const x = width / 2;
-    const y = height - 66;
+    const y = height - 148;
     ctx.save();
-    ctx.fillStyle = 'rgba(33, 27, 21, 0.54)';
+    ctx.shadowColor = 'rgba(132, 214, 187, 0.22)';
+    ctx.shadowBlur = 20;
+    ctx.strokeStyle = 'rgba(132, 214, 187, 0.58)';
+    ctx.lineWidth = 2.2;
+    for (let i = 0; i < 4; i += 1) {
+      ctx.beginPath();
+      ctx.ellipse(x, y - 18, 62 + i * 32 + pulse * 2, 15 + i * 7, 0, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    ctx.shadowBlur = 0;
+
+    ctx.fillStyle = 'rgba(11, 24, 22, 0.82)';
     ctx.beginPath();
-    ctx.ellipse(x, y + 11, 170, 27, 0, 0, Math.PI * 2);
+    ctx.ellipse(x, y + 38, 154, 31, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    ctx.fillStyle = 'rgba(184, 145, 58, 0.95)';
+    ctx.fillStyle = 'rgba(32, 58, 50, 0.98)';
     ctx.beginPath();
-    ctx.ellipse(x, y, 128, 18, 0, 0, Math.PI * 2);
+    ctx.ellipse(x, y + 21, 126, 24, 0, 0, Math.PI * 2);
     ctx.fill();
-
-    ctx.fillStyle = 'rgba(236, 202, 104, 0.48)';
-    ctx.beginPath();
-    ctx.ellipse(x, y - 3, 104 + pulse * 3, 10, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.strokeStyle = 'rgba(132, 214, 187, 0.18)';
-    ctx.lineWidth = 1.4;
-    ctx.beginPath();
-    ctx.ellipse(x, y - 3, 112, 15, 0, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(240, 207, 114, 0.48)';
+    ctx.lineWidth = 2;
     ctx.stroke();
+
+    ctx.fillStyle = 'rgba(16, 38, 36, 0.98)';
+    ctx.beginPath();
+    ctx.ellipse(x, y + 6, 92, 17, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(132, 214, 187, 0.38)';
+    ctx.stroke();
+
+    drawPavilion(x, y - 28, pulse);
+    ctx.restore();
+  }
+
+  function drawPavilion(x, y, pulse) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(1.18, 1.18);
+    ctx.fillStyle = 'rgba(246, 238, 220, 0.18)';
+    ctx.shadowColor = 'rgba(240, 207, 114, 0.55)';
+    ctx.shadowBlur = 18;
+    ctx.fillRect(-12, 16, 24, 34);
+    ctx.shadowBlur = 0;
+
+    ctx.fillStyle = '#0a1a1b';
+    ctx.strokeStyle = 'rgba(240, 207, 114, 0.5)';
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.moveTo(-54, 2);
+    ctx.quadraticCurveTo(0, -28, 54, 2);
+    ctx.quadraticCurveTo(34, 12, 0, 9);
+    ctx.quadraticCurveTo(-34, 12, -54, 2);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = '#102d2c';
+    ctx.beginPath();
+    ctx.moveTo(-42, 13);
+    ctx.quadraticCurveTo(0, -7, 42, 13);
+    ctx.lineTo(32, 22);
+    ctx.quadraticCurveTo(0, 12, -32, 22);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = 'rgba(12, 31, 30, 0.96)';
+    ctx.strokeStyle = 'rgba(240, 207, 114, 0.38)';
+    [-28, -12, 12, 28].forEach((post) => {
+      ctx.fillRect(post - 2, 18, 4, 50);
+      ctx.strokeRect(post - 2, 18, 4, 50);
+    });
+    ctx.fillStyle = 'rgba(21, 57, 49, 0.98)';
+    ctx.fillRect(-36, 64, 72, 8);
+    ctx.strokeRect(-36, 64, 72, 8);
+
+    ctx.strokeStyle = `rgba(132, 214, 187, ${0.44 + pulse * 0.04})`;
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(0, -26);
+    ctx.lineTo(0, -43);
+    ctx.moveTo(-7, -35);
+    ctx.quadraticCurveTo(0, -43, 7, -35);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawLanterns(width, height, pulse) {
+    const positions = [
+      [width / 2 - 190, height - 82],
+      [width / 2 + 190, height - 82],
+      [width / 2 - 118, height - 104],
+      [width / 2 + 118, height - 104],
+    ];
+    ctx.save();
+    positions.forEach(([x, y], index) => {
+      const glow = ctx.createRadialGradient(x, y, 2, x, y, 34 + pulse * 2);
+      glow.addColorStop(0, 'rgba(240, 207, 114, 0.5)');
+      glow.addColorStop(1, 'rgba(240, 207, 114, 0)');
+      ctx.fillStyle = glow;
+      ctx.fillRect(x - 42, y - 42, 84, 84);
+      ctx.strokeStyle = 'rgba(240, 207, 114, 0.52)';
+      ctx.lineWidth = 1.3;
+      ctx.beginPath();
+      ctx.moveTo(x, y - 26);
+      ctx.lineTo(x, y + 22);
+      ctx.moveTo(x - 10, y - 2);
+      ctx.lineTo(x + 10, y - 2);
+      ctx.stroke();
+      ctx.fillStyle = index < 2 ? 'rgba(240, 207, 114, 0.72)' : 'rgba(240, 207, 114, 0.52)';
+      ctx.fillRect(x - 7, y - 14, 14, 20);
+    });
+    ctx.restore();
+  }
+
+  function drawBamboo(width, height) {
+    ctx.save();
+    ctx.strokeStyle = 'rgba(5, 16, 14, 0.62)';
+    ctx.fillStyle = 'rgba(4, 14, 12, 0.58)';
+    [
+      { x: 28, lean: -18 },
+      { x: width - 34, lean: 16 },
+    ].forEach((clump) => {
+      for (let i = 0; i < 5; i += 1) {
+        const base = clump.x + i * (clump.x < width / 2 ? 10 : -10);
+        ctx.lineWidth = 4 - i * 0.35;
+        ctx.beginPath();
+        ctx.moveTo(base, height - 44);
+        ctx.quadraticCurveTo(base + clump.lean * 0.5, height - 172, base + clump.lean, height - 246);
+        ctx.stroke();
+        for (let leaf = 0; leaf < 5; leaf += 1) {
+          const ly = height - 130 - leaf * 23;
+          ctx.beginPath();
+          ctx.ellipse(base + clump.lean * 0.45, ly, 22, 5, (clump.x < width / 2 ? -0.45 : 0.45) + leaf * 0.12, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+    });
     ctx.restore();
   }
 
@@ -5019,7 +5366,225 @@ const spiritBeastQualities = {
       updateSaveStatus('当前浏览器未能写入本地存档，请先导出存档保底。');
       showToast('存档写入受阻', '当前浏览器未能写入本地存档，请先导出存档保底。', 'warning');
     }
+    if (saved) {
+      scheduleCloudSave();
+    }
     return saved;
+  }
+
+  function getCloudAuthInput() {
+    return {
+      email: refs.cloudEmail?.value?.trim() || '',
+      password: refs.cloudPassword?.value || '',
+    };
+  }
+
+  function buildCloudSnapshotMeta(reason = 'manual') {
+    const realm = getCurrentRealm(state);
+    const bestDepth = Math.max(0, ...Object.values(state.mapDepths || {}).map((layer) => Number(layer) || 0));
+    return {
+      reason,
+      realm: realm.name,
+      realmIndex: state.realmIndex || 0,
+      power: calculatePower(state),
+      bestDepth,
+      defeatedBosses: Object.keys(state.defeatedBosses || {}).length,
+      clientSavedAt: Date.now(),
+    };
+  }
+
+  function scheduleCloudSave() {
+    if (!cloudClient?.isConfigured?.() || !cloudSession?.accessToken || cloudBusy) {
+      return;
+    }
+    const now = Date.now();
+    const elapsed = now - cloudLastSaveAt;
+    clearTimeout(cloudSaveTimer);
+    cloudSaveTimer = setTimeout(() => {
+      uploadCloudSnapshot('auto');
+    }, elapsed > 12000 ? 1800 : 9000);
+  }
+
+  function normalizeCloudRows(payload) {
+    const rows = payload?.rows || payload?.leaderboard || payload?.data || payload;
+    return Array.isArray(rows) ? rows : [];
+  }
+
+  function getCloudRowLabel(row, index) {
+    const name = row.display_name || row.displayName || row.name || row.email || `道友 ${index + 1}`;
+    const realm = row.realm || row.realm_name || row.realmName || '未入榜';
+    const depth = row.depth || row.best_depth || row.bestDepth || row.depthLayer || 0;
+    const power = row.power || row.combat_power || row.combatPower || row.score || 0;
+    return `${name} · ${realm} · 秘境 ${depth} 层 · 道威 ${power}`;
+  }
+
+  function renderLeaderboardRows() {
+    if (!refs.leaderboardList) {
+      return;
+    }
+    refs.leaderboardList.replaceChildren();
+    if (!leaderboardRows.length) {
+      const item = document.createElement('li');
+      item.textContent = cloudClient?.isConfigured?.() ? '暂无云端榜单记录。' : '配置云端服务后显示排行榜。';
+      refs.leaderboardList.append(item);
+      return;
+    }
+    leaderboardRows.slice(0, 20).forEach((row, index) => {
+      const item = document.createElement('li');
+      item.textContent = getCloudRowLabel(row, index);
+      refs.leaderboardList.append(item);
+    });
+  }
+
+  function renderCloudPanel() {
+    const configured = Boolean(cloudClient?.isConfigured?.());
+    cloudSession = cloudClient?.getSession?.() || null;
+    const signedIn = Boolean(cloudSession?.accessToken);
+    if (refs.cloudStatus) {
+      if (!configured) {
+        refs.cloudStatus.textContent = '游客模式：本地存档正常，云端服务未连接。';
+      } else if (signedIn) {
+        const email = cloudSession.user?.email || cloudSession.user?.user_metadata?.email || '已登录账号';
+        refs.cloudStatus.textContent = `云端已连接：${email}。本地仍会保留缓存。`;
+      } else {
+        refs.cloudStatus.textContent = '云端已配置：登录后可上传进度、读取云端档和查看榜单。';
+      }
+    }
+    [refs.cloudLogin, refs.cloudRegister].forEach((button) => {
+      if (button) button.disabled = cloudBusy || !configured || signedIn;
+    });
+    [refs.cloudUpload, refs.cloudPull, refs.cloudLogout, refs.cloudDelete].forEach((button) => {
+      if (button) button.disabled = cloudBusy || !configured || !signedIn;
+    });
+    if (refs.cloudRefreshRank) {
+      refs.cloudRefreshRank.disabled = cloudBusy || !configured;
+    }
+    renderLeaderboardRows();
+  }
+
+  function renderOpeningObjective() {
+    if (!refs.openingObjective || !refs.openingAction) {
+      return;
+    }
+    const steps = getOpeningObjectives(state);
+    const step = steps.find((objective) => !objective.claimed && !objective.locked) || steps.at(-1);
+    if (!step) {
+      refs.openingObjective.hidden = true;
+      return;
+    }
+    refs.openingObjective.hidden = false;
+    refs.openingObjective.classList.toggle('completed', step.completed && !step.claimed);
+    refs.openingObjective.querySelector('small').textContent = step.claimed ? '开府七步完成' : '开府七步';
+    refs.openingObjective.querySelector('strong').textContent = step.claimed
+      ? '7/7 · 已完成'
+      : `${step.step}/${step.total} · ${step.title}`;
+    refs.openingAction.textContent = step.completed && !step.claimed ? '领取' : '去完成';
+    refs.openingAction.dataset.openingAction = step.completed && !step.claimed ? 'claimOpening' : '';
+    refs.openingAction.dataset.openingTarget = step.completed && !step.claimed ? step.id : (step.targetId || step.id);
+    refs.openingAction.dataset.openingTab = step.tab || 'overview';
+  }
+
+  async function runCloudAction(title, action) {
+    if (!cloudClient?.isConfigured?.()) {
+      showToast(title, '云端服务尚未配置，当前仍可使用本地存档。', 'warning');
+      renderCloudPanel();
+      return null;
+    }
+    cloudBusy = true;
+    renderCloudPanel();
+    try {
+      const result = await action();
+      if (!result?.ok) {
+        showToast(title, result?.message || '云端请求失败。', 'warning');
+        return result || null;
+      }
+      return result;
+    } catch (error) {
+      showToast(title, error?.message || '云端请求失败。', 'warning');
+      return null;
+    } finally {
+      cloudBusy = false;
+      cloudSession = cloudClient?.getSession?.() || null;
+      renderCloudPanel();
+    }
+  }
+
+  async function handleCloudLogin() {
+    const { email, password } = getCloudAuthInput();
+    if (!email || password.length < 6) {
+      showToast('云端登录', '请输入邮箱和至少 6 位密码。', 'warning');
+      return;
+    }
+    const result = await runCloudAction('云端登录', () => cloudClient.signIn(email, password));
+    if (result?.ok) {
+      cloudSession = result.session || cloudClient.getSession();
+      showToast('云端登录', '已登录云端账号。');
+      refreshLeaderboard();
+    }
+  }
+
+  async function handleCloudRegister() {
+    const { email, password } = getCloudAuthInput();
+    if (!email || password.length < 6) {
+      showToast('云端注册', '请输入邮箱和至少 6 位密码。', 'warning');
+      return;
+    }
+    const result = await runCloudAction('云端注册', () => cloudClient.signUp(email, password));
+    if (!result?.ok) {
+      return;
+    }
+    if (result.pendingConfirmation) {
+      showToast('云端注册', '注册已提交，请按邮件提示确认后再登录。');
+      return;
+    }
+    cloudSession = result.session || cloudClient.getSession();
+    showToast('云端注册', '账号已创建，并保留当前本地进度。');
+    uploadCloudSnapshot('bind');
+  }
+
+  async function uploadCloudSnapshot(reason = 'manual') {
+    const result = await runCloudAction('云端存档', () => cloudClient.saveSnapshot(state, buildCloudSnapshotMeta(reason)));
+    if (result?.ok) {
+      cloudLastSaveAt = Date.now();
+      if (reason !== 'auto') {
+        showToast('云端存档', '当前进度已上传。');
+      }
+      refreshLeaderboard();
+    }
+  }
+
+  async function pullCloudSnapshot() {
+    const result = await runCloudAction('读取云端', () => cloudClient.loadSnapshot());
+    const snapshot = result?.payload?.state || result?.payload?.save?.state || result?.payload?.snapshot?.state;
+    if (!result?.ok) {
+      return;
+    }
+    if (!snapshot) {
+      showToast('读取云端', '云端暂时没有可读取的进度。', 'warning');
+      return;
+    }
+    state = reviveGameState(snapshot, Date.now());
+    saveState();
+    render(true);
+    showToast('读取云端', '已读取云端进度，并写回本地缓存。');
+  }
+
+  async function refreshLeaderboard() {
+    const result = await runCloudAction('云端排行榜', () => cloudClient.getLeaderboard('depth'));
+    if (result?.ok) {
+      leaderboardRows = normalizeCloudRows(result.payload);
+      renderCloudPanel();
+    }
+  }
+
+  async function requestCloudAccountDeletion() {
+    if (!globalThis.confirm?.('确认申请删除当前云端账号？本地游客存档不会被自动删除。')) {
+      return;
+    }
+    const result = await runCloudAction('账号删除申请', () => cloudClient.requestAccountDeletion());
+    if (result?.ok) {
+      showToast('账号删除申请', '删除申请已提交。');
+    }
   }
 
   function loadState() {
@@ -6287,6 +6852,45 @@ const spiritBeastQualities = {
     return mainlineChapters[0].objectives.map((objective) => hydrateMainlineObjective(state, objective));
   }
 
+  function getOpeningObjectives(state, dateKey = getDateKey()) {
+    let previousReady = true;
+    return openingObjectives.map((objective, index) => {
+      const completed = Boolean(objective.completed?.(state, dateKey));
+      const claimed = Boolean(state.openingClaims?.[objective.id]);
+      const locked = !previousReady;
+      const hydrated = {
+        ...objective,
+        index,
+        step: index + 1,
+        total: openingObjectives.length,
+        completed,
+        claimed,
+        locked,
+        current: previousReady && !claimed,
+        rewardText: formatReward(objective.reward),
+      };
+      previousReady = previousReady && claimed;
+      return hydrated;
+    });
+  }
+
+  function claimOpeningObjective(state, objectiveId, dateKey = getDateKey(), now = Date.now()) {
+    const objective = openingObjectives.find((item) => item.id === objectiveId);
+    if (!objective) return { ok: false, reason: 'unknownObjective' };
+    const hydrated = getOpeningObjectives(state, dateKey).find((item) => item.id === objectiveId);
+    if (!hydrated || hydrated.locked) return { ok: false, reason: 'locked' };
+    if (hydrated.claimed) return { ok: false, reason: 'alreadyClaimed' };
+    if (!hydrated.completed) return { ok: false, reason: 'notComplete' };
+    applyResources(state, objective.reward);
+    if (objective.lootTemplateId) {
+      addLootEquipment(state, objective.lootTemplateId, { state, now, mapId: 'qinglanMountain' });
+    }
+    state.openingClaims ||= {};
+    state.openingClaims[objective.id] = true;
+    addLog(state, now, `完成开府七步「${objective.title}」，获得${formatReward(objective.reward)}。`);
+    return { ok: true, reward: objective.reward, objective: hydrated };
+  }
+
   function getResourceGuidance(state) {
     const needs = collectResourceNeeds(state);
     const items = Object.values(needs)
@@ -6391,6 +6995,26 @@ const spiritBeastQualities = {
         targetId: tab === 'gear' ? 'wear' : lastBossFailure.mapId,
       };
     }
+    const openingStep = shouldUseOpeningGuidance(state)
+      ? getOpeningObjectives(state).find((objective) => !objective.claimed && !objective.locked)
+      : null;
+    if (openingStep) {
+      if (openingStep.completed) {
+        return {
+          title: `领取${openingStep.title}`,
+          detail: `开府七步 ${openingStep.step}/${openingStep.total}，奖励${openingStep.rewardText || '补给'}。`,
+          tab: openingStep.tab || 'overview',
+          targetId: openingStep.id,
+          action: 'claimOpening',
+        };
+      }
+      return {
+        title: openingStep.title,
+        detail: `开府七步 ${openingStep.step}/${openingStep.total}：${openingStep.detail}`,
+        tab: openingStep.tab || 'overview',
+        targetId: openingStep.targetId || openingStep.id,
+      };
+    }
     const chapter = getMainlineChapters(state).find((candidate) => !candidate.locked && !candidate.rewardClaimed);
     const claimableObjective = chapter?.objectives.find((objective) => objective.completed && !objective.claimed);
     if (claimableObjective) {
@@ -6481,6 +7105,10 @@ const spiritBeastQualities = {
       return { title: `补足${primary.label}`, detail: `${primary.demandText}，${primary.route.detail}${commissionText}。`, tab: primary.route.unlocked ? 'missions' : 'market' };
     }
     return { title: '继续积累底蕴', detail: '刷地图声望、强化战利品、提升洞府和阵法，准备下一轮突破。', tab: 'missions' };
+  }
+
+  function shouldUseOpeningGuidance(state) {
+    return (state.realmIndex || 0) <= 1 || Object.keys(state.openingClaims || {}).length > 0;
   }
 
   function getProgressPlan(state, now = Date.now()) {
@@ -6671,7 +7299,8 @@ const spiritBeastQualities = {
   }
 
   function isDailyUnlocked(state) {
-    return getGoals(state).filter((goal) => goal.completed).length >= 3;
+    const openingReady = openingObjectives.slice(0, 6).every((objective) => Boolean(state.openingClaims?.[objective.id]));
+    return openingReady || getGoals(state).filter((goal) => goal.completed).length >= 3;
   }
 
   function isDailyTaskUnlocked(state, task) {
@@ -10707,7 +11336,15 @@ const spiritBeastQualities = {
       speed: Math.max(1, profile.speed.value),
       critChance: profile.critChance.effectiveValue ?? Math.min(0.5, Math.max(0, profile.critChance.value)),
       pierce: Math.max(0, profile.pierce.value),
+      statusEffects: getPlayerStatusEffects(state),
     };
+  }
+
+  function getPlayerStatusEffects(state) {
+    return Object.entries(state.treasures || {})
+      .filter(([, level]) => level > 0)
+      .map(([treasureId]) => treasures[treasureId]?.statusEffect?.name)
+      .filter(Boolean);
   }
 
   function getSpiritBeastCombatant(state) {
@@ -11080,6 +11717,7 @@ const spiritBeastQualities = {
   }
 
   function createBattleRound(round, actor, attacker, defender, hit, targetHp, skillName = null, extraHighlights = []) {
+    const statusEffects = attacker.statusEffects || [];
     return {
       round,
       actor,
@@ -11102,7 +11740,8 @@ const spiritBeastQualities = {
       rawDamage: hit.rawDamage,
       effectiveDefense: hit.effectiveDefense,
       elementText: formatElementInteraction(attacker.element, defender.element, hit.elementModifier),
-      highlights: getBattleHighlights(actor, hit, extraHighlights),
+      highlights: getBattleHighlights(actor, hit, [...extraHighlights, ...statusEffects]),
+      statusEffects,
       targetHp,
       targetMaxHp: defender.maxHp ?? defender.vitality,
     };
@@ -12380,7 +13019,7 @@ const spiritBeastQualities = {
   }
 
   function openMobilePanelDialog(tab = activeTab) {
-    if (!isMobileLayout() || tab === 'overview' || !refs.mobilePanelDialog || !refs.mobilePanelBody) {
+    if (!isMobileLayout() || usesInlineMobilePages() || tab === 'overview' || !refs.mobilePanelDialog || !refs.mobilePanelBody) {
       return false;
     }
     const panel = document.querySelector(`[data-panel="${tab}"]`);
@@ -12693,7 +13332,7 @@ const spiritBeastQualities = {
       return `道威永久 +${amount}`;
     }
 
-    const names = { qi: '灵气', herbs: '灵草', spiritStones: '灵石', pills: '聚气丹', gatherQiPill: '聚气丹', clearHeartPill: '清心丹', meridianPill: '护脉丹', bodyTemperPill: '淬体丹', spiritRootPill: '培元丹', beastCores: '妖核', artifacts: '法器', arrayFlags: '阵旗', forgingEssence: '炼器精魄', bloodEssence: '血脉精魄', heartDemon: '心魔', insight: '悟道' };
+    const names = { qi: '灵气', herbs: '灵草', spiritStones: '灵石', pills: '聚气丹', gatherQiPill: '聚气丹', clearHeartPill: '清心丹', meridianPill: '护脉丹', bodyTemperPill: '淬体丹', spiritRootPill: '培元丹', beastCores: '妖核', artifacts: '法器', arrayFlags: '阵旗', forgingEssence: '炼器精魄', bloodEssence: '血脉精魄', openingSecretClues: '秘藏线索', heartDemon: '心魔', insight: '悟道' };
     return `${amount} ${names[key] || key}`;
   }
 
@@ -12711,6 +13350,14 @@ const spiritBeastQualities = {
     const numeric = Number(value) || 0;
     const fixed = numeric < 10 ? numeric.toFixed(1) : numeric.toFixed(0);
     return fixed.replace(/\.0$/, '');
+  }
+
+  function formatHudAction(value) {
+    const text = String(value || '').replace(/\s+/g, '');
+    if (text === '闭关修炼') return '闭关';
+    if (text.startsWith('炼制')) return '炼丹';
+    if (text.includes('第') && text.includes('层')) return '探层';
+    return text.length > 4 ? text.slice(0, 4) : text;
   }
 
   function formatSourceValue(source) {
@@ -12945,7 +13592,7 @@ const spiritBeastQualities = {
 
   function createAccessGate() {
     const gate = document.querySelector('[data-access-gate]');
-    if (!gate) {
+    if (!gate || isNativeAppRuntime()) {
       return {
         isUnlocked: () => true,
         unlock() {},
@@ -13049,5 +13696,51 @@ const spiritBeastQualities = {
     }
 
     return { isUnlocked, unlock, mount };
+  }
+
+  function initHeroArtPreload() {
+    const variants = [
+      { query: '(max-width: 760px)', url: 'assets/hero/hero-mobile.webp' },
+      { query: '(max-width: 1120px)', url: 'assets/hero/hero-tablet.webp' },
+      { query: '', url: 'assets/hero/hero-desktop.webp' },
+    ];
+    const getUrl = () => variants.find((variant) => !variant.query || globalThis.matchMedia?.(variant.query).matches)?.url || variants.at(-1).url;
+    let activeUrl = '';
+    let loadToken = 0;
+
+    const loadCurrent = () => {
+      const url = getUrl();
+      if (url === activeUrl && document.body.classList.contains('hero-art-ready')) {
+        return;
+      }
+      activeUrl = url;
+      loadToken += 1;
+      const token = loadToken;
+      document.body.classList.remove('hero-art-ready');
+      const image = new Image();
+      image.decoding = 'async';
+      image.onload = () => {
+        if (token === loadToken) {
+          document.body.classList.add('hero-art-ready');
+        }
+      };
+      image.src = url;
+    };
+
+    requestAnimationFrame(loadCurrent);
+    variants
+      .filter((variant) => variant.query)
+      .forEach((variant) => globalThis.matchMedia?.(variant.query).addEventListener?.('change', loadCurrent));
+  }
+
+  function isNativeAppRuntime() {
+    const capacitor = globalThis.Capacitor;
+    if (capacitor?.isNativePlatform?.()) {
+      return true;
+    }
+    if (capacitor?.getPlatform?.() === 'ios') {
+      return true;
+    }
+    return globalThis.cordova?.platformId === 'ios';
   }
 })();

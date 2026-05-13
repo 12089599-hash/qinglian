@@ -9,7 +9,7 @@ const LEGACY_REALM_INDEX_MAP = [0, 1, 2, 9, 13, 18, 26, 27];
 
 export const REALMS = createRealmTrack();
 
-export const CURRENT_BALANCE_VERSION = 6;
+export const CURRENT_BALANCE_VERSION = 7;
 export const MAP_DEPTH_MAX_LAYER = 30;
 const MISSION_RESIDUAL_DANGER_RATIO = 0.24;
 export const DEPTH_TRIBULATIONS = [
@@ -635,31 +635,171 @@ export const TREASURES = {
   lifeBoundSeal: {
     id: 'lifeBoundSeal',
     name: '本命青印',
-    detail: '护持经脉和神识，牵引破境天机，并提供少量道威。',
+    detail: '青印镇住命宫，护持经脉和神识，叩关时多留一线回旋。',
     rarityId: 'mystic',
+    element: 'earth',
     maxLevel: 8,
     cost: (level) => ({ spiritStones: scaleCost(120, level), artifacts: level, forgingEssence: level * 2 }),
-    bonuses: { breakthrough: 0.025, power: 10 },
+    bonuses: { breakthrough: 0.025, defense: 10, vitality: 22, elementPower: 4 },
   },
   swordGourd: {
     id: 'swordGourd',
     name: '养剑葫',
-    detail: '温养剑气，凝练历练道威并平息行游劫象。',
+    detail: '葫中温养剑气，行游遇煞时会自行泄出锋芒。',
     rarityId: 'spirit',
+    element: 'metal',
     maxLevel: 8,
     cost: (level) => ({ spiritStones: scaleCost(140, level), beastCores: level, forgingEssence: level * 2 }),
-    bonuses: { power: 24, dangerReduction: 4 },
+    bonuses: { power: 20, attack: 12, dangerReduction: 4, elementPower: 5 },
   },
   spiritLamp: {
     id: 'spiritLamp',
-    name: '聚灵灯',
-    detail: '牵引洞府灵机，提升长期灵息效率。',
+    name: '聚灵塔',
+    detail: '塔中收拢洞府灵机，让周天吐纳更绵长。',
     rarityId: 'spirit',
+    element: 'wood',
     maxLevel: 8,
     cost: (level) => ({ spiritStones: scaleCost(110, level), arrayFlags: level, herbs: scaleCost(10, level) }),
-    bonuses: { qiRate: 0.025 },
+    bonuses: { qiRate: 0.022, defense: 6, elementPower: 4 },
+  },
+  greenEdgeSword: {
+    id: 'greenEdgeSword',
+    name: '青锋灵剑',
+    detail: '剑锋受灵机淬洗，适合补足正面斗法的破势。',
+    rarityId: 'mystic',
+    element: 'metal',
+    maxLevel: 10,
+    cost: (level) => ({ spiritStones: scaleCost(150, level), artifacts: Math.max(1, level), forgingEssence: level * 3 }),
+    bonuses: { power: 18, attack: 14, pierce: 3, elementPower: 6 },
+  },
+  soulBell: {
+    id: 'soulBell',
+    name: '镇魂铃',
+    detail: '铃音镇住神魂，能削弱劫象，也能稳住会心后的反噬。',
+    rarityId: 'mystic',
+    element: 'light',
+    maxLevel: 10,
+    cost: (level) => ({ spiritStones: scaleCost(145, level), insight: Math.max(1, Math.ceil(level / 2)), artifacts: Math.max(1, Math.ceil(level / 2)) }),
+    bonuses: { breakthrough: 0.012, dangerReduction: 5, critChance: 0.006, elementPower: 5 },
+  },
+  clearJadeBottle: {
+    id: 'clearJadeBottle',
+    name: '清玉净瓶',
+    detail: '瓶中藏一缕清泉，滋养血元，并让吐纳气息更缓。',
+    rarityId: 'spirit',
+    element: 'water',
+    maxLevel: 8,
+    cost: (level) => ({ spiritStones: scaleCost(125, level), herbs: scaleCost(16, level), artifacts: Math.max(1, Math.ceil(level / 2)) }),
+    bonuses: { qiRate: 0.014, vitality: 30, defense: 5, elementPower: 4 },
+  },
+  starCompass: {
+    id: 'starCompass',
+    name: '星罗盘',
+    detail: '盘面推演地势和星路，让秘境推进更稳。',
+    rarityId: 'earthFiend',
+    element: 'light',
+    maxLevel: 10,
+    cost: (level) => ({ spiritStones: scaleCost(160, level), arrayFlags: Math.max(1, level), insight: Math.max(1, Math.ceil(level / 3)) }),
+    bonuses: { dangerReduction: 6, speed: 1, breakthrough: 0.006, elementPower: 6 },
+  },
+  moonMirror: {
+    id: 'moonMirror',
+    name: '照月镜',
+    detail: '镜面照出一线虚实，护住道体并压低斗法波动。',
+    rarityId: 'earthFiend',
+    element: 'water',
+    maxLevel: 10,
+    cost: (level) => ({ spiritStones: scaleCost(165, level), artifacts: Math.max(1, level), arrayFlags: Math.max(1, Math.ceil(level / 2)) }),
+    bonuses: { defense: 14, vitality: 18, dangerReduction: 4, elementPower: 6 },
+  },
+  moonPearl: {
+    id: 'moonPearl',
+    name: '太阴灵珠',
+    detail: '珠光收摄灵潮，适合长期积累和叩关前的温养。',
+    rarityId: 'mystic',
+    element: 'water',
+    maxLevel: 10,
+    cost: (level) => ({ spiritStones: scaleCost(150, level), herbs: scaleCost(22, level), forgingEssence: Math.max(1, level) }),
+    bonuses: { qiRate: 0.018, breakthrough: 0.01, vitality: 20, elementPower: 5 },
+  },
+  daoWhisk: {
+    id: 'daoWhisk',
+    name: '拂云尘',
+    detail: '拂尘扫去浊气，令身法和行游气机更轻。',
+    rarityId: 'spirit',
+    element: 'wood',
+    maxLevel: 8,
+    cost: (level) => ({ spiritStones: scaleCost(118, level), herbs: scaleCost(14, level), beastCores: Math.max(1, Math.ceil(level / 2)) }),
+    bonuses: { qiRate: 0.01, speed: 2, dangerReduction: 3, elementPower: 4 },
+  },
+  spiritUmbrella: {
+    id: 'spiritUmbrella',
+    name: '玄纹灵伞',
+    detail: '伞骨成阵，斗法时能分散部分冲击。',
+    rarityId: 'mystic',
+    element: 'earth',
+    maxLevel: 10,
+    cost: (level) => ({ spiritStones: scaleCost(150, level), arrayFlags: Math.max(1, level), forgingEssence: level * 2 }),
+    bonuses: { defense: 16, vitality: 24, dangerReduction: 3, elementPower: 5 },
+  },
+  bindingCord: {
+    id: 'bindingCord',
+    name: '缚灵索',
+    detail: '索影缠住敌势，降低对手回旋空间。',
+    rarityId: 'mystic',
+    element: 'dark',
+    maxLevel: 10,
+    cost: (level) => ({ spiritStones: scaleCost(155, level), beastCores: Math.max(1, level), forgingEssence: level * 2 }),
+    bonuses: { attack: 8, speed: 1, critChance: 0.006, dangerReduction: 3, elementPower: 5 },
   },
 };
+
+Object.assign(TREASURES, {
+  xuanFireOrb: {
+    id: 'xuanFireOrb',
+    name: '玄火珠',
+    detail: '珠内伏着一线玄火，出手时会留下灼烧余势。',
+    rarityId: 'earthFiend',
+    element: 'fire',
+    maxLevel: 10,
+    cost: (level) => ({ spiritStones: scaleCost(190, level), artifacts: Math.max(1, level), forgingEssence: level * 2 }),
+    bonuses: { attack: 18, critChance: 0.008, elementPower: 8 },
+    statusEffect: { id: 'burn', name: '灼烧' },
+  },
+  windListeningBell: {
+    id: 'windListeningBell',
+    name: '听风铃',
+    detail: '铃音听风辨位，让身法与先手更稳定。',
+    rarityId: 'earthFiend',
+    element: 'wood',
+    maxLevel: 10,
+    cost: (level) => ({ spiritStones: scaleCost(180, level), insight: Math.max(1, Math.ceil(level / 2)), artifacts: Math.max(1, level) }),
+    bonuses: { speed: 4, dangerReduction: 5, elementPower: 6 },
+    statusEffect: { id: 'windbind', name: '缠风' },
+  },
+  taixuMirror: {
+    id: 'taixuMirror',
+    name: '太虚镜',
+    detail: '镜中折出虚实两面，能让敌势短暂失衡。',
+    rarityId: 'dao',
+    element: 'light',
+    maxLevel: 12,
+    cost: (level) => ({ spiritStones: scaleCost(360, level), insight: Math.max(1, level), artifacts: Math.max(1, level), forgingEssence: level * 3 }),
+    bonuses: { breakthrough: 0.014, defense: 18, speed: 2, elementPower: 10 },
+    statusEffect: { id: 'weaken', name: '失衡' },
+  },
+  namelessTalisman: {
+    id: 'namelessTalisman',
+    name: '无名古符',
+    detail: '符纹残缺却不失灵机，是后期隐藏流派的线索。',
+    rarityId: 'heavenWork',
+    element: 'dark',
+    maxLevel: 12,
+    cost: (level) => ({ spiritStones: scaleCost(260, level), bloodEssence: Math.max(1, Math.ceil(level / 2)), insight: Math.max(1, Math.ceil(level / 3)) }),
+    bonuses: { power: 30, pierce: 5, elementPower: 8 },
+    statusEffect: { id: 'seal', name: '封脉' },
+  },
+});
 
 export const SPIRIT_BEAST_QUALITIES = {
   wild: { id: 'wild', name: '野灵', growthMultiplier: 0.86, costMultiplier: 0.7 },
@@ -867,6 +1007,39 @@ export const SPIRIT_BEASTS = {
     skill: { name: '蛟影翻江', cadence: 2, multiplier: 1.86, critBonus: 0.08, detail: '隔回合翻起蛟影江潮，造成古血玄水战技。' },
   },
 };
+
+Object.assign(SPIRIT_BEASTS, {
+  moonshadowFox: {
+    id: 'moonshadowFox',
+    name: '月隐灵狐',
+    detail: '云纹灵狐的隐藏异相，月下出手会扰乱敌方气机。',
+    rarityId: 'heavenWork',
+    qualityId: 'heaven',
+    unlock: { realmIndex: 6, mapId: 'qinglanMountain', insight: 1 },
+    maxLevel: 12,
+    cost: (level) => ({ spiritStones: scaleCost(220, level), herbs: scaleCost(34, level), beastCores: level * 3, insight: Math.max(1, Math.ceil(level / 3)) }),
+    bonuses: { qiRate: 0.046, speed: 3, dangerReduction: 4 },
+    deployedBonuses: { speed: 6, vitality: 36, elementPower: 10 },
+    combat: { element: 'dark', attack: 40, defense: 12, vitality: 92, speed: 21, critChance: 0.08, pierce: 8 },
+    assistRole: 'sustain',
+    skill: { name: '月隐迷踪', cadence: 3, multiplier: 1.5, critBonus: 0.05, detail: '每三回合以月影扰乱劫象，造成玄阴战技。' },
+  },
+  ancientAzureCrane: {
+    id: 'ancientAzureCrane',
+    name: '太古青鹤',
+    detail: '青羽灵鹤的稀有古血，擅长护持破境与曜阳斗法。',
+    rarityId: 'dao',
+    qualityId: 'ancient',
+    unlock: { realmIndex: 12, mapId: 'mistyValley', depthLayer: 4, insight: 2 },
+    maxLevel: 14,
+    cost: (level) => ({ spiritStones: scaleCost(430, level), herbs: scaleCost(72, level), beastCores: level * 5, insight: Math.max(1, Math.ceil(level / 2)) }),
+    bonuses: { breakthrough: 0.022, qiRate: 0.036, elementPower: 8 },
+    deployedBonuses: { defense: 20, speed: 8, elementPower: 18 },
+    combat: { element: 'light', attack: 58, defense: 18, vitality: 128, speed: 24, critChance: 0.09, pierce: 11 },
+    assistRole: 'break',
+    skill: { name: '太古拂劫', cadence: 2, multiplier: 1.76, critBonus: 0.07, detail: '隔回合拂开劫象破绽，造成曜阳古血战技。' },
+  },
+});
 
 export const BLOODLINES = {
   greenPhoenixBlood: {
@@ -1436,6 +1609,59 @@ export const LOOT_EQUIPMENT = {
     bonuses: { dangerReduction: 30, speed: 18, attack: 18, pierce: 10, elementPower: 26 },
   },
 };
+
+const EXPANDED_LOOT_SLOTS = {
+  weapon: { names: ['松纹剑', '寒铁刃'], base: { power: 28, attack: 18, elementPower: 8 } },
+  offhand: { names: ['回风铃', '玄砂轮'], base: { power: 18, defense: 10, pierce: 6, elementPower: 7 } },
+  amulet: { names: ['青叶符', '护脉佩'], base: { breakthrough: 0.01, vitality: 22, defense: 6, elementPower: 6 } },
+  robe: { names: ['隐岚衣', '墨云袍'], base: { defense: 18, vitality: 36, dangerReduction: 5, elementPower: 7 } },
+  jade: { names: ['灵泉玉', '藏脉璧'], base: { qiRate: 0.012, vitality: 20, elementPower: 7 } },
+  boots: { names: ['轻岚履', '踏雾靴'], base: { speed: 4, dangerReduction: 7, defense: 8, elementPower: 6 } },
+};
+
+const EXPANDED_LOOT_TIERS = [
+  { key: 'spirit', tier: 0, band: '炼气', minRealmIndex: 0, quality: 1, multiplier: 1, prefix: '灵纹', element: 'wood' },
+  { key: 'mystic', tier: 1, band: '筑基', minRealmIndex: 9, quality: 1, multiplier: 1.18, prefix: '玄纹', element: 'water' },
+  { key: 'earthFiend', tier: 2, band: '筑基', minRealmIndex: 12, quality: 2, multiplier: 1.38, prefix: '地煞', element: 'earth' },
+  { key: 'goldCore', tier: 3, band: '金丹', minRealmIndex: 18, quality: 2, multiplier: 1.62, prefix: '金丹', element: 'metal' },
+  { key: 'heavenWork', tier: 4, band: '元婴', minRealmIndex: 27, quality: 3, multiplier: 1.92, prefix: '天工', element: 'light' },
+];
+
+Object.assign(LOOT_EQUIPMENT, createExpandedLootEquipment());
+
+function createExpandedLootEquipment() {
+  const generated = {};
+  Object.entries(EXPANDED_LOOT_SLOTS).forEach(([slot, config]) => {
+    EXPANDED_LOOT_TIERS.forEach((tier) => {
+      config.names.forEach((name, index) => {
+        const id = `${tier.key}${capitalize(slot)}${index + 1}`;
+        generated[id] = {
+          id,
+          name: `${tier.prefix}${name}`,
+          slot,
+          realmBand: tier.band,
+          minRealmIndex: tier.minRealmIndex,
+          lootTier: tier.tier,
+          quality: tier.quality,
+          element: tier.element,
+          bonuses: scaleLootBonuses(config.base, tier.multiplier + index * 0.08),
+        };
+      });
+    });
+  });
+  return generated;
+}
+
+function scaleLootBonuses(bonuses, multiplier) {
+  return Object.fromEntries(Object.entries(bonuses).map(([key, value]) => [
+    key,
+    key === 'qiRate' || key === 'breakthrough' ? round(value * multiplier) : Math.round(value * multiplier),
+  ]));
+}
+
+function capitalize(value) {
+  return `${value.charAt(0).toUpperCase()}${value.slice(1)}`;
+}
 
 export const RARITY_TIERS = [
   { id: 'common', name: '凡品', weight: 420, qualityBonus: 0, bonusMultiplier: 1, affixCount: 1, dismantleMultiplier: 1 },
@@ -2287,7 +2513,7 @@ export const DAILY_TASKS = {
     title: '今日吐纳',
     detail: '累计修炼即可领取基础补给',
     progressKey: 'cultivationSeconds',
-    target: 300,
+    target: 120,
     reward: { spiritStones: 80, qi: 180 },
   },
   dailyMission: {
@@ -2316,6 +2542,76 @@ export const DAILY_TASKS = {
     reward: { forgingEssence: 1, arrayFlags: 1 },
   },
 };
+
+export const OPENING_OBJECTIVES = [
+  {
+    id: 'openingBreath',
+    title: '吐纳一次',
+    detail: '先让周天运转起来，拿到第一次突破的灵气。',
+    tab: 'overview',
+    action: 'claimOpening',
+    completed: (state) => (state.totalCultivationSeconds ?? 0) >= 30,
+    reward: { qi: 20, spiritStones: 24 },
+  },
+  {
+    id: 'openingBreakthrough',
+    title: '突破一次',
+    detail: '首次破境应在 2-3 分钟内发生，先建立成长反馈。',
+    tab: 'overview',
+    action: 'claimOpening',
+    completed: (state) => (state.realmIndex ?? 0) >= 1,
+    reward: { spiritStones: 60, herbs: 8, gatherQiPill: 1 },
+  },
+  {
+    id: 'openingAlchemy',
+    title: '炼丹一次',
+    detail: '让丹房成为早期节奏的一部分，后续突破不会只等挂机。',
+    tab: 'alchemy',
+    targetId: 'gatherQiPill',
+    action: 'claimOpening',
+    completed: (state) => (state.craftedPills ?? 0) >= 1,
+    reward: { qi: 40, herbs: 10, spiritStones: 40 },
+  },
+  {
+    id: 'openingTravel',
+    title: '行游一次',
+    detail: '完成一次外出，带回第一件可穿戴战利品。',
+    tab: 'missions',
+    targetId: 'cavePatrol',
+    action: 'claimOpening',
+    completed: (state) => Object.values(state.completedMissions ?? {}).some((count) => count >= 1),
+    reward: { spiritStones: 50, artifacts: 1 },
+    lootTemplateId: 'qingfengSword',
+  },
+  {
+    id: 'openingEquip',
+    title: '装备一次',
+    detail: '把战利品装上身，开始形成流派和斗法反馈。',
+    tab: 'gear',
+    targetId: 'loot',
+    action: 'claimOpening',
+    completed: (state) => Object.values(state.equippedLoot ?? {}).some(Boolean),
+    reward: { forgingEssence: 1, spiritStones: 50 },
+  },
+  {
+    id: 'openingCave',
+    title: '升级洞府一次',
+    detail: '让洞府建设进入循环，灵田、丹炉或阵台都可以。',
+    tab: 'cave',
+    action: 'claimOpening',
+    completed: (state) => Object.entries(state.buildings ?? {}).some(([id, level]) => level > (id === 'meditationSeat' ? 1 : 0)),
+    reward: { qiRateBonus: 0.01, herbs: 12 },
+  },
+  {
+    id: 'openingDaily',
+    title: '完成日常一次',
+    detail: '把短目标接到每日留存，之后再逐渐拉长节奏。',
+    tab: 'daily',
+    action: 'claimOpening',
+    completed: (state, dateKey = getDateKey()) => Object.values(state.dailyClaims?.[dateKey] ?? {}).some(Boolean),
+    reward: { spiritStones: 80, openingSecretClues: 1 },
+  },
+];
 
 export const MARKET_ITEMS = {
   herbBundle: {
@@ -2470,7 +2766,7 @@ export const MAINLINE_CHAPTERS = [
         title: '炼成一枚聚气丹',
         detail: '突破前用丹药快速补足灵气',
         completed: (state) => (state.craftedPills ?? 0) >= 1,
-        reward: { qi: 360, spiritStones: 90, herbs: 12 },
+        reward: { qi: 90, spiritStones: 90, herbs: 12 },
       },
     ],
   },
@@ -2661,6 +2957,8 @@ export function createGameState(now = Date.now()) {
     dailyBossClaims: {},
     claimedGoals: {},
     claimedChapterRewards: {},
+    openingClaims: {},
+    openingSecretClues: 0,
     permanentBonuses: {
       qiRate: 0,
       power: 0,
@@ -2808,6 +3106,8 @@ export function reviveGameState(saved, now = Date.now()) {
   state.dailyBossClaims = normalizeDailyMapClaims(state.dailyBossClaims);
   state.claimedGoals = normalizeClaimedGoals(state.claimedGoals);
   state.claimedChapterRewards = normalizeClaimedGoals(state.claimedChapterRewards);
+  state.openingClaims = normalizeClaimedGoals(state.openingClaims);
+  state.openingSecretClues = Math.max(0, Number(state.openingSecretClues) || 0);
   state.permanentBonuses = normalizePermanentBonuses(state.permanentBonuses);
   state.autoMissionId = MISSIONS[state.autoMissionId] ? state.autoMissionId : null;
   state.craftedPills = Math.max(0, Number(state.craftedPills) || 0);
@@ -4651,6 +4951,53 @@ export function getGoals(state) {
   return MAINLINE_CHAPTERS[0].objectives.map((objective) => hydrateMainlineObjective(state, objective));
 }
 
+export function getOpeningObjectives(state, dateKey = getDateKey()) {
+  let previousReady = true;
+  return OPENING_OBJECTIVES.map((objective, index) => {
+    const completed = Boolean(objective.completed?.(state, dateKey));
+    const claimed = Boolean(state.openingClaims?.[objective.id]);
+    const locked = !previousReady;
+    const hydrated = {
+      ...objective,
+      index,
+      step: index + 1,
+      total: OPENING_OBJECTIVES.length,
+      completed,
+      claimed,
+      locked,
+      current: previousReady && !claimed,
+      rewardText: formatReward(objective.reward),
+    };
+    previousReady = previousReady && claimed;
+    return hydrated;
+  });
+}
+
+export function claimOpeningObjective(state, objectiveId, dateKey = getDateKey(), now = Date.now()) {
+  const objective = OPENING_OBJECTIVES.find((item) => item.id === objectiveId);
+  if (!objective) {
+    return { ok: false, reason: 'unknownObjective' };
+  }
+  const hydrated = getOpeningObjectives(state, dateKey).find((item) => item.id === objectiveId);
+  if (!hydrated || hydrated.locked) {
+    return { ok: false, reason: 'locked' };
+  }
+  if (hydrated.claimed) {
+    return { ok: false, reason: 'alreadyClaimed' };
+  }
+  if (!hydrated.completed) {
+    return { ok: false, reason: 'notComplete' };
+  }
+  applyResources(state, objective.reward);
+  if (objective.lootTemplateId) {
+    addLootEquipment(state, objective.lootTemplateId, { state, now, mapId: 'qinglanMountain' });
+  }
+  state.openingClaims ??= {};
+  state.openingClaims[objective.id] = true;
+  addLog(state, now, `完成开府七步「${objective.title}」，获得${formatReward(objective.reward)}。`);
+  return { ok: true, reward: objective.reward, objective: hydrated };
+}
+
 export function getResourceGuidance(state) {
   const needs = collectResourceNeeds(state);
   const items = Object.values(needs)
@@ -4716,6 +5063,27 @@ export function getNextGuidance(state) {
       detail: `${lastBossFailure.bossName}仍有余势，${lastBossFailure.advice}`,
       tab,
       targetId: tab === 'gear' ? 'wear' : lastBossFailure.mapId,
+    };
+  }
+
+  const openingStep = shouldUseOpeningGuidance(state)
+    ? getOpeningObjectives(state).find((objective) => !objective.claimed && !objective.locked)
+    : null;
+  if (openingStep) {
+    if (openingStep.completed) {
+      return {
+        title: `领取${openingStep.title}`,
+        detail: `开府七步 ${openingStep.step}/${openingStep.total}，奖励${openingStep.rewardText || '补给'}。`,
+        tab: openingStep.tab || 'overview',
+        targetId: openingStep.id,
+        action: 'claimOpening',
+      };
+    }
+    return {
+      title: openingStep.title,
+      detail: `开府七步 ${openingStep.step}/${openingStep.total}：${openingStep.detail}`,
+      tab: openingStep.tab || 'overview',
+      targetId: openingStep.targetId || openingStep.id,
     };
   }
 
@@ -4865,6 +5233,10 @@ export function getNextGuidance(state) {
     detail: '刷地图声望、强化战利品、提升洞府和阵法，准备下一轮突破。',
     tab: 'missions',
   };
+}
+
+function shouldUseOpeningGuidance(state) {
+  return (state.realmIndex ?? 0) <= 1 || Object.keys(state.openingClaims ?? {}).length > 0;
 }
 
 export function getProgressPlan(state, now = Date.now()) {
@@ -5025,7 +5397,8 @@ function getObjectivePreparationGuidance(state, objective) {
 }
 
 export function isDailyUnlocked(state) {
-  return getGoals(state).filter((goal) => goal.completed).length >= 3;
+  const openingReady = OPENING_OBJECTIVES.slice(0, 6).every((objective) => Boolean(state.openingClaims?.[objective.id]));
+  return openingReady || getGoals(state).filter((goal) => goal.completed).length >= 3;
 }
 
 function isDailyTaskUnlocked(state, task) {
@@ -7793,7 +8166,15 @@ function getPlayerCombatant(state) {
     speed: Math.max(1, profile.speed.value),
     critChance: profile.critChance.effectiveValue ?? Math.min(0.5, Math.max(0, profile.critChance.value)),
     pierce: Math.max(0, profile.pierce.value),
+    statusEffects: getPlayerStatusEffects(state),
   };
+}
+
+function getPlayerStatusEffects(state) {
+  return Object.entries(state.treasures ?? {})
+    .filter(([, level]) => level > 0)
+    .map(([treasureId]) => TREASURES[treasureId]?.statusEffect?.name)
+    .filter(Boolean);
 }
 
 function getSpiritBeastCombatant(state) {
@@ -8166,6 +8547,7 @@ function resolveCombatHit(attacker, defender, round, isPlayer, now, random, tech
 }
 
 function createBattleRound(round, actor, attacker, defender, hit, targetHp, skillName = null, extraHighlights = []) {
+  const statusEffects = attacker.statusEffects ?? [];
   return {
     round,
     actor,
@@ -8188,7 +8570,8 @@ function createBattleRound(round, actor, attacker, defender, hit, targetHp, skil
     rawDamage: hit.rawDamage,
     effectiveDefense: hit.effectiveDefense,
     elementText: formatElementInteraction(attacker.element, defender.element, hit.elementModifier),
-    highlights: getBattleHighlights(actor, hit, extraHighlights),
+    highlights: getBattleHighlights(actor, hit, [...extraHighlights, ...statusEffects]),
+    statusEffects,
     targetHp,
     targetMaxHp: defender.maxHp ?? defender.vitality,
   };
@@ -9218,6 +9601,7 @@ function formatRewardEntry(key, amount) {
     arrayFlags: '阵旗',
     forgingEssence: '炼器精魄',
     bloodEssence: '血脉精魄',
+    openingSecretClues: '秘藏线索',
     heartDemon: '心魔',
     insight: '悟道',
   };

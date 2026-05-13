@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const outDir = path.join(root, "www");
 
-const files = ["index.html", "styles.css", "browserGame.js"];
+const files = ["index.html", "styles.css", "cloudClient.js", "browserGame.js"];
 const folders = ["assets"];
 
 await rm(outDir, { recursive: true, force: true });

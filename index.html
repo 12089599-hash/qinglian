@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="青岚洞府" />
     <title>青岚洞府</title>
-    <link rel="stylesheet" href="styles.css?v=202605121130" />
+    <link rel="stylesheet" href="styles.css?v=202605121835" />
   </head>
   <body data-active-tab="overview" data-active-group="practice" data-access-locked="true">
     <section data-access-gate class="access-gate" aria-label="青岚洞府口令">
@@ -72,6 +72,13 @@
             <h2>修行</h2>
             <button data-breakthrough class="primary-button">突破</button>
           </header>
+          <section data-opening-objective class="opening-objective" aria-label="开府七步">
+            <div>
+              <small>开府七步</small>
+              <strong>1/7 · 吐纳一次</strong>
+            </div>
+            <button data-opening-action type="button">去完成</button>
+          </section>
           <details class="cultivation-drawer mobile-fold-card" open>
             <summary>
               <h3>修行状态</h3>
@@ -183,6 +190,7 @@
             <button data-craft-pill>炼丹</button>
             <button data-consume-pill>服丹</button>
             <button data-stabilize-foundation>稳固根基</button>
+            <button data-open-character-detail type="button">详情</button>
           </div>
           <p class="foundation-hint" data-foundation-hint>稳固根基 0/3，破境时抵御心魔。</p>
         </article>
@@ -342,6 +350,42 @@
               <input data-import-save-input type="file" accept="application/json,.json" hidden />
             </div>
           </section>
+          <section class="cloud-tools" aria-label="云端账号与排行榜">
+            <header>
+              <div>
+                <strong>云端账号</strong>
+                <p data-cloud-status>游客模式：本地存档正常，云端服务未连接。</p>
+              </div>
+              <button data-cloud-refresh-rank type="button">刷新榜单</button>
+            </header>
+            <form data-cloud-auth-form class="cloud-auth-form">
+              <label>
+                <span>邮箱</span>
+                <input data-cloud-email type="email" autocomplete="email" placeholder="you@example.com" />
+              </label>
+              <label>
+                <span>密码</span>
+                <input data-cloud-password type="password" autocomplete="current-password" minlength="6" />
+              </label>
+              <div class="cloud-auth-actions">
+                <button data-cloud-login type="button">登录</button>
+                <button data-cloud-register type="button">注册</button>
+              </div>
+            </form>
+            <div class="cloud-save-actions">
+              <button data-cloud-upload type="button">上传当前进度</button>
+              <button data-cloud-pull type="button">读取云端进度</button>
+              <button data-cloud-logout type="button">退出账号</button>
+              <button data-cloud-delete type="button">申请删除账号</button>
+            </div>
+            <div class="leaderboard-card">
+              <div>
+                <strong>云端排行榜</strong>
+                <p>只展示服务器接受的云端进度，本地游客档不会上榜。</p>
+              </div>
+              <ol data-leaderboard-list class="leaderboard-list"></ol>
+            </div>
+          </section>
           <ol data-log class="log-list"></ol>
         </article>
       </section>
@@ -395,6 +439,7 @@
 
     <div data-toast-stack class="toast-stack" aria-live="polite"></div>
 
-    <script src="browserGame.js?v=202605121130"></script>
+    <script src="cloudClient.js?v=202605121520"></script>
+    <script src="browserGame.js?v=202605121520"></script>
   </body>
 </html>

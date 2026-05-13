@@ -4587,7 +4587,7 @@ const spiritBeastQualities = {
     refs.qi.textContent = `${Math.floor(state.qi)} / ${realm.requiredQi}`;
     refs.qiRate.textContent = `${formatRate(calculateQiRate(state, Date.now()))} / 分钟`;
     if (refs.hudQi) refs.hudQi.textContent = `${Math.floor(state.qi)} / ${realm.requiredQi}`;
-    if (refs.hudRate) refs.hudRate.textContent = `${formatRate(calculateQiRate(state, Date.now()))} / 分钟`;
+    if (refs.hudRate) refs.hudRate.textContent = `${formatRate(calculateQiRate(state, Date.now()))}/分`;
     refs.stones.textContent = Math.floor(state.spiritStones);
     refs.herbs.textContent = Math.floor(state.herbs);
     refs.pills.textContent = Math.floor(state.pills);
@@ -4630,7 +4630,7 @@ const spiritBeastQualities = {
       refs.mission.textContent = '闭关修炼';
       refs.missionTime.textContent = '待命';
     }
-    if (refs.hudAction) refs.hudAction.textContent = refs.mission.textContent;
+    if (refs.hudAction) refs.hudAction.textContent = formatHudAction(refs.mission.textContent);
 
     if (refs.pillBoost) {
       const secondsLeft = Math.max(0, Math.ceil(((state.pillBoostUntil || 0) - Date.now()) / 1000));
@@ -12463,6 +12463,14 @@ const spiritBeastQualities = {
     const numeric = Number(value) || 0;
     const fixed = numeric < 10 ? numeric.toFixed(1) : numeric.toFixed(0);
     return fixed.replace(/\.0$/, '');
+  }
+
+  function formatHudAction(value) {
+    const text = String(value || '').replace(/\s+/g, '');
+    if (text === '闭关修炼') return '闭关';
+    if (text.startsWith('炼制')) return '炼丹';
+    if (text.includes('第') && text.includes('层')) return '探层';
+    return text.length > 4 ? text.slice(0, 4) : text;
   }
 
   function formatSourceValue(source) {

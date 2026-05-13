@@ -20,6 +20,7 @@ import {
   MISSION_MAPS,
   MISSION_APPROACHES,
   MISSION_EVENTS,
+  OPENING_OBJECTIVES,
   OPPORTUNITIES,
   PILL_RECIPES,
   REALMS,
@@ -37,6 +38,7 @@ import {
   claimGoalReward,
   claimChapterReward,
   claimDailyTask,
+  claimOpeningObjective,
   createGameState,
   buyMarketItem,
   disassembleLootEquipment,
@@ -49,6 +51,7 @@ import {
   getProgressPlan,
   getResourceGuidance,
   getMainlineChapters,
+  getOpeningObjectives,
   getDailyTasks,
   getMarketStock,
   getCaveStage,
@@ -119,6 +122,10 @@ function test(name, fn) {
 }
 
 const realmIndexByName = (name) => REALMS.findIndex((realm) => realm.name === name);
+
+function completeOpeningObjectives(state) {
+  state.openingClaims = Object.fromEntries(OPENING_OBJECTIVES.map((objective) => [objective.id, true]));
+}
 
 test('cultivation accumulates resources over time', () => {
   const state = createGameState(1000);
@@ -297,7 +304,7 @@ test('legacy saves are rebalanced without wiping progress', () => {
   assert.equal(state.spiritStones, 1234);
   assert.equal(state.completedMissions.herbGathering, 5);
   assert.equal(state.qi <= Math.ceil(REALMS[1].requiredQi * 1.15), true);
-  assert.equal(state.balanceVersion, 6);
+  assert.equal(state.balanceVersion, 7);
 });
 
 test('expanded realm saves without a version do not jump through legacy migration', () => {
@@ -310,12 +317,12 @@ test('expanded realm saves without a version do not jump through legacy migratio
 
   assert.equal(state.realmIndex, expandedIndex);
   assert.equal(state.spiritStones, 4321);
-  assert.equal(state.balanceVersion, 6);
+  assert.equal(state.balanceVersion, 7);
 });
 
 test('revived foundation stability is capped to the visible preparation limit', () => {
   const state = reviveGameState({
-    balanceVersion: 6,
+    balanceVersion: 7,
     foundationStability: 99,
   }, 1000);
 
@@ -608,8 +615,76 @@ test('early mainline rewards are generous with ordinary resources only', () => {
   assert.deepEqual(rewards.firstPatrol, { spiritStones: 80, herbs: 8, qi: 140 });
   assert.deepEqual(rewards.realmTwo, { spiritStones: 120, pills: 2, qi: 120 });
   assert.deepEqual(rewards.spiritField, { herbs: 25, spiritStones: 80 });
-  assert.deepEqual(rewards.firstPill, { qi: 360, spiritStones: 90, herbs: 12 });
+  assert.deepEqual(rewards.firstPill, { qi: 90, spiritStones: 90, herbs: 12 });
   assert.equal(Object.keys(rewards.firstPatrol).includes('bloodEssence'), false);
+});
+
+test('opening objective chain gives the first ten minutes a concrete route', () => {
+  const state = createGameState(1000);
+  const steps = getOpeningObjectives(state, '2026-05-12');
+
+  assert.deepEqual(OPENING_OBJECTIVES.map((step) => step.id), [
+    'openingBreath',
+    'openingBreakthrough',
+    'openingAlchemy',
+    'openingTravel',
+    'openingEquip',
+    'openingCave',
+    'openingDaily',
+  ]);
+  assert.equal(steps[0].title, '吐纳一次');
+  assert.equal(steps[0].completed, false);
+
+  updateGame(state, 45, 46_000);
+  const breath = getOpeningObjectives(state, '2026-05-12')[0];
+  assert.equal(breath.completed, true);
+  assert.equal(breath.claimed, false);
+  assert.equal(getNextGuidance(state).action, 'claimOpening');
+  assert.equal(getNextGuidance(state).targetId, 'openingBreath');
+
+  const claimed = claimOpeningObjective(state, 'openingBreath', '2026-05-12', 47_000);
+  assert.equal(claimed.ok, true);
+  assert.equal(state.openingClaims.openingBreath, true);
+  assert.equal(state.qi >= 18, true);
+});
+
+test('opening chain supports a fast first breakthrough without skipping the second', () => {
+  const state = createGameState(1000);
+
+  updateGame(state, 45, 46_000);
+  claimOpeningObjective(state, 'openingBreath', '2026-05-12', 47_000);
+  assert.equal(performBreakthrough(state, 120_000, () => 0).ok, true);
+  claimOpeningObjective(state, 'openingBreakthrough', '2026-05-12', 121_000);
+
+  assert.equal(state.realmIndex, 1);
+  assert.equal(state.qi < REALMS[1].requiredQi, true);
+  assert.equal(getNextGuidance(state).targetId, 'gatherQiPill');
+});
+
+test('equipment, hidden treasures, and rare beasts create a larger collection chase', () => {
+  const templates = Object.values(LOOT_EQUIPMENT);
+
+  assert.equal(templates.length >= 90, true);
+  Object.keys(GEAR).forEach((slot) => {
+    assert.equal(templates.filter((item) => item.slot === slot).length >= 14, true);
+  });
+  assert.equal(Boolean(TREASURES.xuanFireOrb), true);
+  assert.equal(Boolean(TREASURES.taixuMirror), true);
+  assert.equal(Boolean(SPIRIT_BEASTS.moonshadowFox), true);
+  assert.equal(Boolean(SPIRIT_BEASTS.ancientAzureCrane), true);
+});
+
+test('combat rounds surface status effects from rare treasures', () => {
+  const state = createGameState(1000);
+  state.realmIndex = realmIndexByName('筑基一层');
+  state.permanentBonuses.power = 500;
+  state.treasures.xuanFireOrb = 1;
+
+  const battle = simulateBossBattle(state, 'qinglanMountain', 2000, () => 0.5);
+  const playerRound = battle.rounds.find((round) => round.actor === 'player');
+
+  assert.equal(playerRound.highlights.includes('灼烧'), true);
+  assert.equal(playerRound.statusEffects.includes('灼烧'), true);
 });
 
 test('gear affixes support cultivation and exploration roles', () => {
@@ -1061,7 +1136,7 @@ test('daily tasks require progress before claiming', () => {
   buyMarketItem(state, 'herbBundle', 395_000);
 
   const tasks = getDailyTasks(state, '1970-01-01');
-  assert.deepEqual(tasks.map((task) => task.progress), [300, 3, 1, 0]);
+  assert.deepEqual(tasks.map((task) => task.progress), [120, 3, 1, 0]);
   assert.deepEqual(tasks.map((task) => task.completed), [true, true, true, false]);
   assert.equal(claimDailyTask(state, 'dailyCultivation', '1970-01-01', 396_000).ok, true);
 });
@@ -1780,6 +1855,10 @@ test('failed boss battles explain the most useful preparation lever', () => {
 test('next guidance points players toward the clearest progression step', () => {
   const state = createGameState(1000);
 
+  assert.equal(getNextGuidance(state).title, '吐纳一次');
+  assert.equal(getNextGuidance(state).tab, 'overview');
+
+  completeOpeningObjectives(state);
   assert.equal(getNextGuidance(state).title, '先巡守洞府');
   assert.equal(getNextGuidance(state).tab, 'missions');
 
@@ -1874,6 +1953,7 @@ test('next guidance does not send newly founded players into a doomed map', () =
 
 test('next guidance routes early mainline objectives to their exact panels', () => {
   const state = createGameState(1000);
+  completeOpeningObjectives(state);
   state.completedMissions.cavePatrol = 1;
   state.realmIndex = 1;
   state.claimedGoals.firstPatrol = true;
@@ -1894,6 +1974,7 @@ test('next guidance routes early mainline objectives to their exact panels', () 
 
 test('next guidance prioritizes claimable chapter rewards after objectives are claimed', () => {
   const state = createGameState(1000);
+  completeOpeningObjectives(state);
   state.realmIndex = 1;
   state.buildings.spiritField = 1;
   state.completedMissions.cavePatrol = 1;
