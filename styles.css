@@ -7386,6 +7386,25 @@ small {
     --gear-tab-icon: var(--icon-tribulation);
   }
 
+  .map-select-button strong {
+    font-size: 15px;
+    letter-spacing: 0;
+  }
+
+  .cloud-save-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .cloud-save-actions button {
+    width: 100%;
+    min-height: 40px;
+    padding: 0 6px;
+    font-size: 15px;
+    white-space: nowrap;
+  }
+
   .resource-guidance-card,
   .map-action-panel,
   .map-group,
@@ -7408,6 +7427,34 @@ small {
 
   .resource-guidance-card {
     border-color: rgba(221, 190, 111, 0.32);
+  }
+
+  .resource-guidance-detail summary {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: 8px;
+    align-items: center;
+  }
+
+  .resource-guidance-detail summary strong {
+    grid-column: 1 / -1;
+  }
+
+  .resource-guidance-detail summary span {
+    grid-column: 1;
+    margin-top: 4px;
+    white-space: normal;
+    -webkit-line-clamp: 2;
+  }
+
+  .resource-guidance-detail:not([open]) summary span {
+    -webkit-line-clamp: 2;
+  }
+
+  .resource-guidance-toggle {
+    grid-column: 2;
+    grid-row: 2;
+    margin-top: 0;
   }
 
   .map-group,
