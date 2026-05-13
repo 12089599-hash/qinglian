@@ -1,16 +1,8 @@
 (function () {
   const storage = createStorageAdapter();
   initHeroArtPreload();
-  const accessGate = createAccessGate();
-  if (accessGate.isUnlocked()) {
-    accessGate.unlock();
-    bootGame();
-  } else {
-    accessGate.mount(() => {
-      accessGate.unlock();
-      bootGame();
-    });
-  }
+  document.body.dataset.accessLocked = 'false';
+  bootGame();
 
   function bootGame() {
   const realmGroups = [
@@ -13588,114 +13580,6 @@ const spiritBeastQualities = {
         }
       },
     };
-  }
-
-  function createAccessGate() {
-    const gate = document.querySelector('[data-access-gate]');
-    if (!gate || isNativeAppRuntime()) {
-      return {
-        isUnlocked: () => true,
-        unlock() {},
-        mount(callback) {
-          callback();
-        },
-      };
-    }
-
-    const form = gate.querySelector('[data-access-form]');
-    const input = gate.querySelector('[data-access-input]');
-    const error = gate.querySelector('[data-access-error]');
-    const submit = form?.querySelector('button[type="submit"]');
-    const accessKey = 'qinglan-cave-access-v1';
-    const passwordHash = 'db23a6e7a4952c91c84dd68e23cc19d57b4c4408f29f273f1ca8c8d79cb3d893';
-    const fallbackHash = '14txn3dgj4p';
-
-    function isUnlocked() {
-      try {
-        return storage.getItem(accessKey) === passwordHash;
-      } catch {
-        return false;
-      }
-    }
-
-    function unlock() {
-      document.body.dataset.accessLocked = 'false';
-      gate.hidden = true;
-      gate.setAttribute('aria-hidden', 'true');
-    }
-
-    function mount(callback) {
-      document.body.dataset.accessLocked = 'true';
-      gate.hidden = false;
-      gate.removeAttribute('aria-hidden');
-      requestAnimationFrame(() => input?.focus());
-      form?.addEventListener('submit', async (event) => {
-        event.preventDefault();
-        if (!input) {
-          return;
-        }
-        if (error) {
-          error.textContent = '';
-        }
-        if (submit) {
-          submit.disabled = true;
-          submit.textContent = '校验中';
-        }
-        const accepted = await verifyPassword(input.value);
-        if (accepted) {
-          try {
-            storage.setItem(accessKey, passwordHash);
-          } catch {
-            // Private browsing may block storage; keep the current session unlocked.
-          }
-          callback();
-          return;
-        }
-        input.value = '';
-        input.focus();
-        if (error) {
-          error.textContent = '口令不合，请重新输入。';
-        }
-        if (submit) {
-          submit.disabled = false;
-          submit.textContent = '进入洞府';
-        }
-      });
-    }
-
-    async function verifyPassword(value) {
-      const normalized = String(value || '').trim();
-      if (!normalized) {
-        return false;
-      }
-      const digest = await hashAccessPassword(normalized);
-      return digest === passwordHash || digest === fallbackHash;
-    }
-
-    async function hashAccessPassword(value) {
-      const cryptoApi = globalThis.crypto;
-      if (cryptoApi?.subtle && typeof TextEncoder !== 'undefined') {
-        const data = new TextEncoder().encode(value);
-        const digest = await cryptoApi.subtle.digest('SHA-256', data);
-        return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('');
-      }
-      return accessFallbackHash(value);
-    }
-
-    function accessFallbackHash(value, seed = 0) {
-      let h1 = 0xdeadbeef ^ seed;
-      let h2 = 0x41c6ce57 ^ seed;
-      for (let i = 0; i < value.length; i += 1) {
-        const ch = value.charCodeAt(i);
-        h1 = Math.imul(h1 ^ ch, 2654435761);
-        h2 = Math.imul(h2 ^ ch, 1597334677);
-      }
-      h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
-      h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
-      return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(36);
-    }
-
-    return { isUnlocked, unlock, mount };
   }
 
   function initHeroArtPreload() {
