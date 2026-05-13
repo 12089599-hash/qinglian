@@ -6600,16 +6600,16 @@ small {
 
   .mobile-cultivation-hud {
     width: 100%;
-    gap: 8px;
+    gap: 7px;
   }
 
   .mobile-cultivation-hud span {
     min-height: 28px;
-    justify-content: center;
-    gap: 2px;
+    justify-content: flex-start;
+    gap: 4px;
     border-color: rgba(221, 190, 111, 0.42);
     border-radius: 999px;
-    padding: 4px;
+    padding: 4px 8px;
     background:
       linear-gradient(180deg, rgba(26, 55, 48, 0.78), rgba(5, 20, 20, 0.8)),
       rgba(3, 13, 14, 0.72);
@@ -6621,8 +6621,8 @@ small {
   .mobile-cultivation-hud span::before {
     content: "";
     flex: 0 0 auto;
-    width: 16px;
-    height: 16px;
+    width: 15px;
+    height: 15px;
     background: var(--hud-icon) center center / contain no-repeat;
     filter: drop-shadow(0 0 5px rgba(132, 214, 187, 0.42));
   }
@@ -6804,14 +6804,14 @@ small {
   }
 
   body[data-active-tab="overview"] .stats-panel > .action-row button {
+    position: relative;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 3px;
     min-height: 34px;
     border-color: rgba(221, 190, 111, 0.3);
     border-radius: 6px;
-    padding: 0 2px;
+    padding: 0 4px 0 23px;
     color: #f2e6cc;
     background:
       linear-gradient(180deg, rgba(21, 50, 47, 0.92), rgba(6, 22, 22, 0.9));
@@ -6822,9 +6822,12 @@ small {
 
   body[data-active-tab="overview"] .stats-panel > .action-row button::before {
     content: "";
-    flex: 0 0 auto;
-    width: 15px;
-    height: 15px;
+    position: absolute;
+    left: 8px;
+    top: 50%;
+    width: 13px;
+    height: 13px;
+    transform: translateY(-50%);
     background: var(--action-icon) center center / contain no-repeat;
     filter: drop-shadow(0 0 5px rgba(240, 207, 114, 0.24));
   }
@@ -7149,6 +7152,7 @@ small {
   }
 
   .section-tabs button {
+    position: relative;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -7156,7 +7160,7 @@ small {
     min-height: 38px;
     border-color: rgba(221, 190, 111, 0.2);
     border-radius: 7px;
-    padding: 0 4px;
+    padding: 0 6px 0 28px;
     color: #e8dcc4;
     background:
       linear-gradient(180deg, rgba(19, 45, 42, 0.86), rgba(6, 18, 19, 0.92));
@@ -7167,9 +7171,12 @@ small {
 
   .section-tabs button::before {
     content: "";
-    flex: 0 0 auto;
-    width: 20px;
-    height: 20px;
+    position: absolute;
+    left: 8px;
+    top: 50%;
+    width: 18px;
+    height: 18px;
+    transform: translateY(-50%);
     background: var(--nav-icon) center center / contain no-repeat;
     filter: drop-shadow(0 0 5px rgba(240, 207, 114, 0.18));
   }
@@ -7349,25 +7356,30 @@ small {
   }
 
   .gear-subtabs button {
+    position: relative;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 2px;
+    min-height: 32px;
+    padding: 0 4px 0 21px;
     font-size: 13px;
     white-space: nowrap;
   }
 
   .gear-subtabs button::before {
     content: "";
-    flex: 0 0 auto;
-    width: 15px;
-    height: 15px;
+    position: absolute;
+    left: 7px;
+    top: 50%;
+    width: 13px;
+    height: 13px;
+    transform: translateY(-50%);
     background: var(--gear-tab-icon) center center / contain no-repeat;
     filter: drop-shadow(0 0 4px rgba(240, 207, 114, 0.18));
   }
 
   .gear-subtabs button:nth-child(1)::before {
-    --gear-tab-icon: var(--icon-attributes);
+    --gear-tab-icon: var(--icon-action);
   }
 
   .gear-subtabs button:nth-child(2)::before {
@@ -7379,7 +7391,7 @@ small {
   }
 
   .gear-subtabs button:nth-child(4)::before {
-    --gear-tab-icon: var(--icon-action);
+    --gear-tab-icon: var(--icon-attributes);
   }
 
   .gear-subtabs button:nth-child(5)::before {
