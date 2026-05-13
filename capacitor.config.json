@@ -2,8 +2,9 @@
   "appId": "com.qinglan.cave",
   "appName": "青岚洞府",
   "webDir": "www",
+  "backgroundColor": "#050807",
   "ios": {
-    "contentInset": "always"
+    "contentInset": "never"
   },
   "server": {
     "androidScheme": "https"
