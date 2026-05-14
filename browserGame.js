@@ -2458,7 +2458,7 @@ const spiritBeastQualities = {
     cultivation: '功法',
     sect: '宗门',
     cave: '洞府',
-    missions: '历练',
+    missions: '行游',
     log: '日志',
   };
   const gearSections = ['wear', 'loot', 'treasures', 'beasts', 'bloodlines'];
@@ -5558,8 +5558,12 @@ const spiritBeastQualities = {
     }
     refs.openingObjective.hidden = false;
     refs.openingObjective.classList.toggle('completed', ['claimOpening', 'claimGoal', 'claimChapter'].includes(guidance?.action || ''));
-    refs.openingObjective.querySelector('small').textContent = formatFocusObjectiveLabel(guidance, openingStep);
-    refs.openingObjective.querySelector('strong').textContent = `${title} · ${detail.replace(/^开府七步\s*\d+\/\d+[：，,]?\s*/, '')}`;
+    refs.openingObjective.querySelector('small').textContent = openingStep
+      ? '当前目标'
+      : formatFocusObjectiveLabel(guidance, openingStep);
+    refs.openingObjective.querySelector('strong').textContent = openingStep
+      ? `开府 ${openingStep.step}/${openingStep.total} · ${openingStep.title}`
+      : `${title} · ${detail.replace(/^开府七步\s*\d+\/\d+[：，,]?\s*/, '')}`;
     refs.openingAction.textContent = formatFocusObjectiveAction(guidance);
     refs.openingAction.dataset.openingAction = guidance?.action || '';
     refs.openingAction.dataset.openingTarget = guidance?.targetId || openingStep?.targetId || openingStep?.id || '';
@@ -7726,7 +7730,7 @@ const spiritBeastQualities = {
         <div class="mobile-sheet-actions">
           ${renderMobileMissionDetailButton('map', map.id, '地势首领', `${map.exploration.label} · ${bossStatusText}`)}
           ${renderMobileMissionDetailButton('routes', map.id, '全部路线', `${map.routes.filter((id) => getMissionStatus(state, id).unlocked).length} / ${map.routes.length}`)}
-          ${renderMobileMissionDetailButton('report', map.id, '历练结算', state.lastMissionReport ? state.lastMissionReport.missionName : '暂无', !state.lastMissionReport)}
+          ${renderMobileMissionDetailButton('report', map.id, '行游结算', state.lastMissionReport ? state.lastMissionReport.missionName : '暂无', !state.lastMissionReport)}
         </div>
         <small class="combat-advice">${bossAdvice.detail}</small>
       </section>
@@ -13317,7 +13321,7 @@ const spiritBeastQualities = {
     }
     if (kind === 'report') {
       const content = refs.missionReport?.innerHTML?.trim();
-      return openMobileGeneratedDetail('历练结算', `
+      return openMobileGeneratedDetail('行游结算', `
         <section class="mobile-report-detail">
           ${content || '<p class="section-note">暂无结算。完成一次行游后会在这里查看。</p>'}
         </section>
@@ -13350,6 +13354,17 @@ const spiritBeastQualities = {
 
   function openVaultMobileDetail(kind) {
     const activeSection = activeGearSection || 'wear';
+    if (kind === 'beasts') {
+      const items = getEquipmentDetails(state).spiritBeasts;
+      const selectedItem = getSelectedSpiritBeastItem(items);
+      return openMobileGeneratedDetail('灵兽图鉴', `
+        <div class="mobile-full-list mobile-beast-list">
+          <div class="beast-gallery mobile-beast-gallery-full">
+            ${items.map((item) => renderSpiritBeastTile(item, item.id === selectedItem.id)).join('')}
+          </div>
+        </div>
+      `);
+    }
     const configs = {
       gear: { title: '装备栏', nodes: [refs.gearList, refs.formationList] },
       wear: { title: '装备栏', nodes: [refs.gearList, refs.formationList] },
@@ -13357,7 +13372,6 @@ const spiritBeastQualities = {
       alchemy: { title: '丹房', nodes: [refs.alchemyList] },
       market: { title: '坊市', nodes: [refs.marketList] },
       treasures: { title: '法宝', nodes: [refs.treasureList] },
-      beasts: { title: '灵兽', nodes: [refs.beastList] },
       bloodlines: { title: '血脉', nodes: [refs.bloodlineList] },
     };
     const config = configs[kind] || configs[activeSection] || configs.gear;
@@ -13450,6 +13464,7 @@ const spiritBeastQualities = {
       'data-upgrade-treasure',
       'data-awaken-bloodline',
       'data-open-loot-from-bloodline',
+      'data-select-beast',
       'data-lock-rare-loot',
       'data-organize-loot',
       'data-reset-dismantle-defaults',
@@ -13651,6 +13666,7 @@ const spiritBeastQualities = {
       return;
     }
     const group = tabGroups[groupId] || tabGroups.practice;
+    refs.subTabs.dataset.tabCount = String(group.tabs.length);
     refs.subTabs.innerHTML = group.tabs
       .map((tabId) => `<button data-tab="${tabId}" class="${tabId === activeTab ? 'active' : ''}">${tabLabels[tabId]}</button>`)
       .join('');
@@ -13658,6 +13674,7 @@ const spiritBeastQualities = {
   }
 
   function renderGearSections() {
+    document.body.dataset.activeGearSection = activeGearSection;
     document.querySelectorAll('[data-gear-section]').forEach((button) => {
       button.classList.toggle('active', button.dataset.gearSection === activeGearSection);
     });

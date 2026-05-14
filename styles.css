@@ -8001,12 +8001,14 @@ small {
     padding: 8px;
   }
 
-  body:not([data-active-tab="overview"]) .dashboard {
+  body[data-active-tab="missions"] .dashboard,
+  body[data-active-group="vault"] .dashboard {
     overflow: hidden;
     padding-bottom: calc(var(--mobile-tabbar-height) + 8px);
   }
 
-  body:not([data-active-tab="overview"]) .panel.active {
+  body[data-active-tab="missions"] .panel.active,
+  body[data-active-group="vault"] .panel.active {
     display: grid;
     align-content: start;
     gap: 8px;
@@ -8017,6 +8019,7 @@ small {
 
   .mobile-list-more {
     display: grid;
+    grid-column: 1 / -1;
     gap: 2px;
     align-items: center;
     justify-items: start;
@@ -8205,5 +8208,428 @@ small {
   .mobile-detail-body .mission-report-history,
   .mobile-detail-body .battle-report {
     display: grid;
+  }
+
+  body.hero-art-ready .hero::before {
+    opacity: 0 !important;
+  }
+
+  body.hero-art-ready .hero canvas {
+    display: none !important;
+    opacity: 0 !important;
+  }
+
+  body[data-active-tab="overview"] .hero {
+    min-height: calc(224px + env(safe-area-inset-top));
+  }
+
+  body:not([data-active-tab="overview"]) .hero {
+    min-height: calc(100px + env(safe-area-inset-top));
+  }
+
+  body:not([data-active-tab="overview"]) .hero-panel {
+    top: calc(8px + env(safe-area-inset-top));
+    right: 50%;
+    bottom: 7px;
+    left: auto;
+    display: grid;
+    grid-template-rows: auto auto minmax(10px, 1fr) auto;
+    justify-items: center;
+    gap: 4px;
+    width: min(310px, 86vw);
+    text-align: center;
+    transform: translateX(50%);
+  }
+
+  body:not([data-active-tab="overview"]) .hero-panel h1 {
+    display: block;
+    grid-row: 1;
+    margin: 0;
+    color: #f7dfaa;
+    font-size: 15px;
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: 0.08em;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.68);
+  }
+
+  body:not([data-active-tab="overview"]) .realm-line {
+    grid-row: 2;
+    justify-items: center;
+    max-width: min(240px, 70vw);
+  }
+
+  body:not([data-active-tab="overview"]) .realm-line span:first-child {
+    display: none;
+  }
+
+  body:not([data-active-tab="overview"]) .realm-line span:last-child {
+    color: #f2e6cc;
+    font-size: 10px;
+    font-weight: 800;
+    line-height: 1.18;
+  }
+
+  body:not([data-active-tab="overview"]) .progress-track {
+    grid-row: 3;
+    align-self: start;
+    width: min(230px, 68vw);
+    margin-top: 2px;
+  }
+
+  body:not([data-active-tab="overview"]) .mobile-cultivation-hud {
+    grid-row: 4;
+    align-self: end;
+    width: 100%;
+    margin-top: 0;
+  }
+
+  body[data-active-tab="overview"] .hero-panel {
+    top: calc(14px + env(safe-area-inset-top));
+    bottom: 10px;
+    gap: 7px;
+    width: min(330px, 88vw);
+  }
+
+  body[data-active-tab="overview"] .realm-line span:first-child {
+    font-size: 21px;
+    line-height: 1.12;
+  }
+
+  body[data-active-tab="overview"] .realm-line span:last-child,
+  body[data-active-tab="overview"] .progress-track::after {
+    font-size: 12px;
+    line-height: 1.22;
+  }
+
+  body[data-active-tab="overview"] .progress-track {
+    width: min(244px, 66vw);
+    height: 8px;
+  }
+
+  .mobile-cultivation-hud {
+    gap: 6px;
+  }
+
+  .mobile-cultivation-hud span {
+    min-height: 25px;
+    padding: 3px 7px;
+  }
+
+  .mobile-cultivation-hud span::before {
+    width: 14px;
+    height: 14px;
+  }
+
+  .mobile-cultivation-hud small,
+  .mobile-cultivation-hud strong {
+    font-size: 12px;
+  }
+
+  .sub-tabs {
+    margin: 5px 10px 7px;
+    border-radius: 10px;
+  }
+
+  .sub-tabs[data-tab-count="1"] {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  body[data-active-tab="missions"] .mission-map-selector {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  body[data-active-tab="missions"] .mobile-map-flow .approach-selector {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 4px;
+  }
+
+  body[data-active-tab="missions"] .mobile-map-flow .approach-selector button {
+    min-height: 38px;
+    padding: 5px 6px;
+  }
+
+  body[data-active-tab="missions"] .mobile-map-flow .approach-selector strong {
+    font-size: 0.68rem;
+  }
+
+  body[data-active-tab="missions"] .mobile-map-flow .approach-selector span {
+    display: none;
+  }
+
+  body[data-active-tab="missions"] .mobile-map-flow .approach-selector small {
+    display: block;
+    overflow: hidden;
+    color: #f0cf72;
+    font-size: 0.52rem;
+    line-height: 1.15;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  body[data-active-tab="missions"] .mobile-map-flow .approach-selector button small + small {
+    display: none;
+  }
+
+  body[data-active-tab="missions"] .mobile-map-flow {
+    gap: 5px;
+  }
+
+  body[data-active-tab="missions"] .mobile-map-flow-title {
+    min-height: 20px;
+  }
+
+  body[data-active-tab="missions"] .mobile-map-flow-title span,
+  body[data-active-tab="missions"] .mobile-map-flow-title strong {
+    font-size: 0.68rem;
+  }
+
+  body[data-active-tab="missions"] .map-action-panel {
+    gap: 6px;
+    padding: 8px;
+  }
+
+  body[data-active-tab="missions"] .map-action-panel header {
+    min-height: 34px;
+  }
+
+  body[data-active-tab="missions"] .map-action-panel header small,
+  body[data-active-tab="missions"] .active-beast-status {
+    display: none;
+  }
+
+  body[data-active-tab="missions"] .map-action-panel .map-loot-pool {
+    margin-top: 0;
+    padding: 3px 7px;
+    font-size: 0.58rem;
+  }
+
+  body[data-active-tab="missions"] .map-action-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 5px;
+  }
+
+  body[data-active-tab="missions"] .map-action-grid button {
+    min-height: 42px;
+    padding: 6px;
+  }
+
+  body[data-active-tab="missions"] .map-action-grid button strong {
+    font-size: 0.68rem;
+  }
+
+  body[data-active-tab="missions"] .map-action-grid button span,
+  body[data-active-tab="missions"] .map-action-grid button small {
+    display: none;
+  }
+
+  body[data-active-tab="missions"] .mobile-sheet-actions {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 5px;
+  }
+
+  body[data-active-tab="missions"] .mobile-sheet-actions button {
+    min-height: 32px;
+    padding: 4px 6px;
+  }
+
+  body[data-active-tab="missions"] .mobile-sheet-actions span {
+    display: none;
+  }
+
+  body[data-active-tab="gear"][data-active-gear-section="wear"] [data-gear-list] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  body[data-active-tab="gear"][data-active-gear-section="wear"] [data-gear-list] > .mobile-list-more {
+    display: none;
+  }
+
+  body[data-active-tab="gear"][data-active-gear-section="wear"] [data-gear-list] .compact-set-panel {
+    min-height: 38px;
+    padding: 6px 8px;
+  }
+
+  body[data-active-tab="gear"][data-active-gear-section="wear"] [data-gear-list] .compact-set-panel summary {
+    gap: 7px;
+  }
+
+  body[data-active-tab="gear"][data-active-gear-section="wear"] [data-gear-list] .compact-set-panel summary > strong {
+    font-size: 0.76rem;
+  }
+
+  body[data-active-tab="gear"][data-active-gear-section="wear"] [data-gear-list] .compact-set-panel summary > span {
+    font-size: 0.7rem;
+  }
+
+  body[data-active-tab="gear"][data-active-gear-section="wear"] [data-gear-list] > .equipment-detail-card {
+    display: block;
+    min-height: 86px;
+    padding: 6px;
+  }
+
+  body[data-active-tab="gear"][data-active-gear-section="wear"] [data-gear-list] .gear-card-brief {
+    grid-template-columns: 30px minmax(0, 1fr);
+    gap: 5px;
+  }
+
+  body[data-active-tab="gear"][data-active-gear-section="wear"] [data-gear-list] .gear-card-icon {
+    width: 29px;
+  }
+
+  body[data-active-tab="gear"][data-active-gear-section="wear"] [data-gear-list] .gear-card-slot {
+    font-size: 0.58rem;
+  }
+
+  body[data-active-tab="gear"][data-active-gear-section="wear"] [data-gear-list] .gear-card-name {
+    font-size: 0.74rem;
+  }
+
+  body[data-active-tab="gear"][data-active-gear-section="wear"] [data-gear-list] .gear-card-stage {
+    font-size: 0.58rem;
+  }
+
+  body[data-active-tab="gear"][data-active-gear-section="wear"] [data-gear-list] .gear-main-actions {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 4px;
+  }
+
+  body[data-active-tab="gear"][data-active-gear-section="wear"] [data-gear-list] .gear-main-actions button {
+    min-height: 22px;
+    padding: 0 2px;
+    font-size: 0.54rem;
+  }
+
+  body[data-active-tab="gear"][data-active-gear-section="bloodlines"] [data-bloodline-list] {
+    gap: 6px;
+  }
+
+  body[data-active-tab="gear"][data-active-gear-section="bloodlines"] [data-bloodline-list] > .bloodline-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+    min-height: 58px;
+    padding: 8px;
+  }
+
+  body[data-active-tab="gear"][data-active-gear-section="bloodlines"] .bloodline-row span,
+  body[data-active-tab="gear"][data-active-gear-section="bloodlines"] .bloodline-row small:nth-of-type(n+3) {
+    display: none;
+  }
+
+  body[data-active-tab="gear"][data-active-gear-section="bloodlines"] .bloodline-row strong {
+    font-size: 0.84rem;
+  }
+
+  body[data-active-tab="gear"][data-active-gear-section="bloodlines"] .bloodline-row small {
+    font-size: 0.66rem;
+  }
+
+  body[data-active-tab="gear"][data-active-gear-section="bloodlines"] .bloodline-row .row-actions {
+    align-content: center;
+    min-width: 68px;
+  }
+
+  body[data-active-tab="gear"][data-active-gear-section="bloodlines"] .bloodline-row .row-actions button {
+    min-height: 28px;
+    padding: 0 8px;
+    font-size: 0.7rem;
+  }
+
+  .mobile-detail-body .beast-compendium {
+    display: grid;
+    gap: 8px;
+  }
+
+  .mobile-detail-body .mobile-beast-gallery-full {
+    display: grid;
+    grid-template-columns: 1fr;
+    max-height: none;
+    overflow: visible;
+  }
+
+  .mobile-detail-body .mobile-beast-gallery-full .beast-tile {
+    min-height: 58px;
+  }
+
+  .mobile-detail-body .mobile-beast-gallery-full .beast-tile-main i {
+    display: none;
+  }
+
+  .sub-tabs button {
+    min-height: 32px;
+    font-size: 15px;
+  }
+
+  body[data-active-tab="overview"] .stats-panel {
+    gap: 7px;
+    padding: 9px 10px 10px;
+  }
+
+  body[data-active-tab="overview"] .stats-panel > header .primary-button {
+    min-height: 30px;
+    min-width: 72px;
+    font-size: 13px;
+  }
+
+  .opening-objective {
+    grid-template-columns: minmax(0, 1fr) minmax(70px, auto);
+    gap: 7px;
+    padding: 6px 8px;
+  }
+
+  .opening-objective div::before {
+    width: 15px;
+    height: 15px;
+    margin: 7px 7px 0 0;
+  }
+
+  .opening-objective small {
+    font-size: 12px;
+  }
+
+  .opening-objective strong {
+    margin-top: 2px;
+    font-size: 14px;
+  }
+
+  .opening-objective button {
+    min-height: 30px;
+    padding: 0 8px;
+    font-size: 13px;
+  }
+
+  body[data-active-tab="overview"] .stats-panel > .action-row {
+    gap: 5px;
+  }
+
+  body[data-active-tab="overview"] .stats-panel > .action-row button {
+    min-height: 32px;
+    padding: 0 4px 0 22px;
+    font-size: 13px;
+  }
+
+  body[data-active-tab="overview"] .stats-panel > .action-row button::before {
+    left: 7px;
+    width: 12px;
+    height: 12px;
+  }
+
+  body[data-active-tab="overview"] .foundation-hint {
+    font-size: 13px;
+  }
+
+  .overview-detail-actions button {
+    min-height: 38px;
+    padding: 5px 8px;
+  }
+
+  .cultivation-drawer h3,
+  .attribute-card h3,
+  .dao-heart-card h3,
+  .tribulation-card h3,
+  .resource-drawer summary {
+    font-size: 15px;
   }
 }
