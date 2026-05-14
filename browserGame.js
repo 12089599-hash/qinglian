@@ -3360,8 +3360,39 @@ const spiritBeastQualities = {
       refs.mobileDetailDialog.close();
       return;
     }
+    const missionDetailButton = event.target.closest('[data-open-mission-detail]');
+    if (missionDetailButton) {
+      event.preventDefault();
+      event.stopPropagation();
+      openMissionMobileDetail(missionDetailButton.dataset.openMissionDetail, missionDetailButton.dataset.mapId);
+      return;
+    }
+    const vaultDetailButton = event.target.closest('[data-open-vault-detail]');
+    if (vaultDetailButton) {
+      event.preventDefault();
+      event.stopPropagation();
+      openVaultMobileDetail(vaultDetailButton.dataset.openVaultDetail);
+      return;
+    }
     if (handleMobileDetailAction(event)) {
       refs.mobileDetailDialog.close();
+    }
+  });
+
+  document.addEventListener('click', (event) => {
+    if (!isMobileLayout()) {
+      return;
+    }
+    const missionDetailButton = event.target.closest('[data-open-mission-detail]');
+    if (missionDetailButton) {
+      event.preventDefault();
+      openMissionMobileDetail(missionDetailButton.dataset.openMissionDetail, missionDetailButton.dataset.mapId);
+      return;
+    }
+    const vaultDetailButton = event.target.closest('[data-open-vault-detail]');
+    if (vaultDetailButton) {
+      event.preventDefault();
+      openVaultMobileDetail(vaultDetailButton.dataset.openVaultDetail);
     }
   });
 
@@ -7464,6 +7495,7 @@ const spiritBeastQualities = {
         </div>
         <button data-refresh-market>刷新 ${formatReward(stock.refreshCost)}</button>
       </div>
+      ${renderMobileMoreButton('market', '查看全部货架', `${stock.items.length} 件货物 · 弹窗内可购买`)}
       ${stock.items
         .map((item) => `
         <button data-buy-market="${item.id}" ${item.soldOut ? 'disabled' : ''}>
@@ -7690,6 +7722,11 @@ const spiritBeastQualities = {
               <small>产出 ${formatReward(primaryStatus?.rewardPreview)}</small>
             </button>
           ` : ''}
+        </div>
+        <div class="mobile-sheet-actions">
+          ${renderMobileMissionDetailButton('map', map.id, '地势首领', `${map.exploration.label} · ${bossStatusText}`)}
+          ${renderMobileMissionDetailButton('routes', map.id, '全部路线', `${map.routes.filter((id) => getMissionStatus(state, id).unlocked).length} / ${map.routes.length}`)}
+          ${renderMobileMissionDetailButton('report', map.id, '历练结算', state.lastMissionReport ? state.lastMissionReport.missionName : '暂无', !state.lastMissionReport)}
         </div>
         <small class="combat-advice">${bossAdvice.detail}</small>
       </section>
@@ -8644,6 +8681,7 @@ const spiritBeastQualities = {
           <small>丹房 5 / 10 / 15 / 20 级分别增加一个炉位。</small>
         </div>
       </div>
+      ${renderMobileMoreButton('alchemy', '查看全部丹方', `${Object.keys(pillRecipes).length} 张丹方 · 弹窗内可炼制`)}
       ${Object.values(pillRecipes)
       .map((recipe) => {
         const locked = furnaceLevel < recipe.unlockLevel;
@@ -8682,6 +8720,7 @@ const spiritBeastQualities = {
     refs.gearList.innerHTML = `
       ${renderGearSetPanel(details.sets)}
       ${details.gear.map((item) => renderGearRow(item)).join('')}
+      ${renderMobileMoreButton('gear', '查看全部器位', `${details.gear.length} 个器位 · 含阵法栏`)}
     `;
     renderCache.gear = signature;
   }
@@ -8816,6 +8855,7 @@ const spiritBeastQualities = {
     if (!force && renderCache.loot === signature) {
       return;
     }
+    const fullLootButton = renderMobileMoreButton('loot', '查看全部战利品', `${details.length} 件 · 当前筛选 ${activeLootFilter === 'all' ? '全部' : getSlotName(activeLootFilter)}`);
     if (!details.length) {
       refs.lootList.innerHTML = '<div class="system-row muted-row"><div><strong>暂无战利品</strong><span>完成历练奇遇后，可能获得武器、副器、护符、法袍、玉佩、云履等装备。</span></div></div>';
       renderCache.loot = signature;
@@ -8825,11 +8865,11 @@ const spiritBeastQualities = {
       .slice()
       .sort(sortLootForDisplay);
     if (!visibleLoot.length) {
-      refs.lootList.innerHTML = `${renderLootResonanceCard(resonance)}<div class="system-row muted-row"><div><strong>当前筛选暂无战利品</strong><span>切换筛选或继续历练获取对应装备。</span></div></div>`;
+      refs.lootList.innerHTML = `${renderLootResonanceCard(resonance)}${fullLootButton}<div class="system-row muted-row"><div><strong>当前筛选暂无战利品</strong><span>切换筛选或继续历练获取对应装备。</span></div></div>`;
       renderCache.loot = signature;
       return;
     }
-    refs.lootList.innerHTML = `${renderLootResonanceCard(resonance)}${visibleLoot
+    refs.lootList.innerHTML = `${renderLootResonanceCard(resonance)}${fullLootButton}${visibleLoot
       .map((item) => {
         const maxed = item.empower.maxed;
         return `
@@ -9133,7 +9173,7 @@ const spiritBeastQualities = {
     }
     refs.formationList.innerHTML = getEquipmentDetails(state).formations
       .map((formation) => renderFormationRow(formation))
-      .join('');
+      .join('') + renderMobileMoreButton('gear', '查看阵法详情', '阵法与器位统一弹窗查看');
     renderCache.formations = signature;
   }
 
@@ -9147,7 +9187,7 @@ const spiritBeastQualities = {
     }
     refs.treasureList.innerHTML = getEquipmentDetails(state).treasures
       .map((item) => renderTreasureRow(item))
-      .join('');
+      .join('') + renderMobileMoreButton('treasures', '查看全部法宝', '弹窗内可培养');
     renderCache.treasures = signature;
   }
 
@@ -9175,6 +9215,7 @@ const spiritBeastQualities = {
           </div>
         </div>
         ${renderSpiritBeastDetail(selectedItem)}
+        ${renderMobileMoreButton('beasts', '查看灵兽图鉴', `${ownedCount} 已结契 · ${lockedCount} 未现踪`)}
       </div>
     `;
     renderCache.beasts = signature;
@@ -9289,7 +9330,7 @@ const spiritBeastQualities = {
     }
     refs.bloodlineList.innerHTML = getEquipmentDetails(state).bloodlines
       .map((item) => renderBloodlineRow(item))
-      .join('');
+      .join('') + renderMobileMoreButton('bloodlines', '查看全部血脉', '弹窗内可淬醒');
     renderCache.bloodlines = signature;
   }
 
@@ -13226,6 +13267,112 @@ const spiritBeastQualities = {
     return true;
   }
 
+  function openMobileGeneratedDetail(title, content) {
+    if (!refs.mobileDetailDialog || !refs.mobileDetailBody || !refs.mobileDetailTitle) {
+      return false;
+    }
+    refs.mobileDetailTitle.textContent = title || '详情';
+    refs.mobileDetailBody.innerHTML = content || '<p class="section-note">暂无可展开内容。</p>';
+    if (typeof refs.mobileDetailDialog.showModal === 'function') {
+      if (!refs.mobileDetailDialog.open) {
+        refs.mobileDetailDialog.showModal();
+      }
+    } else {
+      refs.mobileDetailDialog.setAttribute('open', '');
+    }
+    return true;
+  }
+
+  function renderMobileMoreButton(kind, label, detail = '') {
+    return `
+      <button class="mobile-list-more" data-open-vault-detail="${kind}" type="button">
+        <strong>${label}</strong>
+        ${detail ? `<span>${detail}</span>` : ''}
+      </button>
+    `;
+  }
+
+  function renderMobileMissionDetailButton(kind, mapId, label, detail = '', disabled = false) {
+    return `
+      <button data-open-mission-detail="${kind}" data-map-id="${mapId || ''}" type="button" ${disabled ? 'disabled' : ''}>
+        <strong>${label}</strong>
+        ${detail ? `<span>${detail}</span>` : ''}
+      </button>
+    `;
+  }
+
+  function openMissionMobileDetail(kind, mapId = activeMissionMapId) {
+    const mapStatuses = getMapStatuses(state);
+    const map = mapStatuses.find((item) => item.id === mapId) || mapStatuses.find((item) => item.id === activeMissionMapId) || mapStatuses[0];
+    if (!map) {
+      return false;
+    }
+    if (kind === 'routes') {
+      const routeList = map.routes.map((id) => missions[id]).filter(Boolean);
+      return openMobileGeneratedDetail(`${map.name}路线`, `
+        <div class="mobile-full-list mission-list">
+          ${routeList.map((mission) => renderMissionCard(mission)).join('') || '<p class="section-note">暂无路线。</p>'}
+        </div>
+      `);
+    }
+    if (kind === 'report') {
+      const content = refs.missionReport?.innerHTML?.trim();
+      return openMobileGeneratedDetail('历练结算', `
+        <section class="mobile-report-detail">
+          ${content || '<p class="section-note">暂无结算。完成一次行游后会在这里查看。</p>'}
+        </section>
+      `);
+    }
+    if (kind === 'guidance') {
+      const content = refs.resourceGuidance?.innerHTML?.trim();
+      return openMobileGeneratedDetail('寻材指引', `
+        <section class="mobile-report-detail">
+          ${content || '<p class="section-note">当前底蕴均衡，可继续推进地图或修行主线。</p>'}
+        </section>
+      `);
+    }
+    return openMobileGeneratedDetail(`${map.name}详情`, `
+      <section class="mobile-map-detail-sheet">
+        <div class="map-meta mobile-map-meta">
+          <small>${map.exploration.label}</small>
+          <small>声望 ${Math.floor(map.reputation)}</small>
+          <small>装备池 ${getMapLootPoolInfo(map.id).label}</small>
+          <small>${map.unlocked ? `${map.readiness.label} ${map.readiness.name}` : `${realms[map.unlockRealmIndex]?.name || '更高境界'}解锁`}</small>
+        </div>
+        <div class="map-progress"><span style="width:${Math.round(map.exploration.percent * 100)}%"></span></div>
+        <div class="map-challenge-strip">
+          ${renderDepthCard(map)}
+          ${renderBossCard(map)}
+        </div>
+      </section>
+    `);
+  }
+
+  function openVaultMobileDetail(kind) {
+    const activeSection = activeGearSection || 'wear';
+    const configs = {
+      gear: { title: '装备栏', nodes: [refs.gearList, refs.formationList] },
+      wear: { title: '装备栏', nodes: [refs.gearList, refs.formationList] },
+      loot: { title: '战利品', nodes: [refs.lootList] },
+      alchemy: { title: '丹房', nodes: [refs.alchemyList] },
+      market: { title: '坊市', nodes: [refs.marketList] },
+      treasures: { title: '法宝', nodes: [refs.treasureList] },
+      beasts: { title: '灵兽', nodes: [refs.beastList] },
+      bloodlines: { title: '血脉', nodes: [refs.bloodlineList] },
+    };
+    const config = configs[kind] || configs[activeSection] || configs.gear;
+    const content = config.nodes
+      .filter(Boolean)
+      .map((node) => node.innerHTML)
+      .filter(Boolean)
+      .join('');
+    return openMobileGeneratedDetail(config.title, `
+      <div class="mobile-full-list mobile-vault-detail-list">
+        ${content || '<p class="section-note">暂无内容。</p>'}
+      </div>
+    `);
+  }
+
   function openOverviewDetailDialog(kind) {
     if (!refs.mobileDetailDialog || !refs.mobileDetailBody || !refs.mobileDetailTitle) {
       return false;
@@ -13282,6 +13429,42 @@ const spiritBeastQualities = {
   }
 
   function handleMobileDetailAction(event) {
+    const proxiedAction = proxyMobileDetailAction(event, [
+      'data-start-mission',
+      'data-auto-mission',
+      'data-select-approach',
+      'data-start-depth',
+      'data-rush-depth',
+      'data-sweep-depth',
+      'data-challenge-boss',
+      'data-sweep-boss',
+      'data-craft-recipe',
+      'data-consume-recipe',
+      'data-refresh-market',
+      'data-buy-market',
+      'data-upgrade-gear',
+      'data-refine-gear',
+      'data-reroll-gear',
+      'data-toggle-gear-detail',
+      'data-upgrade-formation',
+      'data-upgrade-treasure',
+      'data-awaken-bloodline',
+      'data-open-loot-from-bloodline',
+      'data-lock-rare-loot',
+      'data-organize-loot',
+      'data-reset-dismantle-defaults',
+    ]);
+    if (proxiedAction) {
+      return true;
+    }
+    const dismissReportButton = event.target.closest('[data-dismiss-mission-report]');
+    if (dismissReportButton) {
+      event.preventDefault();
+      state.lastMissionReport = null;
+      saveState();
+      renderMissionReport(true);
+      return true;
+    }
     const daoHeartButton = event.target.closest('[data-choose-dao-heart]');
     if (daoHeartButton) {
       event.preventDefault();
@@ -13368,6 +13551,29 @@ const spiritBeastQualities = {
       }
       saveState();
       render(true);
+      return true;
+    }
+    return false;
+  }
+
+  function proxyMobileDetailAction(event, attributes) {
+    for (const attribute of attributes) {
+      const selector = `[${attribute}]`;
+      const button = event.target.closest(selector);
+      if (!button) {
+        continue;
+      }
+      event.preventDefault();
+      const value = button.getAttribute(attribute);
+      const original = [...document.querySelectorAll(selector)].find((candidate) => {
+        if (refs.mobileDetailDialog?.contains(candidate)) {
+          return false;
+        }
+        return value === null || candidate.getAttribute(attribute) === value;
+      });
+      if (original) {
+        original.click();
+      }
       return true;
     }
     return false;

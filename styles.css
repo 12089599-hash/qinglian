@@ -576,6 +576,11 @@ h2 {
   display: none;
 }
 
+.mobile-list-more,
+.mobile-sheet-actions {
+  display: none;
+}
+
 .mobile-combined-section {
   display: grid;
   gap: 10px;
@@ -7994,5 +7999,211 @@ small {
 
   .map-group {
     padding: 8px;
+  }
+
+  body:not([data-active-tab="overview"]) .dashboard {
+    overflow: hidden;
+    padding-bottom: calc(var(--mobile-tabbar-height) + 8px);
+  }
+
+  body:not([data-active-tab="overview"]) .panel.active {
+    display: grid;
+    align-content: start;
+    gap: 8px;
+    min-height: 0;
+    max-height: 100%;
+    overflow: hidden;
+  }
+
+  .mobile-list-more {
+    display: grid;
+    gap: 2px;
+    align-items: center;
+    justify-items: start;
+    min-height: 38px;
+    border-color: rgba(132, 214, 187, 0.34);
+    border-radius: 8px;
+    padding: 6px 9px;
+    text-align: left;
+    background:
+      linear-gradient(180deg, rgba(18, 48, 43, 0.8), rgba(5, 18, 18, 0.88));
+  }
+
+  .mobile-list-more strong,
+  .mobile-list-more span {
+    overflow: hidden;
+    max-width: 100%;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .mobile-list-more strong {
+    color: #f7dfaa;
+    font-size: 0.78rem;
+  }
+
+  .mobile-list-more span {
+    color: #9ecab7;
+    font-size: 0.64rem;
+    font-weight: 800;
+  }
+
+  .mobile-sheet-actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 5px;
+  }
+
+  .mobile-sheet-actions button {
+    display: grid;
+    gap: 1px;
+    align-content: center;
+    justify-items: start;
+    min-width: 0;
+    min-height: 36px;
+    padding: 5px 6px;
+    text-align: left;
+  }
+
+  .mobile-sheet-actions strong,
+  .mobile-sheet-actions span {
+    overflow: hidden;
+    max-width: 100%;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .mobile-sheet-actions strong {
+    color: #f7dfaa;
+    font-size: 0.7rem;
+  }
+
+  .mobile-sheet-actions span {
+    color: #9ecab7;
+    font-size: 0.58rem;
+    font-weight: 800;
+  }
+
+  .mission-report:not([hidden]) {
+    display: none;
+  }
+
+  .map-action-panel {
+    gap: 6px;
+  }
+
+  .map-action-panel header {
+    min-height: 40px;
+  }
+
+  .map-action-panel .map-loot-pool {
+    display: block;
+  }
+
+  .map-action-grid button {
+    min-height: 42px;
+  }
+
+  .map-action-grid button small {
+    display: none;
+  }
+
+  .mission-map-selector {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .map-select-button {
+    min-height: 38px;
+    padding: 5px;
+  }
+
+  .map-select-icon {
+    width: 24px;
+    height: 24px;
+  }
+
+  .mobile-map-flow .approach-selector {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .mobile-map-flow .approach-selector button {
+    min-height: 38px;
+  }
+
+  .mobile-map-flow .approach-selector small {
+    display: none;
+  }
+
+  body[data-active-tab="missions"] .resource-guidance,
+  body[data-active-tab="missions"] .progress-plan,
+  body[data-active-tab="missions"] .map-group,
+  body[data-active-tab="missions"] .combat-advice,
+  body[data-active-tab="missions"] .battle-playback[hidden] {
+    display: none;
+  }
+
+  body[data-active-tab="market"] [data-market-list] > button[data-buy-market]:nth-of-type(n+5),
+  body[data-active-tab="alchemy"] [data-alchemy-list] > .system-row:nth-of-type(n+5),
+  body[data-active-tab="gear"] [data-gear-section-panel="wear"] > h3,
+  body[data-active-tab="gear"] [data-formation-list],
+  body[data-active-tab="gear"] [data-gear-list] > .equipment-detail-card:nth-of-type(n+6),
+  body[data-active-tab="gear"] [data-loot-list] > .loot-equipment-card:nth-of-type(n+4),
+  body[data-active-tab="gear"] [data-treasure-list] > .treasure-row:nth-of-type(n+4),
+  body[data-active-tab="gear"] [data-bloodline-list] > .bloodline-row:nth-of-type(n+4) {
+    display: none;
+  }
+
+  body[data-active-tab="gear"] .loot-toolbar {
+    grid-template-areas:
+      "filters"
+      "actions";
+  }
+
+  body[data-active-tab="gear"] .loot-rules-panel {
+    display: none;
+  }
+
+  body[data-active-tab="gear"] .beast-gallery {
+    max-height: 86px;
+    overflow: hidden;
+  }
+
+  body[data-active-tab="gear"] .beast-detail-grid,
+  body[data-active-tab="gear"] .beast-detail-intro,
+  body[data-active-tab="gear"] .beast-unlock-note {
+    display: none;
+  }
+
+  .mobile-detail-body {
+    max-height: min(70dvh, 580px);
+  }
+
+  .mobile-detail-body .mobile-full-list {
+    display: grid;
+    gap: 8px;
+  }
+
+  .mobile-detail-body .mobile-full-list > *,
+  .mobile-detail-body .mobile-map-detail-sheet > *,
+  .mobile-detail-body .mobile-report-detail > * {
+    display: revert;
+  }
+
+  .mobile-detail-body .mobile-full-list .system-row,
+  .mobile-detail-body .mobile-full-list .equipment-detail-card,
+  .mobile-detail-body .mobile-full-list .loot-equipment-card,
+  .mobile-detail-body .mobile-full-list .mission-card,
+  .mobile-detail-body .mobile-map-detail-sheet .depth-card,
+  .mobile-detail-body .mobile-map-detail-sheet .boss-card {
+    display: grid !important;
+  }
+
+  .mobile-detail-body .mobile-full-list .mobile-list-more {
+    display: none !important;
+  }
+
+  .mobile-detail-body .mission-report-history,
+  .mobile-detail-body .battle-report {
+    display: grid;
   }
 }
