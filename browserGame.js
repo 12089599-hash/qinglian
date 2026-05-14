@@ -2339,6 +2339,8 @@ const spiritBeastQualities = {
     heartDemon: document.querySelector('[data-heart-demon]'),
     power: document.querySelector('[data-power]'),
     breakthroughChance: document.querySelector('[data-breakthrough-chance]'),
+    statusSummary: document.querySelector('[data-status-summary]'),
+    profileSummary: document.querySelector('[data-profile-summary]'),
     stabilizeButton: document.querySelector('[data-stabilize-foundation]'),
     dominantPath: document.querySelector('[data-dominant-path]'),
     upgradeLimit: document.querySelector('[data-upgrade-limit]'),
@@ -2554,11 +2556,29 @@ const spiritBeastQualities = {
       return;
     }
     if (isMobileLayout()) {
-      openMobileDetailDialog(detail);
+      openOverviewDetailDialog('profile');
       return;
     }
     detail.open = true;
     detail.scrollIntoView?.({ block: 'nearest', behavior: 'smooth' });
+  });
+
+  document.querySelectorAll('[data-open-overview-detail]').forEach((button) => {
+    button.addEventListener('click', () => {
+      if (isMobileLayout()) {
+        openOverviewDetailDialog(button.dataset.openOverviewDetail);
+        return;
+      }
+      const selectors = button.dataset.openOverviewDetail === 'status'
+        ? ['.stats-panel > .state-drawer', '.stats-panel > .tribulation-card']
+        : ['.stats-panel > .attribute-card', '.stats-panel > .dao-heart-card'];
+      selectors.forEach((selector) => {
+        const detail = document.querySelector(selector);
+        if (detail) {
+          detail.open = true;
+        }
+      });
+    });
   });
 
   refs.alchemyList?.addEventListener('click', (event) => {
@@ -3428,6 +3448,20 @@ const spiritBeastQualities = {
   });
 
   refs.openingAction?.addEventListener('click', () => {
+    if (refs.openingAction.dataset.openingAction === 'breakthrough') {
+      document.querySelector('[data-breakthrough]')?.click();
+      return;
+    }
+    if (refs.openingAction.dataset.openingAction === 'stabilize') {
+      document.querySelector('[data-stabilize-foundation]')?.click();
+      return;
+    }
+    if (refs.openingAction.dataset.openingAction === 'claimGoal' && claimGoalById(refs.openingAction.dataset.openingTarget)) {
+      return;
+    }
+    if (refs.openingAction.dataset.openingAction === 'claimChapter' && claimChapterById(refs.openingAction.dataset.openingTarget)) {
+      return;
+    }
     if (refs.openingAction.dataset.openingAction === 'claimOpening' && claimOpeningById(refs.openingAction.dataset.openingTarget)) {
       return;
     }
@@ -4835,7 +4869,14 @@ const spiritBeastQualities = {
     if (refs.bloodEssence) refs.bloodEssence.textContent = Math.floor(state.bloodEssence || 0);
     refs.heartDemon.textContent = Math.floor(state.heartDemon);
     refs.power.textContent = calculatePower(state);
-    refs.breakthroughChance.textContent = `${Math.round(calculateBreakthroughChance(state, Date.now()) * 100)}%`;
+    const breakthroughChanceText = `${Math.round(calculateBreakthroughChance(state, Date.now()) * 100)}%`;
+    refs.breakthroughChance.textContent = breakthroughChanceText;
+    if (refs.statusSummary) {
+      refs.statusSummary.textContent = `心魔 ${Math.floor(state.heartDemon)} · 根基 ${state.foundationStability || 0}/3 · 天劫 ${breakthroughChanceText}`;
+    }
+    if (refs.profileSummary) {
+      refs.profileSummary.textContent = `道行 ${calculatePower(state)} · ${formatDaoHeartSummary(state)}`;
+    }
     refs.progress.style.width = `${progress * 100}%`;
     refs.progressText.textContent = remainingQi > 0 ? `距突破还差 ${Math.ceil(remainingQi)} 灵气` : '灵气圆满，可以尝试突破';
     if (refs.nextGuidance) {
@@ -5474,22 +5515,53 @@ const spiritBeastQualities = {
     if (!refs.openingObjective || !refs.openingAction) {
       return;
     }
-    const steps = getOpeningObjectives(state);
-    const step = steps.find((objective) => !objective.claimed && !objective.locked) || steps.at(-1);
-    if (!step) {
+    const openingStep = shouldUseOpeningGuidance(state)
+      ? getOpeningObjectives(state).find((objective) => !objective.claimed && !objective.locked)
+      : null;
+    const guidance = getNextGuidance(state);
+    const title = guidance?.title || openingStep?.title || '继续修行';
+    const detail = guidance?.detail || openingStep?.detail || '积累底蕴，准备下一轮突破。';
+    if (!title) {
       refs.openingObjective.hidden = true;
       return;
     }
     refs.openingObjective.hidden = false;
-    refs.openingObjective.classList.toggle('completed', step.completed && !step.claimed);
-    refs.openingObjective.querySelector('small').textContent = step.claimed ? '开府七步完成' : '开府七步';
-    refs.openingObjective.querySelector('strong').textContent = step.claimed
-      ? '7/7 · 已完成'
-      : `${step.step}/${step.total} · ${step.title}`;
-    refs.openingAction.textContent = step.completed && !step.claimed ? '领取' : '去完成';
-    refs.openingAction.dataset.openingAction = step.completed && !step.claimed ? 'claimOpening' : '';
-    refs.openingAction.dataset.openingTarget = step.completed && !step.claimed ? step.id : (step.targetId || step.id);
-    refs.openingAction.dataset.openingTab = step.tab || 'overview';
+    refs.openingObjective.classList.toggle('completed', ['claimOpening', 'claimGoal', 'claimChapter'].includes(guidance?.action || ''));
+    refs.openingObjective.querySelector('small').textContent = formatFocusObjectiveLabel(guidance, openingStep);
+    refs.openingObjective.querySelector('strong').textContent = `${title} · ${detail.replace(/^开府七步\s*\d+\/\d+[：，,]?\s*/, '')}`;
+    refs.openingAction.textContent = formatFocusObjectiveAction(guidance);
+    refs.openingAction.dataset.openingAction = guidance?.action || '';
+    refs.openingAction.dataset.openingTarget = guidance?.targetId || openingStep?.targetId || openingStep?.id || '';
+    refs.openingAction.dataset.openingTab = guidance?.tab || openingStep?.tab || 'overview';
+  }
+
+  function formatFocusObjectiveLabel(guidance, openingStep) {
+    if (openingStep && guidance?.detail?.startsWith('开府七步')) {
+      return `开府 ${openingStep.step}/${openingStep.total}`;
+    }
+    if (guidance?.action === 'claimGoal' || guidance?.action === 'claimChapter' || guidance?.action === 'claimOpening') {
+      return '可领取';
+    }
+    const tab = guidance?.tab || 'overview';
+    if (tab === 'goals') return '主线';
+    if (tab === 'daily') return '日常';
+    if (tab === 'missions') return '行游';
+    if (tab === 'gear') return '库藏';
+    if (tab === 'sect') return '山门';
+    return '当前目标';
+  }
+
+  function formatFocusObjectiveAction(guidance) {
+    if (guidance?.action === 'claimGoal' || guidance?.action === 'claimChapter' || guidance?.action === 'claimOpening') {
+      return '领取';
+    }
+    if (guidance?.action === 'breakthrough') {
+      return '突破';
+    }
+    if (guidance?.action === 'stabilize') {
+      return '稳固';
+    }
+    return '去完成';
   }
 
   async function runCloudAction(title, action) {
@@ -8686,6 +8758,18 @@ const spiritBeastQualities = {
       `}
     `;
     renderCache.daoHeart = signature;
+  }
+
+  function formatDaoHeartSummary(state) {
+    const choices = getDaoHeartChoices(state);
+    if (choices.length) {
+      return '命格待选';
+    }
+    const claimed = Object.values(state.claimedDaoHeartRealms || {}).filter(Boolean).length;
+    if (claimed) {
+      return `命格 ${claimed} 道`;
+    }
+    return '命格未凝';
   }
 
   function renderBreakthroughPreparation(force = false) {
@@ -13142,6 +13226,45 @@ const spiritBeastQualities = {
     return true;
   }
 
+  function openOverviewDetailDialog(kind) {
+    if (!refs.mobileDetailDialog || !refs.mobileDetailBody || !refs.mobileDetailTitle) {
+      return false;
+    }
+    const groups = kind === 'status'
+      ? {
+          title: '状态根基',
+          selectors: ['.stats-panel > .state-drawer', '.stats-panel > .tribulation-card'],
+        }
+      : {
+          title: '人物命格',
+          selectors: ['.stats-panel > .attribute-card', '.stats-panel > .dao-heart-card'],
+        };
+    refs.mobileDetailTitle.textContent = groups.title;
+    refs.mobileDetailBody.innerHTML = groups.selectors
+      .map((selector) => renderMobileCombinedSection(document.querySelector(selector)))
+      .join('') || '<p class="section-note">暂无可展开内容。</p>';
+    if (typeof refs.mobileDetailDialog.showModal === 'function') {
+      if (!refs.mobileDetailDialog.open) {
+        refs.mobileDetailDialog.showModal();
+      }
+    } else {
+      refs.mobileDetailDialog.setAttribute('open', '');
+    }
+    return true;
+  }
+
+  function renderMobileCombinedSection(detail) {
+    if (!detail) {
+      return '';
+    }
+    return `
+      <section class="mobile-combined-section">
+        <h3>${getMobileDetailTitle(detail)}</h3>
+        ${getMobileDetailContent(detail)}
+      </section>
+    `;
+  }
+
   function getMobileDetailTitle(detail) {
     const summary = detail.querySelector(':scope > summary');
     return summary?.querySelector('h3, strong')?.textContent?.trim()
@@ -13159,6 +13282,17 @@ const spiritBeastQualities = {
   }
 
   function handleMobileDetailAction(event) {
+    const daoHeartButton = event.target.closest('[data-choose-dao-heart]');
+    if (daoHeartButton) {
+      event.preventDefault();
+      const result = chooseDaoHeart(state, daoHeartButton.dataset.chooseDaoHeart);
+      if (result.ok) {
+        showToast('命格凝定', `已凝成「${result.heart.name}」。`);
+      }
+      saveState();
+      render(true);
+      return true;
+    }
     const deployBeastButton = event.target.closest('[data-deploy-beast]');
     if (deployBeastButton) {
       event.preventDefault();

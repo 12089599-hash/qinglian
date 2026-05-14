@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="青岚洞府" />
     <title>青岚洞府</title>
-    <link rel="stylesheet" href="styles.css?v=202605140935" />
+    <link rel="stylesheet" href="styles.css?v=202605141012" />
   </head>
   <body data-active-tab="overview" data-active-group="practice" data-access-locked="false">
     <main class="shell" data-game-shell>
@@ -179,6 +179,16 @@
             <button data-open-character-detail type="button">详情</button>
           </div>
           <p class="foundation-hint" data-foundation-hint>稳固根基 0/3，破境时抵御心魔。</p>
+          <div class="overview-detail-actions" aria-label="修行详情">
+            <button data-open-overview-detail="status" type="button">
+              <strong>状态根基</strong>
+              <span data-status-summary>心魔 0 · 根基 0/3 · 天劫 75%</span>
+            </button>
+            <button data-open-overview-detail="profile" type="button">
+              <strong>人物命格</strong>
+              <span data-profile-summary>道行 22 · 命格未凝</span>
+            </button>
+          </div>
         </article>
 
         <article class="panel goals-panel" data-panel="goals">
@@ -426,6 +436,6 @@
     <div data-toast-stack class="toast-stack" aria-live="polite"></div>
 
     <script src="cloudClient.js?v=202605121520"></script>
-    <script src="browserGame.js?v=202605140935"></script>
+    <script src="browserGame.js?v=202605141012"></script>
   </body>
 </html>

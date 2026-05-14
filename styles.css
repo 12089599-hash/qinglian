@@ -572,6 +572,28 @@ h2 {
     rgba(7, 18, 17, 0.74);
 }
 
+.overview-detail-actions {
+  display: none;
+}
+
+.mobile-combined-section {
+  display: grid;
+  gap: 10px;
+}
+
+.mobile-combined-section + .mobile-combined-section {
+  margin-top: 14px;
+  border-top: 1px solid rgba(245, 238, 220, 0.08);
+  padding-top: 14px;
+}
+
+.mobile-combined-section > h3 {
+  margin: 0;
+  color: var(--gold);
+  font-size: 0.96rem;
+  letter-spacing: 0.04em;
+}
+
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -5218,7 +5240,7 @@ small {
   body[data-active-tab="overview"] .stats-panel > .action-row {
     order: 3;
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 6px;
     margin-top: 0;
   }
@@ -5248,6 +5270,55 @@ small {
 
   body[data-active-tab="overview"] .stats-panel > .resource-drawer {
     margin-top: 0;
+  }
+
+  body[data-active-tab="overview"] .stats-panel > .overview-detail-actions {
+    order: 5;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .overview-detail-actions button {
+    display: grid;
+    gap: 2px;
+    align-content: center;
+    justify-items: start;
+    min-height: 44px;
+    border-color: rgba(132, 214, 187, 0.28);
+    border-radius: 8px;
+    padding: 6px 8px;
+    text-align: left;
+    background:
+      linear-gradient(180deg, rgba(20, 50, 45, 0.82), rgba(5, 18, 18, 0.88));
+  }
+
+  .overview-detail-actions strong,
+  .overview-detail-actions span {
+    display: block;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .overview-detail-actions strong {
+    color: #f7dfaa;
+    font-size: 0.78rem;
+  }
+
+  .overview-detail-actions span {
+    color: #a9cfbd;
+    font-size: 0.66rem;
+    font-weight: 700;
+  }
+
+  body[data-active-tab="overview"] .stats-panel > .state-drawer,
+  body[data-active-tab="overview"] .stats-panel > .attribute-card,
+  body[data-active-tab="overview"] .stats-panel > .dao-heart-card,
+  body[data-active-tab="overview"] .stats-panel > .tribulation-card {
+    display: none;
   }
 
   .cultivation-drawer,
@@ -7637,23 +7708,28 @@ small {
   }
 
   body[data-active-tab="overview"] .stats-panel > .opening-objective {
-    display: none;
-  }
-
-  body[data-active-tab="overview"] .stats-panel > .action-row {
+    display: grid;
     order: 2;
   }
 
-  body[data-active-tab="overview"] .stats-panel > .foundation-hint {
+  body[data-active-tab="overview"] .stats-panel > .action-row {
     order: 3;
   }
 
-  body[data-active-tab="overview"] .stats-panel > .progress-plan {
+  body[data-active-tab="overview"] .stats-panel > .foundation-hint {
     order: 4;
   }
 
-  body[data-active-tab="overview"] .stats-panel > .cultivation-drawer {
+  body[data-active-tab="overview"] .stats-panel > .progress-plan {
     order: 5;
+  }
+
+  body[data-active-tab="overview"] .stats-panel > .overview-detail-actions {
+    order: 5;
+  }
+
+  body[data-active-tab="overview"] .stats-panel > .cultivation-drawer {
+    order: 7;
   }
 
   .goal-list {
@@ -7884,7 +7960,7 @@ small {
     inset: auto 0 var(--mobile-tabbar-height) 0 !important;
     width: 100%;
     max-width: 100%;
-    height: min(52dvh, 430px) !important;
+    height: auto !important;
     max-height: min(52dvh, 430px) !important;
     margin: 0 !important;
     overflow: hidden;
@@ -7894,11 +7970,13 @@ small {
 
   .mobile-detail-frame {
     width: 100%;
-    height: 100%;
+    height: auto;
+    max-height: inherit;
     overflow: hidden;
   }
 
   .mobile-detail-body {
+    max-height: min(42dvh, 340px);
     padding-bottom: calc(18px + env(safe-area-inset-bottom));
   }
 
