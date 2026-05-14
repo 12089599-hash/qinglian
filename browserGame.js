@@ -2963,7 +2963,23 @@ const spiritBeastQualities = {
       const [mapId, approachId] = approachButton.dataset.selectApproach.split(':');
       const result = setMissionApproach(state, mapId, approachId);
       if (result.ok) {
-        showToast('路线已定', `${missionMaps[mapId].name}改走「${result.approach.name}」。`);
+        let startedMission = null;
+        if (!state.activeMission) {
+          const map = getMapStatuses(state).find((item) => item.id === mapId);
+          const primaryMission = map ? getPrimaryMissionForMap(map) : null;
+          if (primaryMission && getMissionStatus(state, primaryMission.id).unlocked) {
+            const now = Date.now();
+            startMission(state, primaryMission.id, now, approachId);
+            if (state.activeMission?.id === primaryMission.id) {
+              startedMission = primaryMission;
+            }
+          }
+        }
+        if (startedMission) {
+          showToast('行游启程', `${missionMaps[mapId]?.name || '此地'} · ${result.approach.name} · ${startedMission.name}`);
+        } else {
+          showToast('路线已定', `${missionMaps[mapId]?.name || '此地'}改走「${result.approach.name}」。`);
+        }
       }
       saveState();
       render(true);
@@ -7529,14 +7545,12 @@ const spiritBeastQualities = {
 
   function renderMapActionPanel(map) {
     const depth = map.depth;
-    const routeList = (map.routes || []).map((id) => missions[id]).filter(Boolean);
     const depthRush = getMapDepthRushStatus(state, map.id);
     const depthSweep = getMapDepthSweepStatus(state, map.id);
     const bossSweep = getMapBossSweepStatus(state, map.id);
     const primaryMission = getPrimaryMissionForMap(map);
     const primaryStatus = primaryMission ? getMissionStatus(state, primaryMission.id) : null;
     const selectedApproach = getSelectedMapApproachOption(map);
-    const unlockedRoutes = routeList.filter((mission) => getMissionStatus(state, mission.id).unlocked).length;
     const bossStatusText = {
       locked: '未解锁',
       hidden: '先探地势',
@@ -7566,17 +7580,10 @@ const spiritBeastQualities = {
         <small class="map-loot-pool">装备池：${lootPool.label} · 六部位皆可出</small>
         <div class="mobile-map-flow">
           <div class="mobile-map-flow-title">
-            <span>行游方式</span>
+            <span>点击路线开始行游</span>
             <strong>${selectedApproach?.name || '未定'}</strong>
           </div>
           ${renderApproachSelector(map)}
-          <div class="mobile-map-flow-title">
-            <span>普通行游</span>
-            <strong>${unlockedRoutes} / ${routeList.length}</strong>
-          </div>
-          <div class="mission-list">
-            ${routeList.map((mission) => renderMissionCard(mission)).join('')}
-          </div>
         </div>
         <div class="map-action-grid">
           <button data-start-depth="${map.id}" ${!depth?.unlocked || depth?.maxed || busy ? 'disabled' : ''}>
@@ -7745,7 +7752,7 @@ const spiritBeastQualities = {
     renderMissionReport(true);
     showBattlePlaybackResult(playback.report, skipped);
     triggerBattleFeedback(playback.tone === 'danger' || playback.report.outcome === 'failure' ? 'danger' : 'victory');
-    if (isMobileLayout() && activeTab === 'missions' && refs.missionReport) {
+    if (!isMobileLayout() && activeTab === 'missions' && refs.missionReport) {
       requestAnimationFrame(() => refs.missionReport.scrollIntoView({ behavior: skipped ? 'auto' : 'smooth', block: 'start' }));
     }
   }
@@ -7980,7 +7987,7 @@ const spiritBeastQualities = {
       ` : ''}
     `;
     renderCache.missionReport = signature;
-    if (isMobileLayout() && activeTab === 'missions' && scrolledMissionReportId !== report.id) {
+    if (!isMobileLayout() && activeTab === 'missions' && scrolledMissionReportId !== report.id) {
       scrolledMissionReportId = report.id;
       requestAnimationFrame(() => refs.missionReport.scrollIntoView({ behavior: 'smooth', block: 'start' }));
     }
