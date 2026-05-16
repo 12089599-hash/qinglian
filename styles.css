@@ -8590,12 +8590,23 @@ small {
     overflow-y: auto;
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
+    padding-top: 6px;
     padding-bottom: calc(var(--mobile-tabbar-height) + 12px);
   }
 
+  body[data-active-group="vault"] .panel.active > header {
+    display: none;
+  }
+
   body[data-active-group="vault"] .gear-subtabs {
-    top: 0;
-    margin: 0 0 8px;
+    z-index: 5;
+    top: -1px;
+    margin: -18px -6px 6px;
+    background:
+      linear-gradient(180deg, rgba(6, 30, 28, 0.98), rgba(3, 17, 17, 0.96));
+    box-shadow:
+      0 8px 16px rgba(0, 0, 0, 0.28),
+      inset 0 0 0 1px rgba(236, 204, 126, 0.12);
   }
 
   body[data-active-group="vault"] .gear-section-stack [data-gear-section-panel].active {
