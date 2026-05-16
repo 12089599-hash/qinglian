@@ -8557,6 +8557,103 @@ small {
     display: none;
   }
 
+  body[data-active-tab="missions"] .panel.active,
+  body[data-active-tab="missions"] [data-mission-list],
+  body[data-active-tab="missions"] .mission-map-layout,
+  body[data-active-tab="missions"] .mission-map-detail,
+  body[data-active-tab="missions"] .map-action-panel {
+    width: 100%;
+    max-width: none;
+    box-sizing: border-box;
+  }
+
+  body[data-active-tab="missions"] .mission-map-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  body[data-active-tab="missions"] .mission-map-detail {
+    display: block;
+  }
+
+  body[data-active-group="vault"] .dashboard,
+  body[data-active-tab="alchemy"] .dashboard,
+  body[data-active-tab="market"] .dashboard {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  body[data-active-group="vault"] .panel.active,
+  body[data-active-tab="alchemy"] .panel.active,
+  body[data-active-tab="market"] .panel.active {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: calc(var(--mobile-tabbar-height) + 12px);
+  }
+
+  body[data-active-group="vault"] .gear-subtabs {
+    top: 0;
+    margin: 0 0 8px;
+  }
+
+  body[data-active-group="vault"] .gear-section-stack [data-gear-section-panel].active {
+    height: auto;
+    overflow: visible;
+    padding-bottom: 0;
+  }
+
+  body[data-active-tab="gear"][data-active-gear-section="beasts"] [data-beast-list],
+  body[data-active-tab="gear"][data-active-gear-section="bloodlines"] [data-bloodline-list],
+  body[data-active-group="vault"][data-active-gear-section="beasts"] [data-beast-list],
+  body[data-active-group="vault"][data-active-gear-section="bloodlines"] [data-bloodline-list] {
+    max-height: none;
+    overflow: visible;
+  }
+
+  body[data-active-tab="gear"][data-active-gear-section="beasts"] .beast-gallery,
+  body[data-active-group="vault"][data-active-gear-section="beasts"] .beast-gallery {
+    max-height: none;
+    overflow: visible;
+  }
+
+  body[data-active-tab="alchemy"] [data-alchemy-list] > .system-row,
+  body[data-active-tab="market"] [data-market-list] > button[data-buy-market],
+  body[data-active-tab="gear"] [data-gear-list] > .equipment-detail-card,
+  body[data-active-tab="gear"] [data-loot-list] > .loot-equipment-card,
+  body[data-active-tab="gear"] [data-treasure-list] > .treasure-row,
+  body[data-active-tab="gear"] [data-bloodline-list] > .bloodline-row {
+    display: grid;
+  }
+
+  .mobile-detail-dialog[open] {
+    max-height: min(72dvh, 620px) !important;
+  }
+
+  .mobile-detail-frame,
+  .mobile-detail-body {
+    min-height: 0;
+  }
+
+  .mobile-detail-body {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+  }
+
+  .mobile-detail-body .mobile-full-list,
+  .mobile-detail-body .mobile-beast-gallery-full {
+    min-height: 0;
+    overflow: visible;
+  }
+
+  .mobile-detail-body .mobile-full-list .bloodline-row,
+  .mobile-detail-body .mobile-beast-gallery-full .beast-tile {
+    display: grid !important;
+  }
+
   .sub-tabs button {
     min-height: 32px;
     font-size: 15px;
